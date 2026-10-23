@@ -402,17 +402,26 @@ def main() -> int:
         suites = control.get("suites") or {}
         if suites:
             print("\n核心 vs 對照組（LLM）vs 表現層 — 判斷「哪些是智能問題」")
-            print(f"  {'suite':10} {'n':>4} {'表現層':>8} {'SNN':>8} {'LLM':>8}")
+            print(
+                f"  {'suite':10} {'n':>4} {'表現層':>8} {'GARDEN':>8}"
+                f" {'ED3N':>8} {'TOK-SNN':>8} {'LLM':>8}  coverage（有回答/總數）"
+            )
             for suite, cell in suites.items():
 
                 def _fmt(value: Optional[float]) -> str:
                     return "未量" if value is None else f"{value:.0%}"
 
+                answered = cell.get("answered") or {}
+                coverage = " ".join(
+                    f"{name} {answered.get(name, 0)}/{cell.get('n')}"
+                    for name in ("performance", "snn", "ed3n", "tok", "llm")
+                )
                 tag = "（表現層任務）" if cell.get("surface_task") else ""
                 print(
                     f"  {suite:10} {int(cell.get('n') or 0):4d}"
                     f" {_fmt(cell.get('performance')):>8} {_fmt(cell.get('snn')):>8}"
-                    f" {_fmt(cell.get('llm')):>8} {tag}"
+                    f" {_fmt(cell.get('ed3n')):>8} {_fmt(cell.get('tok')):>8}"
+                    f" {_fmt(cell.get('llm')):>8}  {coverage}{tag}"
                 )
             print(
                 "  LLM 是對照組不是分數：LLM 也不會＝智能/量測問題；LLM 會而 SNN 不會＝SNN 缺口。"

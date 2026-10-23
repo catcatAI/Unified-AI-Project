@@ -71,6 +71,16 @@ ED3N 這一欄是**訓練後**的（20,000 對、1 epoch、train acc 0.9997）�
 因為 `encode()` 把詞變成字典釋義、解碼器沒有可微的 token 輸出。TOK-SNN 是**換掉
 表徵與目標之後**的版本（token 詞表＋surrogate gradient＋next-token 交叉熵）：
 它學得會複製（5/5），但 20 epochs 後在算術 held-out 是 0/500、在核心題是 0%。
+
+**0% 不是同一種 0%**（`answered`／`distinct` 欄）：
+
+| 生產者 | 有回答 | 不同答案（math 40） | 意義 |
+| --- | --- | --- | --- |
+| GARDEN | **0/40** | 0 | 沒有輸出（缺席），不是答錯 |
+| ED3N | 40/40 | 22 | 有產生、無條件性（亂答） |
+| TOK-SNN | 40/40 | **2** | 模式崩潰（幾乎固定一句） |
+| LLM | 40/40 | 38 | 有能力，60% 正確 |
+
 根因、實測與規模需求見 [`CORE_GAP_ANALYSIS.md`](CORE_GAP_ANALYSIS.md)；不要用
 模板／路由補這個缺口。
 

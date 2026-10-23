@@ -33,6 +33,15 @@ and this project adheres to
 
 ### Changed
 
+- **對照組修正：「0%」不再混淆「答錯」與「沒回答」**（2026-10-23）：
+  `probe_core_control.py` 每個生產者記錄 `answered`／`coverage`／`distinct`
+  （並抽出 `_summarize()` 供測試）。實測發現三種不同的 0%：**GARDEN 0/40
+  有回答**（`generate()` 回空字串＝缺席）、**ED3N 40/40 但 22 個不同答案**（亂
+  答）、**TOK-SNN 40/40 只有 2 個不同答案**（模式崩潰）、LLM 40/40（有能力）。
+  分數規則不變（棄權仍不算正確，避免用棄權換分），但表格與 `report_intelligence`
+  現在同時印 coverage；文件同步這三種 0% 的差別。測試
+  `tests/test_probe_core_control.py`（4 條）。
+
 - **token-SNN：換掉表徵與目標**（2026-10-23）：新增
   `ai/ed3n/token_snn.py`（字元詞表 → LIF／surrogate gradient → next-token head，
   只在答案 token 上算交叉熵、teacher forcing）＋`scripts/train_token_snn.py`

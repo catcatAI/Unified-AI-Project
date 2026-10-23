@@ -55,6 +55,9 @@ DEFAULT_SUITES = ("knowledge", "math", "code", "routing")
 #: output). No core can satisfy it without being told the label space, so it is
 #: a *performance-layer* task and is never read as an intelligence score.
 SURFACE_TASK_SUITES = ("routing",)
+PRODUCERS = ("performance", "snn", "ed3n", "tok", "llm")
+CORE_PRODUCERS = ("snn", "ed3n", "tok", "llm")
+SNN_PRODUCERS = ("snn", "ed3n", "tok")
 DEFAULT_MODEL = REPO_ROOT / "data" / "models" / "qwen2.5-1.5b-instruct-q4_k_m.gguf"
 DEFAULT_ED3N = REPO_ROOT / "apps" / "backend" / "data" / "models" / "ed3n_core.json"
 DEFAULT_TOKEN_SNN = REPO_ROOT / "apps" / "backend" / "data" / "models" / "token_snn.pt"
@@ -65,6 +68,72 @@ _PROMPT = (
     'If you do not know, say "I don\'t know".\n\n'
     "Question: {q}\nAnswer:"
 )
+
+
+def _producer_stats(rows: List[dict], name: str) -> dict:
+    """Accuracy (an abstention is not correct), coverage, and distinct answers.
+
+    Accuracy keeps the old rule — an empty answer is not a correct answer — so
+    replacing a failed answer with an abstention can never raise a score. It is
+    reported next to ``coverage`` because "0%" from 40 wrong answers and "0%"
+    from 0 answers are different facts and the old table hid the difference.
+    """
+    cells = [r[name] for r in rows if not r[name].get("skipped")]
+    answered = [c for c in cells if c.get("answered")]
+    accuracy = (sum(1 for c in cells if c["passed"]) / len(cells)) if cells else None
+    answered_accuracy = (
+        sum(1 for c in answered if c["passed"]) / len(answered) if answered else None
+    )
+    return {
+        "accuracy": accuracy,
+        "coverage": (len(answered) / len(rows)) if rows else None,
+        "accuracy_answered": answered_accuracy,
+        "answered": len(answered),
+        "distinct": len({c.get("answer", "").strip() for c in answered}),
+    }
+
+
+def _summarize(rows: Dict[str, List[dict]]) -> Dict[str, dict]:
+    summary: Dict[str, dict] = {}
+    for suite, suite_rows in rows.items():
+        cell: Dict[str, object] = {
+            "n": len(suite_rows),
+            "surface_task": suite in SURFACE_TASK_SUITES,
+        }
+        for name in PRODUCERS:
+            stats = _producer_stats(suite_rows, name)
+            cell[name] = stats["accuracy"]
+            cell.setdefault("coverage", {})[name] = stats["coverage"]
+            cell.setdefault("accuracy_answered", {})[name] = stats["accuracy_answered"]
+            cell.setdefault("answered", {})[name] = stats["answered"]
+            cell.setdefault("distinct", {})[name] = stats["distinct"]
+        cell["surface_only"] = sum(
+            1
+            for r in suite_rows
+            if r["performance"]["passed"] and r["llm"].get("answered") and not r["llm"]["passed"]
+        )
+        cell["intelligence_problem"] = sum(
+            1
+            for r in suite_rows
+            if not r["performance"]["passed"]
+            and not r["llm"]["passed"]
+            and not r["llm"].get("skipped")
+        )
+        cell["snn_gap"] = sum(
+            1
+            for r in suite_rows
+            if r["llm"]["passed"] and not r["snn"]["passed"] and not r["snn"].get("skipped")
+        )
+        cell["gaps"] = {
+            name: sum(
+                1
+                for r in suite_rows
+                if r["llm"]["passed"] and not r[name]["passed"] and not r[name].get("skipped")
+            )
+            for name in SNN_PRODUCERS
+        }
+        summary[suite] = cell
+    return summary
 
 
 class _LLM:
@@ -215,6 +284,7 @@ def _run_rows(
                 passed, skipped = score_item(item, text)
                 row[name] = {
                     "answer": text[:300],
+                    "answered": bool(str(text).strip()),
                     "passed": bool(passed) and not skipped,
                     "skipped": bool(skipped),
                     "ms": round((time.time() - started) * 1000, 1),
@@ -222,6 +292,7 @@ def _run_rows(
             except Exception as exc:  # noqa: BLE001 - unavailability != wrong
                 row[name] = {
                     "answer": "",
+                    "answered": False,
                     "passed": False,
                     "skipped": True,
                     "error": f"{type(exc).__name__}: {exc}",
@@ -229,42 +300,7 @@ def _run_rows(
                 }
         rows.setdefault(item.suite, []).append(row)
 
-    def rate(rows_: List[dict], name: str) -> Optional[float]:
-        scored = [r[name] for r in rows_ if not r[name].get("skipped")]
-        if not scored:
-            return None
-        return sum(1 for r in scored if r["passed"]) / len(scored)
-
-    summary: Dict[str, dict] = {}
-    for suite, suite_rows in rows.items():
-        summary[suite] = {
-            "n": len(suite_rows),
-            "surface_task": suite in SURFACE_TASK_SUITES,
-            "performance": rate(suite_rows, "performance"),
-            "snn": rate(suite_rows, "snn"),
-            "ed3n": rate(suite_rows, "ed3n"),
-            "tok": rate(suite_rows, "tok"),
-            "llm": rate(suite_rows, "llm"),
-            "surface_only": sum(
-                1
-                for r in suite_rows
-                if r["performance"]["passed"]
-                and not r["llm"].get("skipped")
-                and not r["llm"]["passed"]
-            ),
-            "intelligence_problem": sum(
-                1
-                for r in suite_rows
-                if not r["performance"]["passed"]
-                and not r["llm"]["passed"]
-                and not r["llm"].get("skipped")
-            ),
-            "snn_gap": sum(
-                1
-                for r in suite_rows
-                if r["llm"]["passed"] and not r["snn"]["passed"] and not r["snn"].get("skipped")
-            ),
-        }
+    summary = _summarize(rows)
 
     return {
         "provenance": provenance,
@@ -328,6 +364,11 @@ def main() -> int:
                 f"             ↳ 只有表現層會={cell['surface_only']}"
                 f"　都答不出={cell['intelligence_problem']}"
                 f"　LLM會SNN不會={cell['snn_gap']}"
+            )
+            answered = cell.get("answered") or {}
+            print(
+                "               coverage："
+                + "  ".join(f"{name} {answered.get(name, 0)}/{cell['n']}" for name in PRODUCERS)
             )
         print("\n只有 SNN/ED3N/TOK-SNN/LLM 四欄算智能；表現層只供對照。")
 

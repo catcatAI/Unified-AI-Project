@@ -95,49 +95,181 @@
       "n": 40,
       "surface_task": false,
       "performance": 0.8,
+      "coverage": {
+        "performance": 1.0,
+        "snn": 0.0,
+        "ed3n": 1.0,
+        "tok": 1.0,
+        "llm": 1.0
+      },
+      "accuracy_answered": {
+        "performance": 0.8,
+        "snn": null,
+        "ed3n": 0.0,
+        "tok": 0.0,
+        "llm": 0.6
+      },
+      "answered": {
+        "performance": 40,
+        "snn": 0,
+        "ed3n": 40,
+        "tok": 40,
+        "llm": 40
+      },
+      "distinct": {
+        "performance": 36,
+        "snn": 0,
+        "ed3n": 22,
+        "tok": 2,
+        "llm": 38
+      },
       "snn": 0.0,
       "ed3n": 0.0,
       "tok": 0.0,
       "llm": 0.6,
       "surface_only": 12,
       "intelligence_problem": 4,
-      "snn_gap": 24
+      "snn_gap": 24,
+      "gaps": {
+        "snn": 24,
+        "ed3n": 24,
+        "tok": 24
+      }
     },
     "knowledge": {
       "n": 15,
       "surface_task": false,
       "performance": 0.4666666666666667,
+      "coverage": {
+        "performance": 0.8666666666666667,
+        "snn": 0.0,
+        "ed3n": 1.0,
+        "tok": 1.0,
+        "llm": 1.0
+      },
+      "accuracy_answered": {
+        "performance": 0.5384615384615384,
+        "snn": null,
+        "ed3n": 0.0,
+        "tok": 0.0,
+        "llm": 0.6666666666666666
+      },
+      "answered": {
+        "performance": 13,
+        "snn": 0,
+        "ed3n": 15,
+        "tok": 15,
+        "llm": 15
+      },
+      "distinct": {
+        "performance": 13,
+        "snn": 0,
+        "ed3n": 15,
+        "tok": 2,
+        "llm": 15
+      },
       "snn": 0.0,
       "ed3n": 0.0,
       "tok": 0.0,
       "llm": 0.6666666666666666,
       "surface_only": 1,
       "intelligence_problem": 4,
-      "snn_gap": 10
+      "snn_gap": 10,
+      "gaps": {
+        "snn": 10,
+        "ed3n": 10,
+        "tok": 10
+      }
     },
     "code": {
       "n": 10,
       "surface_task": false,
       "performance": 0.0,
+      "coverage": {
+        "performance": 0.0,
+        "snn": 0.0,
+        "ed3n": 1.0,
+        "tok": 1.0,
+        "llm": 1.0
+      },
+      "accuracy_answered": {
+        "performance": null,
+        "snn": null,
+        "ed3n": 0.0,
+        "tok": 0.0,
+        "llm": 0.0
+      },
+      "answered": {
+        "performance": 0,
+        "snn": 0,
+        "ed3n": 10,
+        "tok": 10,
+        "llm": 10
+      },
+      "distinct": {
+        "performance": 0,
+        "snn": 0,
+        "ed3n": 7,
+        "tok": 2,
+        "llm": 7
+      },
       "snn": 0.0,
       "ed3n": 0.0,
       "tok": 0.0,
       "llm": 0.0,
       "surface_only": 0,
       "intelligence_problem": 10,
-      "snn_gap": 0
+      "snn_gap": 0,
+      "gaps": {
+        "snn": 0,
+        "ed3n": 0,
+        "tok": 0
+      }
     },
     "routing": {
       "n": 10,
       "surface_task": true,
       "performance": 1.0,
+      "coverage": {
+        "performance": 1.0,
+        "snn": 0.0,
+        "ed3n": 1.0,
+        "tok": 1.0,
+        "llm": 1.0
+      },
+      "accuracy_answered": {
+        "performance": 1.0,
+        "snn": null,
+        "ed3n": 0.0,
+        "tok": 0.0,
+        "llm": 0.0
+      },
+      "answered": {
+        "performance": 10,
+        "snn": 0,
+        "ed3n": 10,
+        "tok": 10,
+        "llm": 10
+      },
+      "distinct": {
+        "performance": 6,
+        "snn": 0,
+        "ed3n": 10,
+        "tok": 3,
+        "llm": 10
+      },
       "snn": 0.0,
       "ed3n": 0.0,
       "tok": 0.0,
       "llm": 0.0,
       "surface_only": 10,
       "intelligence_problem": 0,
-      "snn_gap": 0
+      "snn_gap": 0,
+      "gaps": {
+        "snn": 0,
+        "ed3n": 0,
+        "tok": 0
+      }
     }
   },
   "provenance": {
@@ -186,49 +318,181 @@
         "n": 40,
         "surface_task": false,
         "performance": 0.8,
+        "coverage": {
+          "performance": 1.0,
+          "snn": 0.0,
+          "ed3n": 1.0,
+          "tok": 1.0,
+          "llm": 1.0
+        },
+        "accuracy_answered": {
+          "performance": 0.8,
+          "snn": null,
+          "ed3n": 0.0,
+          "tok": 0.0,
+          "llm": 0.6
+        },
+        "answered": {
+          "performance": 40,
+          "snn": 0,
+          "ed3n": 40,
+          "tok": 40,
+          "llm": 40
+        },
+        "distinct": {
+          "performance": 36,
+          "snn": 0,
+          "ed3n": 22,
+          "tok": 2,
+          "llm": 38
+        },
         "snn": 0.0,
         "ed3n": 0.0,
         "tok": 0.0,
         "llm": 0.6,
         "surface_only": 12,
         "intelligence_problem": 4,
-        "snn_gap": 24
+        "snn_gap": 24,
+        "gaps": {
+          "snn": 24,
+          "ed3n": 24,
+          "tok": 24
+        }
       },
       "knowledge": {
         "n": 15,
         "surface_task": false,
         "performance": 0.4666666666666667,
+        "coverage": {
+          "performance": 0.8666666666666667,
+          "snn": 0.0,
+          "ed3n": 1.0,
+          "tok": 1.0,
+          "llm": 1.0
+        },
+        "accuracy_answered": {
+          "performance": 0.5384615384615384,
+          "snn": null,
+          "ed3n": 0.0,
+          "tok": 0.0,
+          "llm": 0.6666666666666666
+        },
+        "answered": {
+          "performance": 13,
+          "snn": 0,
+          "ed3n": 15,
+          "tok": 15,
+          "llm": 15
+        },
+        "distinct": {
+          "performance": 13,
+          "snn": 0,
+          "ed3n": 15,
+          "tok": 2,
+          "llm": 15
+        },
         "snn": 0.0,
         "ed3n": 0.0,
         "tok": 0.0,
         "llm": 0.6666666666666666,
         "surface_only": 1,
         "intelligence_problem": 4,
-        "snn_gap": 10
+        "snn_gap": 10,
+        "gaps": {
+          "snn": 10,
+          "ed3n": 10,
+          "tok": 10
+        }
       },
       "code": {
         "n": 10,
         "surface_task": false,
         "performance": 0.0,
+        "coverage": {
+          "performance": 0.0,
+          "snn": 0.0,
+          "ed3n": 1.0,
+          "tok": 1.0,
+          "llm": 1.0
+        },
+        "accuracy_answered": {
+          "performance": null,
+          "snn": null,
+          "ed3n": 0.0,
+          "tok": 0.0,
+          "llm": 0.0
+        },
+        "answered": {
+          "performance": 0,
+          "snn": 0,
+          "ed3n": 10,
+          "tok": 10,
+          "llm": 10
+        },
+        "distinct": {
+          "performance": 0,
+          "snn": 0,
+          "ed3n": 7,
+          "tok": 2,
+          "llm": 7
+        },
         "snn": 0.0,
         "ed3n": 0.0,
         "tok": 0.0,
         "llm": 0.0,
         "surface_only": 0,
         "intelligence_problem": 10,
-        "snn_gap": 0
+        "snn_gap": 0,
+        "gaps": {
+          "snn": 0,
+          "ed3n": 0,
+          "tok": 0
+        }
       },
       "routing": {
         "n": 10,
         "surface_task": true,
         "performance": 1.0,
+        "coverage": {
+          "performance": 1.0,
+          "snn": 0.0,
+          "ed3n": 1.0,
+          "tok": 1.0,
+          "llm": 1.0
+        },
+        "accuracy_answered": {
+          "performance": 1.0,
+          "snn": null,
+          "ed3n": 0.0,
+          "tok": 0.0,
+          "llm": 0.0
+        },
+        "answered": {
+          "performance": 10,
+          "snn": 0,
+          "ed3n": 10,
+          "tok": 10,
+          "llm": 10
+        },
+        "distinct": {
+          "performance": 6,
+          "snn": 0,
+          "ed3n": 10,
+          "tok": 3,
+          "llm": 10
+        },
         "snn": 0.0,
         "ed3n": 0.0,
         "tok": 0.0,
         "llm": 0.0,
         "surface_only": 10,
         "intelligence_problem": 0,
-        "snn_gap": 0
+        "snn_gap": 0,
+        "gaps": {
+          "snn": 0,
+          "ed3n": 0,
+          "tok": 0
+        }
       }
     },
     "provenance": {
@@ -238,7 +502,7 @@
       "tok": "token_snn.pt (ok)",
       "llm": "qwen2.5-1.5b-instruct-q4_k_m.gguf (ok)"
     },
-    "generated_at": "2026-10-23T17:13:57"
+    "generated_at": "2026-10-23T17:37:40"
   },
   "system_score": 5.75,
   "core_score": 0.0,

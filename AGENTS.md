@@ -1180,7 +1180,9 @@ collected — 0 errors**).
 > ——LLM 也不會＝能力或量測問題；LLM 會而 SNN 不會＝SNN 缺口；表現層會而 LLM
 > 不會＝表層假象。實測：math 表現層 80%／GARDEN 0%／ED3N 0%／TOK-SNN 0%／
 > LLM 60%（12 題只有表層會、24 題 SNN 缺口）、knowledge 47/0/0/0/67、code
-> 0/0/0/0/0、routing 100/0/0/0/0（表現層任務）。核心邊界只有一處：
+> 0/0/0/0/0、routing 100/0/0/0/0（表現層任務）。**0% 要看 coverage**：
+> GARDEN 0/40 有回答（缺席）、ED3N 40/40 但 22 個不同答案（亂答）、TOK-SNN
+> 40/40 只有 2 個不同答案（模式崩潰）、LLM 40/40（有能力）。核心邊界只有一處：
 > `ai/meta/intelligence.py::is_core_backend()`；`neural` 這個字不等於核心
 > （`semantic-qa`／`neural-bridge`／`unified` 是 encoder／統計檢索，屬表現層）。
 >
