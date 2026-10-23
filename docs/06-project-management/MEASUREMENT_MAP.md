@@ -1,0 +1,100 @@
+# Measurement Map — 什麼該在哪，以及在哪裡量
+
+> 為什麼需要這張表：專案曾用「答案含正解」給智能打分，結果 49 個正確答案裡有 32 個
+> 是計算器算的、7 個是知識庫查的、10 個是分類器標的、**0 個是模型產生的**，而總分
+> 仍寫 5.49/10。問題不是分數高低，是**每一層的東西被拿到別層去計分**。
+
+## 一、五層（與 `LAYER_SEPARATION.md` 同一份定義）
+
+| 層 | 擁有什麼 | 在哪裡量（唯一的儀器） | 指標 | 可以貢獻給 |
+| --- | --- | --- | --- | --- |
+| 記憶 memory | 使用者說過的話 | `probe_dialogue_teaching.py` | 回想／更正／保留（%） | 只有記憶分 |
+| 知識 knowledge | 精選庫＋離線百科 | `run_benchmarks.py`（knowledge, strict）＋`census_reply_provenance.py` | correct / wrong / abstain；lookup 佔比 | 只有知識分 |
+| 思考 reasoning | 計算、符號、分類 | `run_benchmarks.py`（math, routing）＋census | correct ∧ computed | 只有思考分 |
+| 學習 learning | 參數改變 | `probe_neural_learning.py` | 刪掉文字來源後仍答對（%） | 只有學習分 |
+| 表層 surface | 措辭、模板、語氣 | `trace_reply.py`＋census | echo／template 佔比 | **不得貢獻任何能力分** |
+
+「產生 generation」不是第六層，而是每層的**來源標記**：同一層可以是查表、計算或
+模型產生。**只有「該層產生＋正確」才算該層的能力**；查表在知識層是知識，在思考層
+是零。
+
+## 二、五條判準（違反就是 placement violation，不是扣分）
+
+1. **一物一層**：每個回答的內容只有一個生產者，記錄在 `source`／`backend`；
+   宣告必須與 trace 到的生產者一致。
+2. **不得借光**：表層（模板、回聲）不得出現在知識／思考／學習的分數裡；查表
+   不得出現在「產生」的統計裡。
+3. **直接回傳要標記**：echo、lookup、classifier 都是合法的層，但必須在回覆上
+   看得出來（`backend`／`route`），不能一律寫 `llm`。
+4. **總分是表，不是數**：任何「智能 X/10」都必須同時印出上面五層的量測；沒有
+   層表的總分視為無效。
+5. **只有核心產生才算智能**：模板／路由／查表／規則可以讓系統有用，但拿它們算
+   智能等於「拿錯木片說桶不漏水」。`report_intelligence.py` 因此印三欄——系統分
+   （5.75）、核心分（只算 SNN/LLM 產生且正確，**0.00**）、表現層（系統−核心）；
+   對外只認核心分。
+
+## 三、核心 vs 表現層（唯一的邊界）
+
+**純智能不能直接量。** SNN 的權重裡沒有一句可讀的宣稱；唯一能知道核心會不會
+「想」的方法，是讓它產生內容、再看結果。這個量測必然**穿過**表現層（呈現、路由、
+記憶），所以兩層必須分開——表現層可以在零思考的情況下答對，一旦讓它先答，模板分
+就會被讀成智能（本專案發生過多次）。
+
+| | 誰 | 算不算智能 |
+| --- | --- | --- |
+| 核心 core | SNN／ED3N／GARDEN／LLM | 只有它產生且正確才算 |
+| 表現層 performance | 路由、模板、記憶、檢索、規則、encoder 相似度 | **0**（正確也不加分） |
+
+判定只有一個地方：`ai/meta/intelligence.py` 的 `is_core_backend()`。`neural`
+這個字**不**等於核心：`semantic-qa`／`neural-bridge`／`unified` 是 encoder 或
+統計檢索，屬表現層（舊的 `neural_share` 是歷史欄名，意思是「非模板」，不是核心）。
+
+**對照組（LLM）**：`probe_core_control.py` 用同一批凍結題目、同一條評分跑三個
+生產者，回答「哪些是智能問題」：
+
+| 現象 | 意義 |
+| --- | --- |
+| LLM 也不會 | 能力或量測／正解本身的問題（不是 SNN 的錯） |
+| LLM 會、SNN 不會 | SNN 專屬缺口（任務可解） |
+| 表現層會、LLM 不會 | 正確答案沒有思考（表層假象） |
+
+2026-10-23 實測（75 題，同題同評分）：
+
+| suite | n | 表現層 | SNN（GARDEN） | LLM（Qwen2.5-1.5B） | 只有表層會 | 都答不出 | LLM會SNN不會 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| math | 40 | 80% | 0% | 60% | 12 | 4 | 24 |
+| knowledge | 15 | 47% | 0% | 67% | 1 | 4 | 10 |
+| code | 10 | 0% | 0% | 0% | 0 | 10 | 0 |
+| routing | 10 | 100% | 0% | 0% | — | — | —（表現層任務） |
+
+讀法：數學與知識的差距是**真的**（LLM 會、SNN 不會）→ 智能問題；數學有 12 題是
+確定性計算答對而 LLM 答不出 → 表層假象；code 是模型規模／提示格式（都答不出）；
+routing 的正解是分類器自己的標籤，本來就是表現層任務，不讀作智能。
+
+## 四、目前量到的（2026-10-23）
+
+| 層 | 量測 | 結果 |
+| --- | --- | --- |
+| 記憶 | `probe_dialogue_teaching` | 回想／更正／保留 100%（7 題；僅記憶，非學習） |
+| 知識 | knowledge 15 題（strict） | 7 對、6 錯、2 棄權；正確的 7 題**全部是 lookup** |
+| 思考 | math 40／routing 10 | math 32 對（全 computed）、routing 10 對（全分類器標籤） |
+| 學習 | `probe_neural_learning` | 教後 0%、刪來源後 0% → **FAIL** |
+| 學習（改述中間層） | `probe_paraphrase`（`heldout_final` 才是分數） | 盲測 50%（4 個沒教過、機制凍結後才寫的說法）；教過的詞＋新句子 100% 只算回想 |
+| 表層 | `trace_reply` 7 句 | 5 句模板或回聲、1 句查表＋外殼、1 句計算；**0 句產生** |
+
+推論（照實寫）：以「模型產生的正確答案」計，基準上是 **0/49**；以「系統任何層
+產生的正確答案」計是 32/49（全是確定性計算）。這不是智能分數，是層的成績單。
+
+## 五、這次修掉的位置錯誤
+
+- `chat_routes` 對 dict 型回覆只讀 `getattr`，導致所有 dict 生產者的 `route`
+  遺失並落到 `"llm"`：`水的沸點是多少?` 明明是知識查表，卻宣告成 LLM。
+  已改為讀 dict 的 `route`／`metadata`，未知後端預設 `"unknown"`（不再假裝 LLM）。
+- `chat_service` 的知識管線把 `route` 寫成 `"local_data"`，已改為 `"knowledge"`。
+- `unified` 對 `天空為什麼是藍色的?` 原本回「問句原文＋『蓝色。』」：問句被逐字
+  複製進答案（表層冒充內容），且回覆宣告的是引擎名 `unified`（不是層）。
+  已修：`_wrap_answer` 不再重述問句（回覆變成 `蓝色。`）；`_wrap_llm_response`
+  改讀 `metadata["route"]`，unified 現在宣告 `semantic-qa` → 知識層；
+  `scripts/audit_placement.py` 也追到 `SemanticQA.answer` 這個生產者。
+  現在 7/7 回覆的宣告與生產者一致（`placement.replies_declare_their_layer`
+  已納入 `check_fact_gates.py`，0 violations）。

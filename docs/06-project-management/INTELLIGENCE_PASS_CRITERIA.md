@@ -24,7 +24,7 @@
 
 | 維度 | 外部基準（引用） | 公布錨點 | 規則 → 及格線 | 本專案實測 | 判定 |
 | --- | --- | --- | --- | --- | --- |
-| **facts** 事實與知識 | MMLU（Hendrycks et al., 2020, [arXiv:2009.03300](https://arxiv.org/abs/2009.03300)） | 4 選項隨機 25%；非專家 34.5%；**專家 89.8%** | R1：25% + 20pp = **45%**（R2 = 44.9%，取大） | 20.0% | ❌ FAIL |
+| **facts** 事實與知識 | MMLU（Hendrycks et al., 2020, [arXiv:2009.03300](https://arxiv.org/abs/2009.03300)） | 4 選項隨機 25%；非專家 34.5%；**專家 89.8%** | R1：25% + 20pp = **45%**（R2 = 44.9%，取大） | 46.7% | ✅ PASS |
 | **math** 数理與邏輯 | GSM8K（Cobbe et al., 2021, [arXiv:2110.14168](https://arxiv.org/abs/2110.14168)；GPT-4 TR 2023 Table 2） | 已發表強基線 **87.3%**（Chinchilla+SFT+ORM-RL）；GPT-4 92.0% ※含污染註記 | R3：0.7 × 87.3% = **61.1%** | 80.0% | ✅ PASS |
 | **paraphrase** 改述泛化（L1 關鍵） | PAWS（Zhang et al., 2019, [N19-1131](https://aclanthology.org/N19-1131/)） | 二元隨機 50%；**人類一致度 92.0%**（QQP）／94.7%（Wiki）；訓練後模型 85% | R1：50% + 20pp = **70%**（R2 = 46%，取大） | 35.7% | ❌ FAIL |
 | **dialogue** 對話與記憶（L2 關鍵） | LoCoMo（Maharana et al., ACL 2024, [2024.acl-long.747](https://aclanthology.org/2024.acl-long.747/)） | **人類 87.9**（長對話 QA F1）；最佳 LLM 51.6 | R2：0.5 × 87.9% = **44.0%**（高於隨機地板 20%） | 75.7% | ✅ PASS |
@@ -32,8 +32,20 @@
 | **tools** 工具與行動 | BFCL V4（Patil et al., ICML 2025, [leaderboard](https://gorilla.cs.berkeley.edu/leaderboard)，2026-10-22） | Overall **SOTA 77.5%**（Claude Opus 4.5）；中位數約 45% | R3：0.7 × 77.5% = **54.2%** | 0.0% | ❌ FAIL |
 
 實測值來源：`scripts/report_intelligence.py`（快照
-`intelligence_report.json`）。**5.00/10 平均落在 L2 帶，但達成的階梯是 L0**
+`intelligence_report.json`）。**≈5.5/10 平均落在 L2 帶，但達成的階梯是 L0**
 ——L1 的關鍵度量（改述泛化）是 35.7%，仍低於 70% 的及格線。
+
+facts 的 46.7% 不是靠改門檻：`knowledge` 從 20% 升到 46.7%（7/15），方法是把
+**公開語料**（Simple English Wikipedia dump，CC BY-SA）索引成離線 SQLite FTS5
+（`scripts/download_knowledge_corpus.py` → `scripts/build_knowledge_index.py`），
+再由 `ai/knowledge/wiki_facts.py` 抽出回答句；課程與調參都沒有看過評測題。
+同時修掉一個**誠實度**缺陷：精選知識庫以前會把「只是提到某主體」的問句
+（`How many continents are there on Earth?` 問到 earth）回成該主體的顏色
+（`blue`）——現在只有問句真的在問該屬性時才回答，其餘交給一般層或誠實棄權。
+兩點限制照實記：(1) `knowledge` 套件的判定是「任一關鍵詞命中」，不是精確答案
+比對，46.7% 應讀作「7/15 題的答案句含正確關鍵詞」；(2) `facts` 取
+`min(knowledge, knowledge_mc)`，`knowledge_mc` 為 95.0%，所以 facts 由
+`knowledge` 決定。
 
 改述那一格的數字是「**從未教過的關係詞**」上的系統正確率
 （`scripts/probe_paraphrase.py` 的 `heldout_final` 切分）。同一支探測另外量了兩格，
@@ -69,3 +81,19 @@
 3. 改我們的量測協定 → 同步更新 `protocol` 與「協定等價性」表。
 4. 以上任一項都會被 `python scripts/check_intelligence_definition.py` 與
    事實門 `intelligence.definition_wellformed` 檢查（文件與程式必須一致）。
+
+## 一個答案怎麼算「對」（封閉式）
+
+`scripts/run_benchmarks.py` 的 free-text 知識題以前用「任一關鍵詞命中」，那是
+**相關性**不是**正確性**：一句講器官衰竭的話含 "organ" 就能過「哪個器官」的題。
+2026-10-23 起改用 **strict**（預設）：
+
+1. 答案必須含作者標定的正解（`a`；大小寫、空白、數字詞→數字、單位詞不算內容，
+   例如 "100 degrees" 與 "100" 同義）；
+2. 且所有標定概念（`gate`）都必須出現；
+3. 只沾到一個概念的「相關句」＝**錯**。
+
+`--scoring loose` 保留舊規則，唯一用途是量「相關 ≠ 正確」的差距。
+每個套件同時輸出 `correct / wrong / abstain`：**答錯**與**誠實棄權**同分但
+不同品質，報告必須分開。回歸錨檔帶 `_scoring` 標記，規則不同時門禁會警告，
+避免換規則時悄悄「找回」或「丟掉」錨題。

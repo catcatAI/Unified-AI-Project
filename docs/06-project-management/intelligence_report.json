@@ -1,10 +1,10 @@
 {
   "scores": {
-    "facts": 0.2,
+    "facts": 0.4667,
     "math": 0.8,
     "tools": 0.0,
-    "paraphrase": 0.3571,
-    "dialogue": 0.7568666666666667,
+    "paraphrase": 0.5,
+    "dialogue": 0.7939333333333334,
     "boundary": 0.8889
   },
   "thresholds": {
@@ -17,7 +17,7 @@
         "url": "https://arxiv.org/abs/2009.03300",
         "protocol": "analogous"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     "math": {
       "pass_line": 0.6111,
@@ -77,26 +77,153 @@
   },
   "diagnostics": {
     "改述（教過詞、新句子）": 1.0,
-    "改述（沒教過的詞，開發診斷）": 0.5
+    "改述（沒教過的詞，開發診斷）": 0.8125
   },
   "sources": {
-    "deterministic": 405,
-    "neural": 249,
+    "deterministic": 421,
+    "neural": 252,
     "other": 10,
-    "retrieval": 13,
-    "template": 419
+    "retrieval": 32,
+    "template": 381
   },
-  "source_verdict": "神經層佔比 23% ≥ 20%：學到的模型確實承擔了一部分回答",
+  "source_verdict": "非模板來源佔比 23% ≥ 20%：有一部分回答不是模板（但見下方核心佔比）",
   "gaps": {
     "知識缺口（標準集 state 類）": 0.0
   },
   "bench_suites": {
-    "math": 80.0,
-    "knowledge": 20.0,
-    "knowledge_mc": 75.0,
-    "code": 0.0,
-    "routing": 100.0
+    "math": {
+      "n": 40,
+      "surface_task": false,
+      "performance": 0.8,
+      "snn": 0.0,
+      "llm": 0.6,
+      "surface_only": 12,
+      "intelligence_problem": 4,
+      "snn_gap": 24
+    },
+    "knowledge": {
+      "n": 15,
+      "surface_task": false,
+      "performance": 0.4666666666666667,
+      "snn": 0.0,
+      "llm": 0.6666666666666666,
+      "surface_only": 1,
+      "intelligence_problem": 4,
+      "snn_gap": 10
+    },
+    "code": {
+      "n": 10,
+      "surface_task": false,
+      "performance": 0.0,
+      "snn": 0.0,
+      "llm": 0.0,
+      "surface_only": 0,
+      "intelligence_problem": 10,
+      "snn_gap": 0
+    },
+    "routing": {
+      "n": 10,
+      "surface_task": true,
+      "performance": 1.0,
+      "snn": 0.0,
+      "llm": 0.0,
+      "surface_only": 10,
+      "intelligence_problem": 0,
+      "snn_gap": 0
+    }
   },
+  "provenance": {
+    "knowledge": {
+      "correct": 7,
+      "produced": 0,
+      "retrieved_or_classified": 7,
+      "provenance": {
+        "lookup": 7
+      }
+    },
+    "math": {
+      "correct": 32,
+      "produced": 32,
+      "retrieved_or_classified": 0,
+      "provenance": {
+        "computed": 32
+      }
+    },
+    "code": {
+      "correct": 0,
+      "produced": 0,
+      "retrieved_or_classified": 0,
+      "provenance": {}
+    },
+    "routing": {
+      "correct": 10,
+      "produced": 0,
+      "retrieved_or_classified": 10,
+      "provenance": {
+        "classifier": 10
+      }
+    }
+  },
+  "core_scores": {
+    "facts": 0.0,
+    "math": 0.0,
+    "tools": 0.0,
+    "paraphrase": 0.0,
+    "dialogue": 0.0,
+    "boundary": 0.0
+  },
+  "core_control": {
+    "suites": {
+      "math": {
+        "n": 40,
+        "surface_task": false,
+        "performance": 0.8,
+        "snn": 0.0,
+        "llm": 0.6,
+        "surface_only": 12,
+        "intelligence_problem": 4,
+        "snn_gap": 24
+      },
+      "knowledge": {
+        "n": 15,
+        "surface_task": false,
+        "performance": 0.4666666666666667,
+        "snn": 0.0,
+        "llm": 0.6666666666666666,
+        "surface_only": 1,
+        "intelligence_problem": 4,
+        "snn_gap": 10
+      },
+      "code": {
+        "n": 10,
+        "surface_task": false,
+        "performance": 0.0,
+        "snn": 0.0,
+        "llm": 0.0,
+        "surface_only": 0,
+        "intelligence_problem": 10,
+        "snn_gap": 0
+      },
+      "routing": {
+        "n": 10,
+        "surface_task": true,
+        "performance": 1.0,
+        "snn": 0.0,
+        "llm": 0.0,
+        "surface_only": 10,
+        "intelligence_problem": 0,
+        "snn_gap": 0
+      }
+    },
+    "provenance": {
+      "performance": "lookup/rules/templates (NativeBackend)",
+      "snn": "GARDEN engine (ok)",
+      "llm": "qwen2.5-1.5b-instruct-q4_k_m.gguf (ok)"
+    },
+    "generated_at": "2026-10-23T15:47:16"
+  },
+  "system_score": 5.75,
+  "core_score": 0.0,
   "integrity": {
     "sample_valid": true,
     "consistent": true,
@@ -104,23 +231,22 @@
     "problems": []
   },
   "result": {
-    "score": 5.0,
+    "score": 5.75,
     "status": "measured",
     "band": "L2 本地可用",
     "band_summary": "多輪對話不跑題，記憶／推理／多模態能串起來當助手用",
     "attained_level": "L0",
     "level_missing": [
-      "paraphrase 3.6/10 < 7.0/10"
+      "paraphrase 5.0/10 < 7.0/10"
     ],
     "failed_dimensions": [
-      "facts 2.0/10 < 4.5/10",
-      "paraphrase 3.6/10 < 7.0/10",
+      "paraphrase 5.0/10 < 7.0/10",
       "tools 0.0/10 < 5.4/10"
     ],
     "counted": [
       [
         "facts",
-        0.2
+        0.4667
       ],
       [
         "math",
@@ -128,11 +254,11 @@
       ],
       [
         "paraphrase",
-        0.3571
+        0.5
       ],
       [
         "dialogue",
-        0.7569
+        0.7939
       ],
       [
         "boundary",

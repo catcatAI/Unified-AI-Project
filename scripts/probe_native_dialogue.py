@@ -50,11 +50,12 @@ from typing import Dict, List, Optional, Sequence, Tuple
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
+from ai.meta.intelligence import is_core_backend  # noqa: E402
 from ai.response.human_speech import (  # noqa: E402
     MULTI_FACT_SCENARIOS,
-    classify_source,
     StandardItem,
     build_standard_set,
+    classify_source,
     judge,
 )
 
@@ -1046,6 +1047,13 @@ async def main() -> int:
         "neural_share": round(
             sum(1 for t in first if t.source == "neural") / max(len(first), 1), 4
         ),
+        # The old "neural" bucket is *not* the thinking core: it contains the
+        # encoder/retrieval hybrids. core_share asks the one definition in
+        # ai/meta/intelligence.py (SNN family / LLM only).
+        "core_share": round(
+            sum(1 for t in first if is_core_backend(t.backend or "")) / max(len(first), 1),
+            4,
+        ),
         "standard_set": {
             "size": sum(len(u) for u in AGENT_UNITS),
             "measured": len(first),
@@ -1129,7 +1137,8 @@ async def main() -> int:
     print(
         "  回答來源："
         + "｜".join(f"{k} {v}" for k, v in sources.items())
-        + f"　→ 神經層佔比 {result.get('neural_share', 0):.0%}"
+        + f"　→ 核心佔比 {result.get('core_share', 0):.0%}"
+        + f"（非模板來源 {result.get('neural_share', 0):.0%}，含 encoder／檢索）"
     )
     validity = result["validity"]
     if validity["valid"]:

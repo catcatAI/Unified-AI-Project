@@ -278,3 +278,71 @@ def test_the_gate_ships_the_committed_report() -> None:
     """The report is the artifact the docs cite — it must be committed."""
     report = REPO_ROOT / "docs" / "06-project-management" / "intelligence_report.json"
     assert report.is_file(), "the unified intelligence report must be committed"
+
+
+# --------------------------------------------------------------------------- #
+# The layer boundary: intelligence is measured indirectly, through a
+# performance layer that must not be mistaken for it.
+# --------------------------------------------------------------------------- #
+def test_core_backends_are_only_the_thinking_models(definition):
+    """只有 SNN 家族與 LLM 是核心；encoder／檢索／統計引擎不是。"""
+    for name in ("snn", "ed3n", "garden", "GARDEN", "llm", "llama_cpp", "qwen2.5"):
+        assert definition.is_core_backend(name), name
+    for name in (
+        "semantic-qa",  # encoder similarity lookup
+        "neural-bridge",  # encoder + deterministic composition
+        "unified",  # statistical nearest-neighbour
+        "neuro-blender",  # phrase blender
+        "knowledge_pipeline",
+        "composed-template",
+        "local-fallback",
+        "dialogue-memory",
+        "claim-reasoning",
+    ):
+        assert not definition.is_core_backend(name), name
+
+
+def test_layer_of_is_a_total_function(definition):
+    assert definition.layer_of("snn") == definition.CORE_LAYER
+    assert definition.layer_of("semantic-qa") == definition.PERFORMANCE_LAYER
+    # Unknown/empty backends default to the performance layer, never the core.
+    assert definition.layer_of("") == definition.PERFORMANCE_LAYER
+    assert definition.layer_of("something-new") == definition.PERFORMANCE_LAYER
+
+
+def test_the_word_neural_does_not_grant_core_credit(definition):
+    """回歸：`source=neural` 曾把 encoder 檢索算成核心（假的 1.22 分）。"""
+    assert "semantic" not in definition.CORE_BACKENDS
+    assert "unified" not in definition.CORE_BACKENDS
+    assert "neural-bridge" not in definition.CORE_BACKENDS
+
+
+def test_report_never_credits_surface_above_system(definition):
+    """核心分 ≤ 系統分，逐維度成立——表層不能被算成智能。"""
+    path = REPO_ROOT / "docs" / "06-project-management" / "intelligence_report.json"
+    if not path.exists():
+        pytest.skip("intelligence report not generated")
+    report = json.loads(path.read_text(encoding="utf-8"))
+    core = report.get("core_scores") or {}
+    system = report.get("scores") or {}
+    assert core, "report must carry core_scores"
+    for dimension_id, value in core.items():
+        assert dimension_id in system
+        assert value <= system[dimension_id] + 1e-9, dimension_id
+    if report.get("core_score") is not None and report.get("system_score") is not None:
+        assert report["core_score"] <= report["system_score"] + 1e-9
+
+
+def test_core_control_marks_surface_tasks():
+    """對照組報告：routing 的 oracle 是分類器自己的標籤，屬表現層任務。"""
+    path = REPO_ROOT / "data" / "intelligence_reports" / "core_control.json"
+    if not path.exists():
+        pytest.skip("core control probe not run")
+    control = json.loads(path.read_text(encoding="utf-8"))
+    suites = control.get("suites") or {}
+    assert "snn" in (control.get("provenance") or {})
+    assert "llm" in (control.get("provenance") or {})
+    assert (suites.get("routing") or {}).get("surface_task") is True
+    for cell in suites.values():
+        for key in ("performance", "snn", "llm"):
+            assert key in cell

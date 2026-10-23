@@ -72,6 +72,11 @@
       "referenced": true,
       "purpose": "L1-5 字典品質審計 — 輕量（<50MB, <1s）"
     },
+    "audit_placement.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "Placement audit: does each reply declare the layer that actually produced it?"
+    },
     "audit_repo_facts.py": {
       "category": "diagnostics",
       "referenced": false,
@@ -142,6 +147,11 @@
       "referenced": false,
       "purpose": "Angela Clay Figurine — procedural modeling build script."
     },
+    "build_knowledge_index.py": {
+      "category": "operations",
+      "referenced": true,
+      "purpose": "Build the offline knowledge index from a public Wikipedia dump."
+    },
     "build_paraphrase_benchmark.py": {
       "category": "operations",
       "referenced": true,
@@ -156,6 +166,11 @@
       "category": "tool",
       "referenced": false,
       "purpose": "Start backend server and capture ALL startup output."
+    },
+    "census_reply_provenance.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Where do the *correct* benchmark replies actually come from?"
     },
     "check_auth_status.py": {
       "category": "diagnostics",
@@ -211,6 +226,11 @@
       "category": "diagnostics",
       "referenced": true,
       "purpose": "check last memories（無說明：原始碼未附 docstring）"
+    },
+    "check_layer_separation.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "Layer separation gate: memory / knowledge / reasoning / learning / surface."
     },
     "check_open_gates.py": {
       "category": "diagnostics",
@@ -391,6 +411,11 @@
       "category": "tool",
       "referenced": true,
       "purpose": "Download external lexical datasets and multimodal training datasets."
+    },
+    "download_knowledge_corpus.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Download a public Wikipedia dump for the offline knowledge index."
     },
     "exchange_drive_code.py": {
       "category": "tool",
@@ -672,10 +697,20 @@
       "referenced": true,
       "purpose": "L1-6 對比訓練硬件自適應 — 規格驅動批處理（<50MB, <1s）"
     },
+    "probe_core_control.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "Core vs control vs performance layer — which failures are intelligence problems."
+    },
     "probe_deep_chain.py": {
       "category": "probe",
       "referenced": true,
       "purpose": "L1-2 深鏈研究 — propagation_hops 3 vs 6 對比（輕量，CPU-only, <2s）"
+    },
+    "probe_dialogue_teaching.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "對話記憶量測 — 教過的事實，之後問得出來嗎？（**記憶層，不是學習**）"
     },
     "probe_intelligence_sources.py": {
       "category": "probe",
@@ -701,6 +736,11 @@
       "category": "probe",
       "referenced": true,
       "purpose": "中間層（神經橋接）量測 — 接觸 / 對齊 / 合成"
+    },
+    "probe_neural_learning.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "Does the native neural engine *learn* a fact from dialogue, or store it?"
     },
     "probe_paraphrase.py": {
       "category": "probe",
@@ -971,6 +1011,11 @@
       "category": "analysis",
       "referenced": false,
       "purpose": "Trace the full encode -> SNN -> decode pipeline."
+    },
+    "trace_reply.py": {
+      "category": "analysis",
+      "referenced": true,
+      "purpose": "Trace one reply: every stage that touched it, and what it returned."
     },
     "trace_stages.py": {
       "category": "analysis",

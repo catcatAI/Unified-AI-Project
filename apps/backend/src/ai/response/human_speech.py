@@ -161,7 +161,16 @@ _DETERMINISTIC_BACKENDS = (
 
 
 def classify_source(backend: str, route: str = "") -> str:
-    """Which layer produced the answer."""
+    """Which bucket produced the answer.
+
+    .. warning::
+       ``neural`` here means **"not a template"** — it includes encoder
+       retrieval (``semantic-qa``) and the hybrid bridge. It is **not** the
+       intelligence core. The core boundary lives in one place,
+       ``ai.meta.intelligence.is_core_backend()`` (SNN family / LLM only), and
+       only that may credit intelligence. A correct answer from this bucket
+       still counts as zero intelligence.
+    """
     name = f"{backend or ''}|{route or ''}".lower()
     if any(key in name for key in _TEMPLATE_BACKENDS):
         return SOURCE_TEMPLATE

@@ -326,6 +326,47 @@ SOURCE_OTHER = "other"
 #: of the answers — otherwise the capability is template copying.
 MIN_NEURAL_SHARE = 0.20
 
+# --------------------------------------------------------------------------- #
+# Core vs performance layer (the one boundary)
+# --------------------------------------------------------------------------- #
+# Pure intelligence is not directly observable. An SNN's weights carry no
+# readable claim; the only way to know whether the core "thinks" is to let it
+# produce the content and look at the result. That measurement necessarily
+# passes *through* the performance layer (rendering, routing, memory), so the
+# two layers must be kept apart: the performance layer can answer correctly
+# with zero core involvement, and when it is allowed to answer first, a
+# template score gets read as intelligence (this project did exactly that).
+#
+# Rule: an answer the core produced is *core intelligence*; an answer produced
+# by routing / templates / memory / retrieval / rules is *performance* — zero
+# intelligence even when correct. Only the entries below are the core. Note
+# that an encoder used as a feature extractor ("semantic-qa", "neural-bridge",
+# "unified") is *not* the core: it retrieves or composes around a similarity
+# score, and counting it as core was the same mistake as counting lookups.
+CORE_BACKENDS: Tuple[str, ...] = (
+    "snn",
+    "ed3n",
+    "garden",
+    "llm",
+    "qwen",
+    "llama",
+    "gpt",
+    "claude",
+)
+CORE_LAYER = "core"
+PERFORMANCE_LAYER = "performance"
+
+
+def is_core_backend(backend: str) -> bool:
+    """True only for the thinking core (SNN family or an LLM)."""
+    name = str(backend or "").lower()
+    return any(key in name for key in CORE_BACKENDS)
+
+
+def layer_of(backend: str) -> str:
+    """``core`` or ``performance`` — never inferred from the word "neural"."""
+    return CORE_LAYER if is_core_backend(backend) else PERFORMANCE_LAYER
+
 
 @dataclass
 class Integrity:
@@ -437,7 +478,12 @@ def composite(dimension_scores: Dict[str, float], integrity: Integrity) -> Dict[
 
 
 __all__ = [
+    "CORE_BACKENDS",
+    "CORE_LAYER",
     "COUNTED_SCORE_TYPES",
+    "PERFORMANCE_LAYER",
+    "is_core_backend",
+    "layer_of",
     "DIMENSIONS",
     "DIMENSION_BY_ID",
     "Dimension",

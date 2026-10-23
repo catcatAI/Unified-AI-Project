@@ -13,7 +13,7 @@ scripts/gen_definitions_audit.py 併入）。
 
 退出碼：0 全綠；1 任一 must_pass 失敗（BLOCKED，附 verdict 向量定位）。
 
-覆蓋十一域（與測試共享黃金值，見 tests/*/test_*contract*.py 與
+覆蓋各域（與測試共享黃金值，見 tests/*/test_*contract*.py 與
 tests/core/test_fact_interpreter.py）：
   edge        硬體/edge_card 包絡三 verdict（重算，不信任轉錄數字）
   audit       卡架構審計：歷史宣稱 corrections 記 INFO（審計抓稻草人是它的
@@ -32,6 +32,15 @@ tests/core/test_fact_interpreter.py）：
               記 INFO，讓它不會被忘記
   hygiene     提交的配置必須等於預設（user 層是執行期狀態，不該被提交；
               evolved 層不得打開雲端部署）
+  placement   回覆宣告的層（source/backend/route）必須等於 trace 到的生產者；
+              引擎名不是層，未宣告或宣告錯層即擋門
+  intelligence 統一定義：六維度、外部錨、及格線推導、誠實度門（規則在
+              scripts/check_intelligence_definition.py）
+  benchmarks  評測資料本身的合約：改述基準必須等於產生器、留出詞不在課程、
+              評測句不在課程
+  layers      分層契約：記憶／知識／思考／學習／表層不得互相冒充。學習宣稱
+              必須有「刪除來源後仍答得出來」的證據；記憶不得走知識路徑；
+              模組標記、路徑、證據、結果四者必須一致
   definitions 定義稽核（四桶：未定義／定義有誤／定義差／定義合理）：
               i18n prompt 鍵、magic_numbers 鍵、StateMatrix 槽（Python
               DEFAULT_DIMENSIONS / matrix.default.yaml / JS 鏡像三源對齊）、
@@ -56,6 +65,7 @@ import importlib.util
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -424,6 +434,124 @@ def _gates_facts():
     ]
 
 
+def _layers_facts():
+    """分層契約（docs/06-project-management/LAYER_SEPARATION.md）。
+
+    專案反覆出現的錯誤：一個 dict＋比對器答得很順，就被報成「學習」或
+    「智能」。這一域把五層（記憶／知識／思考／學習／表層）釘在登記簿上，
+    並由 scripts/check_layer_separation.py 驗證模組標記、路徑、證據與結果
+    一致；學習宣稱若沒有「刪除來源後仍答得出來」的證據，直接擋門。
+    """
+    import json
+
+    from core.facts import Fact
+
+    spec = importlib.util.spec_from_file_location(
+        "layer_guard", REPO / "scripts" / "check_layer_separation.py"
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    from ai.meta.layers import validate_registry
+
+    registry = json.loads(mod.REGISTRY.read_text(encoding="utf-8"))
+    violations = [str(p) for p in validate_registry(registry, REPO)]
+    violations.extend(mod.structural_problems())
+    claims = registry.get("claims") or []
+    learning = [c for c in claims if c.get("layer") == "learning"]
+    learning_passing = [
+        c for c in learning if (c.get("result") or {}).get("status") == "pass"
+    ]
+
+    return [
+        Fact(
+            "layers.registry_wellformed",
+            float(len(violations)),
+            0.0,
+            "le",
+            "violations",
+            "layer registry",
+            f"violations={len(violations)}"
+            + (f": {violations[0]}" if violations else ""),
+            measured_at=MEASURED_AT,
+        ),
+        Fact(
+            "layers.claims_total",
+            float(len(claims)),
+            1.0,
+            "ge",
+            "claims",
+            "layer registry",
+            f"{len(claims)} claims across "
+            f"{sorted({str(c.get('layer')) for c in claims})}",
+            must_pass=False,
+            measured_at=MEASURED_AT,
+        ),
+        Fact(
+            "layers.learning_claims_passing",
+            float(len(learning_passing)),
+            0.0,
+            "ge",
+            "passing learning claims",
+            "layer registry",
+            f"{len(learning_passing)}/{len(learning)} learning claims have "
+            "survived source deletion",
+            must_pass=False,
+            measured_at=MEASURED_AT,
+        ),
+    ]
+
+
+def _placement_facts():
+    """放置（placement）：回覆宣告的層必須等於實際生產它的層。
+
+    `scripts/audit_placement.py` 跑生產聊天路徑並比對 source/backend/route
+    與 trace 到的生產者；未宣告（引擎名不是層）或宣告錯層都算違規。
+    """
+    import tempfile
+
+    from core.facts import Fact
+
+    handle, raw = tempfile.mkstemp(suffix=".json")
+    os.close(handle)
+    path = Path(raw)
+    violations: Optional[int] = None
+    detail = ""
+    try:
+        proc = subprocess.run(
+            [sys.executable, "scripts/audit_placement.py", "--json", str(path)],
+            cwd=str(REPO),
+            capture_output=True,
+            text=True,
+            timeout=900,
+        )
+        if path.exists() and path.stat().st_size:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            violations = int(payload.get("violations") or 0)
+            detail = f"{violations} replies do not declare the layer that produced them"
+        else:
+            detail = f"audit failed (exit {proc.returncode}): {(proc.stderr or '')[-200:]}"
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        detail = f"audit failed: {exc}"
+    finally:
+        path.unlink(missing_ok=True)
+    if violations is None:
+        violations = 1
+    return [
+        Fact(
+            "placement.replies_declare_their_layer",
+            float(violations),
+            0.0,
+            "le",
+            "violations",
+            "layer placement",
+            detail or "0 violations",
+            measured_at=MEASURED_AT,
+        )
+    ]
+
+
 def _intelligence_facts():
     """智能定義：一個定義、一個數字、一個地方。
 
@@ -497,13 +625,7 @@ def _paraphrase_facts():
         text = curriculum.read_text(encoding="utf-8")
         lowered = text.lower()
         splits = payload.get("splits") or {}
-        for name in ("unseen_surfaces", "heldout_final"):
-            for item in splits.get(name) or []:
-                surface = (item.get("surface") or "").replace("{A}", "").replace("{B}", "")
-                for word in re.split(r"[^A-Za-z']+", surface.lower()):
-                    if word and word not in {"a", "an", "the", "is", "by", "to", "over"}:
-                        if word in lowered:
-                            problems.append(f"{name}: held-out word {word!r} is in the curriculum")
+        problems.extend(builder.heldout_word_leaks(text, payload))
         for name in ("heldout_dimensions", "test"):
             for item in splits.get(name) or []:
                 if item.get("surface_kind") != "lexical":
@@ -1893,6 +2015,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         + _gates_facts()
         + _intelligence_facts()
         + _paraphrase_facts()
+        + _layers_facts()
+        + _placement_facts()
     )
     merged = merge_reports(
         adjudicate(edge_facts),
