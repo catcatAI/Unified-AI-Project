@@ -1193,6 +1193,13 @@ collected — 0 errors**).
 > 模板／路由。已修的機械缺陷：CLI 從未建 `SeqBatch`（生成路徑沒訓練）、alpaca
 > 的 `instruction` 被丟掉（只讀 `input`）、訓練資料未整理／未防洩漏（新增
 > `scripts/prepare_core_training_data.py`，157,311 對，丟棄 26 筆與評測重疊）。
+>
+> **表徵／目標已換掉並實測**（`ai/ed3n/token_snn.py`＋`scripts/train_token_snn.py`）：
+> 字元詞表 → LIF（surrogate gradient）→ next-token head，只在答案 token 上算
+> 交叉熵。架構可學（複製任務 5/5、loss 0.034），但規模不足：算術 held-out
+> （`arithmetic_test.csv`）20 epochs 後 **0/500 exact**、核心凍結題 **0%**
+> （loss 2.49／2.51，未收斂）。因此對外核心分仍是 **0.00/10**；跨過外部及格線
+> 需要 ≥10⁸ 參數＋GPU surrogate BPTT，或從 LLM 蒸餾。
 
 > ✅ **NOTE (Updated 2026-10-23, 改述中間層)**: **§X #274**: 改述泛化從 35.7%
 > → **50%**（外部及格線 70%，仍 FAIL）。編碼器換成
@@ -1433,6 +1440,7 @@ tests/
 | Core vs LLM control vs performance layer (which failures are intelligence) | `python3 scripts/probe_core_control.py` |
 | Why the SNN core is still 0 after training (root cause + fix path) | `docs/06-project-management/CORE_GAP_ANALYSIS.md` |
 | Prepare core training data (normalise, dedup, leak check, 95-5 split) | `python3 scripts/prepare_core_training_data.py` |
+| Train the token-level SNN (tokens + surrogate gradient, next-token CE) | `PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_token_snn.py --limit 20000 --epochs 5 --max-len 160` |
 | Train ED3N (associations **and** the sequence decoder `generate()` reads) | `PYTHONPATH=apps/backend/src ./.venv/bin/python -m ai.ed3n train apps/backend/data/processed/core_train.jsonl --epochs 1 -o apps/backend/data/models/ed3n_core.json` |
 | Unified intelligence definition gate | `python3 scripts/check_intelligence_definition.py` |
 | Paraphrase generalisation probe (frozen splits + learning effect) | `python3 scripts/probe_paraphrase.py` |

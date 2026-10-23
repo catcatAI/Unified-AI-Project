@@ -113,3 +113,40 @@ process("Find the area of a square ... 5 cm") -> "4"
    同一評分；核心分只有「核心產生且正確」才算。
 
 在那之前，對外數字就是 **核心 0.00/10**；系統分 5.75 只是表現層。
+
+## 五、架構替換：token-SNN 已實作並量測（2026-10-23）
+
+上面第 1–2 步已落地：`apps/backend/src/ai/ed3n/token_snn.py`（字元詞表 → LIF
+（surrogate gradient，Neftci 2019）→ 線性 next-token head；答案 token 的交叉熵、
+teacher forcing）＋`scripts/train_token_snn.py`（可讀 CSV/JSON/JSONL、可給獨立
+held-out split、存 checkpoint 與報告）。
+
+**架構正常**（可學習性檢查）：複製任務（echo 5 個詞）**5/5 完全正確**，loss
+0.034。所以它不是「連最佳化都不會」。
+
+**實測（可重現）**：
+
+| 任務 | 訓練 | held-out | 結果 |
+| --- | --- | --- | --- |
+| 複製（echo） | 5 詞 ×20 | 同 5 詞 | **5/5 exact** |
+| 算術（加減乘除） | 30,000（`arithmetic_train_dataset.json`） | 500/2,000（`arithmetic_test_dataset.csv`） | **0/500 exact**（20 epochs、154 秒、loss 1.75） |
+| 核心凍結題（math 40／knowledge 15） | 20,000 對（`core_train.jsonl`） | 同基準 | **0%**（loss 2.49，未收斂） |
+
+teacher-forced 字元準確率在訓練列上約 49%（3,000 列、40 epochs 的診斷run），
+表示它學到了數字分布，但**沒有學到進位演算法**，自由生成 сразу 漂移，所以 exact
+是 0。這與規模一致：1.5B 的 LLM 在 GSM8K 等級也只到 60%；128–256 維的單層
+spiking decoder 在 CPU 上不可能補上這個差距。
+
+**結論（更新版）**：表徵與目標已經換對，缺口現在是**規模與訓練預算**，不再是
+「字典釋義／關聯訓練」的結構錯誤。要跨過外部及格線（math 61%、paraphrase 70%）
+需要：
+
+1. 更大的模型（≥10⁸ 參數級）與 GPU 訓練（surrogate BPTT）；本機 CPU 以目前
+   0.2M 參數、5 分鐘級訓練只能到「學得會複製、學不會算術」。
+2. 或**蒸餾**：用本地 LLM 在非評測語料上產生分布，SNN 學分布（Hinton 2015）；
+   仍需要 GPU 與數天級訓練。
+3. 在達成之前，對外核心分維持 **0.00/10**；TOK-SNN 與 GARDEN／ED3N 並列在
+   對照表中，不因「有模型」而加分。
+
+**不要做的事**（已寫進門禁與文件）：把模板／路由／查表塞進核心來「補分」；
+把評測題放進訓練；把 `neural` 這個字當成核心。

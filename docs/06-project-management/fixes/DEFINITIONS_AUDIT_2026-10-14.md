@@ -10,9 +10,9 @@
 | 桶                 | 項數               |
 | ------------------ | ------------------ |
 | 未定義             | 0                  |
-| 定義有誤           | 0                  |
+| 定義有誤           | 1                  |
 | 定義差（多重釋義） | 11                 |
-| 定義合理（已驗證） | 23+ 處顯式定義標記 |
+| 定義合理（已驗證） | 24+ 處顯式定義標記 |
 
 ## 修復記錄（本次）
 
@@ -70,7 +70,11 @@
 
 ## 二、定義有誤（有定義但錯誤／失準）
 
-（無。）
+### GLOSSARY 數值宣稱失準
+
+| 項目      | 文件宣稱                     | 實測       |
+| --------- | ---------------------------- | ---------- |
+| ED3N 規模 | ~7,500 lines across 26 files | (8147, 27) |
 
 ## 三、定義差（多重釋義 — 同對象、多視角／多源）
 
@@ -110,15 +114,15 @@
 
 ## 四、定義合理（驗證通過）
 
-- GLOSSARY 數值宣稱 5/5 項與實測一致。
+- GLOSSARY 數值宣稱 4/5 項與實測一致。
 - i18n prompt：使用 92 鍵、zh 92 / en 92、雙語 parity diff=0、未定義=0。
-- magic_numbers：410 個使用中鍵、YAML 可解析 68、僅 inline
+- magic_numbers：412 個使用中鍵、YAML 可解析 70、僅 inline
   default（設計如此，呼叫點有預設值）342、未定義且崩潰=0（所有取用器簽名帶 default 參數）。
 - `get_parameter`：3 個呼叫鍵全部在 `_DEFAULT_THRESHOLDS`。
 - `ResponseCategory`（apps/backend/src/ai/memory/memory_template.py）：模板 JSON 類別未定義=無。
 - influence_map 有定義但目前無呼叫的類型（備用，非缺陷）：adrenaline, anger,
   boost, negative_thought, oxytocin, serotonin。
-- 顯式定義標記（`定義（`/`Definition:`）共 23 處，格式良。
+- 顯式定義標記（`定義（`/`Definition:`）共 24 處，格式良。
 
 ## 附錄：掃描事實
 

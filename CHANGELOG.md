@@ -33,6 +33,17 @@ and this project adheres to
 
 ### Changed
 
+- **token-SNN：換掉表徵與目標**（2026-10-23）：新增
+  `ai/ed3n/token_snn.py`（字元詞表 → LIF／surrogate gradient → next-token head，
+  只在答案 token 上算交叉熵、teacher forcing）＋`scripts/train_token_snn.py`
+  （CSV/JSON/JSONL、獨立 held-out split、checkpoint 與報告）。`token-snn` 列入
+  核心後端清單，`probe_core_control.py` 多一欄（共五欄）。**可學性**：複製任務
+  5/5；**實測**：算術 held-out 0/500 exact（20 epochs、154 秒）、核心凍結題
+  0%（loss 2.49，未收斂）。結論：結構錯誤已排除（不再用字典釋義／關聯訓練），
+  剩下是**規模**（需 ≥10⁸ 參數＋GPU surrogate BPTT，或 LLM 蒸餾），對外核心分
+  仍 0.00/10。測試 `tests/ai/test_token_snn.py`（8 條）＋
+  `test_intelligence_definition` 納入 `token-snn`。
+
 - **SNN 核心缺口診斷＋訓練路徑修復**（2026-10-23）：`probe_core_control.py`
   新增 ED3N 欄（讀 checkpoint、讀外部字典、直接讀 decoder 不經 reflex）。
   診斷（`docs/06-project-management/CORE_GAP_ANALYSIS.md`）：ED3N 在 20,000
