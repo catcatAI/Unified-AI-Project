@@ -1176,13 +1176,23 @@ collected — 0 errors**).
 > 這不是扣分，是把「桶子有沒有裝水」和「木片有沒有對齊」分開量。
 >
 > **對照組**：`scripts/probe_core_control.py` 用同一批凍結題目、同一條評分跑
-> 表現層／SNN（GARDEN）／LLM（Qwen2.5-1.5B），回答「哪些是智能問題」——LLM
+> 表現層／GARDEN／ED3N／LLM（Qwen2.5-1.5B），回答「哪些是智能問題」——LLM
 > 也不會＝能力或量測問題；LLM 會而 SNN 不會＝SNN 缺口；表現層會而 LLM 不會＝
-> 表層假象。實測：math 表現層 80%／SNN 0%／LLM 60%（12 題只有表層會、24 題
-> SNN 缺口）、knowledge 47/0/67、code 0/0/0、routing 100/0/0（表現層任務）。
-> 核心邊界只有一處：`ai/meta/intelligence.py::is_core_backend()`；
-> `neural` 這個字不等於核心（`semantic-qa`／`neural-bridge`／`unified` 是
-> encoder／統計檢索，屬表現層）。
+> 表層假象。實測：math 表現層 80%／GARDEN 0%／ED3N 0%／LLM 60%（12 題只有
+> 表層會、24 題 SNN 缺口）、knowledge 47/0/0/67、code 0/0/0/0、routing
+> 100/0/0/0（表現層任務）。核心邊界只有一處：
+> `ai/meta/intelligence.py::is_core_backend()`；`neural` 這個字不等於核心
+> （`semantic-qa`／`neural-bridge`／`unified` 是 encoder／統計檢索，屬表現層）。
+>
+> **SNN 為何訓練後仍 0**（`docs/06-project-management/CORE_GAP_ANALYSIS.md`）：
+> 不是 epoch 不夠。ED3N 在 20,000 對上訓練到 `acc=0.9997`，生成仍 0%；因為
+> `DictionaryLayer.encode()` 把詞變成**字典釋義**（`encode("12 + 7")` 回
+> `m2`／`cedict_..._abacus_rule`／…），輸入本身不可區分，解碼再把釋義表面形式
+> 接成字詞湯。修法是換 token 表徵＋可微的 next-token 輸出層（surrogate
+> gradient BPTT，Neftci 2019；SLAYER 2018；蒸餾 Hinton 2015），不是往核心塞
+> 模板／路由。已修的機械缺陷：CLI 從未建 `SeqBatch`（生成路徑沒訓練）、alpaca
+> 的 `instruction` 被丟掉（只讀 `input`）、訓練資料未整理／未防洩漏（新增
+> `scripts/prepare_core_training_data.py`，157,311 對，丟棄 26 筆與評測重疊）。
 
 > ✅ **NOTE (Updated 2026-10-23, 改述中間層)**: **§X #274**: 改述泛化從 35.7%
 > → **50%**（外部及格線 70%，仍 FAIL）。編碼器換成
@@ -1421,6 +1431,9 @@ tests/
 | What belongs where, and where each layer is measured | `docs/06-project-management/MEASUREMENT_MAP.md` |
 | Unified intelligence score (the only one; core vs performance) | `python3 scripts/report_intelligence.py` |
 | Core vs LLM control vs performance layer (which failures are intelligence) | `python3 scripts/probe_core_control.py` |
+| Why the SNN core is still 0 after training (root cause + fix path) | `docs/06-project-management/CORE_GAP_ANALYSIS.md` |
+| Prepare core training data (normalise, dedup, leak check, 95-5 split) | `python3 scripts/prepare_core_training_data.py` |
+| Train ED3N (associations **and** the sequence decoder `generate()` reads) | `PYTHONPATH=apps/backend/src ./.venv/bin/python -m ai.ed3n train apps/backend/data/processed/core_train.jsonl --epochs 1 -o apps/backend/data/models/ed3n_core.json` |
 | Unified intelligence definition gate | `python3 scripts/check_intelligence_definition.py` |
 | Paraphrase generalisation probe (frozen splits + learning effect) | `python3 scripts/probe_paraphrase.py` |
 | Offline knowledge corpus (dump → FTS5 index, then the general layer) | `python3 scripts/download_knowledge_corpus.py && python3 scripts/build_knowledge_index.py` |

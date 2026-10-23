@@ -33,6 +33,20 @@ and this project adheres to
 
 ### Changed
 
+- **SNN 核心缺口診斷＋訓練路徑修復**（2026-10-23）：`probe_core_control.py`
+  新增 ED3N 欄（讀 checkpoint、讀外部字典、直接讀 decoder 不經 reflex）。
+  診斷（`docs/06-project-management/CORE_GAP_ANALYSIS.md`）：ED3N 在 20,000
+  對上訓練到 `acc=0.9997`，生成仍 0%；`DictionaryLayer.encode()` 把詞變成字典
+  **釋義**（`encode("12 + 7")` → `m2`／`cedict_..._abacus_rule`／…），輸入不
+  可區分，解碼再把釋義接成字詞湯；`process()` 的知識分支回相關句而非正解。
+  修機械缺陷：CLI `cmd_train` 從未建 `SeqBatch`（`generate()` 讀的序列路徑從沒
+  被訓練）、`_load_train_examples` 只讀 alpaca 的 `input`（幾乎全空）而丟掉
+  `instruction`、新增 `scripts/prepare_core_training_data.py`（正規化／去重／
+  確定性 95-5 切分／8-gram＋整句洩漏檢查／manifest 雜湊；實跑 157,311 對，
+  丟棄 26 筆與評測重疊）。測試：`tests/test_ed3n_cli_training.py`、
+  `tests/test_prepare_core_training_data.py`（8572 passed / 107 skipped）。
+  對外核心分仍 **0.00/10**（如實）。
+
 - **核心／表現層邊界＋LLM 對照組**（2026-10-23）：新增
   `ai/meta/intelligence.py::is_core_backend()/layer_of()`（唯一定義：核心只
   有 SNN/ED3N/GARDEN/LLM；`semantic-qa`／`neural-bridge`／`unified` 是
