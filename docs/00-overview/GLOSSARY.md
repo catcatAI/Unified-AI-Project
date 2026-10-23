@@ -41,7 +41,7 @@ evolve, and interact with its environment.
 Angela's primary inference engine — a hybrid SNN (Spiking Neural Network) +
 dictionary-lookup system for low-latency local reasoning. Uses trie-based reflex
 tables, LRU-cached dictionary encoding, and continuous learning pipelines.
-~7,500 lines across 26 files.
+~8,100 lines across 27 files.
 
 ### Environment Simulator
 

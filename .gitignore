@@ -103,6 +103,9 @@ credentials.json
 !**/token_stream.py
 !apps/backend/src/game/token_effects.py
 !scripts/analyze_tokens.py
+!apps/backend/src/ai/ed3n/token_snn.py
+!scripts/train_token_snn.py
+!tests/ai/test_token_snn.py
 *.key
 *.pem
 .env

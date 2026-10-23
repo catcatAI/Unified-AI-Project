@@ -55,6 +55,7 @@ DEFAULT_SUITES = ("knowledge", "math", "code", "routing")
 SURFACE_TASK_SUITES = ("routing",)
 DEFAULT_MODEL = REPO_ROOT / "data" / "models" / "qwen2.5-1.5b-instruct-q4_k_m.gguf"
 DEFAULT_ED3N = REPO_ROOT / "apps" / "backend" / "data" / "models" / "ed3n_core.json"
+DEFAULT_TOKEN_SNN = REPO_ROOT / "apps" / "backend" / "data" / "models" / "token_snn.pt"
 OUT = REPO_ROOT / "data" / "intelligence_reports" / "core_control.json"
 
 _PROMPT = (
@@ -92,6 +93,30 @@ class _LLM:
             stop=["\n\n", "Question:"],
         )
         return str((out.get("choices") or [{}])[0].get("text") or "").strip()
+
+
+class _TokenSNN:
+    """Token-level spiking decoder (surrogate gradient, next-token objective)."""
+
+    def __init__(self, checkpoint: Path) -> None:
+        self.ok = False
+        self.error = ""
+        self._model = None
+        if not checkpoint.exists():
+            self.error = f"model not found: {checkpoint}"
+            return
+        try:
+            from ai.ed3n.token_snn import TokenSNN
+
+            self._model = TokenSNN.load(checkpoint)
+            self.ok = True
+        except Exception as exc:  # noqa: BLE001 - reported, not hidden
+            self.error = f"{type(exc).__name__}: {exc}"
+
+    def answer(self, item: BenchItem) -> str:
+        if not self.ok or self._model is None:
+            raise RuntimeError(self.error or "token-snn unavailable")
+        return str(self._model.generate(item.q, max_new=48) or "").strip()
 
 
 class _ED3N:
@@ -153,17 +178,20 @@ def _run_rows(
     items: List[BenchItem],
     suites: Dict[str, List[BenchItem]],
     ed3n_checkpoint: Path = DEFAULT_ED3N,
+    token_checkpoint: Path = DEFAULT_TOKEN_SNN,
 ) -> dict:
     native = NativeBackend()
     llm = _LLM(DEFAULT_MODEL)
     garden = _Garden()
     ed3n = _ED3N(ed3n_checkpoint)
+    token = _TokenSNN(token_checkpoint)
 
     rows: Dict[str, List[dict]] = {}
     provenance = {
         "performance": "lookup/rules/templates (NativeBackend)",
         "snn": f"GARDEN engine ({'ok' if garden.ok else garden.error})",
         "ed3n": f"{ed3n_checkpoint.name} ({'ok' if ed3n.ok else ed3n.error})",
+        "tok": f"{token_checkpoint.name} ({'ok' if token.ok else token.error})",
         "llm": f"{DEFAULT_MODEL.name} ({'ok' if llm.ok else llm.error})",
     }
 
@@ -173,6 +201,7 @@ def _run_rows(
             ("performance", native),
             ("snn", garden),
             ("ed3n", ed3n),
+            ("tok", token),
             ("llm", llm),
         ):
             started = time.time()
@@ -212,6 +241,7 @@ def _run_rows(
             "performance": rate(suite_rows, "performance"),
             "snn": rate(suite_rows, "snn"),
             "ed3n": rate(suite_rows, "ed3n"),
+            "tok": rate(suite_rows, "tok"),
             "llm": rate(suite_rows, "llm"),
             "surface_only": sum(
                 1
@@ -239,7 +269,7 @@ def _run_rows(
         "suites": summary,
         "rows": rows,
         "notes": [
-            "只有 snn/ed3n/llm 三欄算智能；performance 欄只供對照，永不併入。",
+            "只有 snn/ed3n/tok/llm 四欄算智能；performance 欄只供對照，永不併入。",
             "surface_only：表現層答對、LLM 答不出＝正確答案沒有思考。",
             "intelligence_problem：表現層與 LLM 都答不出＝能力或量測/正解本身的問題。",
             "snn_gap：LLM 答對、SNN 答不出＝SNN 專屬缺口（不是任務不可解）。",
@@ -253,6 +283,7 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=0, help="max items per suite")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--ed3n-checkpoint", default=str(DEFAULT_ED3N))
+    parser.add_argument("--token-checkpoint", default=str(DEFAULT_TOKEN_SNN))
     parser.add_argument("--out", default=str(OUT))
     args = parser.parse_args()
 
@@ -267,7 +298,7 @@ def main() -> int:
                 kept[item.suite] = kept.get(item.suite, 0) + 1
         items = limited
 
-    result = _run_rows(items, {}, Path(args.ed3n_checkpoint))
+    result = _run_rows(items, {}, Path(args.ed3n_checkpoint), Path(args.token_checkpoint))
     result["generated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
 
     if args.json:
@@ -276,7 +307,10 @@ def main() -> int:
         print("核心 vs 對照組（LLM）vs 表現層 — 同一題組、同一評分")
         for name, desc in result["provenance"].items():
             print(f"  {name:12} {desc}")
-        print(f"\n  {'suite':10} {'n':>4} {'表現層':>8} {'GARDEN':>8} {'ED3N':>8} {'LLM':>8}")
+        print(
+            f"\n  {'suite':10} {'n':>4} {'表現層':>8} {'GARDEN':>8} {'ED3N':>8}"
+            f" {'TOK-SNN':>8} {'LLM':>8}"
+        )
         for suite, cell in result["suites"].items():
 
             def fmt(v: Optional[float]) -> str:
@@ -286,20 +320,24 @@ def main() -> int:
             print(
                 f"  {suite:10} {cell['n']:4d} {fmt(cell['performance']):>8}"
                 f" {fmt(cell['snn']):>8} {fmt(cell['ed3n']):>8}"
-                f" {fmt(cell['llm']):>8}  {tag}"
+                f" {fmt(cell['tok']):>8} {fmt(cell['llm']):>8}  {tag}"
             )
             print(
                 f"             ↳ 只有表現層會={cell['surface_only']}"
                 f"　都答不出={cell['intelligence_problem']}"
                 f"　LLM會SNN不會={cell['snn_gap']}"
             )
-        print("\n只有 SNN/LLM 兩欄算智能；表現層只供對照。")
+        print("\n只有 SNN/ED3N/TOK-SNN/LLM 四欄算智能；表現層只供對照。")
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     if not args.json:
-        print(f"\n已寫入 {out.relative_to(REPO_ROOT)}")
+        try:
+            shown = out.relative_to(REPO_ROOT)
+        except ValueError:
+            shown = out
+        print(f"\n已寫入 {shown}")
     return 0
 
 

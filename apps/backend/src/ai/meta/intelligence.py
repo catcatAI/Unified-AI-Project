@@ -352,6 +352,7 @@ CORE_BACKENDS: Tuple[str, ...] = (
     "llama",
     "gpt",
     "claude",
+    "token-snn",
 )
 CORE_LAYER = "core"
 PERFORMANCE_LAYER = "performance"

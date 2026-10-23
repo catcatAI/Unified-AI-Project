@@ -1117,6 +1117,11 @@
       "referenced": true,
       "purpose": "Train Three-Layer Visual Architecture on CIFAR-10."
     },
+    "train_token_snn.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "Train the token-level SNN decoder (surrogate gradient) on core pairs."
+    },
     "train_unified.py": {
       "category": "training",
       "referenced": true,

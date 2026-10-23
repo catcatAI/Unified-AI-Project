@@ -286,7 +286,16 @@ def test_the_gate_ships_the_committed_report() -> None:
 # --------------------------------------------------------------------------- #
 def test_core_backends_are_only_the_thinking_models(definition):
     """只有 SNN 家族與 LLM 是核心；encoder／檢索／統計引擎不是。"""
-    for name in ("snn", "ed3n", "garden", "GARDEN", "llm", "llama_cpp", "qwen2.5"):
+    for name in (
+        "snn",
+        "ed3n",
+        "garden",
+        "GARDEN",
+        "llm",
+        "llama_cpp",
+        "qwen2.5",
+        "token-snn",
+    ):
         assert definition.is_core_backend(name), name
     for name in (
         "semantic-qa",  # encoder similarity lookup
