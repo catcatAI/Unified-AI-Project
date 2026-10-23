@@ -687,6 +687,11 @@
       "referenced": false,
       "purpose": "Phase 4 — MMLU 65%→75% 50 條（硬件規格自適應，分批+sleep，<100MB）"
     },
+    "prepare_core_training_data.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Prepare the core's training data (raw -> processed) with a leak check."
+    },
     "probe_clip_mse_500.py": {
       "category": "probe",
       "referenced": true,

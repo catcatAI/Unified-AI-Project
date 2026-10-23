@@ -54,6 +54,7 @@ DEFAULT_SUITES = ("knowledge", "math", "code", "routing")
 #: a *performance-layer* task and is never read as an intelligence score.
 SURFACE_TASK_SUITES = ("routing",)
 DEFAULT_MODEL = REPO_ROOT / "data" / "models" / "qwen2.5-1.5b-instruct-q4_k_m.gguf"
+DEFAULT_ED3N = REPO_ROOT / "apps" / "backend" / "data" / "models" / "ed3n_core.json"
 OUT = REPO_ROOT / "data" / "intelligence_reports" / "core_control.json"
 
 _PROMPT = (
@@ -93,6 +94,40 @@ class _LLM:
         return str((out.get("choices") or [{}])[0].get("text") or "").strip()
 
 
+class _ED3N:
+    """ED3N — the project's other SNN-family core (association + sequence)."""
+
+    def __init__(self, checkpoint: Path) -> None:
+        self.ok = False
+        self.error = ""
+        self._engine = None
+        try:
+            from ai.ed3n.ed3n_engine import ED3NEngine
+
+            self._engine = ED3NEngine()
+            self._engine.load_presets()
+            if checkpoint.exists():
+                self._engine.load(str(checkpoint))
+            # encode() resolves words through the external dictionaries; without
+            # this the core runs on 46 preset keys and every sentence collapses
+            # to a handful of "m*" keys.
+            try:
+                self._engine.load_external_dictionaries()
+            except Exception as exc:  # noqa: BLE001 - optional derived data
+                self.error = f"dictionaries: {type(exc).__name__}: {exc}"
+            self.ok = True
+        except Exception as exc:  # noqa: BLE001 - reported, not hidden
+            self.error = f"{type(exc).__name__}: {exc}"
+
+    def answer(self, item: BenchItem) -> str:
+        if not self.ok or self._engine is None:
+            raise RuntimeError(self.error or "ed3n unavailable")
+        # Read the decoder, not generate(): generate() consults the reflex table
+        # first, and a reflex reply is a template — it must not be credited to
+        # the core.
+        return str(self._engine.step_decoder.generate_text(item.q) or "")
+
+
 class _Garden:
     """The SNN-family core. No prompt-following: it emits what it learned."""
 
@@ -114,21 +149,32 @@ class _Garden:
         return str(self._engine.generate(item.q) or "")
 
 
-def _run_rows(items: List[BenchItem], suites: Dict[str, List[BenchItem]]) -> dict:
+def _run_rows(
+    items: List[BenchItem],
+    suites: Dict[str, List[BenchItem]],
+    ed3n_checkpoint: Path = DEFAULT_ED3N,
+) -> dict:
     native = NativeBackend()
     llm = _LLM(DEFAULT_MODEL)
     garden = _Garden()
+    ed3n = _ED3N(ed3n_checkpoint)
 
     rows: Dict[str, List[dict]] = {}
     provenance = {
         "performance": "lookup/rules/templates (NativeBackend)",
         "snn": f"GARDEN engine ({'ok' if garden.ok else garden.error})",
+        "ed3n": f"{ed3n_checkpoint.name} ({'ok' if ed3n.ok else ed3n.error})",
         "llm": f"{DEFAULT_MODEL.name} ({'ok' if llm.ok else llm.error})",
     }
 
     for item in items:
         row = {"id": item.id, "suite": item.suite, "q": item.q}
-        for name, producer in (("performance", native), ("snn", garden), ("llm", llm)):
+        for name, producer in (
+            ("performance", native),
+            ("snn", garden),
+            ("ed3n", ed3n),
+            ("llm", llm),
+        ):
             started = time.time()
             try:
                 if name == "performance":
@@ -165,6 +211,7 @@ def _run_rows(items: List[BenchItem], suites: Dict[str, List[BenchItem]]) -> dic
             "surface_task": suite in SURFACE_TASK_SUITES,
             "performance": rate(suite_rows, "performance"),
             "snn": rate(suite_rows, "snn"),
+            "ed3n": rate(suite_rows, "ed3n"),
             "llm": rate(suite_rows, "llm"),
             "surface_only": sum(
                 1
@@ -192,7 +239,7 @@ def _run_rows(items: List[BenchItem], suites: Dict[str, List[BenchItem]]) -> dic
         "suites": summary,
         "rows": rows,
         "notes": [
-            "只有 snn/llm 兩欄算智能；performance 欄只供對照，永不併入。",
+            "只有 snn/ed3n/llm 三欄算智能；performance 欄只供對照，永不併入。",
             "surface_only：表現層答對、LLM 答不出＝正確答案沒有思考。",
             "intelligence_problem：表現層與 LLM 都答不出＝能力或量測/正解本身的問題。",
             "snn_gap：LLM 答對、SNN 答不出＝SNN 專屬缺口（不是任務不可解）。",
@@ -205,6 +252,7 @@ def main() -> int:
     parser.add_argument("--suites", default=",".join(DEFAULT_SUITES))
     parser.add_argument("--limit", type=int, default=0, help="max items per suite")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--ed3n-checkpoint", default=str(DEFAULT_ED3N))
     parser.add_argument("--out", default=str(OUT))
     args = parser.parse_args()
 
@@ -219,7 +267,7 @@ def main() -> int:
                 kept[item.suite] = kept.get(item.suite, 0) + 1
         items = limited
 
-    result = _run_rows(items, {})
+    result = _run_rows(items, {}, Path(args.ed3n_checkpoint))
     result["generated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
 
     if args.json:
@@ -228,7 +276,7 @@ def main() -> int:
         print("核心 vs 對照組（LLM）vs 表現層 — 同一題組、同一評分")
         for name, desc in result["provenance"].items():
             print(f"  {name:12} {desc}")
-        print(f"\n  {'suite':10} {'n':>4} {'表現層':>8} {'SNN':>8} {'LLM':>8}")
+        print(f"\n  {'suite':10} {'n':>4} {'表現層':>8} {'GARDEN':>8} {'ED3N':>8} {'LLM':>8}")
         for suite, cell in result["suites"].items():
 
             def fmt(v: Optional[float]) -> str:
@@ -237,7 +285,8 @@ def main() -> int:
             tag = "（表現層任務，不讀作智能）" if cell.get("surface_task") else ""
             print(
                 f"  {suite:10} {cell['n']:4d} {fmt(cell['performance']):>8}"
-                f" {fmt(cell['snn']):>8} {fmt(cell['llm']):>8}  {tag}"
+                f" {fmt(cell['snn']):>8} {fmt(cell['ed3n']):>8}"
+                f" {fmt(cell['llm']):>8}  {tag}"
             )
             print(
                 f"             ↳ 只有表現層會={cell['surface_only']}"

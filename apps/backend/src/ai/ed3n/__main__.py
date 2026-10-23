@@ -48,33 +48,43 @@ def cmd_query(args) -> None:
     print(result)
 
 
+def _pair(item: dict) -> dict:
+    """Normalize one dataset row to ``{"input", "output"}``.
+
+    Alpaca-style rows put the task in ``instruction`` and only the optional
+    context in ``input``; reading ``input`` alone therefore dropped ~every
+    alpaca row (its ``input`` is usually empty) and the trainer reported
+    "No valid examples". The instruction is the input; the context is
+    appended when present.
+    """
+    instruction = str(item.get("instruction") or item.get("question") or item.get("prompt") or "")
+    context = str(item.get("input") or "")
+    problem = str(item.get("problem") or "")
+    text_in = problem or (f"{instruction}\n{context}".strip() if context else instruction)
+    return {
+        "input": text_in.strip(),
+        "output": str(
+            item.get("output") or item.get("response") or item.get("answer") or ""
+        ).strip(),
+    }
+
+
 def _load_train_examples(path: str) -> List[dict]:
     """依副檔名載入 CSV/JSON 訓練樣本；不支援格式印訊息 exit(1)。"""
     import csv
 
     if path.endswith(".csv"):
-        examples: List[dict] = []
         with open(path, encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                examples.append(
-                    {
-                        "input": row.get("input", row.get("problem", "")),
-                        "output": row.get("output", row.get("answer", "")),
-                    }
-                )
-        return examples
+            return [_pair(row) for row in csv.DictReader(f)]
+    if path.endswith(".jsonl"):
+        with open(path, encoding="utf-8") as f:
+            return [_pair(json.loads(line)) for line in f if line.strip()]
     if path.endswith(".json"):
         with open(path, encoding="utf-8") as f:
             raw = json.load(f)
         if isinstance(raw, list):
-            return [
-                {
-                    "input": item.get("input", item.get("problem", "")),
-                    "output": item.get("output", item.get("answer", "")),
-                }
-                for item in raw
-            ]
-        return cast("List[dict]", raw.get("examples", []))
+            return [_pair(item) for item in raw]
+        return [_pair(item) for item in raw.get("examples", [])]
     print(f"Unsupported format: {path}")
     sys.exit(1)
 
@@ -118,11 +128,17 @@ def cmd_train(args) -> None:
         print("No examples with valid dictionary keys")
         return
 
+    # Train both paths. The association path alone was trained before, while
+    # ``generate()`` reads the sequence decoder — so the CLI could report
+    # acc=1.000 and still emit nonsense (the decoder had never seen an edge).
+    from .training_types import seq_batch_from_examples
+
     trainer = JointTrainer(e, dict_lr=args.lr, network_lr=args.lr)
     t0 = time.time()
     for epoch in range(args.epochs):
         batch = TrainingBatch(examples=texamples, batch_id=f"cli_{epoch}")
-        metrics = trainer.train_step(batch)
+        seq_batch = seq_batch_from_examples(texamples, batch_id=f"cli_seq_{epoch}")
+        metrics = trainer.train_step(batch, seq_batch=seq_batch)
         print(
             f"  Epoch {epoch+1}/{args.epochs}: loss={metrics.loss:.4f} acc={metrics.accuracy:.4f}"
         )
