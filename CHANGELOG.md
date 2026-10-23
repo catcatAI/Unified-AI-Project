@@ -39,7 +39,10 @@ and this project adheres to
   epochs），exact 0/0/2/0——**平台化**。同尺寸 GRU 對照（~0.18M、10 epochs）：
   loss 1.13、exact 4/200（2%），兩者都遠低於 math 及格線 61%。結論：在此算力
   下多訓練不會及格；要嘛 ≥10⁸ 參數＋GPU，要嘛蒸餾。診斷與重跑命令寫入
-  `CORE_GAP_ANALYSIS.md` §六。
+  `CORE_GAP_ANALYSIS.md` §六。**再確認不是曝光偏差**：同尺寸 GRU 對照連
+  **訓練題**的 greedy 都只有 2.5%（teacher-forced 每字元 53.7%）——若只是
+  曝光偏差，訓練題 teacher-forced 應接近 100%，所以 scheduled sampling 不是
+  解藥；三條獨立證據一致指向規模。
 
 - **對照組修正：「0%」不再混淆「答錯」與「沒回答」**（2026-10-23）：
   `probe_core_control.py` 每個生產者記錄 `answered`／`coverage`／`distinct`
