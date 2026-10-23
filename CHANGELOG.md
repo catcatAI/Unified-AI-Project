@@ -33,6 +33,14 @@ and this project adheres to
 
 ### Changed
 
+- **token-SNN 學習曲線（不是「訓練不夠久」）**（2026-10-23）：`train_token_snn`
+  新增 `--eval-every` 與 `TokenSNN.train_on(on_epoch=...)`，訓練途中量同一條
+  held-out。算術 30k／官方測試抽 200：loss 1.748→1.706→1.698→1.700（10/20/30/40
+  epochs），exact 0/0/2/0——**平台化**。同尺寸 GRU 對照（~0.18M、10 epochs）：
+  loss 1.13、exact 4/200（2%），兩者都遠低於 math 及格線 61%。結論：在此算力
+  下多訓練不會及格；要嘛 ≥10⁸ 參數＋GPU，要嘛蒸餾。診斷與重跑命令寫入
+  `CORE_GAP_ANALYSIS.md` §六。
+
 - **對照組修正：「0%」不再混淆「答錯」與「沒回答」**（2026-10-23）：
   `probe_core_control.py` 每個生產者記錄 `answered`／`coverage`／`distinct`
   （並抽出 `_summarize()` 供測試）。實測發現三種不同的 0%：**GARDEN 0/40

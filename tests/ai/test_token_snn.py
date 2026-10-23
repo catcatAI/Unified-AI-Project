@@ -55,6 +55,14 @@ def test_copy_task_is_learnable():
     assert hits >= 4, f"only {hits}/5 copied"
 
 
+def test_on_epoch_callback_runs_once_per_epoch(vocab):
+    seen = []
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=16))
+    model.train_on([("abc", "de")], epochs=3, batch_size=1, on_epoch=seen.append)
+    assert [row["epoch"] for row in seen] == [0, 1, 2]
+    assert all("loss" in row for row in seen)
+
+
 def test_save_load_roundtrip(tmp_path, vocab):
     model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=16, max_len=24))
     model.train_on([("abc", "def")], epochs=1, batch_size=1)

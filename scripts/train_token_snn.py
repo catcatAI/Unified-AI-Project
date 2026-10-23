@@ -89,6 +89,12 @@ def main() -> int:
         help="separate held-out split (e.g. arithmetic_test.csv); never the benchmarks",
     )
     ap.add_argument("--eval-sample", type=int, default=500)
+    ap.add_argument(
+        "--eval-every",
+        type=int,
+        default=0,
+        help="evaluate the held-out split every N epochs (learning curve)",
+    )
     ap.add_argument("--epochs", type=int, default=2)
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--lr", type=float, default=3e-3)
@@ -121,12 +127,31 @@ def main() -> int:
 
     model = TokenSNN(vocab, cfg)
     started = time.time()
+    curve: List[dict] = []
+    held_out = []
+    if args.eval_data:
+        held_out = fits(read_pairs(Path(args.eval_data)), vocab, cfg.max_len)
+    on_epoch = None
+    if args.eval_every and held_out:
+
+        def on_epoch(row: dict) -> None:
+            if (row["epoch"] + 1) % args.eval_every:
+                return
+            match = exact_match(model, held_out, args.eval_sample, seed=3)
+            point = {"epoch": row["epoch"] + 1, "loss": row["loss"], **match}
+            curve.append(point)
+            print(
+                f"    eval@{point['epoch']}: loss={point['loss']:.4f} "
+                f"exact={point['exact']:.3f} (n={point['n']})"
+            )
+
     history = model.train_on(
         train_fit,
         epochs=args.epochs,
         batch_size=args.batch,
         lr=args.lr,
         log=lambda row: print(f"  epoch {row['epoch'] + 1}: loss={row['loss']:.4f}"),
+        on_epoch=on_epoch,
     )
     elapsed = time.time() - started
 
@@ -134,9 +159,7 @@ def main() -> int:
     train_match = exact_match(model, train_fit, 200, seed=1)
     val_match = exact_match(model, val_fit, 200, seed=2) if val_fit else {"n": 0, "exact": 0.0}
     eval_match = {"n": 0, "exact": 0.0}
-    if args.eval_data:
-        held_out = read_pairs(Path(args.eval_data))
-        held_out = fits(held_out, vocab, cfg.max_len)
+    if held_out:
         eval_match = exact_match(model, held_out, args.eval_sample, seed=3)
     report = {
         "train": str(train_path),
@@ -151,6 +174,7 @@ def main() -> int:
         "train_exact_200": train_match,
         "val_exact_200": val_match,
         "eval": {"path": args.eval_data, "sample": args.eval_sample, **eval_match},
+        "learning_curve": curve,
         "note": (
             "train_exact_200 is memorisation (same rows); only val/frozen splits "
             "measure generalisation, and only a correct answer produced by this "

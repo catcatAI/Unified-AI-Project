@@ -235,6 +235,7 @@ class TokenSNN:
         lr: float = 3e-3,
         seed: int = 0,
         log: Any = None,
+        on_epoch: Any = None,
     ) -> List[Dict[str, float]]:
         torch = self.torch
         torch.manual_seed(seed)
@@ -262,6 +263,8 @@ class TokenSNN:
             history.append({"epoch": epoch, "loss": total / max(1, steps)})
             if log is not None:
                 log(history[-1])
+            if on_epoch is not None:
+                on_epoch(history[-1])
         return history
 
     # -- inference ----------------------------------------------------------

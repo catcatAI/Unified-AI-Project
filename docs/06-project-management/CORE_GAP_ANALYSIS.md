@@ -167,3 +167,41 @@ teacher-forced 字元準確率在訓練列上 **38.5%**（3,000 列、40 epochs�
 
 **不要做的事**（已寫進門禁與文件）：把模板／路由／查表塞進核心來「補分」；
 把評測題放進訓練；把 `neural` 這個字當成核心。
+
+## 六、學習曲線：不是「再訓練久一點」的問題（2026-10-23）
+
+`--eval-every` 讓 `train_token_snn.py` 在訓練途中量 held-out（同一條
+`exact_match`），避免只看最後一點。算術（30,000 訓練／官方 `arithmetic_test.csv`，
+抽 200 題、greedy）：
+
+| epoch | loss | exact |
+| --- | --- | --- |
+| 10 | 1.748 | 0/200 |
+| 20 | 1.706 | 0/200 |
+| 30 | 1.698 | 2/200 |
+| 40 | 1.700 | 0/200 |
+
+loss 在 1.70 附近**平台化**，exact 在 0–1% 之間震盪。多訓練 20 epochs 沒有
+改變結論（40 epochs、293 秒）。
+
+**對照（診斷用，非專案程式）**：同樣的詞表與資料，換成同尺寸的 GRU
+（emb 96／hidden 192，~0.18M 參數，10 epochs、64 秒）→ loss 1.13、exact
+**4/200（2%）**。所以：
+
+* 這不是「SNN 特別壞」——同尺寸的 GRU 也只能到 2%；任務（含加減乘除與小數）
+  在這個參數量級就是學不動。
+* 但 LIF 版本的平台（1.70）比 GRU（1.13）高，表示**同樣預算下 SNN 更吃虧**；
+  要拉平，需要多層／更大的隱藏層／更長的 BPTT（即更多算力），不是換個
+  learning rate。
+* 兩者都離外部及格線（math 61%）很遠；這支持「缺口是規模」的結論，也說明
+  **在 CPU 上把這個模型訓練到及格不是可達路徑**。
+
+重跑：
+
+```bash
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_token_snn.py \
+  --train apps/backend/data/raw_datasets/arithmetic_train_dataset.json \
+  --val "" --eval-data apps/backend/data/raw_datasets/arithmetic_test_dataset.csv \
+  --eval-sample 200 --eval-every 10 --epochs 40 \
+  --out apps/backend/data/models/token_snn_arith.pt
+```
