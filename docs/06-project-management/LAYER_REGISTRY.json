@@ -49,8 +49,8 @@
       },
       "result": {
         "status": "pass",
-        "value": "knowledge 46.7% (7/15), knowledge_mc 95% (38/40)",
-        "measured_at": "2026-10-23"
+        "value": "knowledge 53.3% (8/15), knowledge_mc 100% (40/40)",
+        "measured_at": "2026-10-24"
       },
       "must_not_be_used_as": ["learning"]
     },
@@ -61,13 +61,13 @@
       "implemented_in": "apps/backend/src/ai/knowledge/wiki_facts.py",
       "evidence": {
         "probe": "scripts/run_benchmarks.py",
-        "method": "Same knowledge suite; the reader abstains when the answer sentence does not share two content words with the question and contain the asked type.",
+        "method": "Same knowledge suite; the reader abstains when no retrieved sentence shares two content words with the question (the question's type word is no longer required inside the sentence — that filter discarded the answer sentences; type safety is enforced only in the definition-shaped entity path).",
         "source_deleted": false
       },
       "result": {
         "status": "pass",
-        "value": "7/15 answers contain the correct keyword; abstains on the rest",
-        "measured_at": "2026-10-23"
+        "value": "ablation 2026-10-24: full 8/15 vs curated-only 5/15 vs knowledge-off 0/15 — the layer contributes +3 answers on top of the curated store and abstains on the rest",
+        "measured_at": "2026-10-24"
       },
       "must_not_be_used_as": ["learning"]
     },

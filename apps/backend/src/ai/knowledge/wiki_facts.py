@@ -382,8 +382,15 @@ class WikiFacts:
                 # not a world city that merely says "capital").
                 if len(overlap) < 2:
                     continue
-                if type_stem and type_stem not in window_stems:
-                    continue
+                # NOTE (2026-10-24): the window used to be rejected when the
+                # question's type word ("what GAS" -> "gas") was missing from
+                # the sentence. That filter killed the *answer* sentences —
+                # "Plants absorb carbon dioxide ..." never repeats "gas" —
+                # while letting topically-typed fillers through ("gas
+                # exchange"). Type safety stays where it belongs: the
+                # definition-shaped entity answer still requires _defines(type).
+                # Measured on knowledge 15 + knowledge_mc 40: 7 -> 8 correct,
+                # no regressions (scorer sweep, 2026-10-24).
                 score = sum(self._idf(stem) for stem in overlap)
                 score += sum(1.0 for phrase in phrases if phrase in window.lower())
                 score -= 0.002 * max(0, len(window) - 160)

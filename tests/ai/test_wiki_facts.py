@@ -40,6 +40,10 @@ ARTICLES = {
         "Nitrogen is a nonmetal chemical element. It is a colourless gas that "
         "makes up most of the atmosphere of the Earth."
     ),
+    "Silver": (
+        "Silver conducts electricity better than any other element. "
+        "It is used in electronics and jewellery."
+    ),
 }
 
 
@@ -49,9 +53,7 @@ def facts(tmp_path) -> WikiFacts:
     connection = sqlite3.connect(path)
     connection.execute("CREATE VIRTUAL TABLE pages USING fts5(title, body)")
     connection.execute("CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT)")
-    connection.executemany(
-        "INSERT INTO pages(title, body) VALUES (?, ?)", list(ARTICLES.items())
-    )
+    connection.executemany("INSERT INTO pages(title, body) VALUES (?, ?)", list(ARTICLES.items()))
     connection.commit()
     connection.close()
     return WikiFacts(db_path=path)
@@ -88,6 +90,19 @@ def test_abstains_when_nothing_overlaps(facts: WikiFacts):
 def test_short_questions_abstain(facts: WikiFacts):
     assert facts.answer("") is None
     assert facts.answer("what") is None
+
+
+def test_answer_need_not_repeat_the_type_word(facts: WikiFacts):
+    """For the question 'What METAL conducts electricity?' the answer
+    sentence ('Silver conducts electricity ...') never says 'metal'.
+    Requiring the question's type word inside the window discarded real
+    answers while letting topically-typed fillers through; only the
+    definition-shaped entity path still requires it (_defines). Before this
+    fix this question abstained.
+    """
+    answer = facts.answer("What metal conducts electricity?")
+    assert answer is not None
+    assert "Silver" in answer
 
 
 @pytest.mark.parametrize(
