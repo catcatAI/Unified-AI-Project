@@ -1,7 +1,9 @@
 {
+  "_scoring": "strict",
   "native/knowledge": [
     "know-002",
     "know-003",
+    "know-004",
     "know-005",
     "know-006",
     "know-008",
@@ -95,6 +97,5 @@
     "route-008",
     "route-009",
     "route-010"
-  ],
-  "_scoring": "strict"
+  ]
 }

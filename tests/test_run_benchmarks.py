@@ -426,6 +426,37 @@ class TestGateAnchor:
         assert tool.update_anchor([r], anchor, p) == 0
         assert not p.exists()
 
+    def test_anchor_keeps_the_scoring_marker(self, tmp_path):
+        """Losing _scoring on rewrite would silently disable the mismatch guard.
+
+        load_anchor used to drop non-list keys, so the very first update
+        rewrote the file without the marker and ANCHOR-SCORING MISMATCH
+        could never fire again.
+        """
+        p = tmp_path / "anchor.json"
+        anchor: dict = {}
+        first = self._native_math([tool.ItemResult(item_id="m1", passed=True)], passed=1, total=1)
+        assert tool.update_anchor([first], anchor, p) == 1
+        loaded = tool.load_anchor(p)
+        assert loaded["_scoring"] == tool.SCORING_MODE
+        second = self._native_math(
+            [
+                tool.ItemResult(item_id="m1", passed=True),
+                tool.ItemResult(item_id="m2", passed=True),
+            ],
+            passed=2,
+            total=2,
+        )
+        assert tool.update_anchor([second], loaded, p) == 1
+        assert tool.load_anchor(p)["_scoring"] == tool.SCORING_MODE
+        assert set(tool.load_anchor(p)["native/math"]) == {"m1", "m2"}
+
+    def test_scoring_mismatch_is_reported(self, capsys):
+        anchor = {"native/math": ["m1"], "_scoring": "loose"}
+        r = self._native_math([tool.ItemResult(item_id="m1", passed=True)], passed=1, total=1)
+        assert tool.check_gate([r], anchor) == 0
+        assert "ANCHOR-SCORING MISMATCH" in capsys.readouterr().err
+
     def test_lost_correct_fails_gate(self, capsys):
         anchor = {"native/math": ["m1", "m2"]}
         r = self._native_math(

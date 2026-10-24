@@ -827,8 +827,14 @@ GATE_NATIVE: Dict[str, float] = {
 ANCHOR_PATH = REPO_ROOT / "benchmarks" / "gate_anchor.json"
 
 
-def load_anchor(path: Path = ANCHOR_PATH) -> Dict[str, List[str]]:
-    """讀取回歸錨；檔案缺失或損毀回空錨（門退化為純地板模式，不失效）。"""
+def load_anchor(path: Path = ANCHOR_PATH) -> Dict[str, Any]:
+    """讀取回歸錨；檔案缺失或損毀回空錨（門退化為純地板模式，不失效）。
+
+    Metadata keys (``_scoring``) are kept: dropping them here would make
+    update_anchor rewrite the file without the rule marker, and the
+    ANCHOR-SCORING MISMATCH guard would never fire again — a silent way to
+    disable the anti-inflation check.
+    """
     if not path.exists():
         return {}
     try:
@@ -837,17 +843,25 @@ def load_anchor(path: Path = ANCHOR_PATH) -> Dict[str, List[str]]:
         return {}
     if not isinstance(raw, dict):
         return {}
-    anchor: Dict[str, List[str]] = {}
+    anchor: Dict[str, Any] = {}
     for key, ids in raw.items():
         if isinstance(key, str) and isinstance(ids, list):
             anchor[key] = sorted({str(i) for i in ids})
+        elif isinstance(key, str) and key.startswith("_"):
+            anchor[key] = ids
     return anchor
 
 
 def update_anchor(
-    all_results: List[SuiteResult], anchor: Dict[str, List[str]], path: Path = ANCHOR_PATH
+    all_results: List[SuiteResult], anchor: Dict[str, Any], path: Path = ANCHOR_PATH
 ) -> int:
-    """把本次 native 答對的題目併入錨並落盤（錨只增不減）。回傳新增數。"""
+    """把本次 native 答對的題目併入錨並落盤（錨只增不減）。回傳新增數。
+
+    The file always records which scoring rule the anchor was built under
+    (``_scoring``): an anchor without that marker cannot warn about a rule
+    change, and the warning is what stops a looser rule from looking like a
+    capability gain.
+    """
     added = 0
     for r in all_results:
         if r.backend != "native":
@@ -861,9 +875,13 @@ def update_anchor(
         if seen:
             anchor[key] = sorted(seen)
     if added:
+        payload: Dict[str, Any] = {
+            key: value for key, value in anchor.items() if isinstance(value, list)
+        }
+        payload["_scoring"] = SCORING_MODE
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            json.dumps(anchor, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
     return added
