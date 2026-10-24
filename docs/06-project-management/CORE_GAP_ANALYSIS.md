@@ -227,3 +227,99 @@ PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_token_snn.py \
   --eval-sample 200 --eval-every 10 --epochs 40 \
   --out apps/backend/data/models/token_snn_arith.pt
 ```
+
+## 七、架構升級輪：同預算 A/B（2026-10-24）
+
+第六節的結論「平台化不是 epoch 不夠」是對的，但「SNN 更吃虧」的**原因**可以
+修。這一輪只做架構與參數化的誠實調整——**不碰及格線、不碰評測題、不加規則**；
+β 修正是 bug（一律生效），膜電位讀取是量測贏家（選勝後設為預設），深度／時間步
+展開保留為旗標但預設關閉（量測說它們沒用），全部有測試守住，同預算 A/B 決定取捨。
+
+### 改了什麼
+
+1. **β 參數化缺陷修復（bug）**：`cfg.beta=0.9` 舊程式存進參數後又被
+   `sigmoid()` 一次，實際漏電是 **sigmoid(0.9)=0.711**——10 步後只剩 3% 狀態
+   （而不是設定的 35%）。現在參數存 logit，有效值＝設定值（有測試守住）。
+2. **膜電位讀取（SLAYER，Shrestha & Orchard 2018）**：`readout="membrane"`
+   ——頭每步讀最後一層的膜電位而不是二值 spike；**遞歸仍然是 spiking 的**，
+   只有讀取方式不同。`readout="spike"` 保留原行為。
+3. **深度**：`layers=N` 堆疊 LIF 層（層 0 吃 embedding，上層吃下層 spike）。
+4. **輸入展開**：`timesteps=K` 每個 token 過 K 個 SNN 時間步再讀取（SNN 序列
+   模型的標準時間解析度旋鈕，代價 Kx）。
+5. **診斷**：`tf_accuracy()`（teacher-forced 答案 token 準確率）寫進 report，
+   區分「沒學會」與「解碼漂移」。
+
+### 同預算 A/B（算術 30,000、batch 64、lr 5e-3、max_len 32、12 epochs、
+held-out 抽 200 greedy）
+
+| # | 變體 | final loss | tf_acc | held-out exact |
+| --- | --- | --- | --- | --- |
+| A | 對照（舊行為：有效 β0.711、spike、1 層） | 1.718 | 35.8% | 0/200 |
+| B | 只修 β（0.9、spike、1 層） | 1.780 | 35.4% | 0/200 |
+| C | β0.9 + **membrane** | **1.601** | **39.7%** | 0/200 |
+| D | C + 2 層 | 1.633 | 38.6% | 0/200 |
+
+第二輪（全用 C 的預設 readout=membrane）：
+
+| # | 設定 | final loss | tf_acc | held-out exact |
+| --- | --- | --- | --- | --- |
+| E | β0.9、K=1、**30 epochs**（平台檢查） | 1.558（10/20/30ep：1.604/1.562/1.558） | 41.0% | 0/200 |
+| F | β0.99（長記憶） | 1.697 | 37.3% | 0/200 |
+| G | K=4（輸入展開） | 1.826 | 33.4% | 0/200 |
+| H | K=4 + β0.99 | 1.662（eval@6 曾 1/200） | 38.9% | 0/200 |
+
+**讀法**：
+
+* **membrane 讀取是唯一的真贏家**：同預算 loss 1.78 → 1.60、tf 35.4% → 39.7%
+  （B vs C 隔離出讀取效果）。在**另一份資料**上複現：核心 20,000 對、5 epochs
+  同預算重訓，loss **2.488 → 2.336**。
+* **深度、長記憶、時間步展開全部變差**（D/F/G/H 各項都輸給 C）——在這個
+  參數量級與 CPU 預算下，加複雜度只會更難訓練。這三項留在程式裡（`layers`／
+  `timesteps` 旗標、`--beta` 可調＋測試），但**預設不開**，因為量測說它們沒用；
+  輸家配置要重現就顯式傳旗標（A 對照＝`--beta 0.711 --readout spike`）。
+* 平台仍在：E 到 30 epochs 降到 1.558 後趨緩，仍**高於同尺寸 GRU 的 1.13**
+  （第六節），exact 仍 **0/200**。所以「膜電位修復」**縮小但沒有消除**與 GRU 的
+  差距，更沒有跨過及格線——它不是新結論的依據，只是把「LIF 同預算更吃虧」的
+  一半原因修掉了。
+
+### 對照表重測（`probe_core_control.py`，2026-10-24，同題同評分）
+
+預設 checkpoint（probe 的 tok 欄）用贏家配置同預算重訓後：
+
+| 套件 | n | 表現層 | GARDEN | ED3N | TOK-SNN | LLM（1.5B chat） |
+| --- | --- | --- | --- | --- | --- | --- |
+| math | 40 | 32/40 | 0 有回答 | 0/40 | **0/40** | 27/40（68%） |
+| knowledge | 15 | 7/13 | 0 | 0/15 | 0/15 | 11/15（73%） |
+| code | 10 | 0 | 0 | 0/10 | 0/10 | 9/10（90%） |
+| routing（表現層） | 10 | 10/10 | 0 | 0/10 | 0/8 | 0/10 |
+
+* **TOK-SNN 的模式崩潰修好了**：math 40 題從「只有 2 個不同答案」→ **40 個
+  全不同**（核心資料同預算重訓後），但仍 **0 題答對**——「有變化」不等於「有
+  智能」，分数不加。
+* **LLM 對照組的測量缺陷修復**（instruct 模型改走 chat 模板，commit
+  `db8cc6d28`）：code 從 0/10 → 9/10、math 60% → 68%。這**只影響對照組的
+  可信度**，不是本專案的分數；對照組高正好坐實「缺口是真的智能缺口」。
+* **官方核心分不變：0.00/10**——probe 裡的四個核心生產者在生產路徑的佔比
+  （`core_share`）仍然是 0，這些表是診斷，不是計分。
+
+### 本輪之後仍然成立的結論
+
+* 修參數化、換讀取方式都在 CPU 上可做且有效——但它們改善的是**收斂**，不是
+  **能力**；exact 仍 0，平台仍在 1.56（vs GRU 1.13）。
+* 這台機器有 **Intel Arc B570（Vulkan）**——但只接了 llama.cpp（對照組用
+  `gpu_layers=-1` 真的在跑 GPU）；torch 仍是 **CPU build**，SNN 訓練沒有吃到
+  這張卡。要吃 GPU 需要 torch XPU/Vulkan build（使用者決定的預算問題之一）。
+* 三選一的決策面不變（GPU 規模訓練／承認 0.00／LLM 當部署核心）；這一輪只是
+  把「架構本身有缺陷」這個變因**排除掉**，讓剩下的缺口乾淨地只剩規模。
+
+重跑（A/B 全套，約 10 分鐘）：
+
+```bash
+PYTHONPATH=apps/backend/src OMP_NUM_THREADS=6 ./.venv/bin/python \
+  scripts/train_token_snn.py \
+  --train apps/backend/data/raw_datasets/arithmetic_train_dataset.json \
+  --val "" --eval-data apps/backend/data/raw_datasets/arithmetic_test_dataset.csv \
+  --epochs 12 --batch 64 --lr 5e-3 --max-len 32 --eval-every 6 --eval-sample 200 \
+  --beta 0.9 --readout membrane --layers 1 --timesteps 1 \
+  --out /tmp/tok_winner.pt --report /tmp/tok_winner.json
+```

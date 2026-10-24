@@ -1223,6 +1223,21 @@ collected — 0 errors**).
 > 改成詞界比對（子字串會把 "in" 判成洩漏），`tests/ai/test_paraphrase_curriculum.py`
 > 共用同一個判定。
 
+> ✅ **NOTE (Updated 2026-10-24, token-SNN 架構升級輪)**: **§X #276**: 同預算
+> A/B 決定取捨，**不碰及格線、不碰評測題**。修**β 參數化 bug**（設定 0.9 被
+> `sigmoid()` 二次變 0.711，10 步後只剩 3% 記憶；參數改存 logit，有測試守住）。
+> 新增 `readout="membrane"`（SLAYER：頭讀膜電位，遞歸仍 spiking；量測贏家，
+> 已設為預設）、`layers`、`timesteps` 旗標與 `tf_accuracy()` 診斷。實測（算術
+> 30k／12 epochs／held-out 200，兩輪共 8 組）：membrane **loss 1.78→1.60、
+> tf 35.4%→39.7%**（核心資料同預算複現 2.488→2.336）；2 層、β0.99、K=4 展開
+> **全部變差**→旗標保留、預設關。30 epochs 平台 1.558、exact 0/200，仍高於同
+> 尺寸 GRU 1.13 → **排除「架構有缺陷」這個變因，剩餘缺口乾淨地只剩規模**。
+> probe 重測：TOK-SNN 模式崩潰修复（math distinct 2→40）但**0 題對**（變樣≠
+> 能力，分數不加）；LLM 對照組 chat 模板修復（`db8cc6d28`）code 0/10→9/10、
+> math 60%→68%——對照組可信度，不是本專案分數。機器有 Intel Arc B570（Vulkan）
+> 但 torch 是 CPU build，SNN 訓練沒吃到 GPU（GPU 預算是待決策項）。
+> **官方核心分不變：0.00/10**。實測表：`CORE_GAP_ANALYSIS.md` 第七節。
+
 ### JavaScript/TypeScript
 
 ```bash

@@ -33,6 +33,21 @@ and this project adheres to
 
 ### Changed
 
+- **token-SNN 架構升級輪：膜電位讀取勝出＋β 參數化 bug 修復（2026-10-24）**：
+  `TokenConfig` 新增 `readout`（spike/membrane，SLAYER 讀取）、`layers`、
+  `timesteps` 旗標與 `tf_accuracy()` 診斷（teacher-forced 答案 token 溆確率）。
+  修**參數化缺陷**：設定 `beta=0.9` 舊程式又被 `sigmoid()` 一次，實際漏電 0.711
+  （10 步後只剩 3% 記憶）——現在參數存 logit，有效值＝設定值（有測試守住）。
+  同預算 A/B（算術 30k、batch 64、12 epochs、held-out 抽 200）：
+  **membrane 讀取是唯一贏家**（loss 1.78→1.60、tf 35.4%→39.7%），在核心資料上
+  同預算複現（2.488→2.336）；2 層深度、β0.99 長記憶、K=4 輸入展開**全部變差**
+  → 旗標保留但預設關（輸家用 `--readout spike`／`--beta 0.711` 重現）。30
+  epochs 平台 1.558，仍高於同尺寸 GRU 1.13、exact 0/200 → **剩餘缺口是規模，
+  不是架構**。probe 重測：TOK-SNN 模式崩潰修复（math distinct 2→40）但**仍 0
+  題對**（變樣≠能力）；LLM 對照組改走 chat 模板後 code 0/10→9/10、math
+  60%→68%（`db8cc6d28`，對照組可信度的修復，不是本專案分數）。**官方核心分
+  不變：0.00/10**。詳見 `CORE_GAP_ANALYSIS.md` 第七節。
+
 - **token-SNN 學習曲線（不是「訓練不夠久」）**（2026-10-23）：`train_token_snn`
   新增 `--eval-every` 與 `TokenSNN.train_on(on_epoch=...)`，訓練途中量同一條
   held-out。算術 30k／官方測試抽 200：loss 1.748→1.706→1.698→1.700（10/20/30/40
