@@ -33,6 +33,25 @@ and this project adheres to
 
 ### Changed
 
+- **表現層稽核＋防洩漏加固＋wiki 評分修復（2026-10-24）**：三件事，都以
+  「分數必須可證非洩漏」為目標。(1) **順序/優先級稽核**：manifest 依序為
+  tier0 確定性快徑（pipeline_math→math_backup→clock→solution_rules）→ tier1
+  （神經檢索/ModelBus/教學確認/對話回憶**先於**模板→ensemble→knowledge→
+  neural_bridge）→ tier2 主 LLM → terminal fallback 釘尾（reorder 不得提前）；
+  實測 trace：事實問句到達知識層（模板未劫持）、code 寫入請求跳過全部模板層、
+  placement 稽核 7/7 宣告=實際。(2) **census 加固**：`census_reply_provenance`
+  把 template／rule-store／memory／dictionary 四類**預存生產者**包進溯源＋按題
+  靜態掃描＋自動 verdict＋`--check`（命中即 exit 1）；本次實測答對裡預存命中
+  **0** →「分數不是答案洩漏」；+8 契約測試。(3) **wiki 評分修復**：移除
+  「窗口內必須出現問句類型詞」過濾（它殺掉答案句、放行型別正確的填充句；型別
+  安全保留在定義式實體路徑），knowledge **7→8/15（53.3%）**、knowledge_mc
+  **40/40**，+1 回歸測試。**加持效應實測**：知識層 ablation 全開 8 / 只精選庫
+  5 / 關掉 0（wiki 層 +3）；對話記憶探針：回想/泛化/更正 100%、保留正確、
+  冷啟 7/7 棄權（lift 真實存在，但都是表層/記憶層——核心仍 0）。官方數字：facts
+  4.7→**5.3/10**、系統分 5.75→**5.86/10**、**智能總分（核心）仍 0.00/10**。
+  前端：web-dashboard typecheck✓ build✓；live2d viewer 47 JS 語法✓；electron
+  語法✓（build 產生的 next-env.d.ts 改動已還原）。
+
 - **token-SNN 架構升級輪：膜電位讀取勝出＋β 參數化 bug 修復（2026-10-24）**：
   `TokenConfig` 新增 `readout`（spike/membrane，SLAYER 讀取）、`layers`、
   `timesteps` 旗標與 `tf_accuracy()` 診斷（teacher-forced 答案 token 溆確率）。

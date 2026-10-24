@@ -79,7 +79,7 @@ historical score inflation.**
 | dialogue | 7.9 | **0.0**（75 個過關回合：45 模板、27 模板、2 lookup、1 lookup） |
 | boundary | 8.9 | **0.0**（59 個過關是 semantic-qa 的相似度檢索、37 個是 claim-reasoning 規則） |
 | tools | 0.0 | **0.0** |
-| **總分** | 5.75 | **0.00/10** |
+| **總分** | 5.86（2026-10-24 重測） | **0.00/10** |
 
 **為什麼 SNN 兩欄是 0（不是訓練不夠）**：根因是表徵與解碼，證據與修復路徑見
 [`CORE_GAP_ANALYSIS.md`](CORE_GAP_ANALYSIS.md)（ED3N 在 20,000 對上訓練到
@@ -108,7 +108,7 @@ code 0% → 90%——那是**對照組可信度**的修復，不是本專案的�
 
 | 維度       | 值      | 外部基準 | 及格線（推導）        | 判定 |
 | ---------- | ------- | -------- | --------------------- | ---- |
-| facts      | 46.7%   | MMLU     | 45%（隨機 25% + 20pp） | ✅   |
+| facts      | 53.3%   | MMLU     | 45%（隨機 25% + 20pp） | ✅   |
 | math       | 80.0%   | GSM8K    | 61%（0.7 × 87.3%）     | ✅   |
 | paraphrase | 50.0%   | PAWS     | 70%（隨機 50% + 20pp） | ❌   |
 | dialogue   | 75.7%   | LoCoMo   | 44%（0.5 × 87.9%）     | ✅   |
@@ -118,7 +118,7 @@ code 0% → 90%——那是**對照組可信度**的修復，不是本專案的�
 > 這些內部量測是「同題型、自己出題」（`protocol="analogous"`），**不是**在那六個
 > 基準上跑的——所以及格線是**可比性下限**，不是「在 MMLU 上拿 45%」。
 
-**智能總分 = 0.00/10（核心）；5.75/10 是系統分，不是智能**：**1,168 個回合裡，沒有任何一個是 SNN/ED3N/GARDEN/LLM 產生的**（knowledge_pipeline 351、local-fallback 342、semantic-qa 250、composed-template 64、claim-reasoning 40、記憶 63、unified 6、其他 11）。probe 裡的 `source=neural` 標籤把 `semantic-qa`／`unified`／`neural-bridge` 也算進去，但那是「encoder 相似度 ＋ 模板」的檢索，不是核心思考——所以核心分是 0，不是 1.22。L1 的關鍵
+**智能總分 = 0.00/10（核心）；5.86/10 是系統分，不是智能**：**1,168 個回合裡，沒有任何一個是 SNN/ED3N/GARDEN/LLM 產生的**（knowledge_pipeline 351、local-fallback 342、semantic-qa 250、composed-template 64、claim-reasoning 40、記憶 63、unified 6、其他 11）。probe 裡的 `source=neural` 標籤把 `semantic-qa`／`unified`／`neural-bridge` 也算進去，但那是「encoder 相似度 ＋ 模板」的檢索，不是核心思考——所以核心分是 0，不是 1.22。L1 的關鍵
 度量「改述泛化」是 50.0%（距 70% 的及格線仍遠；同一切分上，教過的詞＋新句子
 是 100%，那是回想不是泛化）。六維度 4 過 2 不過（paraphrase／tools 未達
 外部及格線）。改述這格在 2026-10-23 換過三次最終留出（每次被用來找 bug 後就
@@ -143,6 +143,15 @@ lesser 同義詞會把整個 lesser 類拉高到連不相干的片語都靠近�
 答案時，benchmark 會退到 SNN bus 生成（中文題因此吐出「细胞 哈喽 什么…」的
 字詞湯），那不是使用者會看到的生產路徑——生產路徑在這一層是誠實棄權。移除該
 fallback 後，同樣 7/15，但**錯答 8→6、棄權 0→2**（正確率不變，錯誤率下降）。
+
+**2026-10-24 續**：wiki 抽取評分再修一刀（移除「窗口內必須出現問句類型詞」的
+過濾——它殺掉的正是答案句：「植物吸收二氧化碳」從不重複「gas」，卻放行了
+「gas exchange」這種型別正確的填充句；型別安全保留在定義式實體路徑）。
+knowledge **7→8/15（53.3%）**、knowledge_mc **40/40（100%）**、facts 維度
+**4.7→5.3/10**、系統分 **5.75→5.86**；ablation：知識層全開 8 / 只精選庫 5 /
+關掉 0（wiki 層加持 **+3**）。同日把防洩漏做硬：`census_reply_provenance --check`
+把 template／rule-store／memory／dictionary 四類**預存生產者**包進溯源＋按題
+靜態掃描，本次實測答對裡預存命中 **0** → **VERDICT: 分數不是答案洩漏**。
 回答來源：確定性 39%／模板 36%／神經 23%／
 檢索 1%（神經層已從 0% 升到 23%，但仍是模板與確定性層為主）。誠實度全過（樣本
 有效性、少量-標準量一致性、非空轉）。完整快照：`intelligence_report.json`。
@@ -150,22 +159,28 @@ fallback 後，同樣 7/15，但**錯答 8→6、棄權 0→2**（正確率不�
 > 這正是統一定義要防的事：如果只看「平均 4.41 落在 L2 帶」就宣布 L2，等於用
 > 平均值掩蓋 L1 的缺口。**平均帶 vs 達成的階梯是兩個不同的東西**，報告兩個都印。
 
-### 這些正確答案是誰生產的（provenance，2026-10-23）
+### 這些正確答案是誰生產的（provenance，2026-10-24 加固）
 
 上面每一列都只回答「答案對不對」。它不回答**這句話怎麼來的**。同一批 native
 正確答案，用 `scripts/census_reply_provenance.py` 記錄實際回傳值的生產者：
 
 | 套件 | 正確 | produced（computed/other） | retrieved / classified |
 | --- | --- | --- | --- |
-| knowledge | 7 | **0** | 7（全部 curated lookup） |
+| knowledge | 8 | **0** | 8（全部 curated/wiki lookup） |
 | math | 32 | 32（確定性計算／公式解算） | 0 |
 | code | 0 | 0 | 0 |
 | routing | 10 | **0** | 10（分類器標籤） |
 
-**49 個正確答案中，由模型產生的：0。** knowledge 的 7 分是知識層查到字串，
+**50 個正確答案中，由模型產生的：0。** knowledge 的 8 分是知識層查到字串，
 routing 的 10 分是分類器回標籤，math 的 32 分是計算器算出來的——三者都是
-「層」在做事，不是生成。所以 ≈5.5/10（每次重跑會因對話探針的隨機性小幅變動，以 `intelligence_report.json` 為準）是**分層聚合分**，不能讀成「模型有
-5.5 分智能」；以「產生的答案」計，基準上的神經能力是 **0/49**。
+「層」在做事，不是生成。所以 5.86/10（每次重跑會因對話探針的隨機性小幅變動，以 `intelligence_report.json` 為準）是**分層聚合分**，不能讀成「模型有
+5.86 分智能」；以「產生的答案」計，基準上的神經能力是 **0/50**。
+
+2026-10-24 起這份 census 自帶防洩漏判定（`--check`）：四類預存生產者
+（template／rule-store／memory／dictionary）任一為**第一個**回傳值的生產者就
+標為預存（不計 produced），另加一輪按題靜態掃描（規則庫＋教導記憶的
+question-keyed 查詢）。本次兩輪皆 0 命中，verdict =「分數不是答案洩漏」；
+若有命中，`--check` 以 exit 1 拒絕引用該分數。
 
 單句層面同樣可追：`scripts/trace_reply.py "天空為什麼是藍色的?"` 顯示回覆是
 「問句原文＋『蓝色。』」（逐字複製 9 字）、`你好` 是 `composed-template`、

@@ -1238,6 +1238,23 @@ collected — 0 errors**).
 > 但 torch 是 CPU build，SNN 訓練沒吃到 GPU（GPU 預算是待決策項）。
 > **官方核心分不變：0.00/10**。實測表：`CORE_GAP_ANALYSIS.md` 第七節。
 
+> ✅ **NOTE (Updated 2026-10-24, 表現層稽核＋防洩漏)**: **§X #277**: 三件事。
+> (1) **順序確認**：路由 manifest tier0 確定性快徑→tier1（神經/記憶**先於**模板，
+> anti-fossilization）→tier2 主 LLM→terminal fallback 釘尾；實測 trace：事實問句
+> 到達知識層、code 寫入跳過全部模板層、placement 7/7；**生產路徑本來就沒有核心
+> SNN 在鏈上**（core_share 0%）——不是被劫持，是缺席，與旧 NOTE §X #275 一致。
+> (2) **census 防洩漏加固**：`census_reply_provenance --check` 包了
+> template／rule-store／memory／dictionary 四類預存生產者＋按題靜態掃描＋自動
+> verdict；本次實測**預存命中 0**→「分數不是答案洩漏」；+8 契約測試。
+> (3) **wiki 評分修復**：移除「窗口必含問句類型詞」過濾（它殺掉答案句：「植物吸收
+> 二氧化碳」從不重複「gas」；型別安全保留在定義式實體路徑）；knowledge
+> **7→8/15**、knowledge_mc **40/40**、facts **4.7→5.3/10**、系統分
+> **5.75→5.86/10**；+1 回歸測試。**加持效應證據**：知識層 ablation 8/5/0
+> （wiki +3）、對話記憶 lift 100%/冷啟 0%——智能面向的提升真實存在但都在
+> 表層/記憶層。**核心分仍 0.00/10（未動）**。前端：dashboard typecheck+build ✓、
+> live2d 47 JS 語法 ✓、electron 語法 ✓。全部實測重跑（bench＋census＋report
+> --from-cache），pytest 全量過。
+
 ### JavaScript/TypeScript
 
 ```bash

@@ -1,6 +1,6 @@
 {
   "scores": {
-    "facts": 0.4667,
+    "facts": 0.5333,
     "math": 0.8,
     "tools": 0.0,
     "paraphrase": 0.5,
@@ -274,11 +274,11 @@
   },
   "provenance": {
     "knowledge": {
-      "correct": 7,
+      "correct": 8,
       "produced": 0,
-      "retrieved_or_classified": 7,
+      "retrieved_or_classified": 8,
       "provenance": {
-        "lookup": 7
+        "lookup": 8
       }
     },
     "math": {
@@ -504,7 +504,7 @@
     },
     "generated_at": "2026-10-24T12:42:13"
   },
-  "system_score": 5.75,
+  "system_score": 5.86,
   "core_score": 0.0,
   "integrity": {
     "sample_valid": true,
@@ -513,7 +513,7 @@
     "problems": []
   },
   "result": {
-    "score": 5.75,
+    "score": 5.86,
     "status": "measured",
     "band": "L2 本地可用",
     "band_summary": "多輪對話不跑題，記憶／推理／多模態能串起來當助手用",
@@ -528,7 +528,7 @@
     "counted": [
       [
         "facts",
-        0.4667
+        0.5333
       ],
       [
         "math",
