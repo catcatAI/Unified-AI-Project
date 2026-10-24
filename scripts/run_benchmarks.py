@@ -470,6 +470,22 @@ def _numbers(text: str) -> List[float]:
     return out
 
 
+_FINAL_MARKER_RE = re.compile(r"final\s*answer\s*[:：]", re.I)
+
+
+def _final_numbers(text: str) -> List[float]:
+    """Numbers that can be *the* answer, not ones merely passed through.
+
+    "3 + 5 * 2 = 10, 3 + 10 = 13" must not pass a 13-question when the stated
+    final answer is 12. If the answer is marked, only the first number after
+    the last marker counts; otherwise the last number is the answer.
+    """
+    marks = list(_FINAL_MARKER_RE.finditer(text))
+    if marks:
+        return _numbers(text[marks[-1].end() :])[:1]
+    return _numbers(text)[-1:]
+
+
 def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text.lower().strip())
 
@@ -484,11 +500,27 @@ def _norm(text: str) -> str:
 SCORING_MODE = "strict"
 
 _NUMBER_WORDS = {
-    "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4",
-    "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
-    "ten": "10", "eleven": "11", "twelve": "12", "thirteen": "13",
-    "fourteen": "14", "fifteen": "15", "sixteen": "16", "seventeen": "17",
-    "eighteen": "18", "nineteen": "19", "twenty": "20",
+    "zero": "0",
+    "one": "1",
+    "two": "2",
+    "three": "3",
+    "four": "4",
+    "five": "5",
+    "six": "6",
+    "seven": "7",
+    "eight": "8",
+    "nine": "9",
+    "ten": "10",
+    "eleven": "11",
+    "twelve": "12",
+    "thirteen": "13",
+    "fourteen": "14",
+    "fifteen": "15",
+    "sixteen": "16",
+    "seventeen": "17",
+    "eighteen": "18",
+    "nineteen": "19",
+    "twenty": "20",
 }
 
 
@@ -512,12 +544,40 @@ def _looks_abstained(text: str) -> bool:
 
 
 _ANSWER_UNITS = {
-    "degree", "degrees", "celsius", "fahrenheit", "kelvin",
-    "meter", "meters", "metre", "metres", "kilometer", "kilometers",
-    "kilometre", "kilometres", "centimeter", "centimeters", "centimetre",
-    "centimetres", "mile", "miles", "kilogram", "kilograms", "gram", "grams",
-    "pound", "pounds", "second", "seconds", "minute", "minutes", "hour",
-    "hours", "percent", "per", "cent",
+    "degree",
+    "degrees",
+    "celsius",
+    "fahrenheit",
+    "kelvin",
+    "meter",
+    "meters",
+    "metre",
+    "metres",
+    "kilometer",
+    "kilometers",
+    "kilometre",
+    "kilometres",
+    "centimeter",
+    "centimeters",
+    "centimetre",
+    "centimetres",
+    "mile",
+    "miles",
+    "kilogram",
+    "kilograms",
+    "gram",
+    "grams",
+    "pound",
+    "pounds",
+    "second",
+    "seconds",
+    "minute",
+    "minutes",
+    "hour",
+    "hours",
+    "percent",
+    "per",
+    "cent",
 }
 
 
@@ -537,7 +597,7 @@ def score_item(item: BenchItem, answer: str, mode: Optional[str] = None) -> Tupl
     text = str(answer)
 
     if item.metric == "numeric-match":
-        nums = _numbers(text)
+        nums = _numbers(text) if mode == "loose" else _final_numbers(text)
         target = float(item.ground_truth)
         for n in nums:
             if abs(n - target) < 1e-6 * max(1.0, abs(target)):
@@ -552,8 +612,7 @@ def score_item(item: BenchItem, answer: str, mode: Optional[str] = None) -> Tupl
                 return any(_canon(g) in low for g in item.gate), False
             return bool(low.strip()), False
         gold = " ".join(
-            w for w in _canon(str(item.ground_truth or "")).split()
-            if w not in _ANSWER_UNITS
+            w for w in _canon(str(item.ground_truth or "")).split() if w not in _ANSWER_UNITS
         )
         if gold and gold not in low:
             words = [w for w in re.findall(r"[a-z0-9]+", gold) if len(w) >= 2]

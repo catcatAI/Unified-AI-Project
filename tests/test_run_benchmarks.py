@@ -73,6 +73,23 @@ class TestScoring:
         ok, _ = tool.score_item(self._item(), "43")
         assert not ok
 
+    def test_numeric_intermediate_does_not_pass(self):
+        """13 appeared on the way, but the stated final answer is 12 → wrong."""
+        ok, _ = tool.score_item(self._item(ground_truth=13), "3 + 10 = 13, so 12.")
+        assert not ok
+
+    def test_numeric_marked_answer_wins(self):
+        ok, _ = tool.score_item(self._item(ground_truth=12), "3 + 10 = 13. Final answer: 12")
+        assert ok
+
+    def test_numeric_marker_ignores_trailing_work(self):
+        ok, _ = tool.score_item(self._item(ground_truth=13), "Final answer: 13. Check: 13 - 10 = 3")
+        assert ok
+
+    def test_numeric_loose_keeps_old_rule(self):
+        ok, _ = tool.score_item(self._item(ground_truth=13), "3 + 10 = 13, so 12.", "loose")
+        assert ok
+
     def test_numeric_no_substring(self):
         """142 不應該算成 42 對。"""
         ok, _ = tool.score_item(self._item(), "142")
@@ -127,9 +144,7 @@ class TestScoring:
 
     def test_keyword_unit_label_not_required(self):
         """'100 degrees' 與 '100' 是同一答案，單位已在問句裡。"""
-        item = self._item(
-            metric="keyword-overlap", ground_truth="100 degrees", gate=["100"]
-        )
+        item = self._item(metric="keyword-overlap", ground_truth="100 degrees", gate=["100"])
         assert tool.score_item(item, "100")[0]
         assert tool.score_item(item, "100 degrees Celsius")[0]
         assert not tool.score_item(item, "90 degrees Celsius")[0]

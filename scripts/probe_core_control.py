@@ -137,11 +137,21 @@ def _summarize(rows: Dict[str, List[dict]]) -> Dict[str, dict]:
 
 
 class _LLM:
-    """Local instruct model — the neural control group (not a competitor)."""
+    """Local instruct model — the neural control group (not a competitor).
+
+    An *instruct* checkpoint must be asked through its chat template. Asking it
+    as a raw base model ("Question: ...\\nAnswer:") made the control look far
+    weaker than it is: code items came back empty (the model started a
+    sentence, the old stop=["\\n\\n"] cut it) and math/facts were graded on
+    rambling. `mode` is reported with the results so the two harnesses are
+    never confused.
+    """
 
     def __init__(self, model_path: Path) -> None:
         self.ok = False
         self.error = ""
+        self.mode = "chat"
+        self.gpu_layers = 0
         self._llm = None
         if not model_path.exists():
             self.error = f"model not found: {model_path}"
@@ -149,7 +159,24 @@ class _LLM:
         try:
             from llama_cpp import Llama  # type: ignore
 
-            self._llm = Llama(model_path=str(model_path), n_ctx=1024, verbose=False, n_threads=4)
+            # Use the GPU when llama.cpp was built with an offloading backend
+            # (Vulkan/SYCL/Metal). n_gpu_layers=0 keeps the old CPU behaviour.
+            gpu_layers = 0
+            try:
+                import llama_cpp as _lc
+
+                if _lc.llama_supports_gpu_offload():
+                    gpu_layers = -1
+            except Exception:  # noqa: BLE001 - older bindings: stay on CPU
+                gpu_layers = 0
+            self._llm = Llama(
+                model_path=str(model_path),
+                n_ctx=2048,
+                n_gpu_layers=gpu_layers,
+                verbose=False,
+                n_threads=6,
+            )
+            self.gpu_layers = gpu_layers
             self.ok = True
         except Exception as exc:  # noqa: BLE001 - reported, not hidden
             self.error = f"{type(exc).__name__}: {exc}"
@@ -157,9 +184,37 @@ class _LLM:
     def answer(self, item: BenchItem) -> str:
         if not self.ok or self._llm is None:
             raise RuntimeError(self.error or "llm unavailable")
+        if self.mode == "chat":
+            try:
+                out = self._llm.create_chat_completion(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "Reply with the complete function in a single "
+                                "python code block. Nothing else."
+                                if item.suite == "code"
+                                else (
+                                    "Put the answer on the first line as "
+                                    "'Final answer: <answer>'. You may add a "
+                                    "short explanation after that line."
+                                )
+                            ),
+                        },
+                        {"role": "user", "content": item.q},
+                    ],
+                    max_tokens=1024,
+                    temperature=0.0,
+                )
+                return str(
+                    ((out.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+                ).strip()
+            except Exception as exc:  # noqa: BLE001 - template-less GGUF
+                self.error = f"chat template unavailable ({type(exc).__name__}); used completion"
+                self.mode = "completion"
         out = self._llm(
             _PROMPT.format(q=item.q),
-            max_tokens=96,
+            max_tokens=256,
             temperature=0.0,
             stop=["\n\n", "Question:"],
         )
@@ -250,9 +305,10 @@ def _run_rows(
     suites: Dict[str, List[BenchItem]],
     ed3n_checkpoint: Path = DEFAULT_ED3N,
     token_checkpoint: Path = DEFAULT_TOKEN_SNN,
+    model_path: Path = DEFAULT_MODEL,
 ) -> dict:
     native = NativeBackend()
-    llm = _LLM(DEFAULT_MODEL)
+    llm = _LLM(model_path)
     garden = _Garden()
     ed3n = _ED3N(ed3n_checkpoint)
     token = _TokenSNN(token_checkpoint)
@@ -263,7 +319,10 @@ def _run_rows(
         "snn": f"GARDEN engine ({'ok' if garden.ok else garden.error})",
         "ed3n": f"{ed3n_checkpoint.name} ({'ok' if ed3n.ok else ed3n.error})",
         "tok": f"{token_checkpoint.name} ({'ok' if token.ok else token.error})",
-        "llm": f"{DEFAULT_MODEL.name} ({'ok' if llm.ok else llm.error})",
+        "llm": (
+            f"{model_path.name} ({'ok' if llm.ok else llm.error}; "
+            f"mode={llm.mode}, gpu_layers={llm.gpu_layers})"
+        ),
     }
 
     for item in items:
@@ -322,6 +381,7 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--ed3n-checkpoint", default=str(DEFAULT_ED3N))
     parser.add_argument("--token-checkpoint", default=str(DEFAULT_TOKEN_SNN))
+    parser.add_argument("--model", default=str(DEFAULT_MODEL), help="local GGUF (LLM control)")
     parser.add_argument("--out", default=str(OUT))
     args = parser.parse_args()
 
@@ -336,7 +396,13 @@ def main() -> int:
                 kept[item.suite] = kept.get(item.suite, 0) + 1
         items = limited
 
-    result = _run_rows(items, {}, Path(args.ed3n_checkpoint), Path(args.token_checkpoint))
+    result = _run_rows(
+        items,
+        {},
+        Path(args.ed3n_checkpoint),
+        Path(args.token_checkpoint),
+        Path(args.model),
+    )
     result["generated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
 
     if args.json:
