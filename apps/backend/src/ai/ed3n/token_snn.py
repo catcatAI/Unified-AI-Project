@@ -42,9 +42,33 @@ SPECIALS = (PAD, BOS, EOS, UNK)
 class TokenConfig:
     d_emb: int = 96
     d_hidden: int = 192
+    # ``beta`` is the membrane leak used *directly* (0.9 keeps 35% of the
+    # state after 10 steps). It used to be pushed through ``sigmoid()``
+    # before use, so a configured 0.9 silently ran at sigmoid(0.9)=0.711
+    # (3% after 10 steps) — a parameterisation bug that shortened every
+    # memory horizon. The parameter is now stored as its logit, so the
+    # effective value equals the configured value.
     beta: float = 0.9
     threshold: float = 0.5
     surrogate_alpha: float = 5.0
+    # ``readout`` selects what the output head reads each step:
+    #   "membrane" — the membrane potential (SLAYER, Shrestha & Orchard
+    #                2018: read the last layer's state instead of its
+    #                threshold crossings). The recurrence stays spiking in
+    #                both cases; only the readout differs. This is the
+    #                measured winner at equal budget (CORE_GAP_ANALYSIS §7),
+    #                so it is the default.
+    #   "spike"    — binary spikes (the original head; kept as the A/B
+    #                control, reproducible with --readout spike).
+    readout: str = "membrane"
+    # ``layers`` stacks LIF layers (input drives layer 0, spikes drive the
+    # next layer). Depth costs ~1x compute per added layer on CPU.
+    layers: int = 1
+    # ``timesteps`` runs each token through the network K times before the
+    # head reads it (input expansion — the standard temporal-resolution
+    # knob in SNN sequence models). Costs Kx compute in forward and
+    # generate; gives the recurrent dynamics K updates per token.
+    timesteps: int = 1
     max_len: int = 192
     min_count: int = 2
     max_vocab: int = 12000
@@ -129,11 +153,22 @@ def _make_net(torch: Any) -> Any:
         def __init__(self, vocab_size: int, cfg: TokenConfig) -> None:
             super().__init__()
             self.cfg = cfg
+            self.n_layers = max(1, int(cfg.layers))
+            if cfg.readout not in ("spike", "membrane"):
+                raise ValueError(f"readout must be 'spike' or 'membrane', got {cfg.readout!r}")
             self.embed = nn.Embedding(vocab_size, cfg.d_emb, padding_idx=0)
-            self.w_in = nn.Linear(cfg.d_emb, cfg.d_hidden)
-            self.w_rec = nn.Linear(cfg.d_hidden, cfg.d_hidden, bias=False)
+            self.w_in = nn.ModuleList(
+                nn.Linear(cfg.d_emb if i == 0 else cfg.d_hidden, cfg.d_hidden)
+                for i in range(self.n_layers)
+            )
+            self.w_rec = nn.ModuleList(
+                nn.Linear(cfg.d_hidden, cfg.d_hidden, bias=False) for _ in range(self.n_layers)
+            )
             self.head = nn.Linear(cfg.d_hidden, vocab_size)
-            self.beta = nn.Parameter(torch.tensor(cfg.beta))
+            # Store the logit so sigmoid(parameter) == cfg.beta exactly.
+            self.beta = nn.Parameter(
+                torch.logit(torch.tensor(float(cfg.beta)).clamp(1e-4, 1 - 1e-4))
+            )
             self.threshold = nn.Parameter(torch.tensor(cfg.threshold))
 
         def _spike(self, x: Any) -> Any:
@@ -144,14 +179,33 @@ def _make_net(torch: Any) -> Any:
 
         def forward(self, ids: Any) -> Any:
             batch, steps = ids.shape
-            v = self.embed.weight.new_zeros((batch, self.cfg.d_hidden))
-            s = self.embed.weight.new_zeros((batch, self.cfg.d_hidden))
+            leak = torch.sigmoid(self.beta)
+            mem = [
+                self.embed.weight.new_zeros((batch, self.cfg.d_hidden))
+                for _ in range(self.n_layers)
+            ]
+            spk = [
+                self.embed.weight.new_zeros((batch, self.cfg.d_hidden))
+                for _ in range(self.n_layers)
+            ]
             logits = []
             for t in range(steps):
                 x = self.embed(ids[:, t])
-                v = torch.sigmoid(self.beta) * v + self.w_in(x) + self.w_rec(s)
-                s = self._spike(v - torch.abs(self.threshold))
-                logits.append(self.head(s))
+                for _ in range(max(1, int(self.cfg.timesteps))):
+                    for layer in range(self.n_layers):
+                        drive = x if layer == 0 else spk[layer - 1]
+                        mem[layer] = (
+                            leak * mem[layer]
+                            + self.w_in[layer](drive)
+                            + self.w_rec[layer](spk[layer])
+                        )
+                        spk[layer] = self._spike(mem[layer] - torch.abs(self.threshold))
+                out = (
+                    mem[self.n_layers - 1]
+                    if self.cfg.readout == "membrane"
+                    else spk[self.n_layers - 1]
+                )
+                logits.append(self.head(out))
             return torch.stack(logits, dim=1)
 
     return _SpikeNet
@@ -225,6 +279,31 @@ class TokenSNN:
         if int(flat_mask.sum()) == 0:
             return logits.sum() * 0.0
         return torch.nn.functional.cross_entropy(flat_logits[flat_mask], flat_targets[flat_mask])
+
+    # -- diagnostics ---------------------------------------------------------
+    def tf_accuracy(self, pairs: Sequence[Tuple[str, str]]) -> Dict[str, float]:
+        """Teacher-forced per-token accuracy over answer positions.
+
+        A memorisation/optimisation signal only: 100% here with 0% exact
+        means greedy decoding drifts (exposure bias), while a low value here
+        means the model has not learned the mapping at all.
+        """
+        torch = self.torch
+        was_training = self.net.training
+        self.net.eval()
+        hits = 0
+        total = 0
+        with torch.no_grad():
+            for start in range(0, len(pairs), 32):
+                ids, mask, _ = self.make_batch(list(pairs[start : start + 32]))
+                pred = self.net(ids)[:, :-1, :].argmax(dim=-1)
+                target = ids[:, 1:]
+                keep = mask[:, 1:]
+                hits += int(((pred == target) & keep).sum().item())
+                total += int(keep.sum().item())
+        if was_training:
+            self.net.train()
+        return {"tokens": total, "tf_acc": round(hits / max(1, total), 4)}
 
     # -- training -----------------------------------------------------------
     def train_on(

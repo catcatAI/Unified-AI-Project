@@ -102,6 +102,21 @@ def main() -> int:
     ap.add_argument("--max-len", type=int, default=192)
     ap.add_argument("--d-hidden", type=int, default=192)
     ap.add_argument("--d-emb", type=int, default=96)
+    ap.add_argument("--beta", type=float, default=0.9, help="membrane leak (used as-is)")
+    ap.add_argument(
+        "--readout",
+        choices=("spike", "membrane"),
+        default="membrane",
+        help="what the head reads each step: membrane potential (SLAYER, measured "
+        "winner, default) or binary spikes (the old head, for A/B control)",
+    )
+    ap.add_argument("--layers", type=int, default=1, help="stacked LIF layers")
+    ap.add_argument(
+        "--timesteps",
+        type=int,
+        default=1,
+        help="SNN timesteps per token (input expansion; costs Kx compute)",
+    )
     ap.add_argument("--out", default=str(OUT_DIR / "token_snn.pt"))
     ap.add_argument("--report", default=str(REPORT_DIR / "token_snn.json"))
     args = ap.parse_args()
@@ -114,7 +129,15 @@ def main() -> int:
         print(f"no pairs in {train_path}")
         return 1
 
-    cfg = TokenConfig(d_emb=args.d_emb, d_hidden=args.d_hidden, max_len=args.max_len)
+    cfg = TokenConfig(
+        d_emb=args.d_emb,
+        d_hidden=args.d_hidden,
+        max_len=args.max_len,
+        beta=args.beta,
+        readout=args.readout,
+        layers=args.layers,
+        timesteps=args.timesteps,
+    )
     vocab = CharVocab.build(
         [p + "\n" + a for p, a in train], min_count=cfg.min_count, max_vocab=cfg.max_vocab
     )
@@ -159,8 +182,10 @@ def main() -> int:
     train_match = exact_match(model, train_fit, 200, seed=1)
     val_match = exact_match(model, val_fit, 200, seed=2) if val_fit else {"n": 0, "exact": 0.0}
     eval_match = {"n": 0, "exact": 0.0}
+    eval_tf = {"tokens": 0, "tf_acc": 0.0}
     if held_out:
         eval_match = exact_match(model, held_out, args.eval_sample, seed=3)
+        eval_tf = model.tf_accuracy(held_out)
     report = {
         "train": str(train_path),
         "pairs": {"train": len(train), "train_fit": len(train_fit), "val_fit": len(val_fit)},
@@ -174,6 +199,7 @@ def main() -> int:
         "train_exact_200": train_match,
         "val_exact_200": val_match,
         "eval": {"path": args.eval_data, "sample": args.eval_sample, **eval_match},
+        "eval_tf_accuracy": eval_tf,
         "learning_curve": curve,
         "note": (
             "train_exact_200 is memorisation (same rows); only val/frozen splits "
@@ -188,6 +214,7 @@ def main() -> int:
     print(
         f"saved {args.out}\n  train_exact={train_match['exact']:.3f} "
         f"val_exact={val_match['exact']:.3f} eval_exact={eval_match['exact']:.3f} "
+        f"eval_tf_acc={eval_tf['tf_acc']:.3f} "
         f"in {elapsed:.0f}s"
     )
     return 0

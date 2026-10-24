@@ -86,3 +86,66 @@ def test_generation_stops_at_eos(vocab):
     assert EOS in vocab.itos and BOS in vocab.itos
     out = model.generate("abc", max_new=4)
     assert len(out) <= 4
+
+
+def test_configured_beta_is_the_effective_leak():
+    """A configured 0.9 must leak 0.9, not sigmoid(0.9)=0.711.
+
+    The parameter used to be stored raw and pushed through sigmoid() at
+    use, silently shortening every memory horizon (0.9 kept 35% of the
+    state after 10 steps; the effective 0.711 kept 3%).
+    """
+    import torch
+
+    for beta in (0.9, 0.711, 0.5):
+        model = TokenSNN(vocab_for_beta(), TokenConfig(d_emb=8, d_hidden=8, beta=beta))
+        effective = float(torch.sigmoid(model.net.beta))
+        assert effective == pytest.approx(beta, abs=1e-4)
+
+
+def vocab_for_beta() -> CharVocab:
+    return CharVocab.build(["abc"], min_count=1)
+
+
+def test_membrane_readout_and_depth_roundtrip(tmp_path, vocab):
+    """SLAYER-style readout and stacked layers must train and reload."""
+    cfg = TokenConfig(d_emb=8, d_hidden=16, max_len=24, readout="membrane", layers=2)
+    model = TokenSNN(vocab, cfg)
+    model.train_on([("abc", "def")], epochs=1, batch_size=1)
+    ids, mask, _ = model.make_batch([("abc", "def")])
+    assert model.net(ids).shape == (1, ids.shape[1], len(vocab))
+    path = tmp_path / "m.pt"
+    model.save(path)
+    restored = TokenSNN.load(path)
+    assert restored.config.readout == "membrane"
+    assert restored.config.layers == 2
+    assert restored.generate("abc", 5) == model.generate("abc", 5)
+
+
+def test_timesteps_keep_output_shape_and_roundtrip(tmp_path, vocab):
+    """K timesteps per token must not change the (batch, steps, vocab) shape."""
+    cfg = TokenConfig(d_emb=8, d_hidden=16, max_len=24, readout="membrane", timesteps=4)
+    model = TokenSNN(vocab, cfg)
+    ids, mask, _ = model.make_batch([("abc", "de")])
+    assert model.net(ids).shape == (1, ids.shape[1], len(vocab))
+    model.train_on([("abc", "de")], epochs=1, batch_size=1)
+    path = tmp_path / "k4.pt"
+    model.save(path)
+    restored = TokenSNN.load(path)
+    assert restored.config.timesteps == 4
+    assert restored.generate("abc", 4) == model.generate("abc", 4)
+
+
+def test_unknown_readout_is_rejected(vocab):
+    with pytest.raises(ValueError, match="readout"):
+        TokenSNN(vocab, TokenConfig(readout="graded"))
+
+
+def test_tf_accuracy_is_a_sane_diagnostic(vocab):
+    """Teacher-forced accuracy must count only answer tokens and lie in [0, 1]."""
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=24))
+    stat = model.tf_accuracy([("abc", "def"), ("bcd", "efg")])
+    assert 0.0 <= stat["tf_acc"] <= 1.0
+    assert stat["tokens"] > 0
+    # untrained model: roughly chance; must not be reported as skill
+    assert stat["tokens"] == sum(len(a) + 1 for _, a in [("abc", "def"), ("bcd", "efg")])
