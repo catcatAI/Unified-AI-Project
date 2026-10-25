@@ -2,7 +2,13 @@ import { useState, useEffect } from 'react'
 
 interface ContextData {
   state: Record<string, Record<string, number>>
-  eta: { execution_count: number; success_rate: number; structural_drift: number } | null
+  eta: {
+    execution_count: number
+    /** null = never measured (no module has executed yet), not 0. */
+    success_rate: number | null
+    /** null = no producer yet; Phase 2 wires the real computation. */
+    structural_drift: number | null
+  } | null
   memory: { initialized: boolean; recent_count?: number }
   intents: { count: number; names: string[] }
   llm: { available: boolean; active: string | null; mode: string }
@@ -69,8 +75,13 @@ export default function ContextViewer() {
         })}
         {ctx.eta && (
           <div className="eta-info">
-            η exec={ctx.eta.execution_count} success={ctx.eta.success_rate.toFixed(1) + '%'} drift=
-            {ctx.eta.structural_drift.toFixed(4)}
+            η exec={ctx.eta.execution_count}
+            {ctx.eta.success_rate === null
+              ? ' success=n/a'
+              : ` success=${ctx.eta.success_rate.toFixed(1)}%`}
+            {ctx.eta.structural_drift === null
+              ? ' drift=n/a'
+              : ` drift=${ctx.eta.structural_drift.toFixed(4)}`}
           </div>
         )}
       </div>

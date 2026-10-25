@@ -495,15 +495,27 @@ def _format_state_snapshot(service: Any) -> str:
         # Eta (execution)
         eta = service.eta_state
         if eta:
+            from core.engine.eta_axis import measured_eta_metrics
+
+            metrics = measured_eta_metrics(eta)
             lines.append("")
             lines.append(_section("η Eta (Execution)"))
             lines.append(
-                f"  exec_count  {_bar(min(eta.execution_count / 100, 1.0))}  count={eta.execution_count}"
+                f"  exec_count  {_bar(min(eta.execution_count / 100, 1.0))}"
+                f"  count={eta.execution_count}"
             )
-            lines.append(f"  success     {_bar(eta.success_rate)}  rate={eta.success_rate:.1%}")
-            lines.append(
-                f"  drift       {_bar(eta.structural_drift)}  drift={eta.structural_drift:.4f}"
-            )
+            # None means nobody has measured it; drawing a 0.0 bar instead
+            # would claim a measurement that was never taken.
+            success = metrics["success_rate"]
+            if success is None:
+                lines.append("  success     n/a (no module has executed)")
+            else:
+                lines.append(f"  success     {_bar(success)}  rate={success:.1%}")
+            drift = metrics["structural_drift"]
+            if drift is None:
+                lines.append("  drift       n/a (no producer yet)")
+            else:
+                lines.append(f"  drift       {_bar(drift)}  drift={drift:.4f}")
 
         return "\n".join(lines)
     except Exception as e:

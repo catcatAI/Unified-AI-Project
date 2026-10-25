@@ -721,11 +721,19 @@ def _ctx_state_matrix(context: Dict[str, Any]) -> None:
         sm = _get_state_matrix()
         eta_state = _get_eta_axis()
         axes = {}
-        for ax_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
+        # zeta is left out on purpose: update_zeta() has no production caller,
+        # so the axis only ever holds its frozen defaults. Feeding it to the
+        # LLM would label a constant as current state (three-core plan,
+        # Phase 1 item 2 — restored once Phase 2 computes it for real).
+        for ax_name in ("alpha", "beta", "gamma", "delta", "epsilon"):
             dim = sm.dimensions.get(ax_name)
             if dim:
                 axes[ax_name] = {"values": dim.values.copy()}
         th = sm.theta.values if hasattr(sm, "theta") else {}
+        from core.engine.eta_axis import measured_eta_metrics
+
+        # None = "not measured", never 0.0 — see measured_eta_metrics(), the
+        # single place that decides which η numbers have an observation.
         context["state_for_llm"] = {
             "axes": axes,
             "theta": {
@@ -734,11 +742,7 @@ def _ctx_state_matrix(context: Dict[str, Any]) -> None:
                 "creation_urge": th.get("creation_urge", 0.0),
                 "correction_urge": th.get("correction_urge", 0.0),
             },
-            "eta": {
-                "module_count": len(eta_state.active_modules) if eta_state else 0,
-                "success_rate": round(eta_state.success_rate, 3) if eta_state else 0.0,
-                "structural_drift": (round(eta_state.structural_drift, 3) if eta_state else 0.0),
-            },
+            "eta": measured_eta_metrics(eta_state),
             "guidance": [],
         }
     except Exception as e:

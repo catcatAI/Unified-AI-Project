@@ -48,14 +48,13 @@ async def _summary_state_section(result: Dict[str, Any]) -> None:
                 state[axis_name] = {k: round(v, 4) for k, v in ax.values.items()}
         result["state"] = state
 
-        # Eta
+        # Eta — None for anything without an observation behind it (see
+        # measured_eta_metrics); execution_count stays a real count, 0 or not.
         eta = service.eta_state
         if eta:
-            result["eta"] = {
-                "execution_count": eta.execution_count,
-                "success_rate": round(eta.success_rate, 4),
-                "structural_drift": round(eta.structural_drift, 4),
-            }
+            from core.engine.eta_axis import measured_eta_metrics
+
+            result["eta"] = measured_eta_metrics(eta)
     except Exception as e:
         logger.warning("State matrix unavailable: %s", e, exc_info=True)
         result["state"] = {}

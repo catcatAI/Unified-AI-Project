@@ -470,3 +470,33 @@ def create_default_modules() -> Dict[str, ModuleConfig]:
     for name, mt, st, params in configs:
         modules[name] = ModuleConfig(name=name, module_type=mt, sub_type=st, parameters=params)
     return modules
+
+
+def measured_eta_metrics(state: Optional[EtaAxisState]) -> Dict[str, Any]:
+    """The η numbers that have actually been observed, for prompt and context.
+
+    ``None`` means "not measured" and is never reported as ``0.0``: a zero is
+    read as a measurement, which is how the prompt came to say
+    "Structural drift: 0.00" and the dashboard "success=100% drift=0.0000"
+    while no module had ever run.
+
+    - ``success_rate`` stays None until ``execution_count`` is above zero —
+      production registers the default modules and never executes one, so the
+      default 1.0 has no observation behind it.
+    - ``structural_drift`` stays None because nothing computes it yet; the
+      three-core plan schedules a real producer for Phase 2, and this is the
+      single place that flips when it lands.
+    """
+    if state is None:
+        return {
+            "module_count": 0,
+            "execution_count": 0,
+            "success_rate": None,
+            "structural_drift": None,
+        }
+    return {
+        "module_count": len(state.active_modules),
+        "execution_count": state.execution_count,
+        "success_rate": round(state.success_rate, 4) if state.execution_count > 0 else None,
+        "structural_drift": None,
+    }

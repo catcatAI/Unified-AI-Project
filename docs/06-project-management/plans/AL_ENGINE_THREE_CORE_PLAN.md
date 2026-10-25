@@ -303,6 +303,43 @@ sources 與 `ham_manager.py` 註解各 1 處。
 **驗證**：受影響測試 346 passed / 2 skipped；`core`、`ai.lifecycle`、
 `core.metamorphosis` 導入正常（未知名稱回 `_SubmoduleSentinel` 是既有設計）。
 
+#### ✅ Phase 1 完成記錄 — 幽靈指標二選一（2026-10-25）
+
+**裁決：5 項 —— 2 項移除展示（真算排入 Phase
+2）、1 項保留待接、1 項實測證實已接、1 項列 Phase 2 持久化；同族的
+`η.success_rate` 一併處置。**
+
+| #   | 項目                     | 裁決                               | 證據（本輪實測）                                                                                                                         | 動作                                                    |
+| --- | ------------------------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| ①   | `ζ` 四個子指標           | **移除展示**，真算排 Phase 2       | `update_zeta()` 零生產呼叫；值恆為凍結預設（`memory_depth` 0.6、`identity_continuity` 0.75 等）                                          | `chat_routes` 與 `prompt_builder` 的軸迴圈拿掉 `zeta`   |
+| ②   | `η.structural_drift`     | **移除展示**，Phase 2 先定義來源   | 全庫只有序列化與 `from_dict`，無任何計算者；prompt 曾印 `Structural drift: 0.00`、儀表板曾印 `drift=0.0000`                              | prompt／`/api/context/summary`／repl 三處改為「未觀測」 |
+| ②b  | `η.success_rate`（同族） | **移除展示**（原未列入，但同區塊） | 恆為預設 `1.0`，而 `execution_count` 生產恆 `0`（模組只註冊、從不執行）→ 曾印 `Success rate: 100.0%`，比恆 0 更嚴重                      | `execution_count == 0` 時回 `None`，不渲染              |
+| ③   | `find_drift()`           | **保留待接**（不刪）               | 318 行零依賴、真能算值漂移，但只有 test 呼叫                                                                                             | 無程式碼變動；交給 Phase 2 給 `ζ` 用                    |
+| ④   | 情緒跨重啟               | **已接，結案**                     | `apps/data/emotion_state.json` 於 2026-10-25 16:55 更新；`emotion_system.py:265/523` 呼叫 `save_state()`；`lifespan.py:717` adopt 舊狀態 | 無改動；Phase 2 清單中該項標為已完成                    |
+| ⑤   | `life_stats.age`         | **列 Phase 2 持久化**              | `get_age()`／`get_life_summary()` 只在 DLI 內部與示範日誌使用；`birth_time` 無持久化 → 每次重啟歸零；prompt/context 本就未展示 age       | 無展示可移除；`age` 已在 Phase 2 `ALState` 欄位清單     |
+
+**執行偏離（記錄，不是照抄）**：原計畫寫「`η.drift` 調用已存在的
+`find_drift()`」——**不成立**。`find_drift(axis, field, expected, threshold)`
+量的是「單一欄位對期望值的偏離」，`η.structural_drift`
+要的是「模組組成的變化」，兩者不同物，硬接會得到一個語義錯的數字。因此改為「Phase
+2 先定義 η.drift 的觀測來源，再接」，`find_drift()` 保留給 `ζ` 的值漂移。
+
+**單一判定點**：`core/engine/eta_axis.py::measured_eta_metrics()` ——「**未觀測 =
+`None`，絕不寫 0.0 / 1.0**」。`chat_routes` 與 `context_routes`
+共用它；prompt 端遇 `None` 不渲染該行，儀表板顯示 `n/a`，repl 顯示
+`n/a`。判定寫在一個地方，就不會有第六個消費者各自 `get(..., 0)` 把缺值填回 0。
+
+**同族殘留（明確不在本輪）**：`websocket_manager` 與 `system_routes`
+仍原樣匯出矩陣的 `zeta`
+值 —— 那是**矩陣的忠實傾印**，不是替讀者詮釋；正解是 Phase
+2 在來源寫真值，而不是在 6 個消費者各過濾一次。prompt 與 context 是會把數字寫成「當前狀態」的地方，所以先修這兩處。
+
+**驗證**：新增 `tests/api/test_state_context_honesty.py` 8 條（`None`
+契約、ζ 不入 LLM context、prompt 遇未觀測不渲染、已觀測仍渲染）；相鄰測試
+`test_prompt_builder` + `test_formula_behavioral_impact` +
+`test_context_summary_recent_count` + `test_eta_axis` 共 **84 passed**；flake8
+0。
+
 ### Phase 2 — 收斂：單一狀態面（2–4 天）
 
 - **做**：
@@ -311,9 +348,15 @@ sources 與 `ham_manager.py` 註解各 1 處。
      `intensity`、`drift{zeta,eta}`、`time_coefficients`、`age`、`emotion`、
      `updated_at`、`source`）—— 這就是「AL 與 AI／記憶交換的量」，寫進契約。（原建議含
      `maturity`，已依契約 §3 裁決**不進 schema**：後端階梯已刪、前端階梯與 AL 無關。）
-  2. **接上真計算**：`ζ` 由 `TemporalState` 的 trend/anomalies 驅動、`η.drift`
-     調用已存在的 `find_drift()`、情緒 `save_state()` 真正落盤、`age`
-     改為持久化。
+  2. **接上真計算並恢復展示**：`ζ` 由 `TemporalState`
+     的 trend/anomalies 驅動（Phase 1 已先從 prompt/context 拿掉，真值到位後在
+     `chat_routes` 與 `prompt_builder` 兩處軸迴圈加回）、`η.drift`
+     **先定義觀測來源再接**（語義應為「模組組成的變化」，不要用
+     `find_drift()`，它量的是單一欄位對期望值的偏離 —— 見 Phase
+     1 完成記錄的執行偏離）、`age` 改為持久化。恢復展示只需改
+     `measured_eta_metrics()` 一個地方。 **情緒 `save_state()` 已於 Phase
+     1 實測確認真正落盤（檔案 2026-10-25 16:55 更新、lifespan
+     adopt 舊狀態），本項無需再做。**
   3. **聚合器註冊進
      `core/backbone`**（已收 memory/state_matrix/emotion，補 DLI／ALC／heartbeat／emotion 的持久化），**不新建**
      aggregator。
@@ -322,8 +365,8 @@ sources 與 `ham_manager.py` 註解各 1 處。
      1 刪除，「恢復或廢棄」變成「新建」，需按 §10 介面從頭實作。
 - **怎麼做**：schema 先行（文件 + 測試），再逐欄接計算；每接一欄補一條測試。
 - **驗**：
-  - 狀態跨重啟保留（今日 `emotion_state.json`
-    不存在、age 歸零 —— 修完後應有檔可驗）；
+  - 狀態跨重啟保留（`emotion_state.json` 已於 Phase 1 實測確認存在且會更新；剩
+    `age` 每次重啟歸零，持久化修完後應跨重啟可驗）；
   - **干預測試**：沿用 `ANGELA_SELF_IDENTITY_STATE_DYNAMICS_PLAN`
     的 E1 方法 ——固定同一段文本、只動 snapshot 欄位，看 `resolved_by`
     是否指名到對應 voter、行為是否可重複翻轉。這是「AL 狀態不是提示詞裝飾」的唯一有效證明。

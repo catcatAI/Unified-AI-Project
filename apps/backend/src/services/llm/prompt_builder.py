@@ -855,7 +855,12 @@ def _build_core_prompt(
     axis_lines, theta_lines, eta_lines, guidance_lines = [], [], [], []
     if state_for_llm:
         axes = state_for_llm.get("axes", {})
-        for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
+        # zeta is deliberately not rendered: update_zeta() has zero production
+        # callers, so its four sub-metrics are frozen defaults (memory_depth
+        # 0.6, identity_continuity 0.75, ...). Printing them would present a
+        # constant as a live state. Phase 2 drives them from TemporalState
+        # and re-adds the axis here (three-core plan, Phase 1 item 2).
+        for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon"):
             ax = axes.get(axis_name, {})
             vals = ax.get("values", {})
             if vals:
@@ -892,12 +897,17 @@ def _build_core_prompt(
         eta = state_for_llm.get("eta", {})
         if eta:
             eta_lines.append(prompt("angela.eta.active_modules", count=eta.get("module_count", 0)))
-            eta_lines.append(
-                prompt("angela.eta.success_rate", value=f"{eta.get('success_rate', 0):.1%}")
-            )
-            eta_lines.append(
-                prompt("angela.eta.drift", value=f"{eta.get('structural_drift', 0):.2f}")
-            )
+            # Render measured values only. The state builder sends None for a
+            # quantity nobody has observed (success_rate before the first
+            # module execution, structural_drift before Phase 2 wires a
+            # producer), and a missing value must never fall back to 0 — that
+            # is exactly how a ghost metric ends up in the prompt.
+            success_rate = eta.get("success_rate")
+            if success_rate is not None:
+                eta_lines.append(prompt("angela.eta.success_rate", value=f"{success_rate:.1%}"))
+            drift = eta.get("structural_drift")
+            if drift is not None:
+                eta_lines.append(prompt("angela.eta.drift", value=f"{drift:.2f}"))
 
         guidance = state_for_llm.get("guidance", [])
         if guidance:
