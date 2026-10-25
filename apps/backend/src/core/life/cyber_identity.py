@@ -26,8 +26,16 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-from core.active_cognition_formula import ActiveCognitionFormula, OrderType
-from core.life_intensity_formula import KnowledgeDomain, LifeIntensityFormula
+from core.active_cognition_formula import (
+    ActiveCognitionFormula,
+    OrderType,
+    get_active_cognition_formula,
+)
+from core.life_intensity_formula import (
+    KnowledgeDomain,
+    LifeIntensityFormula,
+    get_life_intensity_formula,
+)
 from core.system.config.magic_numbers import loop_sleep
 from core.tracing import get_tracer
 
@@ -204,8 +212,12 @@ class CyberIdentity:
 
         # Initialize theoretical frameworks
         if self._formula_integration_enabled:
-            self.life_intensity_formula = LifeIntensityFormula()
-            self.active_cognition_formula = ActiveCognitionFormula()
+            # Shared singletons (three-core plan Phase 1 item 3): identity
+            # init no longer resets the formula state — the knowledge and
+            # observer state belongs to the one life, not to whichever
+            # subsystem happened to (re)initialise last.
+            self.life_intensity_formula = get_life_intensity_formula()
+            self.active_cognition_formula = get_active_cognition_formula()
 
             # Initialize knowledge domains for self
             self._initialize_self_knowledge_domains()

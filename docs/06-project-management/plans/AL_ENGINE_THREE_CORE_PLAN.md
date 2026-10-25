@@ -340,6 +340,50 @@ sources 與 `ham_manager.py` 註解各 1 處。
 `test_context_summary_recent_count` + `test_eta_axis` 共 **84 passed**；flake8
 0。
 
+#### ✅ Phase 1 完成記錄 — 公式單例化去重（2026-10-25）
+
+**交付**：一個公式一個實例，讀與寫分離。
+
+| 公式                        | 實例數（前 → 後） | 站點                                                                     |
+| --------------------------- | ----------------- | ------------------------------------------------------------------------ |
+| `LifeIntensityFormula`      | **3 → 1**         | `autonomous_life_cycle:169`、`cyber_identity:207`、`prompt_builder:576`  |
+| `ActiveCognitionFormula`    | **3 → 1**         | 同上三處                                                                 |
+| `CDMCognitiveDividendModel` | **4 → 1**         | ALC、`prompt_builder:594`、`router:924`（memory_coordinator 的第四本帳） |
+| `HSMFormulaSystem`          | 2 → 1             | ALC、prompt_builder                                                      |
+| `NonParadoxExistence`       | 2 → 1             | ALC、prompt_builder                                                      |
+
+**等價性證據**：5 個 `*_config`
+鍵（`life/ac/cdm/hsm/npe_config`）全庫只出現在 ALC 的 `self.config.get(...)`
+查詢處，**無任何設定檔定義它們** → 一律 `None` → `X(config=None)` ≡
+`X()`（`self.config = config or {}` + `get(key, default)`
+全走預設）。單例化零行為差異；per-instance 調參通道隨之移除，未來調參走
+`magic_numbers`/`llm_param`（HSM 本來就是這麼做的）。
+
+**讀寫分離（歸一的安全前提）**：三實例原本各養各的狀態，prompt 用的是一份「從沒人餵過」的私有副本；**若直接歸一而不改讀法，prompt 的讀取會變成污染共享狀態的第二條寫路徑**——違反契約 §9。因此：
+
+- `LifeIntensityFormula.peek_life_intensity()`：零寫入。時間積分特別拆出
+  `_preview_time_integral()`——`calculate_time_integral()` 會
+  `accumulated_gap_integral +=` 並推進
+  `last_calculation`（讀會切斷寫者的累積窗口），peek 只預覽、不入帳、**不動時鐘**。
+- `CDMCognitiveDividendModel.peek_life_sense_output()`：不 append
+  `outputs`/`conversion_history`、不長 `total_output`、不觸發 output callbacks。
+- HSM／ActiveCognition／NonParadox 的 `calculate_*` 經
+  **AST 遞歸純度檢查**（沿 self 方法呼叫鏈掃寫入）確認純 → 直接共享，無需 peek。
+- prompt 的 5 條公式行改走上述唯讀路徑；ALC、cyber_identity、router 改用各模組的
+  `get_*()` 單例。
+
+**順帶查到的既有事實（未改，屬展示裁決）**：prompt 的 CDM 行從不呼叫
+`calculate_consumption()`，`resource_consumed` 恆 0 → 該行 `amount` 一直顯示
+`0.00`。若要修，應連「這個數字該不該展示」一起裁（幽靈指標家族）。
+
+**行為變更（有意，記錄）**：`cyber_identity.initialize()`
+原本每次重建公式實例（身份重啟歸零公式狀態）；歸一後只是取得共享實例——知識與觀察者狀態屬於「這一條生命」，不因哪個子系統重新初始化而歸零。
+
+**驗證**：新增 `tests/core/test_formula_singletons.py`
+9 條（三站點同一物件、重複取得同一、peek 六項狀態前後不變、calculate 仍記帳的正控制、prompt 五行端到端零寫入）；相鄰 10 個測試檔
+**198 passed**；flake8 0、black 過（router/chat_routes 各有 1 個 **既有**
+hunk 在 HEAD 同樣不合，非本輪所觸，未動）。
+
 ### Phase 2 — 收斂：單一狀態面（2–4 天）
 
 - **做**：

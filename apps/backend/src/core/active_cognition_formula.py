@@ -664,6 +664,32 @@ class ActiveCognitionFormula:
 
 
 # Example usage
+# ---------------------------------------------------------------------------
+# Process-wide instance (three-core plan Phase 1, item 3)
+#
+# The formula had independent instances per call site — private copies of
+# one state, i.e. a second write path beside the snapshot (contract §9).
+# All production sites share this one instance; its calculate path is pure,
+# so readers share it safely.
+# ---------------------------------------------------------------------------
+
+_singleton: Optional[ActiveCognitionFormula] = None
+
+
+def get_active_cognition_formula() -> ActiveCognitionFormula:
+    """The single shared ActiveCognitionFormula (lazily created)."""
+    global _singleton
+    if _singleton is None:
+        _singleton = ActiveCognitionFormula()
+    return _singleton
+
+
+def reset_active_cognition_formula() -> None:
+    """Drop the shared instance (test isolation only — production never calls)."""
+    global _singleton
+    _singleton = None
+
+
 if __name__ == "__main__":
     ac = ActiveCognitionFormula()
 

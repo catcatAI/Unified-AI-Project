@@ -233,3 +233,29 @@ class ExplorationResult:
 
     def is_actionable(self) -> bool:
         return self.success
+
+
+# ---------------------------------------------------------------------------
+# Process-wide instance (three-core plan Phase 1, item 3)
+#
+# The formula had independent instances per call site — private copies of
+# one state, i.e. a second write path beside the snapshot (contract §9).
+# All production sites share this one instance; its calculate path is pure,
+# so readers share it safely.
+# ---------------------------------------------------------------------------
+
+_singleton: Optional[HSMFormulaSystem] = None
+
+
+def get_hsm_formula() -> HSMFormulaSystem:
+    """The single shared HSMFormulaSystem (lazily created)."""
+    global _singleton
+    if _singleton is None:
+        _singleton = HSMFormulaSystem()
+    return _singleton
+
+
+def reset_hsm_formula() -> None:
+    """Drop the shared instance (test isolation only — production never calls)."""
+    global _singleton
+    _singleton = None

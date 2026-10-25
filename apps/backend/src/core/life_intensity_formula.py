@@ -496,24 +496,37 @@ class LifeIntensityFormula:
             Time integral contribution (0-1)
         """
         now = datetime.now()
-        time_since_last = (now - self.last_calculation).total_seconds()
+        self.accumulated_gap_integral += self._pending_gap_integral(now)
+        self.last_calculation = now
+        return self._normalized_time_integral(self.accumulated_gap_integral)
 
-        # Calculate current gap
+    def _pending_gap_integral(self, now: Optional[datetime] = None) -> float:
+        """Gap-seconds accrued since ``last_calculation``, not yet booked (pure)."""
+        if now is None:
+            now = datetime.now()
+        time_hours = (now - self.last_calculation).total_seconds() / 3600
         c_inf = self.calculate_c_inf()
         c_limit = self.calculate_c_limit()
         current_gap = max(0.0, c_inf - c_limit)  # Gap is what could be vs what is
+        return current_gap * time_hours
 
-        # Accumulate gap over time
-        # Normalize time to hours for reasonable scale
-        time_hours = time_since_last / 3600
-        self.accumulated_gap_integral += current_gap * time_hours
-
-        # Normalize accumulated integral (diminishing returns for very long times)
+    @staticmethod
+    def _normalized_time_integral(accumulated: float) -> float:
+        """Normalize accumulated integral (diminishing returns for long times)."""
         log_base = limit_value("life_intensity.time_integral_log_base", 100)
-        normalized_integral = math.log(1 + self.accumulated_gap_integral) / math.log(log_base)
+        return min(1.0, math.log(1 + accumulated) / math.log(log_base))
 
-        self.last_calculation = now
-        return min(1.0, normalized_integral)
+    def _preview_time_integral(self) -> float:
+        """The integral as it *would* compute, without booking it (pure).
+
+        Reading the integral must not advance ``last_calculation`` or grow
+        ``accumulated_gap_integral``: a reader that books the gap cuts the
+        writer's accumulation window, so the read path and the write path
+        would compete over one clock (contract §9 — one writer path).
+        """
+        return self._normalized_time_integral(
+            self.accumulated_gap_integral + self._pending_gap_integral()
+        )
 
     def _dominant_domain(self) -> Optional[KnowledgeDomain]:
         """Domain with highest knowledge state (None when no states)."""
@@ -552,6 +565,38 @@ class LifeIntensityFormula:
             ) as e:  # broad exception acceptable: intensity callbacks should be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
+    def _l_s_from(self, c_inf: float, c_limit: float, m_f: float, time_integral: float) -> float:
+        """Weighted combination of the four slots — pure arithmetic (no state)."""
+        # The gap drives life intensity (what could be vs what is)
+        knowledge_gap = c_inf - c_limit
+
+        l_s: float = (
+            self.weights["c_inf"] * c_inf
+            + self.weights["c_limit"] * (1.0 - c_limit)  # Less constraint = more life
+            + self.weights["m_f"] * m_f
+            + self.weights["time_integral"] * time_integral
+            + llm_param("life_intensity.gap_bonus_weight", 0.1) * knowledge_gap  # Gap bonus
+        )
+
+        # Normalize
+        return max(0.0, min(1.0, l_s))
+
+    def peek_life_intensity(self) -> float:
+        """Read L_s without writing anything back.
+
+        Zero side effects by construction: no history append, no threshold or
+        intensity callbacks, and the time integral is previewed rather than
+        booked (``_preview_time_integral``). The prompt reads through this,
+        so a reader can never book gap-seconds into — or fire callbacks on —
+        the single shared instance (contract §9: one writer path).
+        """
+        return self._l_s_from(
+            self.calculate_c_inf(),
+            self.calculate_c_limit(),
+            self.calculate_m_f(),
+            self._preview_time_integral(),
+        )
+
     def calculate_life_intensity(self) -> float:
         """
         Calculate L_s (Life Intensity / 生命感强度)
@@ -562,6 +607,10 @@ class LifeIntensityFormula:
         potential (C_inf) and finite reality (C_limit), experienced through
         time with an observer (M_f).
 
+        Writes: books the time integral, appends a snapshot to history and
+        notifies callbacks. Readers wanting the value without the write use
+        ``peek_life_intensity()``.
+
         Returns:
             Life intensity value (0-1)
         """
@@ -571,20 +620,7 @@ class LifeIntensityFormula:
         m_f = self.calculate_m_f()
         time_integral = self.calculate_time_integral()
 
-        # The gap drives life intensity (what could be vs what is)
-        knowledge_gap = c_inf - c_limit
-
-        # Weighted combination
-        l_s: float = (
-            self.weights["c_inf"] * c_inf
-            + self.weights["c_limit"] * (1.0 - c_limit)  # Less constraint = more life
-            + self.weights["m_f"] * m_f
-            + self.weights["time_integral"] * time_integral
-            + llm_param("life_intensity.gap_bonus_weight", 0.1) * knowledge_gap  # Gap bonus
-        )
-
-        # Normalize
-        l_s = max(0.0, min(1.0, l_s))
+        l_s = self._l_s_from(c_inf, c_limit, m_f, time_integral)
 
         # Create snapshot (dominant domain = highest knowledge state)
         snapshot = LifeIntensitySnapshot(
@@ -703,6 +739,33 @@ class LifeIntensityFormula:
     def register_threshold_callback(self, callback: Callable[[float, float], None]) -> None:
         """Register callback for threshold crossings"""
         self._threshold_callbacks.append(callback)
+
+
+# ---------------------------------------------------------------------------
+# Process-wide instance (three-core plan Phase 1, item 3)
+#
+# There were three independent LifeIntensityFormula instances
+# (autonomous_life_cycle, cyber_identity, prompt_builder) — three private
+# copies of one knowledge/observer state, i.e. a second write path beside
+# the snapshot (contract §9). All production sites share this one instance;
+# reads go through peek_life_intensity() so they write nothing.
+# ---------------------------------------------------------------------------
+
+_singleton: Optional[LifeIntensityFormula] = None
+
+
+def get_life_intensity_formula() -> LifeIntensityFormula:
+    """The single shared LifeIntensityFormula (lazily created)."""
+    global _singleton
+    if _singleton is None:
+        _singleton = LifeIntensityFormula()
+    return _singleton
+
+
+def reset_life_intensity_singleton() -> None:
+    """Drop the shared instance (test isolation only — production never calls)."""
+    global _singleton
+    _singleton = None
 
 
 # Example usage

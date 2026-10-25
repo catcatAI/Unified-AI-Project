@@ -29,16 +29,26 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from core.active_cognition_formula import ActiveCognitionFormula, OrderType, StressSource
+from core.active_cognition_formula import (
+    ActiveCognitionFormula,
+    OrderType,
+    StressSource,
+    get_active_cognition_formula,
+)
 from core.autonomous.behavior_executor import BehaviorExecutor
 from core.cdm_dividend_model import (
     CDMCognitiveDividendModel,
     CognitiveActivity,
     CognitiveInvestment,
+    get_cdm_model,
 )
-from core.hsm_formula_system import HSMFormulaSystem
-from core.life_intensity_formula import KnowledgeDomain, LifeIntensityFormula
-from core.non_paradox_existence import GrayZoneVariableType, NonParadoxExistence
+from core.hsm_formula_system import HSMFormulaSystem, get_hsm_formula
+from core.life_intensity_formula import (
+    KnowledgeDomain,
+    LifeIntensityFormula,
+    get_life_intensity_formula,
+)
+from core.non_paradox_existence import GrayZoneVariableType, NonParadoxExistence, get_non_paradox
 from core.system.config.magic_numbers import lifecycle_value
 from core.system.state_store.global_store import state_store
 
@@ -161,20 +171,19 @@ class AutonomousLifeCycle:
         self.config = config or {}
         self._persist_path = persist_path
 
-        # Formula systems
-        self.hsm: HSMFormulaSystem = HSMFormulaSystem(config=self.config.get("hsm_config"))
-        self.cdm: CDMCognitiveDividendModel = CDMCognitiveDividendModel(
-            config=self.config.get("cdm_config")
-        )
-        self.life_intensity: LifeIntensityFormula = LifeIntensityFormula(
-            config=self.config.get("life_config")
-        )
-        self.active_cognition: ActiveCognitionFormula = ActiveCognitionFormula(
-            config=self.config.get("ac_config")
-        )
-        self.non_paradox: NonParadoxExistence = NonParadoxExistence(
-            config=self.config.get("npe_config")
-        )
+        # Formula systems — one shared instance per formula (three-core plan
+        # Phase 1 item 3): there used to be 3 private LifeIntensityFormula
+        # copies (here, cyber_identity, prompt_builder), i.e. a second write
+        # path beside the snapshot (contract §9). The `*_config` dict keys
+        # this block used to pass were defined nowhere and always resolved to
+        # None, so sharing the default-configured singleton is behaviourally
+        # identical; per-instance tuning now belongs to the magic_numbers /
+        # llm_param system, like HSMFormulaSystem already uses.
+        self.hsm: HSMFormulaSystem = get_hsm_formula()
+        self.cdm: CDMCognitiveDividendModel = get_cdm_model()
+        self.life_intensity: LifeIntensityFormula = get_life_intensity_formula()
+        self.active_cognition: ActiveCognitionFormula = get_active_cognition_formula()
+        self.non_paradox: NonParadoxExistence = get_non_paradox()
 
         # Life cycle state
         self.current_phase: LifePhase = LifePhase.EMERGENCE

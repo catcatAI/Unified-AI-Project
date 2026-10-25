@@ -23,7 +23,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -291,18 +291,13 @@ class CDMCognitiveDividendModel:
 
         return min(1.0, rate)
 
-    def calculate_life_sense_output(
+    def _compute_life_sense_output(
         self, investment: CognitiveInvestment, life_state: Optional[Dict[str, Any]] = None
-    ) -> LifeSenseOutput:
-        """
-        Calculate life sense output from cognitive investment
+    ) -> Tuple[LifeSenseOutput, float]:
+        """Compute the output record — pure, no history append (no callbacks).
 
-        Args:
-            investment: The source cognitive investment
-            life_state: Current life state
-
-        Returns:
-            Life sense output record
+        Returns the record plus the conversion rate it used, so the booking
+        path can record the rate without re-deriving it.
         """
         # Calculate conversion rate
         conversion_rate = self.calculate_conversion_rate(investment, life_state)
@@ -335,18 +330,51 @@ class CDMCognitiveDividendModel:
             + (life_state.get("relationship_closeness", 0.3) if life_state else 0.3) * 0.5
         )
 
-        output = LifeSenseOutput(
-            source_investment=f"{investment.activity_type.name}_{id(investment)}",
-            output_amount=output_amount,
-            quality_score=min(1.0, quality_score),
-            life_sense_type=life_sense_type,
-            resonance_potential=min(1.0, resonance_potential),
+        return (
+            LifeSenseOutput(
+                source_investment=f"{investment.activity_type.name}_{id(investment)}",
+                output_amount=output_amount,
+                quality_score=min(1.0, quality_score),
+                life_sense_type=life_sense_type,
+                resonance_potential=min(1.0, resonance_potential),
+            ),
+            conversion_rate,
         )
+
+    def peek_life_sense_output(
+        self, investment: CognitiveInvestment, life_state: Optional[Dict[str, Any]] = None
+    ) -> LifeSenseOutput:
+        """Compute the output without booking it (no history, no callbacks).
+
+        The prompt reads through this: a reader must not append to
+        ``outputs``/``conversion_history``, grow ``total_output`` or fire the
+        output callbacks on the single shared instance (contract §9 — one
+        writer path).
+        """
+        return self._compute_life_sense_output(investment, life_state)[0]
+
+    def calculate_life_sense_output(
+        self, investment: CognitiveInvestment, life_state: Optional[Dict[str, Any]] = None
+    ) -> LifeSenseOutput:
+        """
+        Calculate life sense output from cognitive investment and book it:
+        appends to ``outputs``/``conversion_history``, grows ``total_output``
+        and notifies output callbacks. Readers wanting the value without the
+        write use ``peek_life_sense_output()``.
+
+        Args:
+            investment: The source cognitive investment
+            life_state: Current life state
+
+        Returns:
+            Life sense output record
+        """
+        output, conversion_rate = self._compute_life_sense_output(investment, life_state)
 
         self.outputs.append(output)
         if len(self.outputs) > _MAX_OUTPUTS:
             self.outputs = self.outputs[-_MAX_OUTPUTS:]
-        self.total_output += output_amount
+        self.total_output += output.output_amount
         self.conversion_history.append(conversion_rate)
 
         # Keep history manageable
@@ -513,6 +541,33 @@ class CDMCognitiveDividendModel:
     def register_output_callback(self, callback: Callable[[LifeSenseOutput], None]) -> None:
         """Register callback for output generation"""
         self._output_callbacks.append(callback)
+
+
+# ---------------------------------------------------------------------------
+# Process-wide instance (three-core plan Phase 1, item 3)
+#
+# The CDM ledger had three private copies (autonomous_life_cycle,
+# prompt_builder, router/memory_coordinator): investments booked into
+# whichever copy the caller happened to hold, i.e. a split ledger. All
+# production sites share this one instance; reads go through
+# peek_life_sense_output() so they book nothing.
+# ---------------------------------------------------------------------------
+
+_singleton: Optional[CDMCognitiveDividendModel] = None
+
+
+def get_cdm_model() -> CDMCognitiveDividendModel:
+    """The single shared CDMCognitiveDividendModel (lazily created)."""
+    global _singleton
+    if _singleton is None:
+        _singleton = CDMCognitiveDividendModel()
+    return _singleton
+
+
+def reset_cdm_singleton() -> None:
+    """Drop the shared instance (test isolation only — production never calls)."""
+    global _singleton
+    _singleton = None
 
 
 # Example usage

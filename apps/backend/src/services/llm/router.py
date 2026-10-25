@@ -919,9 +919,12 @@ class AngelaLLMService:
             except Exception as e:
                 logger.warning("Failed to import LogicUnit: %s", e, exc_info=True)
             try:
-                from core.cdm_dividend_model import CDMCognitiveDividendModel
+                # Shared ledger (three-core plan Phase 1 item 3): the
+                # coordinator books into the one CDM instance the AL cycle
+                # and the prompt read, instead of a private fourth copy.
+                from core.cdm_dividend_model import get_cdm_model
 
-                cdm_model = CDMCognitiveDividendModel()
+                cdm_model = get_cdm_model()
             except Exception as e:
                 logger.warning("Failed to import CDMCognitiveDividendModel: %s", e, exc_info=True)
             self.memory_coordinator: Optional[UnifiedMemoryCoordinator] = UnifiedMemoryCoordinator(

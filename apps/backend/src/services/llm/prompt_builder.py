@@ -551,57 +551,42 @@ _autonomous_cache = None
 _autonomous_cache_time: float = 0
 _STATE_CACHE_TTL = 2
 
-# Module-level formula singletons (avoid creating fresh instances each time)
-_hsm_instance = None
-_life_intensity_instance = None
-_active_cognition_instance = None
-_cdm_instance = None
-_non_paradox_instance = None
+# The formula singletons used to live here as five private copies — a
+# prompt-only LifeIntensityFormula showing an initial value nobody ever fed,
+# beside the real ones (three-core plan Phase 1 item 3). They now live in
+# their own modules: one shared instance per formula, so what the prompt
+# shows is the one life's state. The _get_* shims remain as the single
+# indirection point for the _formula_*_line helpers above.
 
 
 def _get_hsm():
-    global _hsm_instance
-    if _hsm_instance is None:
-        from core.hsm_formula_system import HSMFormulaSystem
+    from core.hsm_formula_system import get_hsm_formula
 
-        _hsm_instance = HSMFormulaSystem()
-    return _hsm_instance
+    return get_hsm_formula()
 
 
 def _get_life_intensity():
-    global _life_intensity_instance
-    if _life_intensity_instance is None:
-        from core.life_intensity_formula import LifeIntensityFormula
+    from core.life_intensity_formula import get_life_intensity_formula
 
-        _life_intensity_instance = LifeIntensityFormula()
-    return _life_intensity_instance
+    return get_life_intensity_formula()
 
 
 def _get_active_cognition():
-    global _active_cognition_instance
-    if _active_cognition_instance is None:
-        from core.active_cognition_formula import ActiveCognitionFormula
+    from core.active_cognition_formula import get_active_cognition_formula
 
-        _active_cognition_instance = ActiveCognitionFormula()
-    return _active_cognition_instance
+    return get_active_cognition_formula()
 
 
 def _get_cdm():
-    global _cdm_instance
-    if _cdm_instance is None:
-        from core.cdm_dividend_model import CDMCognitiveDividendModel
+    from core.cdm_dividend_model import get_cdm_model
 
-        _cdm_instance = CDMCognitiveDividendModel()
-    return _cdm_instance
+    return get_cdm_model()
 
 
 def _get_non_paradox():
-    global _non_paradox_instance
-    if _non_paradox_instance is None:
-        from core.non_paradox_existence import NonParadoxExistence
+    from core.non_paradox_existence import get_non_paradox
 
-        _non_paradox_instance = NonParadoxExistence()
-    return _non_paradox_instance
+    return get_non_paradox()
 
 
 def _formula_hsm_line() -> Optional[str]:
@@ -616,9 +601,12 @@ def _formula_hsm_line() -> Optional[str]:
 def _formula_life_intensity_line() -> Optional[str]:
     """Life-intensity formula prompt line; None when unavailable."""
     try:
+        # peek, not calculate: reading must not append to the shared
+        # instance's history or fire its callbacks (contract §9 — one
+        # writer path; calculate() also books the time integral).
         return prompt(
             "angela.formula.life_intensity",
-            value=f"{_get_life_intensity().calculate_life_intensity():.4f}",
+            value=f"{_get_life_intensity().peek_life_intensity():.4f}",
         )
     except (ImportError, AttributeError) as e:
         logger.debug(f"LifeIntensity formula unavailable: {e}")
@@ -646,7 +634,9 @@ def _formula_cdm_line() -> Optional[str]:
         inv = CognitiveInvestment(
             activity_type=CognitiveActivity.INTERACTING, duration_seconds=1.0, intensity=0.5
         )
-        output = cdm.calculate_life_sense_output(inv)
+        # peek, not calculate: this probe investment must not be booked into
+        # the shared ledger's outputs/conversion history (contract §9).
+        output = cdm.peek_life_sense_output(inv)
         return prompt(
             "angela.formula.cdm",
             amount=f"{output.output_amount:.2f}",
