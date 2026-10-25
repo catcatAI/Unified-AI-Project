@@ -24,15 +24,6 @@ from .body_adapter import (  # noqa: E402
     TransferStatus,
     create_body_adapter,
 )
-from .soul_core import (  # noqa: E402
-    IdentityCore,
-    MemoryEssence,
-    SoulComponent,
-    SoulCore,
-    SoulCoreManager,
-    SoulSignature,
-    create_soul_core,
-)
 from .transition_anim import (  # noqa: E402
     TransitionAnimator,
     TransitionConfig,
@@ -48,14 +39,6 @@ __version__ = "7.5.0-dev"
 __author__ = "Angela AI Development Team"
 
 __all__ = [
-    # Soul Core
-    "SoulCore",
-    "SoulSignature",
-    "IdentityCore",
-    "MemoryEssence",
-    "SoulCoreManager",
-    "SoulComponent",
-    "create_soul_core",
     # Body Adapter
     "BodyAdapter",
     "StateSnapshot",

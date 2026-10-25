@@ -619,7 +619,7 @@ class HAMMemoryManager:
         }
 
     # ------------------------------------------------------------------
-    # §11.3 #8 — 補齊 LLMDecisionLoop / memory_integration_loop 需要的 3 方法
+    # §11.3 #8 — 補齊 LLMDecisionLoop 需要的 3 方法
     # （原先缺失 → hasattr 防護跳過，記憶上下文/情感記憶拿不到）
     # ------------------------------------------------------------------
     async def get_recent_memories(self, limit: int = 5) -> List[str]:

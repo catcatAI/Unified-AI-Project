@@ -10,7 +10,6 @@ import pytest
 # (module_path, class_name, init_kwargs)
 _SMOKE_MODULES = [
     ("core.engine.action_executor", "ActionExecutor", {"config": {"max_queue_size": 10}}),
-    ("core.engine.angela_model_core", "AngelaModelCore", {}),
     ("core.art.real_playwright_browser", "AngelaRealBrowser", {}),
     ("core.art.real_edge_tts", "AngelaRealVoice", {}),
     (
@@ -30,7 +29,6 @@ _SMOKE_MODULES = [
     ("ai.alignment.decision_theory_system", "DecisionTheorySystem", {}),
     ("ai.context.dialogue_context", "Message", {"sender": "user", "content": "hello"}),
     ("core.life.env_dynamics", "EnvironmentDynamics", {}),
-    ("core.life.evolution_engine", "EvolutionEngine", {}),
     ("services.handlers.file_operation_handler", "FileOperationHandler", {}),
     ("services.handlers.google_drive_handler", "GoogleDriveHandler", {}),
     ("services.llm.providers.google", "GoogleAPIBackend", {"api_key": "test-key-placeholder"}),
@@ -86,8 +84,6 @@ _SMOKE_MODULES = [
     ("core.plugin.hook_registry", "HookRegistry", {}),
     # Merged from tests/unit/test_hsm_formula_system.py (§X #134)
     ("core.hsm_formula_system", "HSMFormulaSystem", {}),
-    # Merged from tests/unit/test_maturity_system.py (§X #134)
-    ("core.maturity.maturity_system", "MaturityManager", {}),
     # Merged from tests/services/test_multimodal_integration.py (§X #134)
     ("services.multimodal_service", "MultimodalService", {}),
     # Gap-closure audit (previously zero test references; all verified
@@ -342,26 +338,3 @@ class TestHSMFormulaSystem:
         HSMFormulaSystem = self._import()
         instance = HSMFormulaSystem()
         assert hasattr(instance, "detect_cognitive_gap")
-
-
-class TestMaturitySystem:
-    """Extra tests for maturity_system (was dedicated file)."""
-
-    def test_maturity_level(self):
-        from core.maturity.maturity_system import MaturityLevel
-
-        assert len(MaturityLevel) == 12
-        assert MaturityLevel.L0.value == "L0"
-        assert MaturityLevel.L11.value == "L11"
-
-    def test_maturity_manager(self):
-        from core.maturity.maturity_system import MaturityLevel, MaturityManager
-
-        instance = MaturityManager()
-        assert instance.current_level == MaturityLevel.L0
-
-    def test_experience_tracker(self):
-        from core.maturity.maturity_system import ExperienceTracker
-
-        instance = ExperienceTracker()
-        assert instance.total_experience == 0

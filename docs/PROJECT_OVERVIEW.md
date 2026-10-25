@@ -22,7 +22,7 @@
 |-------|------|-------------|--------|
 | **L1** | Biology | `endocrine_system`, `physiological_tactile`, `neuroplasticity`, `bio/integrator` | ✅ Complete |
 | **L2** | Memory | `ham_memory`, `vector_store`, `lu_logic`, `cdm_dividend_model` | ✅ Complete |
-| **L3** | Identity | `cyber_identity`, `self_generation`, `soul_core` | ✅ Complete |
+| **L3** | Identity | `cyber_identity`, `self_generation` | ✅ Complete |
 | **L4** | Creation | `live2d_avatar_generator`, `art_learning`, `creative_breakthrough` | ✅ Complete |
 | **L5** | Presence | `live2d_integration`, `perception_engine`, `attention_controller` | ✅ Complete |
 | **L6** | Execution | `action_executor`, `execution_gate`, `file_ops`, `browser_controller` | ✅ Complete |
@@ -50,7 +50,11 @@
 
 ### 2.4 Maturity System (L0-L11)
 
-Current operational maturity: **L5+** (wisdom insight, complex reasoning capable)
+> **2026-10-25（AL Phase 1）更正**：後端 `core/maturity/maturity_system.py`
+> 全庫無生產實例，已刪除。目前僅存前端
+> `packages/shared-js/js/maturity-tracker.js`（以 `memory_count` 分級、存
+> `localStorage['angela_maturity']`），與後端任何指標無關。原敘述
+> 「目前運作成熟度 L5+」無可驗證來源，一併移除。
 
 ## 3. Neural Engines
 
@@ -108,7 +112,6 @@ Current operational maturity: **L5+** (wisdom insight, complex reasoning capable
 | DigitalLifeIntegrator | `core/life/digital_life_integrator.py` | CNS event subscription, ModalityGateway |
 | LifeEssence | `core/life/life_essence.py` | Life force, needs, growth model |
 | CyberIdentity | `core/life/cyber_identity.py` | Self-model, identity growth, relationships |
-| EvolutionEngine | `core/autonomous/evolution_engine.py` | Emotion/feedback-driven personality evolution |
 
 ## 5. Service Layer
 

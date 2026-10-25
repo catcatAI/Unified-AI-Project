@@ -78,8 +78,6 @@
 | --------------------------------- | ----- | ------ | ---------- | ------------------------------ |
 | `llm_decision_loop.py`            | ~665  | ✅     | ✅         | LLM decision-making loop       |
 | `proactive_interaction_system.py` | ~576  | ✅     | ✅         | Proactive interaction triggers |
-| `behavior_feedback_loop.py`       | ~432  | ✅     | ✅         | Behavior→Response→Feedback     |
-| `memory_integration_loop.py`      | ~492  | ✅     | ✅         | Memory integration cycle       |
 | `user_monitor.py`                 | ~408  | ✅     | ✅         | User activity monitoring       |
 
 ### `ai/streaming/` — Streaming Pipeline
@@ -155,7 +153,6 @@
 | `life_essence.py`            | ~753  | ✅     | ✅         | Life force, needs, growth                   |
 | `cyber_identity.py`          | ~450  | ✅     | ✅         | Self-model, identity growth                 |
 | `dynamic_parameters.py`      | ~348  | ✅     | 📝         | Dynamic life parameters                     |
-| `evolution_engine.py`        | ~300  | ✅     | ✅         | Personality evolution                       |
 | `self_generation.py`         | ~200  | ✅     | ✅         | Self-generation capabilities                |
 
 ### `core/engine/` — Engine Systems (Canonical Location)
@@ -165,7 +162,6 @@
 | `state_matrix.py`            | ~1664 | ✅     | ✅         | 6D state matrix (αβγδεθ)       |
 | `state_matrix_adapter.py`    | ~280  | ✅     | ✅         | State matrix adapter           |
 | `action_executor.py`         | ~1119 | ✅     | ✅         | Action queue, priority, safety |
-| `angela_model_core.py`       | ~164  | ✅     | ✅         | Angela model core              |
 | `eta_axis.py`                | ~200  | ✅     | ✅         | Epsilon dimension axis         |
 | `theta_router.py`            | ~180  | ✅     | ✅         | Theta dimension routing        |
 | `cognitive_operations.py`    | ~750  | ✅     | ✅         | Cognitive operations           |
@@ -238,9 +234,8 @@ that re-export from canonical locations in `core/engine/`, `core/bio/`, or
 | `core/card/`                | ✅     | Card system for RPG game                        |
 | `core/ethics/`              | ✅     | Ethics manager                                  |
 | `core/i18n/`                | ✅     | Internationalization                            |
-| `core/maturity/`            | ✅     | Maturity system                                 |
 | `core/metacognition/`       | ✅     | Metacognition engine                            |
-| `core/metamorphosis/`       | ✅     | Soul core, body adapter                         |
+| `core/metamorphosis/`       | ✅     | Body adapter, transition animation              |
 
 ---
 

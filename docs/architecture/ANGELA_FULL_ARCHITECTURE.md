@@ -226,14 +226,14 @@ _handle_chat_request()
 
 **目錄**: `ai/lifecycle/`
 
-| 模組                           | 功能                   | 循環方式             |
-| ------------------------------ | ---------------------- | -------------------- |
-| **UserMonitor**                | 追蹤用戶在線/情緒/活動 | 背景循環，30 秒檢查  |
-| **ProactiveInteractionSystem** | 8 種主動互動觸發       | 背景循環，機會偵測   |
-| **LLMDecisionLoop**            | LLM 決策 7 種行為      | 背景循環，LLM prompt |
-| **BehaviorFeedbackLoop**       | 行為效果學習           | 背景循環，效果評估   |
-| **MemoryIntegrationLoop**      | 記憶結構化             | 背景循環，模式分析   |
-| **UnifiedMemoryCoordinator**   | HAM+Logic+CDM 橋接     | 被呼叫時執行         |
+| 模組                           | 功能                   | 循環方式                            |
+| ------------------------------ | ---------------------- | ----------------------------------- |
+| **UserMonitor**                | 追蹤用戶在線/情緒/活動 | 背景循環，30 秒檢查                 |
+| **ProactiveInteractionSystem** | 8 種主動互動觸發       | 背景循環，機會偵測                  |
+| **LLMDecisionLoop**            | LLM 決策 7 種行為      | 背景循環，LLM prompt                |
+| **BehaviorFeedbackLoop**       | 行為效果學習           | 🗑️ 已刪除 (AL Phase 1 / 2026-10-25) |
+| **MemoryIntegrationLoop**      | 記憶結構化             | 🗑️ 已刪除 (AL Phase 1 / 2026-10-25) |
+| **UnifiedMemoryCoordinator**   | HAM+Logic+CDM 橋接     | 被呼叫時執行                        |
 
 **主動互動觸發**:
 
@@ -1097,30 +1097,30 @@ AngelaLLMService (核心 LLM 路由)
 
 ### 10.11 其他核心子系統
 
-| 子系統                 | 檔案                                                                | 行數  | 功能                       |
-| ---------------------- | ------------------------------------------------------------------- | ----- | -------------------------- |
-| **CloudSync**          | `core/sync/cloud_sync.py`                                           | 468   | 跨裝置記憶同步 + 衝突解決  |
-| **ConnectionSession**  | `services/connection_session.py`                                    | 457   | WebSocket Session 生命週期 |
-| **ExecutionMonitor**   | `core/managers/execution_monitor.py`                                | 684   | 執行監控 + 終端機回應偵測  |
-| **AnchorLearning**     | `core/engine/anchor_learning.py`                                    | 420   | 語義錨點學習               |
-| **PetManager**         | `pet/pet_manager.py` 🗑️ 已刪除 (Phase 9-12 / §X #204)               | 478   | 寵物管理系統               |
-| **AuditLogger**        | `security/audit_logger.py`                                          | 455   | 安全審計日誌               |
-| **StateHashManager**   | `core/state/state_hash_manager.py`                                  | 329   | 狀態雜湊管理               |
-| **CardStore**          | `core/card/card_store.py`                                           | 214   | 卡片存儲系統               |
-| **ModuleManager**      | `core/system/module_manager/__init__.py`                            | 192   | 模組生命週期管理           |
-| **SecurityEncryption** | `core/security/encryption.py`                                       | 208   | 加密基礎設施               |
-| **KeyValidator**       | `core/security/key_validator.py`                                    | 279   | 金鑰驗證                   |
-| **BodyAdapter**        | `core/metamorphosis/body_adapter.py`                                | 364   | 軀體適應 ( metamorphosis)  |
-| **SoulCore**           | `core/metamorphosis/soul_core.py`                                   | 318   | 靈魂核心                   |
-| **CausalChain**        | `core/tracing/causal_chain.py`                                      | 173   | 因果鏈數據結構             |
-| **HardwareDetector**   | `shared/utils/hardware_detector.py`                                 | 402   | 硬體偵測                   |
-| **GoogleDriveService** | `integrations/google_drive_service.py`                              | 306   | Google Drive 整合          |
-| **AtlassianBridge**    | `integrations/atlassian_bridge.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 288   | Atlassian Jira/Confluence  |
-| **EconomyManager**     | `economy/economy_manager.py`                                        | 204   | 經濟系統                   | 🗑️ 已刪除 (Phase 9-12 / §X #204) |
-| **FormulaEngine**      | `ai/formula_engine/__init__.py`                                     | 309   | 公式引擎                   |
-| **ED3N 內部**          | `ai/ed3n/*.py` (16 files)                                           | ~4328 | ED3N 完整子系統            |
-| **GARDEN 內部**        | `ai/garden/*.py` (4 files)                                          | ~1842 | GARDEN 完整子系統          |
-| **HAM 內部**           | `ai/memory/ham_memory/*.py` (5 files)                               | ~1301 | HAM 完整子系統             |
+| 子系統                 | 檔案                                                                  | 行數  | 功能                       |
+| ---------------------- | --------------------------------------------------------------------- | ----- | -------------------------- |
+| **CloudSync**          | `core/sync/cloud_sync.py`                                             | 468   | 跨裝置記憶同步 + 衝突解決  |
+| **ConnectionSession**  | `services/connection_session.py`                                      | 457   | WebSocket Session 生命週期 |
+| **ExecutionMonitor**   | `core/managers/execution_monitor.py`                                  | 684   | 執行監控 + 終端機回應偵測  |
+| **AnchorLearning**     | `core/engine/anchor_learning.py`                                      | 420   | 語義錨點學習               |
+| **PetManager**         | `pet/pet_manager.py` 🗑️ 已刪除 (Phase 9-12 / §X #204)                 | 478   | 寵物管理系統               |
+| **AuditLogger**        | `security/audit_logger.py`                                            | 455   | 安全審計日誌               |
+| **StateHashManager**   | `core/state/state_hash_manager.py`                                    | 329   | 狀態雜湊管理               |
+| **CardStore**          | `core/card/card_store.py`                                             | 214   | 卡片存儲系統               |
+| **ModuleManager**      | `core/system/module_manager/__init__.py`                              | 192   | 模組生命週期管理           |
+| **SecurityEncryption** | `core/security/encryption.py`                                         | 208   | 加密基礎設施               |
+| **KeyValidator**       | `core/security/key_validator.py`                                      | 279   | 金鑰驗證                   |
+| **BodyAdapter**        | `core/metamorphosis/body_adapter.py`                                  | 364   | 軀體適應 ( metamorphosis)  |
+| **SoulCore**           | `core/metamorphosis/soul_core.py` 🗑️ 已刪除 (AL Phase 1 / 2026-10-25) | 318   | 靈魂核心                   |
+| **CausalChain**        | `core/tracing/causal_chain.py`                                        | 173   | 因果鏈數據結構             |
+| **HardwareDetector**   | `shared/utils/hardware_detector.py`                                   | 402   | 硬體偵測                   |
+| **GoogleDriveService** | `integrations/google_drive_service.py`                                | 306   | Google Drive 整合          |
+| **AtlassianBridge**    | `integrations/atlassian_bridge.py` 🗑️ 已刪除 (Phase 9-12 / §X #204)   | 288   | Atlassian Jira/Confluence  |
+| **EconomyManager**     | `economy/economy_manager.py`                                          | 204   | 經濟系統                   | 🗑️ 已刪除 (Phase 9-12 / §X #204) |
+| **FormulaEngine**      | `ai/formula_engine/__init__.py`                                       | 309   | 公式引擎                   |
+| **ED3N 內部**          | `ai/ed3n/*.py` (16 files)                                             | ~4328 | ED3N 完整子系統            |
+| **GARDEN 內部**        | `ai/garden/*.py` (4 files)                                            | ~1842 | GARDEN 完整子系統          |
+| **HAM 內部**           | `ai/memory/ham_memory/*.py` (5 files)                                 | ~1301 | HAM 完整子系統             |
 
 ---
 

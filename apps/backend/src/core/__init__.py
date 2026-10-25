@@ -68,22 +68,10 @@ _LAZY_IMPORTS = {
     "PossibilityState": "core.non_paradox_existence",
     "CoexistenceField": "core.non_paradox_existence",
     "GrayZoneVariableType": "core.non_paradox_existence",
-    # Maturity System
-    "MaturityLevel": "core.maturity.maturity_system",
-    "MaturityManager": "core.maturity.maturity_system",
-    "ExperienceTracker": "core.maturity.maturity_system",
-    "create_maturity_system": "core.maturity.maturity_system",
     # Creative Systems
     "AngelaRealVoice": "core.art.real_edge_tts",
     "AngelaRealBrowser": "core.art.real_playwright_browser",
     # Metamorphosis
-    "SoulCore": "core.metamorphosis.soul_core",
-    "SoulSignature": "core.metamorphosis.soul_core",
-    "IdentityCore": "core.metamorphosis.soul_core",
-    "MemoryEssence": "core.metamorphosis.soul_core",
-    "SoulCoreManager": "core.metamorphosis.soul_core",
-    "SoulComponent": "core.metamorphosis.soul_core",
-    "create_soul_core": "core.metamorphosis.soul_core",
     "BodyAdapter": "core.metamorphosis.body_adapter",
     "StateSnapshot": "core.metamorphosis.body_adapter",
     "TransferRecord": "core.metamorphosis.body_adapter",
@@ -283,23 +271,10 @@ __all__ = [
     "PossibilityState",
     "CoexistenceField",
     "GrayZoneVariableType",
-    # Maturity System
-    "MaturityLevel",
-    "MaturityManager",
-    "ExperienceTracker",
-    "create_maturity_system",
     # Creative Systems
     "AngelaRealVoice",
     "AngelaRealBrowser",
     # Metamorphosis Systems
-    # Soul Core
-    "SoulCore",
-    "SoulSignature",
-    "IdentityCore",
-    "MemoryEssence",
-    "SoulCoreManager",
-    "SoulComponent",
-    "create_soul_core",
     # Body Adapter
     "BodyAdapter",
     "StateSnapshot",

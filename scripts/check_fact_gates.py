@@ -786,9 +786,9 @@ TERM_PERSPECTIVES: Dict[str, Dict[str, str]] = {
         "ai": "γ 槽=狀態量；influence=事件量；routing mode=行為策略",
     },
     "identity": {
-        "sources": "zeta identity_continuity 槽 / soul_core IDENTITY / protocols identity_id",
+        "sources": "zeta identity_continuity 槽 / config identity per-user store / protocols identity_id",
         "human": "我是誰",
-        "ai": "zeta=敘事連續度量；soul_core=枚舉；identity_id=實體編號",
+        "ai": "zeta=敘事連續度量；config identity=名字與 per-user 覆寫；identity_id=實體編號",
     },
 }
 

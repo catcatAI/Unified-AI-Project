@@ -389,7 +389,7 @@ route 鉤子，三軸只做語料對位。遵循 `math_verifier` 的「單一真
 | C. 模態對位  | `SharedLatentSpace` + `cross_modal_router` + `multimodal_memory/retriever`                                      | `ai/multimodal/`                                      | 模態配對樣本已內建，序列化即餵錨點學習          |
 | D. 物理/化學 | `PhysicsDomainEngine` :459 / `ChemistryDomainEngine` :558 / `route_domain` :638                                 | `ai/memory/domain_ripple.py`                          | 引擎+路由已存在，只補公式求解器                 |
 | 短軸(域軸)   | `DOMAIN_REGISTRY`（math/chemistry/physics）                                                                     | `ai/memory/domain_ripple.py:609`                      | §0.1 域軸的現成值域                             |
-| 熱/冷分層    | `memory_integration_loop._promote_memories`（short→long-term 升溫）                                             | `ai/lifecycle/memory_integration_loop.py:424-447`     | §5.2「命中升溫」已實作                          |
+| 熱/冷分層    | ~~`memory_integration_loop._promote_memories`~~（模組已於 AL Phase 1 刪除，2026-10-25）                         | `ai/lifecycle/memory_integration_loop.py`（已刪）     | §5.2「命中升溫」需重新實作                      |
 | 一致性       | `ham_core_storage` 磁碟滿**跳過儲存不截斷**（與 §5.2 同策略）                                                   | `ai/memory/ham_memory/ham_core_storage.py:74-121`     | 冷層策略複用                                    |
 | 對齊鉤子     | `core/hsp/bridge/data_aligner.py`（stub）                                                                       | `connector.py:221-225`                                | 「align」名稱衝突處可掛真實錨點對位             |
 

@@ -114,7 +114,7 @@ class TestBug8HAMMissingMethods:
         assert results[0].content == "doc content"
 
     def test_methods_exist_for_hasattr_callers(self):
-        """llm_decision_loop / memory_integration_loop 的 hasattr 防護現在會通過。"""
+        """llm_decision_loop 的 hasattr 防護現在會通過。"""
         ham = self._make_ham()
         assert hasattr(ham, "get_recent_memories")
         assert hasattr(ham, "retrieve_emotional_memories")
@@ -180,8 +180,8 @@ class TestR85DeadPathFixes:
 
     def test_pollution_chain_full_reproduction_is_broken(self):
         """完整重現原污染鏈並驗證已斷鏈：patch 視窗內首次 import 消費模組 →
-        建構實例 → 型別必須是真实類。覆蓋 DLI / Heartbeat / AngelaModelCore
-        三個消費者的所有免疫建構點。"""
+        建構實例 → 型別必須是真实類。覆蓋 DLI / Heartbeat 兩個消費者的所有
+        免疫建構點。"""
         import importlib
 
         from core.bio.biological_integrator import BiologicalIntegrator
@@ -197,13 +197,12 @@ class TestR85DeadPathFixes:
 
         bio_mod.BiologicalIntegrator = _mock_factory
         try:
-            # 2. patch 視窗內「首次 import」三個消費模組（若先前已被 import 過，
-            #    del 重建不了；但本專案 DLI/heartbeat/model_core 只在消費時
-            #    建構，動態解析讓視窗内外都安全）
+            # 2. patch 視窗內「首次 import」兩個消費模組（若先前已被 import
+            #    過，del 重建不了；但本專案 DLI/heartbeat 只在消費時建構，
+            #    動態解析讓視窗内外都安全）
             for name in (
                 "core.life.digital_life_integrator",
                 "core.life.heartbeat",
-                "core.engine.angela_model_core",
             ):
                 if name in importlib.sys.modules:
                     mod = importlib.import_module(name)

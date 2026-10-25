@@ -821,79 +821,91 @@ POST /chat/unified (或 WS chat_message)
 
 #### 🟢 活躍（已接進主幹線，遷移時優先註冊）
 
-| 子系統       | 元件                                                       | 主幹線角色                  | 目前接法                                                         |
-| ------------ | ---------------------------------------------------------- | --------------------------- | ---------------------------------------------------------------- |
-| 生命整合     | `core/life/digital_life_integrator.py`                     | 中央聚合器（lifespan 單例） | 組裝 Bio+ActionExecutor+StateMatrix+Intent，訂閱 3 CNS 事件      |
-| 生物         | `core/bio/biological_integrator.py`                        | 情感/危機每輪分析           | chat_routes 呼叫 `_analyze_emotion_and_crisis()`                 |
-| 狀態         | `core/engine/state_matrix.py`                              | **核心矩陣**                | DLI 持有；chat_routes `_get_state_matrix()` fallback 第二實例 ⚠️ |
-| 生命週期     | `core/life/autonomous_life_cycle.py`                       | 主動行為 + 路由調整         | lifespan `get_lifecycle()` 共用單例；CNS 訂閱                    |
-| 心跳         | `core/life/heartbeat.py`                                   | 系統健康                    | lifespan `get_metabolic_heartbeat()`；CNS 訂閱 3 事件            |
-| 意圖         | `core/life/intent_model.py`                                | 路由調整 voter              | CNS 事件發送者；router 讀取                                      |
-| 路由         | `ai/meta/priority_negotiator.py`                           | **8 選民路由**              | router.py L80-87 註冊全部 voter                                  |
-| 執行閘       | `ai/core/execution_gate.py`                                | 工具調用安全閘              | chat_routes L687 每次 new；ModelBus 對齊 7 handlers              |
-| 代理         | `ai/agents/agent_manager.py` + `dynamic_agent_registry.py` | 任務代理路由                | chat_routes Step 8；寫 StateMatrix(αβγδ)                         |
-| 因果         | `ai/reasoning/causal_reasoning_engine.py`                  | 因果預測注入                | lifespan 初始化；chat_routes Step 9                              |
-| 記憶         | `ai/memory/ham_memory/ham_manager.py`                      | **記憶核心樞紐**            | ⚠️ **4+ 實例**（router/chat_service/drive/DLI）各自 new          |
-| 向量記憶     | `ai/memory/vector_store.py`                                | 語義搜尋                    | chat_service `semantic_search`（1s timeout 永久停用）            |
-| 落地學習     | `ai/memory/grounded_learning_manager.py`                   | 知識驗證（單例）            | chat_service 三處使用                                            |
-| 數理         | `ai/memory/domain_ripple.py`                               | 數理認知情                  | chat_routes L415 對 DLI 的 live StateMatrix4D                    |
-| 協調記憶     | `ai/memory/unified_memory_coordinator.py`                  | HAM+LU+CDM 整合             | router.py L389 建構，`store_experience`                          |
-| 對話上下文   | `ai/context/dialogue_context.py`                           | 對話狀態                    | chat_routes `_get_dialogue_ctx()` 單例                           |
-| 文化         | `ai/context/cultural_context.py`                           | 語言文化注入                | chat_service                                                     |
-| CNS 事件     | `core/system/state_store/global_store.py`                  | **事件匯流排**              | 訂閱 2 元件 6 筆 / 發送 41 筆                                    |
-| LLM 樞紐     | `services/llm/router.py`（2,072L）                         | **LLM 路由**                | get_llm_service() 註冊進 service_registry                        |
-| 外部閘道候選 | `services/llm/providers/*.py`                              | 9 LLM backend               | BaseLLMBackend.generate()/check_health() 統一                    |
-| WS 樞紐      | `services/websocket_manager.py`                            | 外部進/出                   | /ws → chat_routes；DLI 主動 → manager.broadcast                  |
-| 流式         | `ai/streaming/pipeline.py`                                 | SSE/WS 旁路                 | 僅 2 旁路，不接 LLM token 流                                     |
-| 插件         | `core/plugin/plugin_manager.py` + `hook_registry.py`       | 擴展點                      | lifespan `_init_plugins`；api/v1/endpoints/plugins.py            |
-| 追蹤         | `core/tracing/causal_tracer.py`                            | 因果鏈                      | api/v1/endpoints/trace.py 已掛載                                 |
-| 安全評估     | `core/security/secure_eval.py`                             | safe_eval                   | math_ripple/logic_unit/eta_axis                                  |
+| 子系統       | 元件                                                       | 主幹線角色                  | 目前接法                                                                                    |
+| ------------ | ---------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------- |
+| 生命整合     | `core/life/digital_life_integrator.py`                     | 中央聚合器（lifespan 單例） | 組裝 Bio+ActionExecutor+StateMatrix+Intent，訂閱 3 CNS 事件                                 |
+| 生物         | `core/bio/biological_integrator.py`                        | 情感/危機每輪分析           | chat_routes 呼叫 `_analyze_emotion_and_crisis()`                                            |
+| 狀態         | `core/engine/state_matrix.py`                              | **核心矩陣**                | DLI 持有；chat_routes `_get_state_matrix()` fallback 第二實例 ⚠️                            |
+| 生命週期     | `core/life/autonomous_life_cycle.py`                       | 主動行為 + 路由調整         | lifespan `get_lifecycle()` 共用單例；CNS 訂閱                                               |
+| 主動互動     | `ai/lifecycle/proactive_interaction_system.py`             | 8 種主動互動觸發            | lifespan `_try_start_proactive()` 建構並 `start()`（2026-10-25 更正舊「全庫無實例化」標記） |
+| 心跳         | `core/life/heartbeat.py`                                   | 系統健康                    | lifespan `get_metabolic_heartbeat()`；CNS 訂閱 3 事件                                       |
+| 意圖         | `core/life/intent_model.py`                                | 路由調整 voter              | CNS 事件發送者；router 讀取                                                                 |
+| 路由         | `ai/meta/priority_negotiator.py`                           | **8 選民路由**              | router.py L80-87 註冊全部 voter                                                             |
+| 執行閘       | `ai/core/execution_gate.py`                                | 工具調用安全閘              | chat_routes L687 每次 new；ModelBus 對齊 7 handlers                                         |
+| 代理         | `ai/agents/agent_manager.py` + `dynamic_agent_registry.py` | 任務代理路由                | chat_routes Step 8；寫 StateMatrix(αβγδ)                                                    |
+| 因果         | `ai/reasoning/causal_reasoning_engine.py`                  | 因果預測注入                | lifespan 初始化；chat_routes Step 9                                                         |
+| 記憶         | `ai/memory/ham_memory/ham_manager.py`                      | **記憶核心樞紐**            | ⚠️ **4+ 實例**（router/chat_service/drive/DLI）各自 new                                     |
+| 向量記憶     | `ai/memory/vector_store.py`                                | 語義搜尋                    | chat_service `semantic_search`（1s timeout 永久停用）                                       |
+| 落地學習     | `ai/memory/grounded_learning_manager.py`                   | 知識驗證（單例）            | chat_service 三處使用                                                                       |
+| 數理         | `ai/memory/domain_ripple.py`                               | 數理認知情                  | chat_routes L415 對 DLI 的 live StateMatrix4D                                               |
+| 協調記憶     | `ai/memory/unified_memory_coordinator.py`                  | HAM+LU+CDM 整合             | router.py L389 建構，`store_experience`                                                     |
+| 對話上下文   | `ai/context/dialogue_context.py`                           | 對話狀態                    | chat_routes `_get_dialogue_ctx()` 單例                                                      |
+| 文化         | `ai/context/cultural_context.py`                           | 語言文化注入                | chat_service                                                                                |
+| CNS 事件     | `core/system/state_store/global_store.py`                  | **事件匯流排**              | 訂閱 2 元件 6 筆 / 發送 41 筆                                                               |
+| LLM 樞紐     | `services/llm/router.py`（2,072L）                         | **LLM 路由**                | get_llm_service() 註冊進 service_registry                                                   |
+| 外部閘道候選 | `services/llm/providers/*.py`                              | 9 LLM backend               | BaseLLMBackend.generate()/check_health() 統一                                               |
+| WS 樞紐      | `services/websocket_manager.py`                            | 外部進/出                   | /ws → chat_routes；DLI 主動 → manager.broadcast                                             |
+| 流式         | `ai/streaming/pipeline.py`                                 | SSE/WS 旁路                 | 僅 2 旁路，不接 LLM token 流                                                                |
+| 插件         | `core/plugin/plugin_manager.py` + `hook_registry.py`       | 擴展點                      | lifespan `_init_plugins`；api/v1/endpoints/plugins.py                                       |
+| 追蹤         | `core/tracing/causal_tracer.py`                            | 因果鏈                      | api/v1/endpoints/trace.py 已掛載                                                            |
+| 安全評估     | `core/security/secure_eval.py`                             | safe_eval                   | math_ripple/logic_unit/eta_axis                                                             |
 
 #### 🟡 半活/待接（有實作但缺對接點或單例重複）
 
-| 子系統          | 元件                                                                                                      | 問題                                                                                 |
-| --------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| 座標軸          | `core/state/axis.py` + `axis_field.py` + `eta_axis.py` + `axis_port_registry.py`                          | **4 檔案分裂**，無統一介面                                                           |
-| θ 路由          | `core/engine/theta_router.py`                                                                             | **空參數實例化**（prompt_builder L49 `ThetaRouter()`）→ theta_values 回傳 `{}`       |
-| θ 三件套        | `port_channel.py` / `axis_port_registry.py` / `state_matrix_adapter.py`                                   | 僅 docstring/playground，**request path 全未接**                                     |
-| 學習整合        | `ai/ed3n/learning_integration.py`                                                                         | chat_service 有接（synchronize_knowledge）                                           |
-| 字典            | `ai/ed3n/dictionary_layer.py` + `ai/garden/dictionary.py`                                                 | 各自獨立介面，需統一                                                                 |
-| 深度字典        | `ai/ed3n/continuous_learning.py`                                                                          | 有接（load/save）                                                                    |
-| 外部分支        | `core/life/cyber_identity.py`、`self_generation.py`、`evolution_engine.py`、`tickle_reflex_system.py`     | 僅 autonomous facade / bio re-export                                                 |
-| 感知            | `core/perception/*.py`（visual/auditory sampler, attention）                                              | vision_service/audio_service 用，**與 StateMatrix4D 無接線**                         |
-| 生物細節        | `core/bio/`（endocrine, tactile, emotional_blending, cerebellum, habit, trauma, hormone_kinetics）        | 被 DLI/heartbeat 用，但無統一主幹線對接                                              |
-| DLI 記憶橋      | `core/bio/memory_neuroplasticity_bridge.py`                                                               | **`DLI.memory_bridge = None` 從未賦值** → trigger_consolidation 全 no-op             |
-| 落地記憶        | `ai/memory/cognitive_pipeline.py`、`attractor_field.py`                                                   | 僅 lab/playground，**生產未用**                                                      |
-| 決策記憶        | `ai/lifecycle/llm_decision_loop.py`                                                                       | 需 `get_recent_memories` 但 HAM 無此法 → hasattr 靜默跳過                            |
-| 協調整合        | `ai/lifecycle/memory_integration_loop.py`、`proactive_interaction_system.py`、`behavior_feedback_loop.py` | **全庫無實例化**（設計有但沒接）                                                     |
-| LLM 決策 import | `ai/core/dynamic_threshold_manager.py:455`                                                                | **import 路徑錯**（services.llm.llm_decision_loop 不存在）→ 被 except ImportError 吞 |
-| 協調器記憶      | `ai/memory/unified_memory_coordinator.py`                                                                 | 呼叫 `query_core_memory` 但 HAM 無此法                                               |
-| 記憶整合        | `ai/context/integration_with_ham.py`                                                                      | **HAM import 全註解**（dead）                                                        |
+| 子系統          | 元件                                                                                               | 問題                                                                                                     |
+| --------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| 座標軸          | `core/state/axis.py` + `axis_field.py` + `eta_axis.py` + `axis_port_registry.py`                   | **4 檔案分裂**，無統一介面                                                                               |
+| θ 路由          | `core/engine/theta_router.py`                                                                      | **空參數實例化**（prompt_builder L49 `ThetaRouter()`）→ theta_values 回傳 `{}`                           |
+| θ 三件套        | `port_channel.py` / `axis_port_registry.py` / `state_matrix_adapter.py`                            | 僅 docstring/playground，**request path 全未接**                                                         |
+| 學習整合        | `ai/ed3n/learning_integration.py`                                                                  | chat_service 有接（synchronize_knowledge）                                                               |
+| 字典            | `ai/ed3n/dictionary_layer.py` + `ai/garden/dictionary.py`                                          | 各自獨立介面，需統一                                                                                     |
+| 深度字典        | `ai/ed3n/continuous_learning.py`                                                                   | 有接（load/save）                                                                                        |
+| 外部分支        | `core/life/cyber_identity.py`、`self_generation.py`、`tickle_reflex_system.py`                     | 僅 autonomous facade / bio re-export                                                                     |
+| 感知            | `core/perception/*.py`（visual/auditory sampler, attention）                                       | vision_service/audio_service 用，**與 StateMatrix4D 無接線**                                             |
+| 生物細節        | `core/bio/`（endocrine, tactile, emotional_blending, cerebellum, habit, trauma, hormone_kinetics） | 被 DLI/heartbeat 用，但無統一主幹線對接                                                                  |
+| DLI 記憶橋      | `core/bio/memory_neuroplasticity_bridge.py`                                                        | **`DLI.memory_bridge = None` 從未賦值** → trigger_consolidation 全 no-op                                 |
+| 落地記憶        | `ai/memory/cognitive_pipeline.py`、`attractor_field.py`                                            | 僅 lab/playground，**生產未用**                                                                          |
+| 決策記憶        | `ai/lifecycle/llm_decision_loop.py`                                                                | 需 `get_recent_memories` 等 3 法 —— HAM 已補齊（§11.3 #8），hasattr 防護通過（舊記「HAM 無此法」已過時） |
+| LLM 決策 import | `ai/core/dynamic_threshold_manager.py:455`                                                         | **import 路徑錯**（services.llm.llm_decision_loop 不存在）→ 被 except ImportError 吞                     |
+| 協調器記憶      | `ai/memory/unified_memory_coordinator.py`                                                          | 呼叫 `query_core_memory` 但 HAM 無此法                                                                   |
+| 記憶整合        | `ai/context/integration_with_ham.py`                                                               | **HAM import 全註解**（dead）                                                                            |
 
 #### 🔴 死碼 / 孤兒（無 production 消費者，設計時不可假設存在）
 
-| 子系統      | 元件                                                                                                                                                          | 說明                                                                  |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| 頂層安全    | `security/`（audit_logger, content_filter, permission_control, safety_audit）                                                                                 | **4 檔全孤兒**，僅測試引用                                            |
-| HTTP 安全   | `core/security/AuthMiddleware`                                                                                                                                | DORMANT（FastAPI 無 auth dependency）；`setup_middleware()` 只有 CORS |
-| 簽章        | `shared/security_middleware.SignedCommunicationMiddleware`                                                                                                    | 定義但從未註冊（no-op）                                               |
-| 密鑰        | `shared/key_manager.UnifiedKeyManager`                                                                                                                        | **從未實例化**；`set_key_manager()` 無人呼叫                          |
-| MCP         | `mcp/connector.py`                                                                                                                                            | **production 零使用**，僅測試                                         |
-| 監控        | `monitoring/system_monitor.py`                                                                                                                                | ops_routes 用內聯 psutil，不經它                                      |
-| 遊戲        | `game/`（12 檔）                                                                                                                                              | **完全獨立死碼**，無 AI core 接線                                     |
-| 片段        | `fragmenta/`（4 檔）                                                                                                                                          | src 內無任何 import                                                   |
-| 模型        | `models/api_models.py` + `services/api_models.py` shim                                                                                                        | 無 production route 使用                                              |
-| 熱載入      | `services/hot_reload_service.py`                                                                                                                              | 孤兒                                                                  |
-| LLM shim    | `services/angela_llm_service.py`                                                                                                                              | re-export shim                                                        |
-| 幽靈        | `core/metacognition/`、`core/ethics/`、`core/evolution/`、`core/feedback_loop_engine.py`                                                                      | docstring-only stub                                                   |
-| 事件        | `core/event_loop_system.py`                                                                                                                                   | 自稱 DEPRECATED，production 零引用                                    |
-| 監控實時    | `core/real_time_monitor.py`（1,162L）                                                                                                                         | 無人用                                                                |
-| 變形        | `core/metamorphosis/`、`core/maturity/`、`core/clock/`、`core/hardware/`、`core/desktop/`、`core/card/`、`core/ripple/`、`core/influence/`、`core/knowledge/` | 僅 core/**init** lazy export 或 tests                                 |
-| 上下文 lab  | `ai/context/manager_fixed.py`、`model_context.py`、`tool_context.py`、`config.py`、`storage/*`                                                                | 僅 demo_context_system 使用                                           |
-| 記憶重複    | `ai/memory/importance_scorer.py`（根目錄版）                                                                                                                  | 與 ham_memory 版重複，無消費者                                        |
-| 執行橋      | `core/action_execution_bridge.py`                                                                                                                             | 半活（僅 action_executor 用）                                         |
-| router 死碼 | `router.py` L747-771 `_try_action_router`/`_try_router_chain`、L772 `_try_agent_routing`                                                                      | 定義但 generate_response 鏈未呼叫                                     |
-| MQTT        | `core/hsp/fallback/fallback_protocols.py` HTTPProtocol、`MessageBridge`、`DataAligner`、`StreamSynthesizer`                                                   | stub 或未連通路徑                                                     |
+| 子系統      | 元件                                                                                                                                        | 說明                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| 頂層安全    | `security/`（audit_logger, content_filter, permission_control, safety_audit）                                                               | **4 檔全孤兒**，僅測試引用                                            |
+| HTTP 安全   | `core/security/AuthMiddleware`                                                                                                              | DORMANT（FastAPI 無 auth dependency）；`setup_middleware()` 只有 CORS |
+| 簽章        | `shared/security_middleware.SignedCommunicationMiddleware`                                                                                  | 定義但從未註冊（no-op）                                               |
+| 密鑰        | `shared/key_manager.UnifiedKeyManager`                                                                                                      | **從未實例化**；`set_key_manager()` 無人呼叫                          |
+| MCP         | `mcp/connector.py`                                                                                                                          | **production 零使用**，僅測試                                         |
+| 監控        | `monitoring/system_monitor.py`                                                                                                              | ops_routes 用內聯 psutil，不經它                                      |
+| 遊戲        | `game/`（12 檔）                                                                                                                            | **完全獨立死碼**，無 AI core 接線                                     |
+| 片段        | `fragmenta/`（4 檔）                                                                                                                        | src 內無任何 import                                                   |
+| 模型        | `models/api_models.py` + `services/api_models.py` shim                                                                                      | 無 production route 使用                                              |
+| 熱載入      | `services/hot_reload_service.py`                                                                                                            | 孤兒                                                                  |
+| LLM shim    | `services/angela_llm_service.py`                                                                                                            | re-export shim                                                        |
+| 幽靈        | `core/metacognition/`、`core/ethics/`、`core/evolution/`、`core/feedback_loop_engine.py`                                                    | docstring-only stub                                                   |
+| 事件        | `core/event_loop_system.py`                                                                                                                 | 自稱 DEPRECATED，production 零引用                                    |
+| 監控實時    | `core/real_time_monitor.py`（1,162L）                                                                                                       | 無人用                                                                |
+| 變形        | `core/metamorphosis/`、`core/clock/`、`core/hardware/`、`core/desktop/`、`core/card/`、`core/ripple/`、`core/influence/`、`core/knowledge/` | 僅 core/**init** lazy export 或 tests                                 |
+| 上下文 lab  | `ai/context/manager_fixed.py`、`model_context.py`、`tool_context.py`、`config.py`、`storage/*`                                              | 僅 demo_context_system 使用                                           |
+| 記憶重複    | `ai/memory/importance_scorer.py`（根目錄版）                                                                                                | 與 ham_memory 版重複，無消費者                                        |
+| 執行橋      | `core/action_execution_bridge.py`                                                                                                           | 半活（僅 action_executor 用）                                         |
+| router 死碼 | `router.py` L747-771 `_try_action_router`/`_try_router_chain`、L772 `_try_agent_routing`                                                    | 定義但 generate_response 鏈未呼叫                                     |
+| MQTT        | `core/hsp/fallback/fallback_protocols.py` HTTPProtocol、`MessageBridge`、`DataAligner`、`StreamSynthesizer`                                 | stub 或未連通路徑                                                     |
+
+> **2026-10-25 AL Phase 1 清場**：本節各表原列的孤兒已刪除（git 歷史可復原）——
+> `core/maturity/`、`core/life/evolution_engine.py`、
+> `core/metamorphosis/soul_core.py`、`core/engine/angela_model_core.py`、
+> `ai/lifecycle/memory_integration_loop.py`、
+> `ai/lifecycle/behavior_feedback_loop.py`。保留：`cyber_identity.py` 與
+> `self_generation.py`（`core/autonomous` 有實例化、版本一致性測試依賴）；前端
+> `maturity-tracker.js` 保留——判據為**有真實接線** （`app.js:723`
+> `new MaturityTracker()`、`app.js:244-246`
+> 掛websocket/stateMatrix、`plugin-manager.js:515` 暴露、兩個 `index.html`
+> 載入）。原判據「`sync_shared_js.py` 閘會 exit 1」經實測**不成立**
+> （移走 source 後 `--check` 與預設 vendor 模式皆 exit 0）。
 
 ### 11.3 主幹線設計必須處理的「重複/斷點」清單
 
@@ -926,7 +938,7 @@ POST /chat/unified (或 WS chat_message)
 │  LearningCoordinator (learning.py)                               │
 │  · continuous_learning ✅ / learning_loop ✅ / learning_orchestrator ✅ │
 │  · 目前由 chat_service L201-202 內嵌觸發 🔧 → 改 CNS 事件驅動       │
-│  · memory_integration_loop / proactive_interaction 未接 🔴         │
+│  · proactive_interaction 已接 lifespan（餘兩件已於 AL Phase 1 刪）│
 │  字典 registry: DictionaryLayer ✅ / VectorDictionary ✅            │
 │  模組 registry: EmotionSystem / IntentModel / ExecutionGate /     │
 │                AgentManager / Crisis / CausalReasoning             │
@@ -951,7 +963,7 @@ POST /chat/unified (或 WS chat_message)
 
 本次盤點涵蓋：`ai/`（memory/context/lifecycle/meta/agents/multimodal/ed3n/garden/
 streaming）、`core/`（life/bio/engine/state/security/perception/autonomous/tracing/
-allocation/card/i18n/plugin/ripple/influence/maturity/knowledge/evolution/ethics/
+allocation/card/i18n/plugin/ripple/influence/knowledge/evolution/ethics/
 metacognition/metamorphosis/desktop/hardware/clock/feedback）、`services/`
 （頂層 + llm + handlers + api）、`api/`（routes + lifespan + v1/endpoints）、
 `shared/`、`security/`、`mcp/`、`monitoring/`、`game/`、`fragmenta/`、`models/`、
@@ -972,7 +984,7 @@ metacognition/metamorphosis/desktop/hardware/clock/feedback）、`services/`
 - [x] `apps/backend/src/ai/`（231 檔：ed3n/garden/memory/meta/context/agents/alignment/
       multimodal/lifecycle/response/streaming）
 - [x] `apps/backend/src/core/`（life/bio/engine/state/security/perception/autonomous/
-      tracing/allocation/card/i18n/plugin/ripple/influence/maturity/knowledge/evolution/
+      tracing/allocation/card/i18n/plugin/ripple/influence/knowledge/evolution/
       ethics/metacognition/metamorphosis/desktop/hardware/clock/feedback/hsp/system）
 - [x] `apps/backend/src/services/`（chat/llm/multimodal/vision/audio/document/weather/
       atlassian/handlers/websocket/api_models）

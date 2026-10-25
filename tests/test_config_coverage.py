@@ -351,14 +351,6 @@ def test_self_model_resolves_its_name_at_import(monkeypatch):
         importlib.reload(cyber_identity)
 
 
-def test_create_soul_core_honours_an_explicit_name():
-    """It used to accept `name` and pass a hardcoded literal instead."""
-    from core.metamorphosis.soul_core import create_soul_core
-
-    assert create_soul_core().identity.name == "Angela"
-    assert create_soul_core(name="TestSoul").identity.name == "TestSoul"
-
-
 def test_name_is_not_read_from_a_reentrant_live_check():
     """`angela_agent.py` uses "Angela" as a *game player* name.
 
