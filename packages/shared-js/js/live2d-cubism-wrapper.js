@@ -532,6 +532,10 @@ class Live2DCubismWrapper {
     const srcFormat = this.gl.RGBA
     const srcType = this.gl.UNSIGNED_BYTE
 
+    // Cubism 的 UV 約定是 v=0 對應圖像**底部**（GL 約定），而 WebGL 未設
+    // UNPACK_FLIP_Y 時 t=0 會取圖像第一列（頂部）——不翻轉的話整張圖集在
+    // 部件內上下鏡像，就是「五官與頭髮碎裂錯位」的第三層根因。
+    this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true)
     this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, imageToUse)
 
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR)
@@ -882,8 +886,10 @@ class Live2DCubismWrapper {
       let canvasH = 1.0
       if (canvasinfo) {
         ppUnit = canvasinfo.PixelsPerUnit || 1.0
-        originX = canvasinfo.OriginX || 0.0
-        originY = canvasinfo.OriginY || 0.0
+        // CubismCore 的鍵名是 CanvasOriginX/CanvasOriginY（舊碼讀
+        // OriginX 永遠 undefined，log 出假的 Origin=(0,0)）
+        originX = canvasinfo.CanvasOriginX || 0.0
+        originY = canvasinfo.CanvasOriginY || 0.0
         canvasW = canvasinfo.CanvasWidth || 1.0
         canvasH = canvasinfo.CanvasHeight || 1.0
         console.log(
@@ -928,9 +934,12 @@ class Live2DCubismWrapper {
                                 uniform vec4 u_transform; // x: scaleX, y: scaleY, z: offsetX, w: offsetY
                                 varying vec2 v_texCoord;
                                 void main() {
-                                    // Transform model-space coords to clip-space [-1, 1]
+                                    // CubismCore 輸出 y-up，clip 空間也是 y-up，
+                                    // 直接映射即可——官方 framework 的
+                                    // gl_Position = u_matrix * a_position 同樣
+                                    // 不翻轉。舊碼的 -pos.y 會把模型上下顛倒。
                                     vec2 pos = a_position * u_transform.xy + u_transform.zw;
-                                    gl_Position = vec4(pos.x, -pos.y, 0.0, 1.0);
+                                    gl_Position = vec4(pos.x, pos.y, 0.0, 1.0);
                                     v_texCoord = a_texCoord;
                                 }
                             `
@@ -949,23 +958,73 @@ class Live2DCubismWrapper {
 
             gl.useProgram(self.shaderProgram)
 
-            // CubismCore with PPU=2000 outputs vertices in [-0.5, 0.5]
-            // We scale 2x to fill [-1, 1] clip space, Y is flipped in shader
-            if (!self._transformComputed) {
-              // Simple 2:1 scale — CubismCore normalizes coords for us
-              // Adjust for canvas aspect ratio
-              const canvasAspect = gl.canvas.width / gl.canvas.height
+            // 從 drawable 頂點掃出模型全局 bbox（只掃一次）。CubismCore 的輸出
+            // 不保證落在 [-0.5, 0.5]：Epsilon_free 實測 x∈[-0.36,0.348]、
+            // y∈[-0.774,0.725]，所以不能寫死 scaleY=2.0（舊註解「Core 輸出
+            // [-0.5,0.5]」對這個模型不成立，會把上下段裁掉）。
+            if (!self._modelBounds) {
+              const allPositions = drawables.vertexPositions
+              let bx0 = Infinity
+              let bx1 = -Infinity
+              let by0 = Infinity
+              let by1 = -Infinity
+              if (allPositions) {
+                for (let vi = 0; vi < allPositions.length; vi++) {
+                  const pv = allPositions[vi]
+                  if (!pv) continue
+                  for (let k = 0; k < pv.length; k += 2) {
+                    const vx = pv[k]
+                    const vy = pv[k + 1]
+                    if (vx < bx0) bx0 = vx
+                    if (vx > bx1) bx1 = vx
+                    if (vy < by0) by0 = vy
+                    if (vy > by1) by1 = vy
+                  }
+                }
+              }
+              if (bx0 <= bx1 && by0 <= by1) {
+                self._modelBounds = {
+                  cx: (bx0 + bx1) / 2,
+                  cy: (by0 + by1) / 2,
+                  spanX: bx1 - bx0,
+                  spanY: by1 - by0,
+                }
+              }
+            }
 
-              // Scale uniformly, fit taller dimension
-              self._scaleX = 2.0 / canvasAspect // narrower for wide canvases
-              self._scaleY = 2.0
+            if (self._modelBounds) {
+              // 每幀依當前 canvas 尺寸重算：resize() 改的是 canvas.width/
+              // height，只算一次會留下舊比例。clip 空間每單位 x/y 對應
+              // canvasW/2、canvasH/2 像素，要保持模型不失真就得
+              // scaleX/scaleY = canvasH/canvasW，再取能完整容納模型的縮放。
+              const mb = self._modelBounds
+              const canvasW = gl.canvas.width || 1
+              const canvasH = gl.canvas.height || 1
+              const margin = 0.92
+              const s = Math.min(
+                (2 * margin) / Math.max(mb.spanY, 1e-6),
+                (2 * margin * canvasW) / (Math.max(mb.spanX, 1e-6) * canvasH)
+              )
+              self._scaleX = (s * canvasH) / canvasW
+              self._scaleY = s
+              self._offsetX = -mb.cx * self._scaleX
+              self._offsetY = -mb.cy * self._scaleY
+              if (!self._transformLogged) {
+                self._transformLogged = true
+                console.log(
+                  `[Renderer] Transform: scale=(${self._scaleX.toFixed(4)}, ${self._scaleY.toFixed(4)}), ` +
+                    `model span=(${mb.spanX.toFixed(3)}, ${mb.spanY.toFixed(3)}), ` +
+                    `canvas=${canvasW}x${canvasH}`
+                )
+              }
+            } else if (!self._transformComputed) {
+              // 拿不到頂點（理論上不發生）：退化成單位轉換而不是寫死 2.0
+              self._scaleX = 1.0
+              self._scaleY = 1.0
               self._offsetX = 0.0
               self._offsetY = 0.0
               self._transformComputed = true
-
-              console.log(
-                `[Renderer] Transform: scale=(${self._scaleX.toFixed(4)}, ${self._scaleY.toFixed(4)}), canvasAspect=${canvasAspect.toFixed(2)}`
-              )
+              console.warn('[Renderer] model bbox unavailable, using identity transform')
             }
 
             // Upload transform uniform
