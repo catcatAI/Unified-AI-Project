@@ -415,6 +415,44 @@ hunk 在 HEAD 同樣不合，非本輪所觸，未動）。
     的 E1 方法 ——固定同一段文本、只動 snapshot 欄位，看 `resolved_by`
     是否指名到對應 voter、行為是否可重複翻轉。這是「AL 狀態不是提示詞裝飾」的唯一有效證明。
 
+#### ✅ Phase 2 item 1 完成記錄 — ALState schema 與讀路徑（2026-10-27）
+
+**交付**：`apps/backend/src/core/life/al_state.py`（schema + 時鐘 + 唯讀快照）＋
+`tests/core/test_al_state.py`
+25 條。schema 先行，本 commit 不接任何新計算——每欄接真計算按計畫逐項、每項一 commit。
+
+- **8 欄 schema**（契約 §3.2）落成 `FIELD_CLASSES`：`born_at`/`ticks`/
+  `life_phase`=invariant、`health`/`emotion`=fast、`intensity`/`tendency`
+  =slow、`drift`=derived；`maturity` 依 D9 不進 schema。
+- **I9 歸因**：`ALSnapshot.as_dict()` 必含 `version` + `effective` + 分量 +
+  `weights` + `source`，每欄 `source` 記 provenance、未觀測即 `None`。`weights`
+  v1 =
+  `{ai:1.0, user:0.0, group_fast:0.0, group_slow:0.0}`（D7 群體留槽位）；`effective`
+  與分量恆 `None`——參數層一階濾波（§7.2）尚未接線，D11 未觀測不寫假數。
+- **I1/I2**：`validate_weights()` 驗 `Σw = 1 ± 1e-6` 與
+  `w_self ≥ al_w_self_min`（`threshold_value`
+  配置鍵、預設 0.5＝自己至少佔一半）； `get_al_state()` 出口呼叫
+  `validate_snapshot()`，違反即拋（boot 失敗語意）。
+- **I3 機械保證**：`_persist()` 對任何 `derived` 鍵直接拋
+  `ALValidationError`——drift 落盤在結構上不可能，不靠「記得別寫」。
+- **單一時鐘（§4）**：`init_clock()`
+  先讀檔、有即沿用（跨重啟**不得以當前時間重建**，§4.4）；`advance_tick()`
+  每次推進落盤；缺檔 → `(None, None)`（D11），讀路徑不偷寫。
+- **讀路徑（§9）**：core 側單例直接讀——`intensity` ←
+  `peek_life_intensity()`（Phase 1 的唯讀路徑）、`tendency` ←
+  `get_all_blended_tendencies()`；實例握在 api 側的 `life_phase`/
+  `health`/`drift` 走 provider 登記簿 `register_al_source()`（只收
+  `PROVIDABLE_SOURCES` 三名，打錯字直接拋），item
+  3 由 lifespan 統一註冊——AL 不出站伸手。
+- **`emotion` v1 恆 `None`**：情緒實例在 `ai/alignment`，AL 出站 import `ai.*`
+  即 I8 違規（Phase 3 要修的 9 處，不新增第 10 處）；`emotion` 不在
+  `PROVIDABLE_SOURCES`，登記也登不進來，等 §8 `submit_event` 事件通道。
+
+**驗證**：25 條測試全過——含 I8 自檢（AST 掃模組 import 只有 stdlib +
+`core.*`）、跨重啟 `born_at`/`ticks` 不歸零、I3 拒寫、來源故障降級
+`None`；相鄰 4 檔合計 **55 passed**；flake8 0、black 過、 `check_fact_gates.py`
+ALL PASS。
+
 ### Phase 3 — 割邊：把 AL 從 AI 層拔出來（3–5 天，**主戰場**）
 
 - **做**：
