@@ -9,15 +9,20 @@
 
 三個量與觀測源（語義映射 2026-10-27 使用者裁決）：
 
-- **該記多久 ``retention_seconds`` ← ``drift{zeta,eta}``**：系統變動越快，
+- **該記多久 ``retention_seconds`` ← ``drift{zeta,eta,identity}``**：系統變動越快，
   舊記憶越快過時 → 留短。取**已觀測鍵的最大值**（漂移的語義是「變化最快
   的那一面」），線性壓縮、10% 為地板（再怎麼動盪，剛存下的經驗也該活過
-  最短的一段時間）。觀測源是 2b/2c 接好的 ζ（異常對佔比）與 η（模組組成
-  對稱差）——policy 直接消費本計畫前幾項的真值。
+  最短的一段時間）。觀測源是 2b/2c 接好的 ζ（異常對佔比）、η（模組組成
+  對稱差）與 ``identity``（身份離開錨**且仍在動**的量，2026-10-28 起）——
+  ``identity`` 只在確認漂移時才 > 0，所以它進最大值時語義仍是「正在變動」，
+  不會把「穩定地長離了初始」誤當成動盪。
 - **多重 ``weight`` ← ``intensity``**：生命強度越高，編碼越該加權
   —— ``weight = 0.5 + intensity ∈ [0.5, 1.5]``（中強度 0.5 → 1.0 中性）。
-- **該固化嗎 ``consolidate`` ← ``life_phase == "CONSOLIDATION"``**：鞏固
-  階段才定型；其他階段與未觀測都不固化。
+- **該固化嗎 ``consolidate`` ← ``life_phase == "CONSOLIDATION"``，且
+  ``drift["identity"] == 0``**：鞏固階段才定型；**身份正在離開錨且仍在動時
+  不固化**（2026-10-28 的固化閘，觀測源 ``core/life/identity_drift.py``）——
+  閘只延後保護，不改寫任何狀態值，所以不碰契約 Q3「修正過頭會抹平生命」。
+  其他階段與未觀測都不固化。
 
 **D11**：任一觀測源缺席 → 該量退基準值，``source`` 標 ``"default"``；
 執行側只對 ``"state"`` 的量改變記憶行為——未觀測不動現行規則。
@@ -73,8 +78,12 @@ class RetentionPolicy:
 
 
 def _finite_float(value: Any) -> float | None:
-    """Coerce to a finite float; None/NaN/inf → ``None``（不可觀測）。"""
-    if value is None:
+    """Coerce to a finite float; None/NaN/inf/bool/非數字 → ``None``（不可觀測）。
+
+    ``bool`` 也擋：``True`` 進 float 欄位是型別錯，被讀成 1.0 會讓一個
+    沒量過的量看起來「拉滿」（D11 的同一件事：壞型別 = 未觀測）。
+    """
+    if value is None or isinstance(value, bool):
         return None
     try:
         number = float(value)
@@ -117,11 +126,23 @@ def retention_policy(snapshot: ALSnapshot) -> RetentionPolicy:
         weight = WEIGHT_BASE + WEIGHT_GAIN * intensity
         weight_source = _SOURCE_STATE
 
-    # --- 該固化嗎 ← life_phase --------------------------------------------
+    # --- 該固化嗎 ← life_phase + 身份漂移閘 -------------------------------
     consolidate = False
     consolidate_source = _SOURCE_DEFAULT
     if snapshot.life_phase is not None:
         consolidate = str(snapshot.life_phase).upper() == CONSOLIDATION_PHASE
+        consolidate_source = _SOURCE_STATE
+
+    # 固化閘（2026-10-28）：``drift["identity"] > 0`` ＝ 身份正在離開錨**且仍在
+    # 動**（`core/life/identity_drift.py` 的 confirmed 條件，兩者缺一不可）。
+    # 還沒定型的自我不該把記憶永久保護起來 —— 噪音固化成人格，正是衰減/固化
+    # 邊界要防的那一格。鍵缺席（未觀測）或 0.0（觀測到沒在漂）→ 不動原判定；
+    # 被閘擋下時決定來自觀測 → source 標 state（D11/I9 逐量歸因）。
+    identity_drift = (
+        _finite_float(snapshot.drift.get("identity")) if isinstance(snapshot.drift, dict) else None
+    )
+    if identity_drift is not None and identity_drift > 0.0:
+        consolidate = False
         consolidate_source = _SOURCE_STATE
 
     return RetentionPolicy(

@@ -8,7 +8,8 @@
    未觀測，不炸。
 2. **語義映射**（2026-10-27 使用者裁決）：保留期 ← drift 取已觀測鍵
    最大值、線性壓縮、10% 地板；權重 ← intensity（`0.5 + i`，界限
-   [0.5, 1.5]）；固化 ← `life_phase == "CONSOLIDATION"`（僅此一格）。
+   [0.5, 1.5]）；固化 ← `life_phase == "CONSOLIDATION"`，**且身份不在漂移中**
+   （2026-10-28 的固化閘，見 `TestConsolidationIdentityGate`）。
 3. **逐量歸因獨立**（I9）：三個 `source` 各記各的，一個觀測缺席不牽連
    另外兩個。
 4. **純性**（I6 可重放）：同快照同策略、快照不被修改、只讀三個觀測欄
@@ -192,3 +193,36 @@ class TestPurityAndScope:
         payload = retention_policy(_snap()).as_dict()
         assert set(payload) == {"retention_seconds", "weight", "consolidate", "source"}
         assert isinstance(payload["source"], dict)
+
+
+class TestConsolidationIdentityGate:
+    """固化閘（2026-10-28）：`drift["identity"] > 0` ＝ 身份正在離開錨且仍在動。
+
+    觀測源是 `core/life/identity_drift.py`（契約 §6 距離錨）。還沒定型的自我
+    不該把記憶永久保護起來 —— 噪音固化成人格，正是衰減/固化邊界要防的那一格。
+    鍵缺席（未觀測）或 0.0（量到沒在漂）一律不動原判定（D11）。
+    """
+
+    def test_confirmed_identity_drift_blocks_consolidation(self):
+        policy = retention_policy(_snap(life_phase="CONSOLIDATION", drift={"identity": 0.42}))
+        assert policy.consolidate is False
+        assert policy.source["consolidate"] == "state", "決定來自觀測，不是預設"
+
+    def test_observed_zero_identity_drift_does_not_block(self):
+        policy = retention_policy(_snap(life_phase="CONSOLIDATION", drift={"identity": 0.0}))
+        assert policy.consolidate is True
+
+    def test_unobserved_identity_key_leaves_the_phase_rule_alone(self):
+        policy = retention_policy(_snap(life_phase="CONSOLIDATION", drift={"zeta": 0.9}))
+        assert policy.consolidate is True, "鍵缺席 = 未觀測，不動原判定（D11）"
+
+    @pytest.mark.parametrize("bad", [float("nan"), float("inf"), None, "oops", True])
+    def test_non_finite_identity_key_is_treated_as_unobserved(self, bad):
+        policy = retention_policy(_snap(life_phase="CONSOLIDATION", drift={"identity": bad}))
+        assert policy.consolidate is True
+
+    def test_identity_key_participates_in_the_retention_max(self):
+        """`identity` 只在確認漂移時 > 0，所以它進最大值時語義仍是「正在變動」。"""
+        policy = retention_policy(_snap(drift={"identity": 0.5}))
+        assert policy.retention_seconds == pytest.approx(BASE_RETENTION_SECONDS * 0.5)
+        assert policy.source["retention"] == "state"
