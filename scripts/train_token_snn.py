@@ -19,12 +19,18 @@ import random
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-from ai.ed3n.token_snn import CharVocab, TokenConfig, TokenSNN  # noqa: E402
+from ai.ed3n.token_snn import (  # noqa: E402
+    CharVocab,
+    TokenConfig,
+    TokenSNN,
+    TokenVocab,
+    resolve_device,
+)
 
 DEFAULT_TRAIN = REPO_ROOT / "apps" / "backend" / "data" / "processed" / "core_train.jsonl"
 DEFAULT_VAL = REPO_ROOT / "apps" / "backend" / "data" / "processed" / "core_val.jsonl"
@@ -59,9 +65,13 @@ def read_pairs(path: Path, limit: int = 0) -> List[Tuple[str, str]]:
     return pairs
 
 
-def fits(pairs: List[Tuple[str, str]], vocab: CharVocab, max_len: int) -> List[Tuple[str, str]]:
+def fits(
+    pairs: List[Tuple[str, str]], vocab: Union[CharVocab, TokenVocab], max_len: int
+) -> List[Tuple[str, str]]:
+    # Budget is in *vocab units*: characters for CharVocab, atoms for
+    # TokenVocab (a 74-char question costs ~16 atoms).
     def size(prompt: str, answer: str) -> int:
-        return 2 + len(prompt) + len(answer) + 1  # bos + newline + eos
+        return 3 + len(vocab.encode(prompt)) + len(vocab.encode(answer))  # bos+nl+eos
 
     kept = [(p, a) for p, a in pairs if size(p, a) <= max_len]
     return kept
@@ -73,7 +83,10 @@ def exact_match(
     picks = pairs if len(pairs) <= sample else random.Random(seed).sample(pairs, sample)
     hits = 0
     for prompt, answer in picks:
-        got = model.generate(prompt, max_new=min(model.config.max_len, len(answer) + 8))
+        # budget in vocab units: token vocabs make answers shorter in ids,
+        # and an over-long budget lets the decode run past EOS into junk.
+        budget = len(model.vocab.encode(answer)) + 8
+        got = model.generate(prompt, max_new=min(model.config.max_len, budget))
         if got.strip() == answer.strip():
             hits += 1
     return {"n": len(picks), "exact": hits / max(1, len(picks))}
@@ -117,8 +130,21 @@ def main() -> int:
         default=1,
         help="SNN timesteps per token (input expansion; costs Kx compute)",
     )
+    ap.add_argument(
+        "--device",
+        default="auto",
+        help="torch device for training/inference: auto (xpu>cuda>cpu), xpu, cuda, cpu",
+    )
     ap.add_argument("--out", default=str(OUT_DIR / "token_snn.pt"))
     ap.add_argument("--report", default=str(REPORT_DIR / "token_snn.json"))
+    ap.add_argument(
+        "--vocab",
+        choices=("char", "token"),
+        default="char",
+        help="char = per-character ids (the original); token = word atoms "
+        "(words carry their trailing spaces, numbers split to digits) — "
+        "shorter sequences for long questions (CORE_GAP_ANALYSIS fix path)",
+    )
     args = ap.parse_args()
 
     train_path = Path(args.train)
@@ -138,9 +164,13 @@ def main() -> int:
         layers=args.layers,
         timesteps=args.timesteps,
     )
-    vocab = CharVocab.build(
-        [p + "\n" + a for p, a in train], min_count=cfg.min_count, max_vocab=cfg.max_vocab
-    )
+    texts = [p + "\n" + a for p, a in train]
+    if args.vocab == "token":
+        # min_count 1: rare words must stay composable (knowledge answers
+        # are often hapax); unseen *probe* words become <unk> either way.
+        vocab = TokenVocab.build(texts, min_count=1, max_vocab=cfg.max_vocab)
+    else:
+        vocab = CharVocab.build(texts, min_count=cfg.min_count, max_vocab=cfg.max_vocab)
     train_fit = fits(train, vocab, cfg.max_len)
     val_fit = fits(val, vocab, cfg.max_len)
     print(
@@ -148,7 +178,11 @@ def main() -> int:
         f"val={len(val)} (fit {len(val_fit)}) len<={cfg.max_len}"
     )
 
-    model = TokenSNN(vocab, cfg)
+    import torch
+
+    device = resolve_device(torch, args.device)
+    print(f"device={device}")
+    model = TokenSNN(vocab, cfg, device=device)
     started = time.time()
     curve: List[dict] = []
     held_out = []
@@ -188,12 +222,14 @@ def main() -> int:
         eval_tf = model.tf_accuracy(held_out)
     report = {
         "train": str(train_path),
+        "vocab_kind": args.vocab,
         "pairs": {"train": len(train), "train_fit": len(train_fit), "val_fit": len(val_fit)},
         "vocab_size": len(vocab),
         "config": cfg.to_dict(),
         "epochs": args.epochs,
         "batch": args.batch,
         "lr": args.lr,
+        "device": device,
         "seconds": round(elapsed, 1),
         "loss_history": history,
         "train_exact_200": train_match,

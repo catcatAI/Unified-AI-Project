@@ -8,7 +8,16 @@ import pytest
 
 pytest.importorskip("torch")
 
-from ai.ed3n.token_snn import BOS, EOS, UNK, CharVocab, TokenConfig, TokenSNN  # noqa: E402
+from ai.ed3n.token_snn import (  # noqa: E402
+    BOS,
+    EOS,
+    UNK,
+    CharVocab,
+    TokenConfig,
+    TokenSNN,
+    TokenVocab,
+    tokenize,
+)
 
 
 @pytest.fixture(scope="module")
@@ -139,6 +148,79 @@ def test_timesteps_keep_output_shape_and_roundtrip(tmp_path, vocab):
 def test_unknown_readout_is_rejected(vocab):
     with pytest.raises(ValueError, match="readout"):
         TokenSNN(vocab, TokenConfig(readout="graded"))
+
+
+def test_tokenize_roundtrips_and_splits_numbers():
+    """Join(tokenize(s)) == s; a word absorbs its leading space; digits split."""
+    text = "What is 214.0 + 7% of 3?"
+    atoms = tokenize(text)
+    assert "".join(atoms) == text
+    assert "1" in atoms and "4" in atoms  # digits, so unseen values compose
+    assert " i" in atoms  # leading-space atom (GPT-2 style)
+    assert "What" in atoms
+
+
+def test_tokenize_never_drops_a_character():
+    r"""The catch-all must be a separate alternative.
+
+    It used to be concatenated onto ``\s+`` (``\s+.`` with no fallback), so a
+    trailing whitespace run and chars like ``_`` matched nothing and vanished:
+    join(tokenize("abc ")) != "abc ".
+    """
+    for text in ("abc ", "a_b", "answer: 42  \n", "  leading", "café"):
+        assert "".join(tokenize(text)) == text, text
+    assert tokenize("a_b") == ["a", "_", "b"]
+
+
+def test_token_vocab_roundtrip_and_unk():
+    vocab = TokenVocab.build(["the cat sat", "the dog sat"], min_count=1)
+    ids = vocab.encode("the cat")
+    assert vocab.decode(ids) == "the cat"
+    # an unseen word becomes <unk> instead of crashing
+    assert vocab.stoi[UNK] in vocab.encode("the zebra")
+    assert vocab.pad_id >= 0 and vocab.eos_id >= 0 and vocab.bos_id >= 0
+
+
+def test_token_vocab_shortens_long_questions():
+    """The whole point of the token kind: long prose collapses >2x.
+
+    74-char questions land at ~16-25 atoms, back inside the band the
+    learnability diagnosis measured as trainable (<=18 steps)."""
+    q = "What is the force on a 5 kg mass with acceleration 2 m/s2?"
+    token_ids = TokenVocab.build([q], min_count=1).encode(q)
+    char_ids = CharVocab.build([q], min_count=1).encode(q)
+    assert len(token_ids) * 2 < len(char_ids)
+
+
+def test_token_vocab_save_load_dispatches(tmp_path):
+    """load() must rebuild the token kind, not fall back to characters."""
+    vocab = TokenVocab.build(["alpha beta gamma"], min_count=1)
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=16))
+    path = tmp_path / "t.pt"
+    model.save(path)
+    restored = TokenSNN.load(path)
+    assert isinstance(restored.vocab, TokenVocab)
+    assert restored.generate("alpha", 4) == model.generate("alpha", 4)
+
+
+def test_membrane_readout_is_normalized():
+    """LayerNorm on the membrane path: logits must not saturate with length.
+
+    Without it the membrane accumulates (leak 0.9 -> ~10x steady-state gain)
+    and the initial loss explodes with sequence length (18 chars: 19; 74: 174).
+    """
+    import torch
+
+    vocab = TokenVocab.build(["abcdefgh" * 8], min_count=1)
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=16, max_len=96))
+    ids = torch.tensor([vocab.encode("abcdefgh" * 8)], device=model.device)
+    with torch.no_grad():
+        long_logits = model.net(ids)
+        short_ids = torch.tensor([vocab.encode("abcd")], device=model.device)
+        short_logits = model.net(short_ids)
+    assert torch.isfinite(long_logits).all()
+    assert float(long_logits.abs().max()) < 40.0
+    assert float(short_logits.abs().max()) < 40.0
 
 
 def test_tf_accuracy_is_a_sane_diagnostic(vocab):

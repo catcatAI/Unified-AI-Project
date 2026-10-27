@@ -13,9 +13,14 @@ salad. That is a representation problem, not a training budget problem.
 
 This module replaces the representation and the objective:
 
-* **tokens** — a character vocabulary built from the training data (CJK
-  characters are individual tokens; ASCII words are characters too, which is
-  enough for the sizes used here and needs no third-party tokenizer),
+* **tokens** — a vocabulary built from the training data, in two kinds:
+  ``CharVocab`` (characters, the original) or ``TokenVocab`` (self-delimiting
+  word atoms — a word absorbs its leading whitespace, GPT-2 style, and
+  numbers split into digits, so a 74-character question costs ~16-25 steps
+  instead of 74 and unseen numbers still compose). Measured on the same
+  pairs: character level stops
+  learning at ~70 steps (init CE 24 nats, 0/300 memorised) while ~18 steps
+  learns normally — so long questions need the token kind.
 * **differentiable output** — LIF neurons with a surrogate gradient
   (Neftci, Mostafa & Zenke 2019) followed by a linear next-token head,
 * **objective** — cross-entropy on the *answer* tokens only (teacher forcing),
@@ -30,6 +35,7 @@ separate, measurable step.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -145,7 +151,134 @@ class CharVocab:
         return len(self.itos)
 
 
-def _make_net(torch: Any) -> Any:
+# One atom at a time, with a catch-all so "".join(tokenize(s)) == s always:
+# ASCII words / numbers (with . , and a trailing %) / CJK characters /
+# punctuation / a whitespace run *with the one character that follows it* /
+# anything unmatched as a single character.
+#
+# The ``\s+.`` grouping is deliberate (GPT-2-style leading-space atoms):
+# ``tokenize("the cat") == ["the", " c", "at"]`` — a word absorbs the
+# whitespace *before* it, so decode is a plain join. The final ``.`` must
+# stay a *separate* alternative: without it, a trailing whitespace run
+# (nothing follows to absorb) and chars like ``_`` match no alternative and
+# are silently dropped — join(tokenize(s)) != s. Ordered alternation means
+# the catch-all only fires where nothing else matched, so atom boundaries
+# for text that already tokenized fully are unchanged (checkpoint vocab
+# compatibility).
+_ATOM = re.compile(
+    r"[A-Za-z]+" r"|\d+(?:[.,]\d+)*%?" r"|[\u3400-\u4dbf\u4e00-\u9fff]" r"|[^\w\s]" r"|\s+." r"|.",
+    re.S,
+)
+
+
+def tokenize(text: str) -> List[str]:
+    """Split text into self-delimiting atoms (decode is a plain join).
+
+    * a word absorbs the whitespace *before* it — ``tokenize("the cat") ==
+      ["the", " c", "at"]`` (leading-space atoms, GPT-2 style) — so joining
+      needs no rules and roundtrips exactly; leading whitespace with nothing
+      behind it stays alone;
+    * numbers split into single digits, so an answer value never seen in
+      training (``"214.0"``) can still be composed instead of becoming
+      ``<unk>``;
+    * a bare ``"\n"`` never comes out of tokenize (it is always absorbed or
+      followed); the vocabulary still reserves it as the prompt/answer
+      separator (``encode_pair`` inserts the id directly).
+    """
+    out: List[str] = []
+    for atom in _ATOM.findall(str(text or "")):
+        if atom.isspace():
+            if "\n" in atom or not out:
+                out.append(atom)
+            else:
+                out[-1] += atom
+        elif atom[0].isdigit():
+            out.extend(atom)
+        else:
+            out.append(atom)
+    return out
+
+
+class TokenVocab:
+    """Word-atom vocabulary: same contract as :class:`CharVocab`, longer horizon.
+
+    ``to_dict()`` adds ``kind: "token"`` so ``TokenSNN.load`` can dispatch
+    without guessing; a missing kind means the historical character vocab.
+    """
+
+    kind = "token"
+
+    def __init__(self, tokens: Sequence[str]) -> None:
+        self.itos: List[str] = list(tokens)
+        self.stoi: Dict[str, int] = {t: i for i, t in enumerate(self.itos)}
+        for special in (*SPECIALS, "\n"):
+            if special not in self.stoi:
+                self.stoi[special] = len(self.itos)
+                self.itos.append(special)
+
+    @property
+    def pad_id(self) -> int:
+        return self.stoi[PAD]
+
+    @property
+    def bos_id(self) -> int:
+        return self.stoi[BOS]
+
+    @property
+    def eos_id(self) -> int:
+        return self.stoi[EOS]
+
+    @property
+    def unk_id(self) -> int:
+        return self.stoi[UNK]
+
+    @classmethod
+    def build(
+        cls,
+        texts: Iterable[str],
+        min_count: int = 1,
+        max_vocab: int = 12000,
+    ) -> "TokenVocab":
+        counts: Dict[str, int] = {}
+        for text in texts:
+            for atom in tokenize(text):
+                counts[atom] = counts.get(atom, 0) + 1
+        ordered = [a for a, n in counts.items() if n >= min_count and a not in SPECIALS]
+        ordered.sort(key=lambda a: (-counts[a], a))
+        return cls(ordered[:max_vocab])
+
+    def encode(self, text: str, add_eos: bool = False) -> List[int]:
+        unk = self.stoi[UNK]
+        ids = [self.stoi.get(atom, unk) for atom in tokenize(text)]
+        if add_eos:
+            ids.append(self.eos_id)
+        return ids
+
+    def decode(self, ids: Iterable[int], skip_special: bool = True) -> str:
+        out = []
+        for i in ids:
+            if i < 0 or i >= len(self.itos):
+                continue
+            token = self.itos[i]
+            if skip_special and token in SPECIALS:
+                if token == EOS:
+                    break
+                continue
+            out.append(token)
+        return "".join(out)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"kind": self.kind, "itos": self.itos}
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "TokenVocab":
+        return cls(data["itos"])
+
+    def __len__(self) -> int:
+        return len(self.itos)
+
+
+def _make_net(torch: Any, pad_id: int = 0) -> Any:
     """Define the nn.Module lazily so importing this file stays torch-free."""
     nn = torch.nn
 
@@ -156,7 +289,11 @@ def _make_net(torch: Any) -> Any:
             self.n_layers = max(1, int(cfg.layers))
             if cfg.readout not in ("spike", "membrane"):
                 raise ValueError(f"readout must be 'spike' or 'membrane', got {cfg.readout!r}")
-            self.embed = nn.Embedding(vocab_size, cfg.d_emb, padding_idx=0)
+            # padding_idx must be the *real* PAD id: CharVocab/TokenVocab
+            # append specials after the content tokens, so PAD is not 0 —
+            # hard-coding 0 used to freeze the most frequent token's embedding
+            # at the zero vector and give PAD a trained one.
+            self.embed = nn.Embedding(vocab_size, cfg.d_emb, padding_idx=pad_id)
             self.w_in = nn.ModuleList(
                 nn.Linear(cfg.d_emb if i == 0 else cfg.d_hidden, cfg.d_hidden)
                 for i in range(self.n_layers)
@@ -165,6 +302,12 @@ def _make_net(torch: Any) -> Any:
                 nn.Linear(cfg.d_hidden, cfg.d_hidden, bias=False) for _ in range(self.n_layers)
             )
             self.head = nn.Linear(cfg.d_hidden, vocab_size)
+            # Membrane potential accumulates with steady-state gain ~1/(1-leak)
+            # (=10x at beta 0.9), so raw membrane saturates the softmax on
+            # long inputs (measured: init CE 19 nats at 18 chars, 24+ at 74).
+            # Normalise before the head; the spike readout (A/B control) is
+            # left untouched because a binary vector has no meaningful scale.
+            self.out_norm = nn.LayerNorm(cfg.d_hidden)
             # Store the logit so sigmoid(parameter) == cfg.beta exactly.
             self.beta = nn.Parameter(
                 torch.logit(torch.tensor(float(cfg.beta)).clamp(1e-4, 1 - 1e-4))
@@ -205,23 +348,48 @@ def _make_net(torch: Any) -> Any:
                     if self.cfg.readout == "membrane"
                     else spk[self.n_layers - 1]
                 )
+                if self.cfg.readout == "membrane":
+                    out = self.out_norm(out)
                 logits.append(self.head(out))
             return torch.stack(logits, dim=1)
 
     return _SpikeNet
 
 
+def resolve_device(torch: Any, wanted: str = "auto") -> str:
+    """Pick a torch device: explicit name, or auto (xpu > cuda > cpu).
+
+    ``auto`` prefers the GPU because surrogate-gradient BPTT through time is
+    compute-bound; on CPU the same run is 1-2 orders of magnitude slower.
+    Only floating-point dtypes the device supports are used — consumer Intel
+    Arc cards have no FP64, so nothing here ever creates double tensors.
+    """
+    if wanted and wanted != "auto":
+        return wanted
+    if hasattr(torch, "xpu") and torch.xpu.is_available():
+        return "xpu"
+    if torch.cuda.is_available():
+        return "cuda"
+    return "cpu"
+
+
 class TokenSNN:
     """Small token-level SNN language model (torch required at build time)."""
 
-    def __init__(self, vocab: CharVocab, config: Optional[TokenConfig] = None) -> None:
+    def __init__(
+        self,
+        vocab: Any,
+        config: Optional[TokenConfig] = None,
+        device: str = "auto",
+    ) -> None:
         import torch  # lazy: keeps torch out of import time
 
         self.torch = torch
         self.vocab = vocab
         self.config = config or TokenConfig()
-        net_cls = _make_net(torch)
-        self.net = net_cls(len(vocab), self.config)
+        self.device = resolve_device(torch, device)
+        net_cls = _make_net(torch, pad_id=vocab.pad_id)
+        self.net = net_cls(len(vocab), self.config).to(self.device)
 
     # -- batching -----------------------------------------------------------
     def encode_pair(self, prompt: str, answer: str) -> Tuple[List[int], int]:
@@ -259,10 +427,12 @@ class TokenSNN:
             rows.append(ids)
             starts.append(start)
         width = max(len(r) for r in rows)
-        ids_t = torch.full((len(rows), width), self.vocab.pad_id, dtype=torch.long)
-        mask = torch.zeros((len(rows), width), dtype=torch.bool)
+        ids_t = torch.full(
+            (len(rows), width), self.vocab.pad_id, dtype=torch.long, device=self.device
+        )
+        mask = torch.zeros((len(rows), width), dtype=torch.bool, device=self.device)
         for i, (row, start) in enumerate(zip(rows, starts)):
-            ids_t[i, : len(row)] = torch.tensor(row, dtype=torch.long)
+            ids_t[i, : len(row)] = torch.tensor(row, dtype=torch.long, device=self.device)
             mask[i, start : len(row)] = True
         return ids_t, mask, starts
 
@@ -360,7 +530,7 @@ class TokenSNN:
         self.net.eval()
         out: List[int] = []
         with torch.no_grad():
-            cur = torch.tensor([ids], dtype=torch.long)
+            cur = torch.tensor([ids], dtype=torch.long, device=self.device)
             for _ in range(max_new):
                 logits = self.net(cur)[0, -1]
                 if temperature <= 0:
@@ -373,7 +543,9 @@ class TokenSNN:
                 if nxt == self.vocab.pad_id or nxt == self.vocab.bos_id:
                     break
                 out.append(nxt)
-                cur = torch.cat([cur, torch.tensor([[nxt]], dtype=torch.long)], dim=1)
+                cur = torch.cat(
+                    [cur, torch.tensor([[nxt]], dtype=torch.long, device=self.device)], dim=1
+                )
         self.net.train()
         return self.vocab.decode(out)
 
@@ -391,15 +563,29 @@ class TokenSNN:
         )
 
     @classmethod
-    def load(cls, path: Path | str, map_location: str = "cpu") -> "TokenSNN":
+    def load(cls, path: Path | str, map_location: str = "cpu", device: str = "auto") -> "TokenSNN":
         import torch
 
         payload = torch.load(str(path), map_location=map_location, weights_only=False)
-        vocab = CharVocab.from_dict(payload["vocab"])
-        model = cls(vocab, TokenConfig(**payload["config"]))
+        vocab_data = payload["vocab"]
+        vocab_cls = TokenVocab if vocab_data.get("kind") == "token" else CharVocab
+        vocab = vocab_cls.from_dict(vocab_data)
+        model = cls(vocab, TokenConfig(**payload["config"]), device=device)
         model.net.load_state_dict(payload["state"])
         model.net.eval()
         return model
 
 
-__all__ = ["CharVocab", "TokenConfig", "TokenSNN", "SPECIALS", "PAD", "BOS", "EOS", "UNK"]
+__all__ = [
+    "CharVocab",
+    "TokenVocab",
+    "TokenConfig",
+    "TokenSNN",
+    "tokenize",
+    "resolve_device",
+    "SPECIALS",
+    "PAD",
+    "BOS",
+    "EOS",
+    "UNK",
+]
