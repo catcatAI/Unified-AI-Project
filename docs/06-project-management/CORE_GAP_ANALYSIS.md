@@ -323,3 +323,133 @@ PYTHONPATH=apps/backend/src OMP_NUM_THREADS=6 ./.venv/bin/python \
   --beta 0.9 --readout membrane --layers 1 --timesteps 1 \
   --out /tmp/tok_winner.pt --report /tmp/tok_winner.json
 ```
+
+## 八、輸入長度瓶頸 → token 詞表 → 蒸餾資料：第一次拿到非零分（2026-10-26／27）
+
+第七節說「缺口只剩規模」——**不完全對**。同預算單變因診斷找出第三個結構瓶頸：
+**輸入長度**（前六節所有實驗的輸入都是 ≤18 字元的短算術）。
+
+### 1. 瓶頸是輸入長度，不是 epoch、不是 lr
+
+蒸餾資料的題目平均 **74 字元**（舊算術題平均 18）。同一架構、同一協議、60 epochs：
+
+| 子集 | 平均長度 | 擬合（300 題） | teacher-forced |
+| --- | --- | --- | --- |
+| 短題 | 18 字元 | 60/300 | 71% |
+| 長題 | 74 字元 | **0/300** | 36% |
+
+lr ×2 也只到 10/300 → 不是最佳化不足。進一步量到**初始 loss 隨長度爆炸**
+（18 字→19、74 字→174）：膜電位在長序列上累積、softmax 飽和。修法與量測：
+
+1. **LayerNorm 掛在膜讀出路徑**（`token_snn.py`，可 A/B、spike 對照路徑不動）：
+   初始 loss 24 → **3.45**，飽和修復；但長題仍 2%——**步數才是根本瓶頸**。
+2. **token 詞表**（文件既定處方第 1 步的另一半）：74 字元 → **~16 token**，
+   落回已證明可學的步數區間：
+
+| 詞表 | 長題擬合（300） | tf | 短題 |
+| --- | --- | --- | ---|
+| char | 0–10/300 | 0.46 | 擬合 |
+| **token** | **264/300（88%）** | **0.95** | loss→0、tf 100% |
+
+這是本文件第一個「**同一協議下換一個表徵就從 0 變有**」的單變因結果。舊 char
+checkpoint 與 LN 不相容，直接由 token 版取代（舊版本來就是 0% 模型）。
+
+### 2. 路線②（使用者拍板 1+2 的 ②）：蒸餾資料
+
+`scripts/distill_core_data.py` 用本地 Qwen2.5-1.5B（對照組模型）在**非評測**語料上
+產生訓練對，四源各有自己的驗證器（數學答案由 Python 求值、wordprob 雙重記帳、
+knowledge 接地原文）：**5,425 對**（math 3,478／knowledge 800／wordprob 598／
+alpaca 549），`_is_leak` 契約擋下 26 筆與評測重疊的資料，`--check` 實測 **0 洩漏**，
+7 條契約測試守住。
+
+**訓練（Run A）**：token 詞表 3,577、`d_emb=96`／`d_hidden=512`、100 epochs、
+2,556 秒、CPU：
+
+| 指標 | 值 |
+| --- | --- |
+| train_exact（記憶檢查，不計能力） | 38% |
+| distill_val exact（150 題抽樣） | 8% |
+| **淨 holdout（248 題）exact** | **11.3%** |
+| 淨 holdout teacher-forced | 37.9% |
+
+**train/eval 污染清理（量測有效性）**：`distill_val` 與 `core_train` 逐字重複
+**33/281**（alpaca 同源）。以「input 或 output 逐字出現在 core_train」為準濾出
+`distill_val_holdout.jsonl`（248 題，`distill_val_holdout.meta.json` 記錄準則與
+n_dropped），兩個 checkpoint 都在**同一份淨題**上重量，數字才可比。
+
+### 3. 對照表重測（`probe_core_control.py`，2026-10-27）
+
+`--token-checkpoint token_snn_distill.pt`，同題同評分（`core_control_distill.json`）：
+
+| suite | n | 表現層 | GARDEN | ED3N | TOK-SNN | LLM（1.5B chat） |
+| --- | --- | --- | --- | --- | --- | --- |
+| math | 40 | 80% | 0% | 0% | **3/40（8%）** | 68% |
+| knowledge | 15 | 47% | 0% | 0% | 0/15 | 73% |
+| code | 10 | 0% | 0% | 0% | 0/10 | 90% |
+| routing（表現層） | 10 | 100% | 0% | 0% | 0/10 | 0% |
+
+**這 3 題是真泛化，證據鏈**：
+
+* `What is 15 % 4?` → `3`；`What is the force on a 5 kg mass with acceleration
+  2 m/s2?` → `10`；`What is the work when force = 10 and distance = 3?` → `30`。
+* 40/40 有回答、**29 個不同答案**（不是模式崩潰），也不是重複同一個數字。
+* 訓練資料**沒有這些句子**：蒸餾與 core 兩份資料的洩漏門禁都是 0（`--check`），
+  學到的是運算技能（mod／F=ma／W=Fd），不是背題。
+* 但 **knowledge/code 仍是 0**，所以「第一次非零」≠「可用」；**官方核心分仍然
+  0.00/10**（probe 是診斷，`core_share` 在生產路徑仍是 0）。
+
+### 4. GPU 線：重開機後仍阻塞（誠實記錄，不改口）
+
+重開機（GuC 回到 70.72.1、sha `de81c75f…`）＋私有 runtime（libze 26.27／
+igc 2.40.14／OpenCL ICD 26.27）＋`SYCL_UR_USE_LEVEL_ZERO_V2=0` 下的乾淨壓力測試
+（`/tmp/xpu_stress.py` 經 `scripts/xpu_run.sh`）：
+
+* warmup（10 次 256² 矩陣乘）**通過**、`torch.xpu.is_available()=True`；
+* 進入持續負載（1024²、500 步 fwd/bwd）**第 1 步就 `UR_RESULT_ERROR_DEVICE_LOST`**；
+* kernel log 同時：`Check job timeout: … guc_id=52, not started` →
+  `Engine reset: engine_class=ccs` → 連續 `exec queue reset detected`（另有
+  devcoredump 提示），同一 GT 上 Xorg 也在排隊。
+
+結論：**torch XPU 訓練路線仍不可用**，瓶頸在 xe/GuC 層而非 torch 與 runtime 版本；
+要再戰需要顯示與計算分離（或多卡）才能排除顯示引擎爭用。在此之前主線走 **CPU**，
+不把 GPU 當成已解決的變因。
+
+### 5. Run B（進行中）：只換資料量這一個變因
+
+Run A 卡在 train_exact 38%（連 5k 都記不完）與平台化，下一個單變因是**資料量**：
+同容量（`d_emb 96`／`d_hidden 512`）改餵 `core_train.jsonl`（138,693 對可過
+`max_len=192`）、5 epochs、每輪在淨 holdout（248 題）上量：
+
+```bash
+PYTHONPATH=apps/backend/src OMP_NUM_THREADS=6 ./.venv/bin/python \
+  scripts/train_token_snn.py --vocab token \
+  --train apps/backend/data/processed/core_train.jsonl \
+  --val apps/backend/data/processed/core_val.jsonl \
+  --eval-data apps/backend/data/processed/distill_val_holdout.jsonl \
+  --eval-sample 500 --eval-every 1 --epochs 5 --batch 64 --lr 3e-3 \
+  --d-emb 96 --d-hidden 512 --max-len 192 --device cpu \
+  --out apps/backend/data/models/token_snn_core149k.pt \
+  --report data/intelligence_reports/token_snn_core149k.json
+```
+
+**Run B 結果（2026-10-28，46,930 秒＝13.0 小時 CPU）**：唯一變因＝資料量
+（5,425 → 149,489 對，27×），容量、詞表、評分、評測題全不變：
+
+| 指標 | Run A（5.4k，100 ep，2,556s） | Run B（149k，5 ep，46,930s） |
+| --- | --- | --- |
+| train_exact（記憶，200 題） | 38% | **47%** |
+| val exact | 8%（distill_val 150 題） | 45%（core_val 200 題，**不同題組不可直接比**） |
+| **淨 holdout（248 題）exact** | **11.3%** | **0.0%（5 輪全 0）** |
+| 淨 holdout teacher-forced | 37.9% | **13.9%** |
+| probe math（TOK-SNN） | 3/40（8%） | **1/40（2.5%，只有 math-027）** |
+| knowledge／code／routing | 0／0／0 | 0／0／0 |
+
+**結論（照實寫）：資料量不是瓶頸。** 27× 資料讓記憶變好（train 38→47%）,
+但淨 holdout 從 11.3% 掉到 **0%**、tf 掉到 13.9%，probe math 3/40 → 1/40
+（`core_control_core149k.json`，與 `core_control_distill.json` 同題同評分）。
+混雜要承認：Run A 是 100 epochs × 5.4k，Run B 是 5 epochs × 149k，所以 A/B
+同時變了「資料量」與「每對更新次數」——但兩者指向同一個結論：**在固定 0.1M
+容量、固定 CPU 預算下，加資料換不到升分，只換來更少的優化**（loss 2.77→2.05
+仍在下降、未收斂）。還沒被排除的變因只剩**容量＋算力**（≥10⁸ 參數需 GPU，
+而 GPU 線仍阻塞，見第四節）與**蒸餾目標**（學 teacher 分佈而非單一正解）。
+及格線、評測題、規則三者沒動；**官方核心分維持 0.00/10**。

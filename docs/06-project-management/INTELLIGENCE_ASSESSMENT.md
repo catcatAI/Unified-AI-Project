@@ -104,6 +104,22 @@ code 0% → 90%——那是**對照組可信度**的修復，不是本專案的�
 2026-10-24 膜電位 checkpoint 同預算重訓後 **40 題全不同、仍 0 題答對**——
 變樣不等於能力，分數不加。
 
+**2026-10-27 最新一輪（`token_snn_distill.pt`，`core_control_distill.json`）**：
+表徵（char → token）＋蒸餾資料（`scripts/distill_core_data.py`，5,425 對、0 洩漏）
+之後，TOK-SNN math **0% → 3/40（8%）**（40/40 有回答、29 個不同答案；`15 % 4`→3、
+`F=ma`→10、`W=Fd`→30），knowledge 0/15、code 0/10。這 3 題的句子不在訓練資料裡
+（訓練資料洩漏門禁 0），是技能泛化；但**官方核心分仍 0.00/10**：probe 是診斷表，
+生產路徑的 `core_share` 仍為 0，且 knowledge／code 兩欄分數未動。證據鏈與單變因過程
+見 [`CORE_GAP_ANALYSIS.md`](CORE_GAP_ANALYSIS.md) 第八節。
+
+**2026-10-28 資料量單變因（Run B，`core_control_core149k.json`）**：同容量
+（`d_emb 96`／`d_hidden 512`）、同 token 詞表，只把訓練資料從 5,425 對換成
+149,489 對（27×），13 小時 CPU／5 epochs：記憶變好（train/val exact 47%／45%），
+但**淨 holdout exact 11.3% → 0.0%、tf 37.9% → 13.9%、probe math 3/40 → 1/40**，
+knowledge／code／routing 依舊 0。**資料量不是瓶頸**——固定 0.1M 容量與 CPU 算力
+下加資料不升分（loss 2.77→2.05 未收斂，每對的更新次數反而少 20×）。核心分維持
+**0.00/10**；下一步只有容量＋算力（GPU 仍阻塞）或蒸餾目標兩個真變因。
+
 
 
 | 維度       | 值      | 外部基準 | 及格線（推導）        | 判定 |
