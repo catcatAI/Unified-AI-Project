@@ -274,19 +274,38 @@ class HAMMemoryManager:
 
     @staticmethod
     def _entry_importance(entry: Dict[str, Any]) -> float:
+        """保留決策用的**有效重要性** = 原評分 × 編碼時的 AL 權重（clamp [0,1]）。
+
+        ``al_weight``（§10 policy 的「多重」，state 觀測才有戳記）只影響
+        保留決策，不改寫 metadata 原值 —— caller 的內容評分保持真實，兩層
+        分開可取證。沒有 ``al_weight`` 的記憶 = 原評分（既有行為不變）。
+        """
+        base = 0.5
+        weight = 1.0
         meta = entry.get("metadata")
         if isinstance(meta, dict):
             try:
-                return float(meta.get("importance", 0.5))
+                base = float(meta.get("importance", 0.5))
             except (TypeError, ValueError):
-                return 0.5
-        return 0.5
+                base = 0.5
+            raw_weight = meta.get("al_weight")
+            if raw_weight is not None:
+                try:
+                    weight = float(raw_weight)
+                except (TypeError, ValueError):
+                    weight = 1.0
+        return min(max(base * weight, 0.0), 1.0)
 
     def _should_prune_entry(self, entry: Dict[str, Any], now: datetime) -> bool:
         """True when an entry is stale enough to drop.
 
         Protected entries and high-importance entries are kept regardless of
         age; low-importance entries die after 30 days, medium ones after 90.
+
+        §10（item ④）：帶 ``al_retain_days`` 戳記的記憶，保留期由 AL 的
+        policy 決定（取代 30/90 分層）—— ``protected`` 與 keep-floor
+        （有效重要性 ≥ 0.7）仍先判：固化與高價值優先於保留期。戳記損壞
+        → 退回預設分層（一個壞值不該誤殺記憶）。
         """
         meta = entry.get("metadata")
         if isinstance(meta, dict) and meta.get("protected"):
@@ -297,6 +316,13 @@ class HAMMemoryManager:
         importance = self._entry_importance(entry)
         if importance >= self._RETENTION_KEEP_IMPORTANCE:
             return False
+        if isinstance(meta, dict) and meta.get("al_retain_days") is not None:
+            try:
+                policy_days = float(meta["al_retain_days"])
+            except (TypeError, ValueError):
+                policy_days = None
+            if policy_days is not None:
+                return age > policy_days
         limit = (
             self._RETENTION_DAYS_LOW
             if importance < self._RETENTION_DROP_IMPORTANCE
@@ -337,6 +363,63 @@ class HAMMemoryManager:
                 removed["conversations"],
             )
         return removed
+
+    def _apply_retention_policy(self, entry_meta: Dict[str, Any]) -> Dict[str, Any]:
+        """§10：把 AL 的 retention/decay policy 執行進這筆記憶（item ④）。
+
+        三個量與執行方式：
+
+        - ``retention``（state 觀測）→ 戳記 ``al_retain_days``：
+          ``_should_prune_entry`` 用它取代預設 30/90 天分層。
+        - ``weight``（state 觀測）→ 戳記 ``al_weight``：保留決策的有效
+          重要性 = 原評分 × al_weight（``_entry_importance``）。
+          **不改寫 caller 的 ``importance`` 原值** —— 內容評分與生命調制
+          兩層分開，各自可取證（panel 契約釘住原值）。
+        - ``consolidate`` → ``protected = True``（現行規則：不論年齡保留
+          ＝固化；固化只在 ``life_phase == CONSOLIDATION`` 時發生）。
+
+        AL 缺席（import 失敗、快照讀不到）→ 回 ``{}`` 且不動任何規則、
+        debug 留痕 —— 記憶層不能因為 AL 不在就存不下東西。回傳值同時是
+        給 ``submit_event`` 的執行摘要（統計，無內容 —— §8）。
+        """
+        try:
+            from core.life.al_memory_policy import retention_policy
+            from core.life.al_state import get_al_state
+
+            policy = retention_policy(get_al_state())
+        except Exception as exc:
+            logger.debug("HAM retention policy unavailable, storing plain: %s", exc, exc_info=True)
+            return {}
+
+        applied: Dict[str, Any] = {
+            "policy": policy.as_dict(),
+            "stamped": {},
+        }
+        if policy.source["retention"] == "state":
+            days = policy.retention_seconds / 86400.0
+            entry_meta["al_retain_days"] = days
+            applied["stamped"]["al_retain_days"] = days
+        if policy.source["weight"] == "state":
+            entry_meta["al_weight"] = policy.weight
+            applied["stamped"]["al_weight"] = policy.weight
+        if policy.consolidate:
+            entry_meta["protected"] = True
+            applied["stamped"]["protected"] = True
+        return applied
+
+    def _report_policy_result(
+        self, mem_id: str, applied: Dict[str, Any], pruned: Dict[str, int]
+    ) -> None:
+        """§10 的「回報結果事件」：執行摘要進 AL 事件流（原文不進 AL —— §8）。"""
+        try:
+            from core.life.al_state import EventType, submit_event
+
+            submit_event(
+                EventType.MEMORY_RESULT,
+                {"mem_id": mem_id, "applied": applied, "pruned": dict(pruned)},
+            )
+        except Exception as exc:
+            logger.debug("HAM policy result event failed: %s", exc, exc_info=True)
 
     async def store_template(self, template: Any) -> None:
         self._data["templates"].append(
@@ -492,6 +575,9 @@ class HAMMemoryManager:
             "metadata": entry_meta,
             "keywords": resolved_keywords,
         }
+        # §10（Phase 2 item ④）：AL 的 retention/decay policy 在此執行進
+        # metadata（三量各自標觀測歸因；未觀測的量不動現行規則 —— D11）。
+        applied = self._apply_retention_policy(entry_meta)
         # Route experiences into the correct bucket. Only proper answer
         # templates belong in `templates` (used by TemplateMatcher to compose
         # responses). Conversation logs and other data types must NOT pollute
@@ -505,8 +591,16 @@ class HAMMemoryManager:
             bucket = self._data.get(bucket) is not None and bucket or "conversations"
         self._data.setdefault(bucket, []).append(entry)
         self._enforce_cap(bucket)
+        # id = 寫入當下的位置（在 prune 之前取，避免清舊後編號回撞）
+        mem_id = f"exp_{len(self._data.get(bucket, []))}"
+        # 保留規則的生產執行點（2026-10-27 前零呼叫 —— 30/90 天分層與
+        # policy 戳記自此真的會跑）：本次 store 順帶清掉過期的舊記憶，
+        # 隨後 _save 把清完的狀態落盤。
+        pruned = self.prune()
+        if applied:
+            self._report_policy_result(mem_id, applied, pruned)
         await asyncio.to_thread(self._save)
-        return f"exp_{len(self._data.get(bucket, []))}"
+        return mem_id
 
     def _extract_keywords(self, raw_data: Any, max_keywords: int = 8) -> List[str]:
         """Auto-extract keywords from raw_data.

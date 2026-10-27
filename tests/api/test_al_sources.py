@@ -13,6 +13,7 @@ item 1 的契約：``life_phase`` / ``health`` / ``drift`` 的實例握在 api �
 
 server 執行下的 dump 面是 ``GET /api/v1/system/status/detailed`` 的
 ``al_state`` 段（``_detailed_al_state``），本檔從同一条讀路徑驗證。
+item ④ 另加 ``al_events`` 段（§8 事件寫路徑的 dump 面）。
 """
 
 import sys
@@ -26,7 +27,13 @@ if str(BACKEND_SRC) not in sys.path:
     sys.path.insert(0, str(BACKEND_SRC))
 
 import api.lifespan as lifespan  # noqa: E402
-from core.life.al_state import clear_al_sources, get_al_state  # noqa: E402
+from core.life.al_state import (  # noqa: E402
+    EventType,
+    clear_al_sources,
+    clear_events,
+    get_al_state,
+    submit_event,
+)
 
 
 class _FakeHeartbeat:
@@ -42,12 +49,14 @@ class _FakeHeartbeat:
 
 @pytest.fixture(autouse=True)
 def isolated_al_registry(monkeypatch):
-    """乾淨的 provider 登記簿 + sentinel 生命單例（不起真物件）。"""
+    """乾淨的 provider 登記簿 + 事件緩衝 + sentinel 生命單例（不起真物件）。"""
     clear_al_sources()
+    clear_events()
     monkeypatch.setattr(lifespan, "_lifecycle_instance", SimpleNamespace(current_phase="EMERGENCE"))
     monkeypatch.setattr(lifespan, "_heartbeat_instance", _FakeHeartbeat())
     yield
     clear_al_sources()
+    clear_events()
 
 
 def _patch_drift_upstream(monkeypatch, *, eta_observed: bool, zeta_coherence):
@@ -187,3 +196,29 @@ class TestDetailedEndpointDump:
         assert data["source"]["health"] == "provider:health"
         # 歸因紅線：參數層未接線 → effective 恆 None（item 1 D11）
         assert data["effective"] is None
+
+    def test_detailed_al_events_is_the_recent_event_list(self):
+        """``/status/detailed`` 的 al_events 段 = §8 事件（舊→新，item ④）。"""
+        from api.routes.system_routes import _detailed_al_events
+
+        submit_event(EventType.MEMORY_RESULT, {"mem_id": "exp_1", "pruned": 2})
+        submit_event(EventType.MEMORY_RESULT, {"mem_id": "exp_2", "pruned": 0})
+
+        data = _detailed_al_events()
+        assert [e["payload"]["mem_id"] for e in data] == ["exp_1", "exp_2"]
+        assert all(e["type"] == "memory_result" for e in data)
+
+    def test_empty_buffer_reads_as_nothing_observed(self):
+        from api.routes.system_routes import _detailed_al_events
+
+        assert _detailed_al_events() == [], "空＝沒觀測到事件，不是資料丟了"
+
+    def test_detailed_endpoint_wires_the_al_events_key(self):
+        """釘住接線 — 漏了 key，helper 就成了零呼叫孤兒。"""
+        import inspect
+
+        from api.routes.system_routes import system_status_detailed
+
+        source = inspect.getsource(system_status_detailed)
+        assert 'result["al_events"]' in source
+        assert "_detailed_al_events()" in source

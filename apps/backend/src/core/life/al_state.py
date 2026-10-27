@@ -1,9 +1,10 @@
 # =============================================================================
 # ANGELA-MATRIX: [L3] [αβγδ] [A] [L0-L11]
 # =============================================================================
-"""AL 單一狀態面：欄位類別、單一時鐘與唯讀快照（契約 §3–§4、§9）。
+"""AL 單一狀態面：欄位、時鐘、唯讀快照與事件寫入口（契約 §3–§4、§8–§9）。
 
-三分法 Phase 2 item 1 —— schema 先行。本模組只有三件事：
+三分法 Phase 2 item 1 —— schema 先行；item ④ 補上 §8 事件寫入口。
+本模組只有四件事：
 
 1. **欄位類別表**（``FIELD_CLASSES``）：v1 八個欄位各屬 ``invariant`` /
    ``slow`` / ``fast`` / ``derived``（§3.1–§3.2）。類別決定是否落盤、
@@ -14,14 +15,21 @@
    來源在 core 側的直接讀（``intensity`` / ``tendency``）；實例握在 api
    側的（``life_phase`` / ``health`` / ``drift``）經 provider 登記簿注入 ——
    AL 出站不 import ``ai.*`` / ``api.*``（I8），所以永遠不會自己伸手去拿。
+4. **事件寫入口**（``submit_event()``，§8/§9）—— 對 AL 的寫只走這裡
+   （I7）。v1 只有 ``MEMORY_RESULT``（記憶層執行 §10 retention policy
+   的結果回報，item ④ 種子）；事件先落地、可回放，視窗聚合與轉移函數
+   是後續項（§14 明列 v1 不做事件視窗聚合）。
 
-三條紀律：
+四條紀律：
 
 - **未觀測一律 ``None``，絕不寫 ``0.0`` / ``1.0``**（D11）。
 - **``derived`` 欄位不落盤**（I3）：由 ``_persist()`` 機械拒絕，不靠記得。
 - **``emotion`` v1 恆 ``None``**：情緒實例在 ``ai/alignment``，AL 出站
-  import ``ai.*`` 即 I8 違規；等 §8 ``submit_event`` 事件通道接上後才有
-  觀測值，因此 ``PROVIDABLE_SOURCES`` 也不含它 —— 登記也登不進來。
+  import ``ai.*`` 即 I8 違規；§8 ``submit_event`` 通道已開（item ④ 的
+  ``MEMORY_RESULT`` 種子），但「事件 → 觀測」的聚合尚未接線，因此
+  ``PROVIDABLE_SOURCES`` 仍不含它 —— 登記也登不進來。
+- **事件緩衝有界、不落盤**：滿 ``_EVENT_LIMIT`` 淘汰最舊、重啟即空 ——
+  事件是觀測記錄不是記憶，沒觀測到就不裝作有。
 """
 
 from __future__ import annotations
@@ -30,10 +38,12 @@ import json
 import logging
 import math
 import time
+from collections import deque
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, Mapping, Optional, Tuple, Union
+from typing import Any, Callable, Deque, Dict, List, Mapping, Optional, Tuple, Union
 
 from core.data_config import get_data_root
 from core.life.life_essence import get_life_essence
@@ -279,6 +289,58 @@ def _call_source(name: str) -> Any:
     except Exception as exc:  # 來源故障 → 未觀測（D11），不拖垮整個快照
         logger.debug("[ALState] source %s unavailable: %s", name, exc)
         return None
+
+
+# =========================================================================
+# §8 寫路徑（item ④ 種子）：對 AL 的寫只經 submit_event（I7）
+# =========================================================================
+class EventType(str, Enum):
+    """§8 事件類型。v1 只有「記憶層執行 retention policy 的結果回報」——
+
+    型別隨生產呼叫者一起新增：沒有 producer 的型別不進枚舉（零死碼）。
+    """
+
+    MEMORY_RESULT = "memory_result"
+
+
+# 緩衝有界；v1 不持久化、不做視窗聚合（§14 明列 v1 出界）。重啟後為空
+# 是誠實的：沒觀測到的事件不裝作有。
+_EVENT_LIMIT = 100
+_EVENTS: Deque[Dict[str, Any]] = deque(maxlen=_EVENT_LIMIT)
+
+
+def submit_event(event_type: Union[EventType, str], payload: Mapping[str, Any]) -> None:
+    """寫入口（§9）：記錄一筆事件 —— v1 僅落地，聚合/轉移是後續項。
+
+    - 型別未知拋 :class:`ALValidationError`（打錯字靜默失效比崩潰更貴，
+      與 ``register_al_source`` 同款）；收 ``EventType`` 也收它的字串值。
+    - ``payload`` 只收統計摘要：**原始內容不進 AL**（§8）。
+    - 緩衝滿 ``_EVENT_LIMIT`` 淘汰最舊 —— 事件是觀測，不是記憶。
+    """
+    try:
+        resolved = event_type if isinstance(event_type, EventType) else EventType(event_type)
+    except ValueError as exc:
+        raise ALValidationError(
+            f"unknown event type {event_type!r}; known = {[e.value for e in EventType]}"
+        ) from exc
+    if not isinstance(payload, Mapping):
+        raise TypeError(f"event payload must be a mapping, got {type(payload).__name__}")
+    record: Dict[str, Any] = {"type": resolved.value, "at": time.time(), "payload": dict(payload)}
+    _EVENTS.append(record)
+    logger.debug("[ALEvent] %s payload=%s", resolved.value, record["payload"])
+
+
+def recent_events(limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    """已記錄的事件（舊→新）；``limit`` 取最近 N 筆，非正數回空清單。"""
+    events = list(_EVENTS)
+    if limit is not None:
+        events = events[-limit:] if limit > 0 else []
+    return events
+
+
+def clear_events() -> None:
+    """清空事件緩衝（測試隔離用；生產不呼叫）。"""
+    _EVENTS.clear()
 
 
 # =========================================================================

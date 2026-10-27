@@ -20,6 +20,11 @@ clock) — is asserted at the bottom.
    `core.*` — it never reaches out to `ai.*`/`api.*`/`services.*`.
    Sources held by the api layer are injected via the provider registry;
    `emotion` is unobservable in v1 by design (§8 event channel later).
+5. **§8 event write path** (item ④): `submit_event()` is the only write
+   into AL — unknown types raise `ALValidationError`, non-mapping
+   payloads are rejected, the payload is copied (callers can't mutate
+   the record), the buffer is bounded at 100 with oldest evicted, and
+   nothing persists (v1 skips window aggregation per §14).
 """
 
 import ast
@@ -44,11 +49,15 @@ from core.life.al_state import (  # noqa: E402
     PARAM_SOURCES,
     ALSnapshot,
     ALValidationError,
+    EventType,
     advance_tick,
+    clear_events,
     get_al_state,
     init_clock,
     load_clock,
+    recent_events,
     register_al_source,
+    submit_event,
     validate_snapshot,
     validate_weights,
 )
@@ -291,3 +300,58 @@ class TestI8Boundary:
                 imported.append(node.module or "")
         violations = [name for name in imported if name.split(".")[0] in self.BANNED_ROOTS]
         assert violations == [], f"I8: AL outbound imports are forbidden: {violations}"
+
+
+class TestEventWritePath:
+    """§8 寫路徑（item ④ 種子）：對 AL 的寫只經 ``submit_event``（I7）。"""
+
+    @pytest.fixture(autouse=True)
+    def _clean_buffer(self):
+        """事件緩衝是模組級共享狀態 — 每測試前後清空。"""
+        clear_events()
+        yield
+        clear_events()
+
+    def test_records_shape(self):
+        submit_event(EventType.MEMORY_RESULT, {"mem_id": "exp_1", "pruned": 3})
+        events = recent_events()
+        assert len(events) == 1
+        record = events[0]
+        assert record["type"] == "memory_result"
+        assert isinstance(record["at"], float)
+        assert record["payload"] == {"mem_id": "exp_1", "pruned": 3}
+
+    def test_accepts_the_enum_member_and_its_plain_string_value(self):
+        submit_event(EventType.MEMORY_RESULT, {"a": 1})
+        submit_event("memory_result", {"b": 2})
+        assert [e["payload"] for e in recent_events()] == [{"a": 1}, {"b": 2}]
+
+    def test_unknown_type_raises(self):
+        # 打錯字靜默失效比崩潰更貴 — 與 register_al_source 同款
+        with pytest.raises(ALValidationError, match="unknown event type"):
+            submit_event("memory_reuslt", {"typo": True})
+
+    def test_non_mapping_payload_raises(self):
+        with pytest.raises(TypeError, match="mapping"):
+            submit_event(EventType.MEMORY_RESULT, ["not", "a", "mapping"])
+
+    def test_payload_is_copied_not_linked(self):
+        payload = {"count": 1}
+        submit_event(EventType.MEMORY_RESULT, payload)
+        payload["count"] = 999
+        assert recent_events()[-1]["payload"]["count"] == 1
+
+    def test_buffer_is_bounded_and_evicts_oldest(self):
+        for index in range(105):
+            submit_event(EventType.MEMORY_RESULT, {"i": index})
+        events = recent_events()
+        assert len(events) == 100, "bounded buffer: oldest evicted, never grows"
+        assert events[0]["payload"]["i"] == 5  # 前 5 筆被淘汰
+        assert events[-1]["payload"]["i"] == 104
+
+    def test_limit_semantics(self):
+        for index in range(3):
+            submit_event(EventType.MEMORY_RESULT, {"i": index})
+        assert len(recent_events()) == 3
+        assert [e["payload"]["i"] for e in recent_events(limit=2)] == [1, 2]
+        assert recent_events(limit=0) == []

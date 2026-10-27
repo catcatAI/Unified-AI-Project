@@ -388,9 +388,11 @@ hunk 在 HEAD 同樣不合，非本輪所觸，未動）。
 
 > **狀態（2026-10-27）**：① schema ✅（item 1 `c9118398f`）／② ζ ✅＋age
 > ✅＋η.drift ✅（2a `ff2b19a93`、2b `ca1d8e350`、2c `f087df2f1`——item 2
-> **全數完成**）／③ ✅（本提交——lifespan AL
-> source 登記、ALState 入 backbone、server 執行下 dump 驗證，見下方完成記錄）／④ 未動（`memory_integration_loop`
-> 已刪 → 按 §10 新建）。「驗」段的 E1 干預測試**未寫**（方法先例：`tests/ai/meta/test_state_intervention.py`）。
+> **全數完成**）／③ ✅（`3c38586c8`——lifespan AL
+> source 登記、ALState 入 backbone、server 執行下 dump 驗證，見下方完成記錄）／④
+> ✅（本提交——§10 retention/decay policy：AL 側純函式、HAM 執行＋接活 prune、
+> `submit_event` 種子回報＋`al_events`
+> dump，見下方完成記錄）。「驗」段的 E1 干預測試**未寫**（方法先例：`tests/ai/meta/test_state_intervention.py`）。
 
 - **做**：
   1. 定義 **`ALState` snapshot
@@ -618,6 +620,71 @@ server 執行下沒有任何 dump 面（item 1 的讀路徑零生產消費者）
 enum 序列化、backbone 收聚合器、detailed dump 段）；相鄰 **665
 passed**（`tests/api/`＋`tests/core/backbone/`＋`test_al_state`＋`test_zeta_driven`）；flake8
 0、black 過。
+
+#### ✅ Phase 2 item 4 完成記錄 — §10 retention/decay policy 介面（2026-10-27）
+
+**盤點結論（四個偵察發現）**：(1) `submit_event`/`EventType`
+全庫零實作——§8寫路徑只存在於 docstring；(2) `HAMMemoryManager.store_experience`
+是真儲存咽喉（5 個生產呼叫者：chat_service、router 經 coordinator、card
+adapter、ed3n、angela_agent）；(3) **`prune()`
+生產零呼叫**——2026-10-20 專門搬進來的 30/90 天保留規則只有測試在跑，
+`ham_memory/__init__.py` docstring 卻宣稱規則「now live in
+`prune()`」（真幽靈：規則在、執行點死）；(4) chat 路徑已用 `ImportanceScorer` 寫
+`metadata.importance`（保留決策的既有輸入）。
+
+**兩個裁決（2026-10-27 使用者）**：執行深度＝**三腿＋接活 prune**（policy純函式＋store 套用＋prune 接生產呼叫＋submit_event種子回報）；語義映射＝**drift/intensity/phase**。
+
+**做**：
+
+- **AL 側 policy 純函式**（新 `core/life/al_memory_policy.py`）：
+  `retention_policy(snapshot) -> RetentionPolicy`——該記多久 ← `drift{zeta,eta}`
+  取已觀測鍵**最大值**（漂移＝變化最快的那一面）、線性壓縮、10% 地板；多重 ←
+  `intensity`（`weight = 0.5 + i`，界限 [0.5, 1.5]）；固化 ←
+  `life_phase == "CONSOLIDATION"`。逐量
+  `source`（`state`/`default`），D11 未觀測退基準；0.0 是合法觀測不算缺席。純函式、無 I/O、不 import
+  `ai.*`（I8）、同快照同策略（I6）。
+- **§8 寫路徑種子**（`al_state.py`）：`EventType`（v1 只有
+  `MEMORY_RESULT`——型別隨生產呼叫者一起新增，沒有 producer 的型別不進枚舉）、`submit_event()`（未知型別拋
+  `ALValidationError`、非 Mapping 拋
+  `TypeError`、payload 複製不連動呼叫方）、有界 100 筆 `recent_events()`
+  （滿淘汰最舊、不落盤）、測試隔離 `clear_events()`。
+- **HAM 執行**（`store_experience`）：entry 建好後套用 policy——state 觀測戳
+  `al_retain_days`／`al_weight`、CONSOLIDATION 戳
+  `protected=True`；AL 缺席（import 失敗/快照讀不到）回 `{}`
+  照常存、不回報——記憶層不能因為 AL 不在就存不下東西。`mem_id` 在 prune
+  **前**取（寫入位置，避免清舊後編號回撞）；**prune 接活**：每次 store 順帶執行、
+  `_save` 前清完落盤（30/90 天規則自此真的會跑）。
+- **保留決策**：`_should_prune_entry` 加 `al_retain_days`
+  分支（取代 30/90 分層；`protected` 與 keep-floor（有效重要性 ≥
+  0.7）**先判**；壞戳記退預設分層——一個壞值不該誤殺記憶）；`_entry_importance`
+  改**有效重要性** ＝原評分 × `al_weight`（clamp [0,1]）。
+- **回報與 dump**：執行摘要（`mem_id`／`applied`／`pruned`
+  統計，**無內容**——§8 原始內容不進 AL）進 `submit_event`，只在 `applied`
+  非空時回報；`/status/detailed` 加 `al_events`
+  段（`_detailed_al_events()`，有界緩衝、重啟為空＝沒觀測到事件）。
+
+**設計中途修正（撞既有測試）**：`test_memory_recent_panel:69` 釘死 caller 送的
+`importance=0.42` 必須原樣保留 → weight **不**乘進原值，改為獨立戳記
+`al_weight`、只在保留決策點（`_entry_importance`）生效——內容評分與生命調制兩層分離，各自可取證。
+
+**行為變更（有意，記錄）**：
+
+- **prune 從零呼叫變每次 store 執行**：30/90 天保留規則 2026-10-27 起真的會跑（此前只有測試在跑）。
+- **已觀測 drift 的生產路徑，新記憶一律帶 `al_retain_days` 戳記**：mid-tier
+  90 天被 policy 取代（drift=0 →
+  30 天基準）；舊記憶無戳記維持預設規則（D11 不追溯既有資料）。
+- `weight` 不改寫 caller `importance`（0.42 契約不破），調制只在有效重要性。
+
+**驗**：新增 `tests/core/test_al_memory_policy.py`
+**40 條**（全未觀測退基準、壞觀測不炸、drift 壓縮與地板 parametrize、取已觀測鍵最大、clamp、NaN 退 default、weight 界限、CONSOLIDATION 唯一固化、逐量歸因、同快照同策略、快照不變、其他欄位不影響）＋
+`tests/ai/memory/test_ham_al_policy.py`
+**19 條**（state 戳記、未觀測一個戳都不留、0.42 原值保留、固化＋地板同戳、AL 缺席純存不回報、**prune 接活釘**：60 種子→store 後 51 且
+`pruned=10`、TTL 取代分層＋對照組、keep-floor／protected 勝 TTL、壞戳記退層、al_weight 換保留層、事件 payload 統計無內容）；擴
+`test_al_state.py` **+7**（§8 寫路徑：形狀、enum/字串值、未知型別拋
+`unknown event type`、非 Mapping、payload 複製、有界 100 淘汰最舊、limit 語義）與
+`test_al_sources.py` **+3**（`al_events`
+dump 舊→新、空＝沒觀測、endpoint 接線 source 釘——漏 key 就是零呼叫孤兒）。相鄰 373
+passed；flake8 0、black 過。
 
 ### Phase 3 — 割邊：把 AL 從 AI 層拔出來（3–5 天，**主戰場**）
 

@@ -7,7 +7,7 @@ GET /system/discovery — deployment mode, backends, intents, memory, state summ
 
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from core.utils import safe_error
 from fastapi import APIRouter, HTTPException
@@ -183,6 +183,19 @@ def _detailed_al_state() -> Dict[str, Any]:
     return get_al_state().as_dict()
 
 
+def _detailed_al_events() -> List[Dict[str, Any]]:
+    """Recent AL events (contract §8's write path), oldest first.
+
+    Bounded in-memory buffer (100); empty right after a restart — v1 does
+    not persist events or aggregate them over windows (§14 puts both out
+    of v1 scope), so an empty list means "nothing observed", never
+    "lost data".
+    """
+    from core.life.al_state import recent_events
+
+    return recent_events()
+
+
 @router.get("/status/detailed")
 async def system_status_detailed() -> Dict[str, Any]:
     """Detailed system status (the contract the INVOCATION_MATRIX documents).
@@ -237,6 +250,14 @@ async def system_status_detailed() -> Dict[str, Any]:
     except Exception as exc:
         result["al_state"] = None
         result["al_state_error"] = safe_error(exc)
+
+    # §8 事件寫路徑的 dump 面（item ④ 種子：memory_result 結果回報）。
+    # 有界緩衝、重啟為空 —— 空清單＝「沒觀測到事件」，不是「事件丟了」。
+    try:
+        result["al_events"] = _detailed_al_events()
+    except Exception as exc:
+        result["al_events"] = None
+        result["al_events_error"] = safe_error(exc)
 
     return result
 
