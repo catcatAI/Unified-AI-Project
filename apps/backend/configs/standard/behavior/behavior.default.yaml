@@ -110,6 +110,15 @@ state_constants:
   identity_continuity_bound: 0.6
   identity_continuity_count: 5
 
+  # Identity drift — core/life/identity_drift.py（契約 §7.2：τ 是配置鍵）。
+  # τ 的單位 = LifeEssence 世代（epoch，§4.3 的三種時間尺度之一）；
+  # 只許在這裡改，改了全跟著走（讀路徑由 tests/core/test_identity_drift.py 釘住，
+  # 防再次變成上面那批無讀者的死鍵）。
+  identity_tau_slow: 20.0
+  identity_tau_fast: 5.0
+  identity_z_threshold: 2.0
+  identity_min_points: 6
+
   # Alpha Formula Weights
   alpha_min_energy: 0.3
   alpha_stress_drain: 0.05

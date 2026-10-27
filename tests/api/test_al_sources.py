@@ -59,9 +59,14 @@ def isolated_al_registry(monkeypatch):
     clear_events()
 
 
-def _patch_drift_upstream(monkeypatch, *, eta_observed: bool, zeta_coherence):
-    """把 ``_al_drift`` 的兩個 canonical getter 指到可控替身（2c 同款讀法）。"""
+def _patch_drift_upstream(monkeypatch, *, eta_observed: bool, zeta_coherence, identity_history=()):
+    """把 ``_al_drift`` 的三個 canonical getter 指到可控替身（2c 同款讀法）。
+
+    第三個（2026-10-28）是 LifeEssence 的世代序列 —— 預設給空序列 = 未觀測，
+    於是 ``identity`` 不進 dict，原有兩鍵斷言不受影響（D11 同款讀法）。
+    """
     import api.routes.chat_routes as chat_routes
+    import core.life.life_essence as life_essence
 
     monkeypatch.setattr(
         chat_routes,
@@ -83,6 +88,12 @@ def _patch_drift_upstream(monkeypatch, *, eta_observed: bool, zeta_coherence):
             zeta=SimpleNamespace(values=values),
             zeta_observed_fields=observed,
         ),
+    )
+    history = list(identity_history)
+    monkeypatch.setattr(
+        life_essence,
+        "get_life_essence",
+        lambda: SimpleNamespace(mu_history=lambda: list(history)),
     )
 
 
@@ -123,6 +134,33 @@ class TestProviderRegistration:
         snap = get_al_state()
         assert snap.drift is None, "both keys unobserved → the whole field is withheld"
         assert snap.source["drift"] is None
+
+    def test_identity_drift_key_appears_once_observed(self, monkeypatch):
+        """2026-10-28：第三個觀測鍵 ``identity``（契約 §6 距離錨）。
+
+        持續單向位移 = 離開錨**且仍在動** → 確認 → 進 dict；值在 [0, 1]。
+        """
+        history = [(i, {"SOCIAL_ORIENTATION": 0.8 - 0.005 * i}) for i in range(40)]
+        _patch_drift_upstream(
+            monkeypatch, eta_observed=True, zeta_coherence=0.75, identity_history=history
+        )
+        lifespan._register_al_sources()
+
+        snap = get_al_state()
+        assert snap.drift is not None
+        assert "identity" in snap.drift
+        assert 0.0 < snap.drift["identity"] <= 1.0
+
+    def test_identity_drift_stays_out_when_history_is_too_short(self, monkeypatch):
+        """點數不足 → 未觀測 → 不進 dict（D11，不是報 0.0）。"""
+        history = [(i, {"SOCIAL_ORIENTATION": 0.8 - 0.02 * i}) for i in range(3)]
+        _patch_drift_upstream(
+            monkeypatch, eta_observed=True, zeta_coherence=0.75, identity_history=history
+        )
+        lifespan._register_al_sources()
+
+        snap = get_al_state()
+        assert snap.drift == {"eta": 0.125, "zeta": 0.25}
 
     def test_life_phase_enum_serialises_to_its_name(self):
         from core.life.al_state import _phase_str

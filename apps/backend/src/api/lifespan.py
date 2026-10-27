@@ -863,6 +863,38 @@ def _al_drift() -> Optional[Dict[str, float]]:
         coherence = values.get("temporal_coherence")
         if coherence is not None:
             drift["zeta"] = round(1.0 - float(coherence), 4)
+
+    # 身份漂移（契約 §6 三層錨的「距離錨」量測）：LifeEssence 的世代序列，
+    # 第 0 代祖先核心就是錨 —— 觀測得到、跨重啟持久（`data/life_essence_state.json`）。
+    # 時間係數走配置（identity_tau_* / identity_z_threshold / identity_min_points，
+    # §7.2「τ 是配置鍵」）。τ 用 `lifecycle_value` 而**不是** `timing_value`：
+    # 後者會乘硬體倍率（同鍵在本機量出 40 而非 20）—— 身份的時間常數是語義，
+    # 不該隨機器快慢變（測量隨硬體變 = 量測缺陷）。觀測不足 → 不進 dict（D11）；本段失敗也不拖垮
+    # eta/zeta 兩鍵（`_call_source` 兜底，這裡再就地圈住）。
+    try:
+        from core.life.identity_drift import worst_identity_drift
+        from core.life.life_essence import get_life_essence
+        from core.system.config.magic_numbers import lifecycle_value, limit_value, threshold_value
+
+        worst = worst_identity_drift(
+            get_life_essence().mu_history(),
+            tau_slow=lifecycle_value("identity_tau_slow", 20.0),
+            tau_fast=lifecycle_value("identity_tau_fast", 5.0),
+            z_threshold=threshold_value("identity_z_threshold", 2.0),
+            min_points=int(limit_value("identity_min_points", 6)),
+        )
+        if worst is not None:
+            dimension, evidence = worst
+            drift["identity"] = round(float(evidence.drift), 4)
+            logger.debug(
+                "[ALState] identity drift via %s: distance=%s z=%s moving=%s",
+                dimension,
+                evidence.distance,
+                evidence.z,
+                evidence.moving,
+            )
+    except Exception:
+        logger.debug("[ALState] identity drift unavailable", exc_info=True)
     return drift or None
 
 

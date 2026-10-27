@@ -609,6 +609,30 @@ class LifeEssence:
             "trace_breakdown": self._trace_breakdown(),
         }
 
+    def mu_history(self) -> List[Tuple[int, Dict[str, float]]]:
+        """``[(世代, {維度: μ})]`` —— 從第 0 代祖先核心到當前世代的唯讀序列。
+
+        供身份漂移量測（``core/life/identity_drift.py``）：第 0 代就是錨，
+        序列本身是觀測（不重算、不寫入）。用**原始 μ**而非 blended —— 祖先
+        核心存的也是原始 μ，兩端不同口徑就不是同一條序列。
+        """
+        dims = list(EssenceDimension)
+        rows: List[Tuple[int, Dict[str, float]]] = []
+        for core in self._ancestral_cores:
+            rows.append(
+                (
+                    int(core.generation),
+                    {d.name: float(core.final_tendencies.mu.get(d, _DEFAULT_MU)) for d in dims},
+                )
+            )
+        rows.append(
+            (
+                int(self._generation),
+                {d.name: float(self._tendencies.mu.get(d, _DEFAULT_MU)) for d in dims},
+            )
+        )
+        return rows
+
     def _trace_breakdown(self) -> Dict[str, int]:
         """痕跡類型分佈。"""
         breakdown: Dict[str, int] = defaultdict(int)
