@@ -721,14 +721,21 @@ def _ctx_state_matrix(context: Dict[str, Any]) -> None:
         sm = _get_state_matrix()
         eta_state = _get_eta_axis()
         axes = {}
-        # zeta is left out on purpose: update_zeta() has no production caller,
-        # so the axis only ever holds its frozen defaults. Feeding it to the
-        # LLM would label a constant as current state (three-core plan,
-        # Phase 1 item 2 — restored once Phase 2 computes it for real).
+        # zeta arrives through a per-key observation gate (three-core plan,
+        # Phase 2 item 2): compute_zeta_values() writes each sub-metric only
+        # once TemporalState holds >= 2 observations, and zeta_observed_fields
+        # reports which keys those are. A default nobody computed stays out —
+        # Phase 1's honesty rule became a filter, not a whole-axis exclusion.
         for ax_name in ("alpha", "beta", "gamma", "delta", "epsilon"):
             dim = sm.dimensions.get(ax_name)
             if dim:
                 axes[ax_name] = {"values": dim.values.copy()}
+        zdim = sm.dimensions.get("zeta")
+        observed = getattr(sm, "zeta_observed_fields", frozenset())
+        if zdim and observed:
+            axes["zeta"] = {
+                "values": {k: zdim.values[k] for k in sorted(observed) if k in zdim.values}
+            }
         th = sm.theta.values if hasattr(sm, "theta") else {}
         from core.engine.eta_axis import measured_eta_metrics
 
@@ -1912,9 +1919,7 @@ def _format_chat_response(
         "llamacpp": "llm",
         "error": "error",
     }
-    _derived_route = (
-        _declared_route or _metadata.get("route") or _route_map.get(_backend)
-    )
+    _derived_route = _declared_route or _metadata.get("route") or _route_map.get(_backend)
     if _derived_route is None:
         _derived_route = "fallback" if _metadata.get("fallback") else "unknown"
     return {

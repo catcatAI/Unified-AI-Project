@@ -71,3 +71,29 @@ def test_anomalies_scan_is_bounded():
     # threshold=1.5 avoids floating-point edge cases at exactly -0.5 std.
     results = ts.anomalies("alpha", "arousal", threshold=1.5, window=5)
     assert len(results) == 1
+
+
+def test_trend_reads_newest_first_series():
+    """trend() must label direction by time, not by list order.
+
+    ``get_field_series()`` walks the history newest-first, so the old
+    ``values[-1] - values[0]`` slope read the series backwards and reported a
+    rising field as "falling". Latent while TemporalState stayed empty; the
+    three-core plan Phase 2 item 2 (ζ is driven by trend/anomalies, and
+    ``get_state_summary()`` now reaches this branch) makes it live.
+    """
+    from core.state.temporal import TemporalState
+
+    rising_ts = TemporalState(max_size=100)
+    for i, v in enumerate([0.1, 0.2, 0.3, 0.4, 0.5]):
+        rising_ts.record({"timestamp": f"t{i}", "alpha": {"energy": v}})
+    rising = rising_ts.trend("alpha", "energy", window=10)
+    assert rising.direction == "rising"
+    assert rising.slope > 0
+
+    falling_ts = TemporalState(max_size=100)
+    for i, v in enumerate([0.5, 0.4, 0.3, 0.2, 0.1]):
+        falling_ts.record({"timestamp": f"t{i}", "alpha": {"energy": v}})
+    falling = falling_ts.trend("alpha", "energy", window=10)
+    assert falling.direction == "falling"
+    assert falling.slope < 0

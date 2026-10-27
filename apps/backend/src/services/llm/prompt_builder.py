@@ -845,12 +845,12 @@ def _build_core_prompt(
     axis_lines, theta_lines, eta_lines, guidance_lines = [], [], [], []
     if state_for_llm:
         axes = state_for_llm.get("axes", {})
-        # zeta is deliberately not rendered: update_zeta() has zero production
-        # callers, so its four sub-metrics are frozen defaults (memory_depth
-        # 0.6, identity_continuity 0.75, ...). Printing them would present a
-        # constant as a live state. Phase 2 drives them from TemporalState
-        # and re-adds the axis here (three-core plan, Phase 1 item 2).
-        for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon"):
+        # zeta is rendered only through the upstream observation gate:
+        # _ctx_state_matrix puts the axis in `axes` solely with keys that
+        # compute_zeta_values() actually computed from TemporalState
+        # (three-core plan, Phase 2 item 2). Anything printed here therefore
+        # carries an observation, never a frozen default.
+        for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
             ax = axes.get(axis_name, {})
             vals = ax.get("values", {})
             if vals:

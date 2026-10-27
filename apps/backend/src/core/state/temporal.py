@@ -218,7 +218,13 @@ class TemporalState:
         values = self.get_field_series(axis, field, window)
         if len(values) < 2:
             return TrendResult(axis=axis, field_name=field, direction="insufficient_data")
-        slope = (values[-1] - values[0]) / max(len(values) - 1, 1)
+        # get_field_series walks the history newest-first, so values[0] is
+        # the newest point: slope over time = (newest - oldest) / (n - 1).
+        # The previous (values[-1] - values[0]) read the series backwards
+        # and labelled a rising field "falling" — latent while TemporalState
+        # stayed empty (zero callers of _sync_to_temporal), and ζ's drive
+        # (three-core plan Phase 2 item 2) makes this branch live.
+        slope = (values[0] - values[-1]) / max(len(values) - 1, 1)
         mean_val = sum(values) / len(values)
         direction = "rising" if slope > 0.01 else ("falling" if slope < -0.01 else "stable")
         return TrendResult(

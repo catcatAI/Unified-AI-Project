@@ -6,8 +6,12 @@ out of the prompt/context. It may never be displayed as if it were live.
 Evidence behind each assertion:
 
 - ``update_zeta()`` has zero production callers, so the four ζ sub-metrics
-  are frozen defaults (memory_depth 0.6, identity_continuity 0.75, ...).
-  They are therefore kept out of the axes the LLM reads.
+  are frozen defaults (memory_depth 0.6, identity_continuity 0.75, ...)
+  and were kept out of the LLM's axes. Phase 2 item 2 computes them from
+  ``TemporalState``; the rule became a per-key observation gate:
+  ``_ctx_state_matrix`` sends only the keys listed in
+  ``zeta_observed_fields``, and the prompt renders whatever the state
+  builder vouches for. Unobserved -> absent; observed -> shown.
 - ``η.success_rate`` has no observation until a module has actually run —
   production registers the default modules and never executes one — and
   ``η.structural_drift`` has no producer at all yet (the plan schedules it
@@ -63,13 +67,17 @@ class TestMeasuredEtaMetrics:
 
 
 class TestStateContextInjection:
-    def test_ctx_state_matrix_leaves_zeta_out_of_the_llm_context(self, monkeypatch):
+    def test_ctx_state_matrix_leaves_unobserved_zeta_out_of_the_llm_context(self, monkeypatch):
         state_matrix = SimpleNamespace(
             dimensions={
                 "alpha": SimpleNamespace(values={"energy": 0.7}),
+                # The axis holds defaults — nobody has computed them yet, so
+                # zeta_observed_fields is empty (cold start, one observation
+                # max) and the gate must withhold the whole axis.
                 "zeta": SimpleNamespace(values={"memory_depth": 0.6, "identity_continuity": 0.75}),
             },
             theta=SimpleNamespace(values={"novelty": 0.4}),
+            zeta_observed_fields=frozenset(),
         )
         monkeypatch.setattr(chat_routes, "_get_state_matrix", lambda: state_matrix)
         monkeypatch.setattr(chat_routes, "_get_eta_axis", lambda: _eta())
@@ -79,7 +87,35 @@ class TestStateContextInjection:
 
         axes = context["state_for_llm"]["axes"]
         assert "alpha" in axes
-        assert "zeta" not in axes, "a frozen axis must not reach the LLM as current state"
+        assert "zeta" not in axes, "an unobserved axis must not reach the LLM as current state"
+
+    def test_ctx_state_matrix_sends_only_observed_zeta_keys(self, monkeypatch):
+        state_matrix = SimpleNamespace(
+            dimensions={
+                "alpha": SimpleNamespace(values={"energy": 0.7}),
+                # All four sub-metrics exist on the axis; only two of them
+                # carry an observation (Phase 2 item 2) — the other two are
+                # still defaults and must not be sent.
+                "zeta": SimpleNamespace(
+                    values={
+                        "memory_depth": 0.04,
+                        "temporal_coherence": 1.0,
+                        "identity_continuity": 0.75,
+                        "narrative_flow": 0.5,
+                    }
+                ),
+            },
+            theta=SimpleNamespace(values={"novelty": 0.4}),
+            zeta_observed_fields=frozenset({"memory_depth", "temporal_coherence"}),
+        )
+        monkeypatch.setattr(chat_routes, "_get_state_matrix", lambda: state_matrix)
+        monkeypatch.setattr(chat_routes, "_get_eta_axis", lambda: _eta())
+
+        context = {}
+        chat_routes._ctx_state_matrix(context)
+
+        axes = context["state_for_llm"]["axes"]
+        assert axes["zeta"]["values"] == {"memory_depth": 0.04, "temporal_coherence": 1.0}
 
     def test_ctx_state_matrix_sends_none_for_unmeasured_eta(self, monkeypatch):
         state_matrix = SimpleNamespace(
@@ -101,12 +137,13 @@ class TestStateContextInjection:
 
 
 class TestPromptRendering:
-    def _state(self, eta):
+    def _state(self, eta, zeta=None):
+        axes = {"alpha": {"values": {"energy": 0.7}}}
+        if zeta is not None:
+            # What _ctx_state_matrix sends once the keys are observed.
+            axes["zeta"] = {"values": zeta}
         return {
-            "axes": {
-                "alpha": {"values": {"energy": 0.7}},
-                "zeta": {"values": {"memory_depth": 0.6}},
-            },
+            "axes": axes,
             "theta": {
                 "novelty": 0.4,
                 "theta_negativity": 0.1,
@@ -117,7 +154,9 @@ class TestPromptRendering:
             "guidance": [],
         }
 
-    def test_unmeasured_eta_and_frozen_zeta_are_not_printed(self):
+    def test_unmeasured_eta_and_unobserved_zeta_are_not_printed(self):
+        # The cold gate output: no zeta in axes (nothing observed), eta
+        # present but every unmeasured quantity None.
         prompt_text = _build_core_prompt(
             self._state(
                 {
@@ -137,6 +176,29 @@ class TestPromptRendering:
             assert marker not in prompt_text, f"an unmeasured value reached the prompt: {marker}"
         # The module count is a real fact and still belongs there.
         assert ("Active modules" in prompt_text) or ("活躍模組" in prompt_text)
+
+    def test_observed_zeta_is_rendered(self):
+        # Phase 2 item 2: observed keys arrive through the gate and the
+        # prompt renders them — computed values may be shown as current state.
+        prompt_text = _build_core_prompt(
+            self._state(
+                {
+                    "module_count": 3,
+                    "execution_count": 0,
+                    "success_rate": None,
+                    "structural_drift": None,
+                },
+                zeta={"memory_depth": 0.04, "temporal_coherence": 1.0},
+            ),
+            None,
+            "",
+        )
+        assert "ZETA" in prompt_text
+        assert "memory_depth" in prompt_text
+        assert "temporal_coherence" in prompt_text
+        # The unmeasured eta quantities still stay out.
+        for marker in ("Structural drift", "結構漂移", "Success rate", "成功率"):
+            assert marker not in prompt_text
 
     def test_measured_eta_values_are_still_rendered(self):
         prompt_text = _build_core_prompt(

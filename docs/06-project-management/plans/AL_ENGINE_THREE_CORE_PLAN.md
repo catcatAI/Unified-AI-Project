@@ -468,6 +468,63 @@ ALL PASS。
 **精確等於**持久化值、`age > 1000` 天；舊行為是 `now - now`
 恆 0）；相鄰 5 檔合計 **70 passed**；flake8 0、black 過。
 
+#### ✅ Phase 2 item 2b 完成記錄 — ζ 真值驅動＋兩處軸迴圈恢復（2026-10-27）
+
+**根因（雙層）**：(1) `update_zeta()` 零生產呼叫 →
+ζ 四欄恆為凍結預設；(2) 更深一層——`_sync_to_temporal()`
+是**零呼叫者**的一次性補記（`_temporal_synced` 旗標只放行第一筆，且
+`_post_update` 從不呼叫它）→ `TemporalState`
+恆空 → 即便接了 trend/anomalies 也永遠 `insufficient_data`。另查出 `trend()`
+方向 bug：`get_field_series` 由新到舊，原 `(values[-1]-values[0])`
+讀反 → 上升報 "falling"（先前死路徑無害，本項把它接活就必須同修）。
+
+**修**：
+
+- **`compute_zeta_values(temporal, window=50, anomaly_threshold=2.0)`
+  純函式**（`state_matrix.py` module-level）：觀測單元＝快照 `(axis, field)`
+  對（需 ≥2 點），每對只進一個桶 → 恆等式
+  `temporal_coherence == identity_continuity + narrative_flow`。
+  `memory_depth=min(1,size/50)`、`coherence=1-異常對佔比`、
+  `continuity=stable&clean/n`、`flow=rising/falling&clean/n`；觀測不足回
+  `{}`（呼叫方一個鍵都不動，D11）。
+  **閾值 2.0 而非草案 1.5σ**：均勻 ramp 的 z_max → √3 ≈
+  1.73，1.5σ 會把漸變端點全判異常（原型實測 ramp50 coherence=1.0、spike
+  0.5 確認行為）。
+- **閘在 `_post_update`**：`if dimension_name != "zeta"` 才
+  `_sync_to_temporal()`＋`_recompute_zeta()`——ζ 自己的更新不是觀測（ζ 不入快照），手動
+  `update_zeta` 寫入保持到下次真觀測。
+- **`_sync_to_temporal` 重寫**：每次非 ζ 觀測同步，identity
+  guard（`is not`）確保同一筆快照只入一次，與 `history` lockstep 滑動（同受
+  `max_history` 上界）；`_temporal_synced` 旗標全刪。
+- **`_recompute_zeta` 直寫** `zeta.values`＋`compute_coordinate()`＋
+  `state_store`，**不走
+  `update_zeta → _post_update`**（會無限遞迴＋灌軸值全同的假樣本）；不發 change
+  callback／threshold（ζ 上零註冊者已 grep 驗證）。
+- **展示分流改逐鍵**：`zeta_observed_fields` property ＝觀測過的鍵；
+  `chat_routes._ctx_state_matrix` 只送這些鍵、`prompt_builder` 軸迴圈加回
+  `"zeta"`——Phase 1 的「整軸拿掉」升級成「未觀測缺席、已觀測才出現」的閘。
+
+**執行偏離（記錄）**：Phase 1 把 `find_drift()` earmark 給 ζ——
+**最終不用**：它需外部 `expected` 基線，ζ 的基線是自衍生＝ `anomalies()`
+已窗口化覆蓋；成本 5.25ms/recompute vs
+trend+anomalies 全體 1.75ms（history=1000、46 pairs 實測）。 `find_drift()`
+維持 Phase 1 「保留待接」狀態。
+
+**行為變更（有意，記錄）**：(1) `TemporalState` 恆空 → 有資料，
+`get_state_summary()["temporal_trend"]` 由 `"stable"` 字串 → `TrendResult`
+物件（無測試鎖此 key）；(2) `trend()` 方向修正（新測試鎖定）；(3)
+ζ→theta/epsilon 的影響規則改吃計算值；(4) ζ 欄位從預設 → 第 2 筆觀測起為計算值。
+**備註**：`StateMatrixAdapter` 是 JSON 假件（自持 `_state`
+dict，從不碰真矩陣）→ 既有 `test_update_zeta_succeeds` 無衝突。
+
+**驗**：新增 `tests/core/test_zeta_driven.py`
+14 條（純函式 7＋接線 7，含 lockstep、手動寫入先立後被取代、`update_count`
+證明不走 `_post_update`）＋`test_temporal.py`
+方向測試＋honesty 修訂（unobserved 不印／observed 必印／只送觀測鍵）；相鄰合計
+**440 passed**（另：`tests/api → neuro` 子集排序下 2 failed 為**既有**
+跨檔污染——純 HEAD 同樣失敗，已 stash 實測排除本變更）；全量 **8605 passed / 107
+skipped / 0 failed**；flake8 0、black過。
+
 ### Phase 3 — 割邊：把 AL 從 AI 層拔出來（3–5 天，**主戰場**）
 
 - **做**：

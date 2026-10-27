@@ -57,6 +57,65 @@ CognitiveOp = _CognitiveOp
 from .state_matrix_types import AllocateDecision, AxisSemanticAnchor, DimensionState
 
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
+# =============================================================================
+def compute_zeta_values(
+    temporal: TemporalState, window: int = 50, anomaly_threshold: float = 2.0
+) -> Dict[str, float]:
+    """ζ 四個子指標 — 純函式：給 ``TemporalState`` 觀測、回算得出的值。
+
+    three-core plan Phase 2 item 2：ζ 由 ``TemporalState`` 的 trend/anomalies
+    驅動。觀測單元 = 快照裡的 ``(axis, field)`` 對，需 ≥2 點才有趨勢可言；
+    每對只進一個桶（anomalous / stable / moving），因此恆等式
+
+        temporal_coherence == identity_continuity + narrative_flow
+
+    四欄語義：
+
+    - ``memory_depth``：歷史窗口填充率 ``min(1, size/window)`` —— 能回看
+      多深的過去。
+    - ``temporal_coherence``：``1 - 異常對佔比``（``anomalies()``，
+      z > 2σ）。2σ 是 ``anomalies()`` 的 high 嚴重度檔；1.5σ 會把任何均勻
+      漸變序列的端點都判成異常（均勻 ramp 的 z_max → √3 ≈ 1.73）。
+    - ``identity_continuity``：stable 且無異常的對佔比 —— 狀態留在自己
+      附近（含每點斜率 ≤ 0.01 的緩慢漂移）。
+    - ``narrative_flow``：rising/falling 且無異常的對佔比 —— 狀態在快速
+      移動（每點斜率 > 0.01，沿用 ``trend()`` 的 stable 判定）。
+
+    觀測不足（<2 筆，或沒有任何對有 2 點）回 ``{}`` —— 呼叫方因此一個鍵
+    都不動（D11：未觀測不寫假數、也不覆蓋現值）。
+    """
+    if temporal.size() < 2:
+        return {}
+    pairs: set[tuple[str, str]] = set()
+    for snapshot in temporal.history[-window:]:
+        for axis_name, values in snapshot.items():
+            if isinstance(values, dict):
+                for field_name in values:
+                    pairs.add((axis_name, field_name))
+    total = anomalous = stable = moving = 0
+    for axis_name, field_name in sorted(pairs):
+        result = temporal.trend(axis_name, field_name, window=window)
+        if result.direction == "insufficient_data":
+            continue
+        total += 1
+        if temporal.anomalies(axis_name, field_name, threshold=anomaly_threshold, window=window):
+            anomalous += 1
+        elif result.direction == "stable":
+            stable += 1
+        else:
+            moving += 1
+    if total == 0:
+        return {}
+    return {
+        "memory_depth": min(1.0, temporal.size() / window),
+        "temporal_coherence": 1.0 - anomalous / total,
+        "identity_continuity": stable / total,
+        "narrative_flow": moving / total,
+    }
+
+
 class StateMatrix4D:
     """
     6D状态矩阵系统（αβγδεθ）/ 6D State Matrix System
@@ -129,7 +188,8 @@ class StateMatrix4D:
         self.config = config or {}
         self._precision = 1.0
         self._temporal_state: Optional[TemporalState] = None
-        self._temporal_synced = False
+        # ζ 四欄中已被觀測重算過的鍵 — 展示端只渲染這些（D11：預設值不是觀測）
+        self._zeta_observed: set[str] = set()
 
         self._setup_dimensions()
         # Type annotations for dynamically set dimension attributes (mypy compat)
@@ -1188,6 +1248,14 @@ class StateMatrix4D:
         # Record to history
         self._record_history()
 
+        # ζ 真值驅動（three-core plan Phase 2 item 2）：新的觀測進
+        # TemporalState 後重算四個子指標。ζ 自己的更新不是觀測（ζ 不入
+        # 快照 —— 它是被算出來的，不是被觀察的），所以 update_zeta 不觸發
+        # 同步/重算：手動寫入保持到下一次真正的觀測，然後被觀測值取代。
+        if dimension_name != "zeta":
+            self._sync_to_temporal()
+            self._recompute_zeta()
+
         # [Task N.21.3] 意圖重力耦合 (Intent Gravity Coupling)
         self.apply_intent_gravity()
 
@@ -1238,18 +1306,51 @@ class StateMatrix4D:
         """獲取關聯的 TemporalState（用於雙軌整合）"""
         if not hasattr(self, "_temporal_state") or self._temporal_state is None:
             self._temporal_state = TemporalState(max_size=self.max_history)
-            self._temporal_synced = False
         return self._temporal_state
 
     def _sync_to_temporal(self) -> None:
-        """將最新快照同步到 TemporalState（延遲初始化）"""
-        if not hasattr(self, "_temporal_state") or self._temporal_state is None:
+        """將最新快照同步到 TemporalState（每次觀測都同步）。
+
+        three-core plan Phase 2 item 2 的根因修復：這裡原本是零呼叫者的
+        一次性補記（``_temporal_synced`` 只放行第一筆）—— TemporalState
+        恆空，``trend()``/``anomalies()`` 永遠 ``insufficient_data``。
+        現在由 ``_post_update`` 在每次非 ζ 更新後呼叫；identity guard
+        （``is not``）確保同一筆快照只入一次，與 ``history`` 同步滑動
+        （兩邊同受 ``max_history`` 上界、各自 pop 最舊，last 恆為同一物件
+        或 temporal 落後時補進新筆）。
+        """
+        timeline = self._get_temporal_state()
+        if self.history and timeline.get_at(-1) is not self.history[-1]:
+            timeline.record(self.history[-1])
+
+    def _recompute_zeta(self) -> None:
+        """由 TemporalState 觀測重算 ζ 四欄（three-core plan Phase 2 item 2）。
+
+        直接寫 ``self.zeta.values`` + ``compute_coordinate()``，**不走
+        ``update_zeta → _post_update``** —— 那會再記錄一次快照、再觸發
+        一次重算（無限遞迴），而 ζ 快照與上一筆軸值完全相同 = 往序列裡
+        灌假的「無變化」樣本（扭曲 trend/anomalies 的窗口）。也因此不發
+        change callback／threshold 事件 —— 兩者在 ζ 上目前零註冊者；
+        手動 ``update_zeta`` 仍走 ``_post_update`` 完整路徑。
+        算不出值（``{}``）時一個鍵都不動（D11）。
+        """
+        computed = compute_zeta_values(self._get_temporal_state())
+        if not computed:
             return
-        if self._temporal_synced:
-            return
-        if self.history:
-            self._temporal_state.record(self.history[-1])
-            self._temporal_synced = True
+        self.zeta.values.update(computed)
+        self.zeta.compute_coordinate()
+        self._zeta_observed.update(computed)
+        try:
+            from core.system.state_store import state_store
+
+            state_store.update_state("zeta", self.zeta.values.copy())
+        except Exception as e:
+            logger.error(f"[StateStore] Failed to sync zeta: {e}", exc_info=True)
+
+    @property
+    def zeta_observed_fields(self) -> frozenset[str]:
+        """ζ 四欄中已被觀測重算過的鍵 —— 展示端只渲染這些（D11）。"""
+        return frozenset(self._zeta_observed)
 
     def _check_thresholds(self, dimension_name: str) -> None:
         """检查阈值 / Check thresholds for callbacks"""
