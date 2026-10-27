@@ -302,11 +302,23 @@ def _read_tendency() -> Optional[Dict[str, float]]:
 
 
 def _phase_str(value: Any) -> Optional[str]:
+    """階段 → 可讀字串；與 ``system_routes._phase_label`` 同款規則。
+
+    ``LifePhase`` 是 ``Enum``，其 ``value`` 是 ``(cn, en)`` tuple —— 直接
+    ``str(value)`` 會得到 ``"('涌现', 'Emergence')"`` 這種 tuple 字面量。
+    先例：enum 優先 ``.name``（`autonomous_life_cycle` 的 status dict 同用），
+    tuple 值取首元素，字串原樣。
+    """
     if value is None:
         return None
     if isinstance(value, str):
         return value
+    name = getattr(value, "name", None)
+    if name:
+        return str(name)
     raw = getattr(value, "value", value)
+    if isinstance(raw, (tuple, list)) and raw:
+        return str(raw[0])
     return str(raw)
 
 

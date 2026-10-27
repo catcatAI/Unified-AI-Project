@@ -9,7 +9,7 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, Dict, Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -817,6 +817,102 @@ def _register_state_matrix(bb) -> None:
         logger.debug("[Backbone] state_matrix unavailable: %s", exc)
 
 
+# =========================================================================
+# Phase 2 item ③ — AL provider 登記簿（I8：AL 不出站伸手，組裝層代取）
+# =========================================================================
+def _al_life_phase():
+    """``life_phase`` ← 共享 AutonomousLifeCycle 的當前階段（str/enum 皆可）。"""
+    return getattr(get_lifecycle(), "current_phase", None)
+
+
+def _al_health():
+    """``health`` ← 代謝心跳的系統健康分。
+
+    D11 閘：``_health_update_count`` 為 0 表示心跳還沒重算過一次健康分
+    （唯一重算點是 CNS 事件 handler），預設 0.5 沒有觀測背後 → 回
+    ``None``，讓快照照報未觀測，不把預設值當測量。
+    """
+    info = get_metabolic_heartbeat().get_system_health()
+    if not info.get("health_update_count"):
+        return None
+    return info.get("system_health")
+
+
+def _al_drift() -> Optional[Dict[str, float]]:
+    """``drift{zeta,eta}`` ← 兩個已定義觀測來源（2b / 2c），未觀測的鍵不寫。
+
+    - ``eta``：``measured_eta_metrics()`` 的 ``structural_drift`` —— 2c 的
+      observed 閘（有啟動基線才是比較值，裸態/還原態回 ``None`` → 不進 dict）。
+    - ``zeta``：值漂移 = 觀測窗口內被判異常的 ``(axis, field)`` 對佔比，
+      即 2b ``compute_zeta_values()`` 的 ``1 - temporal_coherence``（同一
+      觀測源，不新算）；``temporal_coherence`` 未觀測（<2 筆）→ 不進 dict。
+
+    兩鍵皆缺 → 回 ``None``（D11：整個欄位未觀測，不是 ``{}`` 裝可觀測）。
+    """
+    from api.routes.chat_routes import _get_eta_axis, _get_state_matrix
+    from core.engine.eta_axis import measured_eta_metrics
+
+    drift: Dict[str, float] = {}
+    eta_metrics = measured_eta_metrics(_get_eta_axis())
+    if eta_metrics["structural_drift"] is not None:
+        drift["eta"] = float(eta_metrics["structural_drift"])
+
+    matrix = _get_state_matrix()
+    if "temporal_coherence" in getattr(matrix, "zeta_observed_fields", frozenset()):
+        values = getattr(getattr(matrix, "zeta", None), "values", {})
+        coherence = values.get("temporal_coherence")
+        if coherence is not None:
+            drift["zeta"] = round(1.0 - float(coherence), 4)
+    return drift or None
+
+
+def _register_al_sources() -> None:
+    """Phase 2 item ③：三個 provider 由 lifespan 統一註冊進 AL 登記簿。
+
+    item 1 的契約：``life_phase``/``health``/``drift`` 的實例握在 api 側，
+    AL 出站不 import ``ai.*``/``api.*``（I8），所以由組裝層（本檔）在
+    啟動序列裡注入。註冊後讀一次快照並落 log —— server 執行下的自檢：
+    來源解析到值與否，直接進 server log，不需要額外面。
+    """
+    try:
+        from core.life.al_state import register_al_source
+
+        register_al_source("life_phase", _al_life_phase)
+        register_al_source("health", _al_health)
+        register_al_source("drift", _al_drift)
+    except Exception:
+        logger.warning("[ALState] provider registration failed", exc_info=True)
+        return
+    try:
+        from core.backbone import get_backbone
+        from core.life.al_state import get_al_state
+
+        snap = get_al_state()
+        logger.info(
+            "[ALState] providers live: life_phase=%r health=%r drift=%r "
+            "sources=%s al_state_on_backbone=%s",
+            snap.life_phase,
+            snap.health,
+            snap.drift,
+            {k: snap.source[k] for k in ("life_phase", "health", "drift")},
+            get_backbone().get_module("al_state") is not None,
+        )
+    except Exception:
+        logger.warning("[ALState] boot snapshot failed", exc_info=True)
+
+
+def _al_state_module():
+    """AL 單一狀態面模組（契約 §9 的唯一對外交換量）—— 供 backbone 註冊。
+
+    它是模組級 API（``get_al_state()`` 出口），不是可實例化的單例；註冊
+    模組本身讓 ``dump`` 反映「AL 狀態面已接上主幹線」，消費端經
+    ``get_module("al_state").get_al_state()`` 讀快照。
+    """
+    from core.life import al_state
+
+    return al_state
+
+
 def _register_backbone() -> None:
     """把已建好的核心單例註冊進主幹線（讓 backbone 直接連接到實際元件）。
 
@@ -832,6 +928,9 @@ def _register_backbone() -> None:
     bb = get_backbone()
 
     _register_state_matrix(bb)
+
+    # AL 單一狀態面（Phase 2 item ③）— 聚合器註冊進既有主幹線，不新造
+    _backbone_try(bb, "al_state", _al_state_module, kind="module", key="al_state")
 
     # 模組（lifespan 單例）
     _backbone_try(bb, "digital_life", get_digital_life, kind="module", key="digital_life")
@@ -1022,6 +1121,9 @@ async def _startup_services():
 
     await _preinit_chat_service()
     _preinit_backbone()
+    # Phase 2 item ③：AL provider 登記（backbone 先行，自檢 log 才能報
+    # al_state_on_backbone）；函式內部全 try/except，不會阻塞啟動。
+    _register_al_sources()
 
     return _broadcast_task
 

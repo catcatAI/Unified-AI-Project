@@ -387,11 +387,9 @@ hunk 在 HEAD 同樣不合，非本輪所觸，未動）。
 ### Phase 2 — 收斂：單一狀態面（2–4 天）
 
 > **狀態（2026-10-27）**：① schema ✅（item 1 `c9118398f`）／② ζ ✅＋age
-> ✅＋η.drift ✅（2a `ff2b19a93`、2b `ca1d8e350`、2c 本提交——item 2
-> **全數完成**）／③ **需重新盤點**——`_register_backbone()`
-> 自 2026-08-10（`13a1e99a1`）就已註冊 DLI／ALC（lifecycle）／heartbeat，計畫所寫「補註冊」大半已在；實際剩：item
-> 1 指定的 lifespan AL
-> source 登記、server 執行下的 dump 驗證、ALState 是否入 backbone ／④ 未動（`memory_integration_loop`
+> ✅＋η.drift ✅（2a `ff2b19a93`、2b `ca1d8e350`、2c `f087df2f1`——item 2
+> **全數完成**）／③ ✅（本提交——lifespan AL
+> source 登記、ALState 入 backbone、server 執行下 dump 驗證，見下方完成記錄）／④ 未動（`memory_integration_loop`
 > 已刪 → 按 §10 新建）。「驗」段的 E1 干預測試**未寫**（方法先例：`tests/ai/meta/test_state_intervention.py`）。
 
 - **做**：
@@ -569,6 +567,57 @@ getter（`chat_routes._get_state_matrix()`/`_get_eta_axis()` → backbone
 drift 從「永不顯示」→ 顯示計算值；今日生產恆 `0.00`——
 **照實說**：boot 之後沒有任何生產呼叫者動過 η 的四個變更函式，0.00 是真比較結果，熱插拔路徑接上後才會動；(2)
 dashboard state 區從恆 `{}` →真六軸；(3) REPL `/state` 從恆失敗 → 渲染。
+
+#### ✅ Phase 2 item 3 完成記錄 — lifespan AL source 登記＋backbone＋server dump 驗證（2026-10-27）
+
+**盤點結論**：`_register_backbone()`
+自 2026-08-10（`13a1e99a1`，他人）已註冊DLI／ALC（lifecycle）／heartbeat——計畫所寫「補註冊」大半已在；真正剩的三件＝本提交交付：(1)
+`register_al_source()` 此前**零生產呼叫者**（item 1 建好登記簿但沒人注入）→ 快照
+`life_phase`/`health`/`drift` 恆 `None`；(2) ALState 不在 backbone；(3)
+server 執行下沒有任何 dump 面（item 1 的讀路徑零生產消費者）。
+
+**做**：
+
+- **lifespan 統一註冊三個 provider**（`_register_al_sources()`，在
+  `_startup_services` 的 `_preinit_backbone()`
+  之後呼叫——backbone 先行，自檢 log 才能報在線狀態；函式內部全 try/except，不阻塞啟動）：
+  - `life_phase` ← `get_lifecycle().current_phase`。順手修 `_phase_str`：
+    `LifePhase.value` 是 `(cn, en)` tuple，原 `str()` 會吐
+    `"('涌现', 'Emergence')"`；改依 `system_routes._phase_label` 先例（enum →
+    `.name`，如 `"EMERGENCE"`）。
+  - `health` ← heartbeat
+    `get_system_health()["system_health"]`，**D11閘**：`_health_update_count == 0`（唯一重算點是 CNS 事件 handler，還沒觸發過）→
+    `None`——預設 0.5 沒有觀測背後，不當測量報。
+  - `drift{zeta,eta}` ← 兩個**已定義**的觀測來源，不新算：`eta` = 2c
+    `measured_eta_metrics()` 的 observed 閘；`zeta` = 2b
+    `1 - temporal_coherence`（觀測窗口內異常對佔比＝值漂移，同一觀測源）。兩鍵皆未觀測 → 整欄
+    `None`（不是 `{}` 裝可觀測）。
+- **ALState 入 backbone**：`_register_backbone()` 註冊
+  `_al_state_module()`——模組級 API（`get_al_state()`
+  出口）註冊**模組本身**，消費端 `get_module("al_state").get_al_state()`
+  讀快照。合計畫「聚合器註冊進既有主幹線，不新造」。
+- **server 執行下的 dump 面**：`GET /api/v1/system/status/detailed` 新增
+  `al_state` 段（`_detailed_al_state()`，沿用該端點既有 best-effort
+  try/except 模式）——這是 item 1 讀路徑的**第一個生產消費者**。另
+  `_register_al_sources()` 註冊後讀一次快照落 INFO log，啟動自檢不需要額外面。
+
+**server 執行驗證（實跑 uvicorn :8000，非 pytest 模擬）**：
+
+- 啟動 log：`[Backbone] registration done; modules=12 ...` ＋
+  `[ALState] providers live: life_phase='EMERGENCE' health=None drift={'eta': 0.0} sources={'life_phase': 'provider:life_phase', 'health': None, 'drift': 'provider:drift'} al_state_on_backbone=True`——boot 瞬間 health 未觀測（心跳尚未重算）**照實報 None**、zeta 尚無第 2 筆觀測不進 dict；`al_state_on_backbone=True`
+  即 dump 驗證。
+- 之後
+  `curl /api/v1/system/status/detailed`：`life_phase: 'EMERGENCE'`（provider）、`health: 0.738 provider:health`（啟動期 CNS 事件已觸發重算 → 轉已觀測）、
+  `drift: {'eta': 0.0, 'zeta': 0.0}`（zeta 觀測到位，兩者皆真 0）、`born_at`
+  沿用持久化值（非 now 重建）、`emotion: None`（I8 紅線）／
+  `effective: None`（§7.2 未接線）／`weights` v1 全不變。
+
+**驗**：`tests/api/test_al_sources.py`
+7 條（啟動呼叫與順序 source 釘、三 provider 進快照＋`source`
+逐欄歸因、health 未觀測閘、drift 全未觀測 → 整欄 None、`_phase_str`
+enum 序列化、backbone 收聚合器、detailed dump 段）；相鄰 **665
+passed**（`tests/api/`＋`tests/core/backbone/`＋`test_al_state`＋`test_zeta_driven`）；flake8
+0、black 過。
 
 ### Phase 3 — 割邊：把 AL 從 AI 層拔出來（3–5 天，**主戰場**）
 

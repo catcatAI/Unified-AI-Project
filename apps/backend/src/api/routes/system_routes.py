@@ -170,6 +170,19 @@ def _detailed_memory() -> Dict[str, Any]:
     return HAMMemoryManager(auto_save=False).get_stats()
 
 
+def _detailed_al_state() -> Dict[str, Any]:
+    """The AL read-only snapshot (contract §9's only exchange quantity).
+
+    This is the dump surface for ALState under a running server: the
+    ``source`` column names each value's provenance (``provider:*`` /
+    ``core.*`` / ``None``), and an unobserved quantity is null — never a
+    fake 0.0 (D11).
+    """
+    from core.life.al_state import get_al_state
+
+    return get_al_state().as_dict()
+
+
 @router.get("/status/detailed")
 async def system_status_detailed() -> Dict[str, Any]:
     """Detailed system status (the contract the INVOCATION_MATRIX documents).
@@ -215,6 +228,15 @@ async def system_status_detailed() -> Dict[str, Any]:
     except Exception as exc:
         result["memory"] = None
         result["memory_error"] = safe_error(exc)
+
+    # AL 唯讀快照（契約 §9 的唯一交換量）— 這是在 server 執行下 dump
+    # ALState 的面：``source`` 欄逐鍵顯示 provenance（provider:* / core.*
+    # / None），未觀測就是 null，不會有假 0.0（D11）。
+    try:
+        result["al_state"] = _detailed_al_state()
+    except Exception as exc:
+        result["al_state"] = None
+        result["al_state_error"] = safe_error(exc)
 
     return result
 
