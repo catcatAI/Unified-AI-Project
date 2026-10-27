@@ -83,7 +83,10 @@ def test_temporal_state():
     results = timeline.query(query)
     assert len(results) <= 5
     corr = timeline.correlation("beta", "focus", "alpha", "energy", window=15)
-    assert -1.0 <= corr.correlation <= 1.0
+    # alpha.energy 在整段視窗是常數 0.7 → 零方差 → r 未定義，回 None；
+    # 舊版回 0.0 會被讀成「無關」，那是偽裝的觀測（D11）。
+    assert corr.correlation is None
+    assert corr.strength == "none"
 
 
 def test_find_drift():

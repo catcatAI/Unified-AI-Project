@@ -95,7 +95,8 @@ def _demo_temporal_queries(sm: StateMatrixAdapter) -> None:
     anomalies = sm.temporal_anomalies("alpha", "energy", threshold=0.3)
     print(f"  Anomalies: {len(anomalies)} found")
     corr = sm.temporal_correlation("alpha", "energy", "beta", "focus")
-    print(f"  Correlation (alpha.energy, beta.focus): r={corr.correlation:.4f} ({corr.strength})")
+    r_text = "undefined" if corr.correlation is None else f"{corr.correlation:.4f}"
+    print(f"  Correlation (alpha.energy, beta.focus): r={r_text} ({corr.strength})")
 
 
 def _demo_influence_computation(sm: StateMatrixAdapter) -> None:

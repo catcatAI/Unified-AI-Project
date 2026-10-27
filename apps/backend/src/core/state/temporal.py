@@ -88,14 +88,21 @@ class AnomalyResult:
 
 @dataclass
 class CorrelationResult:
-    """Result of a correlation analysis between two axes/fields."""
+    """Result of a correlation analysis between two axes/fields.
+
+    ``correlation``/``p_value`` are ``None`` when the statistic is undefined
+    (fewer than two paired points, or either series has zero variance): the
+    old code returned ``0.0``/``1.0`` there, which reads as "no relation" /
+    "fully significant" when in fact **nothing was measured**. Unmeasured is
+    not zero (D11, same rule the AL snapshot follows).
+    """
 
     axis_a: str = ""
     field_a: str = ""
     axis_b: str = ""
     field_b: str = ""
-    correlation: float = 0.0
-    p_value: float = 1.0
+    correlation: Optional[float] = None
+    p_value: Optional[float] = None
     sample_size: int = 0
     strength: str = "none"
 
@@ -297,6 +304,11 @@ class TemporalState:
     def correlation(
         self, axis_a: str, field_a: str, axis_b: str, field_b: str, window: int = 50
     ) -> CorrelationResult:
+        """兩序列的 Pearson r（**形狀**一致性，不是距離 —— 拿它反證漂移會漏掉
+        位移：狀態停在離錨 0.4 的常數位置，r 仍是 1）。零方差（常數序列，
+        含「對常數錨比對」）→ ``correlation=None``：未定義，不是 0。``p_value``
+        恆 ``None`` —— 本函式**沒做**顯著性檢定，舊版恆回 1.0 是假值。
+        """
         ax_a_vals = self.get_field_series(axis_a, field_a, window)
         ax_b_vals = self.get_field_series(axis_b, field_b, window)
         n = min(len(ax_a_vals), len(ax_b_vals))
@@ -309,8 +321,16 @@ class TemporalState:
         num = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y))
         dx = sum((xi - mx) ** 2 for xi in x) ** 0.5
         dy = sum((yi - my) ** 2 for yi in y) ** 0.5
-        r = num / (dx * dy) if dx and dy else 0.0
-        r = max(-1.0, min(1.0, r))
+        if not dx or not dy:
+            # 零方差 → r 未定義；回 0.0 會被讀成「無關」，那是偽裝的觀測。
+            return CorrelationResult(
+                axis_a=axis_a,
+                field_a=field_a,
+                axis_b=axis_b,
+                field_b=field_b,
+                sample_size=n,
+            )
+        r = max(-1.0, min(1.0, num / (dx * dy)))
         strength = "strong" if abs(r) > 0.7 else ("moderate" if abs(r) > 0.4 else "weak")
         return CorrelationResult(
             axis_a=axis_a,
@@ -318,7 +338,7 @@ class TemporalState:
             axis_b=axis_b,
             field_b=field_b,
             correlation=r,
-            p_value=1.0,
+            p_value=None,
             sample_size=n,
             strength=strength,
         )
