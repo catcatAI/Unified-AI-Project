@@ -31,6 +31,7 @@ from core.active_cognition_formula import (
     OrderType,
     get_active_cognition_formula,
 )
+from core.life.al_state import birth_datetime
 from core.life_intensity_formula import (
     KnowledgeDomain,
     LifeIntensityFormula,
@@ -169,8 +170,10 @@ class CyberIdentity:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
 
-        # Core models
+        # Core models — birth_date 走 §4 單一時鐘：與 DLI 同一個 born_at，
+        # 身份自述「我诞生于…」不因重啟而漂移（原本 default_factory=now）
         self.self_model: SelfModel = SelfModel()
+        self.self_model.birth_date = birth_datetime()
 
         # Identity tracking
         self.identity_aspects: Dict[IdentityAspect, IdentityGrowth] = {

@@ -44,6 +44,7 @@ from core.system.config.magic_numbers import loop_sleep
 from core.system.state_store.global_store import state_store
 from core.utils import safe_error
 
+from .al_state import birth_datetime
 from .autonomous_life_cycle import AutonomousLifeCycle
 from .dynamic_parameters import DynamicThresholdManager
 from .intent_model import IntentManager
@@ -306,8 +307,10 @@ class DigitalLifeIntegrator:
         self.life_cycle_state: LifeCycleState = LifeCycleState.INITIALIZING
         self.previous_state: Optional[LifeCycleState] = None
 
-        # Statistics
-        self.life_stats: LifeStats = LifeStats()
+        # Statistics — 出生時刻取單一持久化時鐘（契約 §4）：
+        # LifeStats 的 default_factory=datetime.now 會把每次重建都當新生，
+        # age 於是每次重啟歸零；birth_datetime() 首次起鐘、其後沿用。
+        self.life_stats: LifeStats = LifeStats(birth_time=birth_datetime())
 
         # Subsystems
         # 注意：此處以模組屬性動態解析 BiologicalIntegrator，而非直接使用上方

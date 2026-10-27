@@ -453,6 +453,21 @@ hunk 在 HEAD 同樣不合，非本輪所觸，未動）。
 `None`；相鄰 4 檔合計 **55 passed**；flake8 0、black 過、 `check_fact_gates.py`
 ALL PASS。
 
+#### ✅ Phase 2 item 2a 完成記錄 — age 與單一出生時鐘（2026-10-27）
+
+**根因**：`LifeStats`（DLI）與 `SelfModel`（cyber_identity）都是
+`default_factory=datetime.now`——每次重建＝新生：`age`
+每次重啟歸零、身份自述「我诞生于…」每次重啟漂移。全庫兩個互不同步的出生時鐘，違§4「單一時間基準」。
+
+**修**：`al_state.birth_datetime()`——§4 單一時間基準的 `datetime`
+視圖（首次呼叫起鐘持久化、其後一律沿用檔案裡的 `born_at`）。DLI 改
+`LifeStats(birth_time=birth_datetime())`、cyber_identity 改
+`self_model.birth_date = birth_datetime()`。cyber_identity 屬同根因擴充：計畫點名 DLI，但兩個出生鐘只修一個等於單一時鐘沒做成。
+
+**驗**：`tests/core/test_al_state.py` +2（把時鐘凍結在 1970 → 兩個物件的 birth
+**精確等於**持久化值、`age > 1000` 天；舊行為是 `now - now`
+恆 0）；相鄰 5 檔合計 **70 passed**；flake8 0、black 過。
+
 ### Phase 3 — 割邊：把 AL 從 AI 層拔出來（3–5 天，**主戰場**）
 
 - **做**：

@@ -31,6 +31,7 @@ import logging
 import math
 import time
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple, Union
 
@@ -230,6 +231,19 @@ def advance_tick(path: Optional[Union[str, Path]] = None) -> int:
     next_ticks = (ticks or 0) + 1
     _persist({"version": AL_STATE_VERSION, "born_at": born, "ticks": next_ticks}, path)
     return next_ticks
+
+
+def birth_datetime(
+    now: Optional[float] = None, path: Optional[Union[str, Path]] = None
+) -> datetime:
+    """生命誕生時刻 — §4 單一時間基準的 ``datetime`` 視圖。
+
+    首次呼叫即起鐘（持久化），其後一律沿用檔案裡的 ``born_at`` ——
+    每個子系統重建時讀到同一個誕生時刻，「age 每次重啟歸零」在結構上
+    不可能發生（替代 ``default_factory=datetime.now`` 這類私有出生時鐘）。
+    """
+    born_at, _ = init_clock(now=now, path=path)
+    return datetime.fromtimestamp(born_at)
 
 
 # =========================================================================

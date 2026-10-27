@@ -1,8 +1,10 @@
 """Phase 2 item 1 of the three-core plan — the single AL state surface.
 
 Contract §3–§4 (schema + clock) and §9 (read goes through one snapshot).
-Four properties hold before any field is wired to a real computation
-(schema-first per the plan, then one field per commit):
+The schema holds before the remaining fields are wired to real
+computation (schema-first per the plan, then one field per commit); the
+one field already wired — `age` (item 2, birth adopts the persisted
+clock) — is asserted at the bottom.
 
 1. **Schema matches the contract**: the eight v1 fields with their
    §3.1 class tags, `maturity` excluded per D9, `drift` the only
@@ -24,6 +26,8 @@ import ast
 import dataclasses
 import json
 import sys
+import time
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -233,6 +237,44 @@ class TestAggregationReadPath:
     def test_register_rejects_unknown_source_name(self):
         with pytest.raises(ALValidationError, match="unknown AL source"):
             register_al_source("emotion", lambda: None)
+
+
+class TestBirthAdoptsSingleClock:
+    """item 2（age）：私有出生時鐘 → 單一持久化 ``born_at``（§4）。
+
+    舊 bug：``LifeStats`` / ``SelfModel`` 都是
+    ``default_factory=datetime.now`` —— 每次重建 = 新生 = age 歸零、
+    身份自述的誕生日每次重啟漂移。
+    """
+
+    @staticmethod
+    def _freeze_clock(monkeypatch, tmp_path, born=1000.0):
+        """起鐘於過去某刻，並把模組時鐘檔導向 tmp（不碰真資料目錄）。"""
+        target = tmp_path / "al_state.json"
+        init_clock(now=born, path=target)
+        monkeypatch.setattr(
+            al_state,
+            "_clock_path",
+            lambda path=None: Path(path) if path is not None else target,
+        )
+        return target
+
+    def test_dli_birth_time_comes_from_persisted_clock(self, tmp_path, monkeypatch):
+        self._freeze_clock(monkeypatch, tmp_path)
+        from core.life.digital_life_integrator import DigitalLifeIntegrator
+
+        dli = DigitalLifeIntegrator(config={"enable_formula_integration": False})
+        assert dli.life_stats.birth_time == datetime.fromtimestamp(1000.0)
+        # 1970 年出生 → age 以千天計；舊 bug 恆 0（now - now）
+        assert dli.get_age().days > 1000
+
+    def test_cyber_identity_birth_comes_from_persisted_clock(self, tmp_path, monkeypatch):
+        self._freeze_clock(monkeypatch, tmp_path)
+        from core.life.cyber_identity import CyberIdentity
+
+        identity = CyberIdentity()
+        assert identity.self_model.birth_date == datetime.fromtimestamp(1000.0)
+        assert identity.get_self_summary()["age_days"] > 1000
 
 
 class TestI8Boundary:
