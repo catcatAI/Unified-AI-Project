@@ -889,9 +889,10 @@ def _build_core_prompt(
             eta_lines.append(prompt("angela.eta.active_modules", count=eta.get("module_count", 0)))
             # Render measured values only. The state builder sends None for a
             # quantity nobody has observed (success_rate before the first
-            # module execution, structural_drift before Phase 2 wires a
-            # producer), and a missing value must never fall back to 0 — that
-            # is exactly how a ghost metric ends up in the prompt.
+            # module execution, structural_drift before mark_structural_
+            # baseline() — Phase 2 item 2's producer), and a missing value
+            # must never fall back to 0 — that is exactly how a ghost metric
+            # ends up in the prompt.
             success_rate = eta.get("success_rate")
             if success_rate is not None:
                 eta_lines.append(prompt("angela.eta.success_rate", value=f"{success_rate:.1%}"))

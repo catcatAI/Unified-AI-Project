@@ -317,6 +317,11 @@ class EtaAxisState:
         self.execution_count: int = 0
         self.success_rate: float = 1.0
         self.structural_drift: float = 0.0
+        # η.drift 觀測來源（three-core plan Phase 2 item 2）：structural_drift
+        # 是「模組組成相對啟動基線的變化」的計算值，只在
+        # mark_structural_baseline() 之後有意義。沒有基線 → 屬未觀測
+        # （structural_drift_observed 為 False），展示端須扣住不顯示（D11）。
+        self._structural_baseline: Optional[Tuple[frozenset, frozenset]] = None
         self.module_composition: Dict[str, Any] = field(
             default_factory=lambda: {"total_modules": 0, "axes": []}
         )
@@ -325,23 +330,62 @@ class EtaAxisState:
         self.module_registry[config.name] = config
         if config.name not in self.active_modules:
             self.active_modules.append(config.name)
+        self._recompute_structural_drift()
 
     def unregister_module(self, name: str) -> None:
         self.module_registry.pop(name, None)
         if name in self.active_modules:
             self.active_modules.remove(name)
+        self._recompute_structural_drift()
 
     def activate_module(self, name: str) -> bool:
         if name in self.module_registry and name not in self.active_modules:
             self.active_modules.append(name)
+            self._recompute_structural_drift()
             return True
         return name in self.module_registry
 
     def deactivate_module(self, name: str) -> bool:
         if name in self.active_modules:
             self.active_modules.remove(name)
+            self._recompute_structural_drift()
             return True
         return False
+
+    @property
+    def structural_drift_observed(self) -> bool:
+        """structural_drift 有無比較基線（= 有無觀測）。"""
+        return self._structural_baseline is not None
+
+    def mark_structural_baseline(self) -> None:
+        """記下當前模組組成作為 η.drift 的比較基線（Phase 2 item 2）。
+
+        three-core plan：`η.drift` 的觀測來源定義為「模組組成的變化」——
+        工廠註冊完預設模組後呼叫一次；其後任何 register/unregister/
+        activate/deactivate 都會把 ``structural_drift`` 重算成組成相對
+        基線的對稱差比例（註冊集＋啟用集，除以聯集，∈ [0,1]）。基線屬本
+        進程（不跨重啟持久化——跨重啟的組成回到底線）；``from_dict`` 還原
+        的狀態沒有基線 → 未觀測，直到重新標記。
+        """
+        self._structural_baseline = (
+            frozenset(self.module_registry),
+            frozenset(self.active_modules),
+        )
+        self.structural_drift = 0.0
+
+    def _recompute_structural_drift(self) -> None:
+        """組成相對基線變了 → 重算 drift；未標基線就不算（D11）。"""
+        if self._structural_baseline is None:
+            return
+        base_registry, base_active = self._structural_baseline
+        current_registry = frozenset(self.module_registry)
+        current_active = frozenset(self.active_modules)
+        union = len(base_registry | current_registry) + len(base_active | current_active)
+        if union == 0:
+            self.structural_drift = 0.0
+            return
+        changed = len(base_registry ^ current_registry) + len(base_active ^ current_active)
+        self.structural_drift = changed / union
 
     def execute(self, name: str, kwargs: Dict[str, Any]) -> Any:
         config = self.module_registry.get(name)
@@ -406,6 +450,9 @@ class EtaAxisState:
         state.active_modules = list(data.get("active_modules", []))
         state.execution_count = data.get("execution_count", 0)
         state.success_rate = data.get("success_rate", 1.0)
+        # 数值照存（round-trip 兼容），但基線不隨狀態還原 —— 舊值描述的是一
+        # 次本進程沒有的比較，因此 structural_drift_observed 仍為 False，
+        # 展示端扣住，直到 mark_structural_baseline() 重新建立比較點。
         state.structural_drift = data.get("structural_drift", 0.0)
         return state
 
@@ -483,9 +530,12 @@ def measured_eta_metrics(state: Optional[EtaAxisState]) -> Dict[str, Any]:
     - ``success_rate`` stays None until ``execution_count`` is above zero —
       production registers the default modules and never executes one, so the
       default 1.0 has no observation behind it.
-    - ``structural_drift`` stays None because nothing computes it yet; the
-      three-core plan schedules a real producer for Phase 2, and this is the
-      single place that flips when it lands.
+    - ``structural_drift`` flips with the producer that landed in Phase 2
+      item 2: it reports ``state.structural_drift`` only once
+      ``structural_drift_observed`` is True (``mark_structural_baseline()``
+      established the boot-time composition as the comparison point). A bare
+      or restored state has no baseline → None. A marked state's ``0.0`` is
+      a real comparison — composition unchanged since boot — and is shown.
     """
     if state is None:
         return {
@@ -494,9 +544,14 @@ def measured_eta_metrics(state: Optional[EtaAxisState]) -> Dict[str, Any]:
             "success_rate": None,
             "structural_drift": None,
         }
+    observed_drift = (
+        round(state.structural_drift, 4)
+        if getattr(state, "structural_drift_observed", False)
+        else None
+    )
     return {
         "module_count": len(state.active_modules),
         "execution_count": state.execution_count,
         "success_rate": round(state.success_rate, 4) if state.execution_count > 0 else None,
-        "structural_drift": None,
+        "structural_drift": observed_drift,
     }

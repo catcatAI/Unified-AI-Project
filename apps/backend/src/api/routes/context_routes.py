@@ -35,12 +35,20 @@ def _render_memory_content(content: Any) -> str:
 
 
 async def _summary_state_section(result: Dict[str, Any]) -> None:
-    """Fill result['state'] and result['eta'] from chat service state matrix."""
-    try:
-        from api.lifespan import _get_chat_service
+    """Fill result['state'] and result['eta'] from the shared matrix/η.
 
-        service = await _get_chat_service()
-        sm = service.state_matrix
+    The live objects are the backbone singletons (``chat.state_matrix`` /
+    ``chat.eta_axis``), reached through the same getters ``_ctx_state_matrix``
+    uses — NOT attributes on ChatService. Reading ``service.state_matrix``
+    raised AttributeError on every call (ChatService never had it — same
+    defect shape as ``memory_manager``, pinned in
+    ``test_context_summary_recent_count``), so the except below silently
+    returned ``state={}`` and ``eta=None`` while the real matrix was live.
+    """
+    try:
+        from api.routes.chat_routes import _get_eta_axis, _get_state_matrix
+
+        sm = _get_state_matrix()
         state = {}
         for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon", "theta"):
             ax = getattr(sm, axis_name, None)
@@ -50,7 +58,7 @@ async def _summary_state_section(result: Dict[str, Any]) -> None:
 
         # Eta — None for anything without an observation behind it (see
         # measured_eta_metrics); execution_count stays a real count, 0 or not.
-        eta = service.eta_state
+        eta = _get_eta_axis()
         if eta:
             from core.engine.eta_axis import measured_eta_metrics
 

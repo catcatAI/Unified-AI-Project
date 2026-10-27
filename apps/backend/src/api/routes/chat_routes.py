@@ -355,6 +355,10 @@ def _get_eta_axis():
         state = EtaAxisState()
         for name, config in create_default_modules().items():
             state.register_module(config)
+        # Boot baseline for η.drift (Phase 2 item 2): the defaults are the
+        # composition this process started with, so later hotplug-style
+        # register/unregister/activate/deactivate shows up as measured drift.
+        state.mark_structural_baseline()
         return state
 
     return _backbone_module("chat.eta_axis", _factory)

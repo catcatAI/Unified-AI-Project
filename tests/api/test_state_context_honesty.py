@@ -13,10 +13,14 @@ Evidence behind each assertion:
   ``zeta_observed_fields``, and the prompt renders whatever the state
   builder vouches for. Unobserved -> absent; observed -> shown.
 - ``η.success_rate`` has no observation until a module has actually run —
-  production registers the default modules and never executes one — and
-  ``η.structural_drift`` has no producer at all yet (the plan schedules it
-  for Phase 2). Both arrive as ``None``, because ``0.0`` / ``1.0`` would be
-  read as measurements.
+  production registers the default modules and never executes one, so the
+  default ``1.0`` would be read as a measurement and arrives as ``None``.
+- ``η.structural_drift`` gained its producer in Phase 2 item 2: composition
+  vs the boot baseline (``mark_structural_baseline()``). It arrives as
+  ``None`` whenever that baseline is missing (bare fake, restored state) —
+  the stored ``0.0`` on such a state is not a comparison anyone made — and
+  as a real number once the baseline exists, where ``0.0`` means
+  "composition unchanged since boot" and is shown.
 """
 
 import sys
@@ -38,6 +42,9 @@ def _eta(execution_count: int = 0, success_rate: float = 1.0):
         execution_count=execution_count,
         success_rate=success_rate,
         structural_drift=0.0,
+        # No baseline on this fake: the 0.0 above is not a comparison, so
+        # measured_eta_metrics must withhold it.
+        structural_drift_observed=False,
     )
 
 
@@ -59,11 +66,30 @@ class TestMeasuredEtaMetrics:
     def test_success_rate_appears_once_a_module_has_run(self):
         metrics = measured_eta_metrics(_eta(execution_count=5, success_rate=0.8))
         assert metrics["success_rate"] == 0.8
-        assert metrics["structural_drift"] is None, "drift still has no producer"
+        assert metrics["structural_drift"] is None, "no baseline was marked on this state"
 
     def test_drift_is_never_reported_as_a_measured_zero(self):
+        # The fake carries a raw structural_drift of 0.0 — without a baseline
+        # nobody made that comparison, so it must not be reported.
         metrics = measured_eta_metrics(_eta(execution_count=5))
         assert metrics["structural_drift"] is None
+
+    def test_a_marked_baseline_reports_its_measured_zero(self):
+        # Phase 2 item 2's producer: with the boot baseline in place the same
+        # 0.0 IS a comparison ("composition unchanged since boot") and shows.
+        from core.engine.eta_axis import EtaAxisState, create_default_modules
+
+        state = EtaAxisState()
+        for config in create_default_modules().values():
+            state.register_module(config)
+        state.mark_structural_baseline()
+
+        metrics = measured_eta_metrics(state)
+        assert state.structural_drift_observed is True
+        assert metrics["structural_drift"] == 0.0
+
+        state.unregister_module("xor_gate")
+        assert measured_eta_metrics(state)["structural_drift"] > 0.0
 
 
 class TestStateContextInjection:
@@ -134,6 +160,26 @@ class TestStateContextInjection:
         assert eta["execution_count"] == 0
         assert eta["success_rate"] is None
         assert eta["structural_drift"] is None
+
+    def test_ctx_state_matrix_sends_measured_drift_once_observed(self, monkeypatch):
+        # Phase 2 item 2 flip: the producer landed (boot baseline marked), so
+        # the real number — even a measured 0.0 — flows into the LLM context.
+        state_matrix = SimpleNamespace(
+            dimensions={"alpha": SimpleNamespace(values={"energy": 0.7})},
+            theta=SimpleNamespace(values={}),
+        )
+        eta = _eta(execution_count=5, success_rate=0.9)
+        eta.structural_drift = 0.0
+        eta.structural_drift_observed = True
+        monkeypatch.setattr(chat_routes, "_get_state_matrix", lambda: state_matrix)
+        monkeypatch.setattr(chat_routes, "_get_eta_axis", lambda: eta)
+
+        context = {}
+        chat_routes._ctx_state_matrix(context)
+
+        sent = context["state_for_llm"]["eta"]
+        assert sent["structural_drift"] == 0.0
+        assert sent["success_rate"] == 0.9
 
 
 class TestPromptRendering:
@@ -216,3 +262,24 @@ class TestPromptRendering:
         assert "Active modules" in prompt_text or "活躍模組" in prompt_text
         assert "90.0%" in prompt_text
         assert "0.05" in prompt_text
+
+
+class TestReplStateSnapshot:
+    """The REPL ``/state`` snapshot — the third η display surface.
+
+    It used to read ``service.state_matrix``/``service.eta_state`` off
+    ChatService (attributes that never existed), so the except swallowed
+    the whole snapshot in production. After the repoint it renders the
+    shared singletons: bars for the axes, ``success`` n/a at 0 runs, and a
+    *measured* drift line (Phase 2 item 2's boot baseline) instead of
+    "no producer yet".
+    """
+
+    def test_snapshot_renders_the_shared_state_and_measured_drift(self):
+        from cli.repl import _format_state_snapshot
+
+        out = _format_state_snapshot(object())
+        assert "8D State Matrix" in out
+        assert "n/a (no module has executed)" in out, "0 runs must read as unmeasured"
+        assert "drift" in out
+        assert "n/a (no producer yet)" not in out, "the producer landed — drift is measured"

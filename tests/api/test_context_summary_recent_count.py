@@ -36,6 +36,27 @@ def _make_fake_service() -> MagicMock:
 
 
 @pytest.mark.asyncio
+async def test_state_section_reads_the_shared_singletons_not_chat_service():
+    """_summary_state_section must not read attributes off ChatService.
+
+    ChatService never carried ``state_matrix``/``eta_state`` — the old
+    ``service.state_matrix`` raised AttributeError on every call and the
+    except silently returned ``state={}`` and ``eta=None`` while the real
+    backbone singletons were live (the same defect shape as the
+    memory_manager pin above). The section now goes through the
+    chat_routes getters, so the axes and the measured η arrive here.
+    """
+    result: dict = {}
+    await context_routes._summary_state_section(result)
+
+    assert set(result["state"]) >= {"alpha", "theta"}, "shared matrix axes must arrive"
+    assert result["eta"] is not None
+    # Phase 2 item 2: the boot baseline marks η.drift observed, so the
+    # dashboard gets a real number instead of None (or a fake 0.0).
+    assert isinstance(result["eta"]["structural_drift"], float)
+
+
+@pytest.mark.asyncio
 async def test_summary_recent_count_is_filled(monkeypatch):
     """recent_count 必須等於記憶查詢實際回傳筆數（死路徑 #19 契約）."""
     fake = _make_fake_service()

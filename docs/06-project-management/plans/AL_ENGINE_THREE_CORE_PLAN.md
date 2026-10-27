@@ -386,6 +386,14 @@ hunk 在 HEAD 同樣不合，非本輪所觸，未動）。
 
 ### Phase 2 — 收斂：單一狀態面（2–4 天）
 
+> **狀態（2026-10-27）**：① schema ✅（item 1 `c9118398f`）／② ζ ✅＋age
+> ✅＋η.drift ✅（2a `ff2b19a93`、2b `ca1d8e350`、2c 本提交——item 2
+> **全數完成**）／③ **需重新盤點**——`_register_backbone()`
+> 自 2026-08-10（`13a1e99a1`）就已註冊 DLI／ALC（lifecycle）／heartbeat，計畫所寫「補註冊」大半已在；實際剩：item
+> 1 指定的 lifespan AL
+> source 登記、server 執行下的 dump 驗證、ALState 是否入 backbone ／④ 未動（`memory_integration_loop`
+> 已刪 → 按 §10 新建）。「驗」段的 E1 干預測試**未寫**（方法先例：`tests/ai/meta/test_state_intervention.py`）。
+
 - **做**：
   1. 定義 **`ALState` snapshot
      schema**（JSON，欄位建議：`life_phase`、`health`、
@@ -524,6 +532,43 @@ dict，從不碰真矩陣）→ 既有 `test_update_zeta_succeeds` 無衝突。
 **440 passed**（另：`tests/api → neuro` 子集排序下 2 failed 為**既有**
 跨檔污染——純 HEAD 同樣失敗，已 stash 實測排除本變更）；全量 **8605 passed / 107
 skipped / 0 failed**；flake8 0、black過。
+
+#### ✅ Phase 2 item 2c 完成記錄 — η.drift 觀測來源與展示恢復（2026-10-27）
+
+**觀測來源定義（計畫要求「先定義再接」）**：`η.structural_drift` =
+**模組組成相對啟動基線的變化**。`mark_structural_baseline()`
+在工廠註冊完預設模組後呼叫一次，記下 `(註冊集, 啟用集)`；其後任何
+`register/unregister/activate/deactivate` 重算對稱差比例
+`(|Δregistry| + |Δactive|) / (|∪registry| + |∪active|)` ∈ [0,1]。 **沒用
+`find_drift()`**（量單欄位對外部 `expected`
+的偏離，與「模組組成」語義不符——Phase
+1 執行偏離已記錄）。讀寫分離：比較在**變更函式（寫側）**
+做，`measured_eta_metrics` 純讀。基線屬本進程、不跨重啟持久化； `from_dict`
+還原不帶基線 → `structural_drift_observed`
+為 False（舊值描述的是一次本進程沒有的比較），直到重新標記。
+
+**展示恢復（計畫說「改 `measured_eta_metrics()`
+一個地方」）＋順手揪到的兩個生產缺陷**：翻牌規則——有基線才送數字；有基線的 `0.0`
+=「組成自啟動以來沒變」＝真比較，**照送**；裸態/還原態 → `None`
+照扣（D11）。但「一個地方」的假設**不成立**：dashboard（`context_routes. _summary_state_section`）與 REPL（`_format_state_snapshot`）讀的是
+`service.state_matrix`/`service.eta_state`——**ChatService 從未有這兩個屬性**
+（grep＋實例驗證），每次呼叫都 AttributeError → except 靜默回
+`state={}`/`eta=None`／整個快照被吞。與先前 `memory_manager` 缺陷**同形**
+（該缺陷有專屬回歸測試可參照）。兩處改讀 canonical
+getter（`chat_routes._get_state_matrix()`/`_get_eta_axis()` → backbone
+`chat.state_matrix`/`chat.eta_axis`）。這不是擴大範圍：η 到不了
+`measured_eta_metrics` 就談不上「恢復展示」。
+
+**驗**：`test_eta_axis.py`
++7（`TestStructuralDriftProducer`：裸態未觀測、基線前註冊不計入、基線零值屬「已測」、unregister→0.5、重註冊歸零、deactivate→0.25、還原未觀測＋重標歸零）；honesty
++3（真實基線 0.0 報送、ctx 送已觀測值、REPL 快照渲染且無「no producer yet」）；
+`test_context_summary_recent_count` +1（state 段讀共享單例——缺陷回歸釘）；相鄰
+**446 passed**；flake8 0、black 過。
+
+**行為變更（有意，記錄）**：(1) prompt/context/dashboard/REPL 的 Structural
+drift 從「永不顯示」→ 顯示計算值；今日生產恆 `0.00`——
+**照實說**：boot 之後沒有任何生產呼叫者動過 η 的四個變更函式，0.00 是真比較結果，熱插拔路徑接上後才會動；(2)
+dashboard state 區從恆 `{}` →真六軸；(3) REPL `/state` 從恆失敗 → 渲染。
 
 ### Phase 3 — 割邊：把 AL 從 AI 層拔出來（3–5 天，**主戰場**）
 

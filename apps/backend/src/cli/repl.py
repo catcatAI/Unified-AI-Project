@@ -466,9 +466,18 @@ def _build_help_text() -> str:
 
 
 def _format_state_snapshot(service: Any) -> str:
-    """Format state snapshot with visual bars."""
+    """Format state snapshot with visual bars.
+
+    Reads the shared backbone singletons through the chat_routes getters —
+    ChatService has never carried ``state_matrix``/``eta_state``, so the old
+    ``service.state_matrix`` raised AttributeError on every call and the
+    except below swallowed the whole snapshot (``service`` is kept in the
+    signature for the callers that share it with the other formatters).
+    """
     try:
-        sm = service.state_matrix
+        from api.routes.chat_routes import _get_eta_axis, _get_state_matrix
+
+        sm = _get_state_matrix()
         lines = [_section("8D State Matrix")]
 
         axes_display = [
@@ -493,7 +502,7 @@ def _format_state_snapshot(service: Any) -> str:
                 lines.append(f"  {label} (no data)")
 
         # Eta (execution)
-        eta = service.eta_state
+        eta = _get_eta_axis()
         if eta:
             from core.engine.eta_axis import measured_eta_metrics
 
