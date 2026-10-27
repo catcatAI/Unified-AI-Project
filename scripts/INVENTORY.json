@@ -397,6 +397,11 @@
       "referenced": true,
       "purpose": "diag route（無說明：原始碼未附 docstring）"
     },
+    "distill_core_data.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Distil non-benchmark QA pairs for the token-SNN from local sources (route ②)."
+    },
     "download_corpus.py": {
       "category": "tool",
       "referenced": true,
@@ -1121,6 +1126,11 @@
       "category": "training",
       "referenced": true,
       "purpose": "Train the token-level SNN decoder (surrogate gradient) on core pairs."
+    },
+    "train_token_snn_curriculum.py": {
+      "category": "training",
+      "referenced": false,
+      "purpose": "Graduated curriculum for the token-SNN arithmetic learner (CPU-friendly)."
     },
     "train_unified.py": {
       "category": "training",
