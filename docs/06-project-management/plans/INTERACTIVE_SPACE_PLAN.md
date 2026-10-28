@@ -4,7 +4,7 @@
 >
 > **這份文件不是什麼**：不是實作（目前全倉沒有這個空間的執行時）；不是角色大腦（那是 `MULTI_ROLE_PLAY_AGENT_PLAN.md`）；不是美術規格書（不規定模型面數、材質流程）。
 >
-> **狀態**：draft — 方向已定（§4 決策）。**S0 已落地**、**S1 前半已落地**（三角色同場、說話氣泡、可見性、Live2D 探測；47 tests、零建置）。S1 後半（後端 WebSocket 廣播）與 S1.5（Live2D 載入器）未做；S5 直播待外部條件。
+> **狀態**：draft — 方向已定（§4 決策）。**S0 已落地**、**S1 已落地**（三角色同場、說話氣泡、可見性、`/ws/space` 權威廣播＋前端同步；57 node tests + 21 backend tests）。S1.5（Live2D 載入器，目前程序繪製）與 S5 直播待外部條件。
 >
 > - 作者：Angela AI Development Team
 > - 版本：7.5.0-dev
@@ -204,8 +204,9 @@ class Actor:
 - [x] 共享/私有可見性：`Actor.visibleTo` 決定「誰在誰的畫面裡」；`SpacePort.visibleFrom(viewer)` 已是純資料過濾，測試守住「對 role_c 隱藏 role_b」。
 - [x] 說話：`Actor.say()` 氣泡狀態（含 CJK 逐字換行），三人輪流說話的節奏由 `scriptedBeat()` 驅動。
 - [x] Live2D 探測：`detectLive2D()` 只回答「有沒有 Cubism runtime」，UI 誠實顯示目前是程序繪製（**載入器未接，S1.5**）。
-- [ ] 後端 WebSocket 廣播演員狀態（位置／表情／動作／穿著版本號）——**未做**，目前舞台是純前端狀態。
-- [ ] 驗收（斷線重連、跨視窗同步）——依賴上一項。
+- [x] 後端 WebSocket 廣播演員狀態（位置／表情／動作）：`services/space/`（`SpaceService` + `space_ws.py`，端點 `/ws/space`）。加入時先送權威快照，之後每個 action 廣播新快照；壞訊息只回 `space.error`，不斷線。啟動時用 `space/roles.json` 種好舞台（`SPACE_SEED_ROLES=0` 可關）。
+- [x] 前端同步：`ws_client.js`（重連、狀態回報）＋ `snapshot_sync.js`（把快照套回 `SpacePort`，快照裡沒有的演員會被移除）。**連不上後端就留在本機模式**，不是壞掉。
+- [ ] 驗收（兩個視窗同步、斷線重連恢復）——程式與測試已具備，實機雙視窗驗收待做。
 
 ### S2 — 形象編輯（4–6 天）
 

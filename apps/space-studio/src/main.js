@@ -14,6 +14,8 @@ import { cycleTint, SLOTS } from "./wardrobe.js";
 import { isRecordingSupported, startRecording } from "./recorder.js";
 import { scriptedBeat, spawnRoster } from "./roster.js";
 import { rendererLabel } from "./live2d.js";
+import { applySnapshot } from "./snapshot_sync.js";
+import { createSpaceSocket } from "./ws_client.js";
 
 const DATA = {
   room: "../../space/rooms/studio_a.json",
@@ -45,11 +47,24 @@ let selectedRole = "main";
 let lastFrame = performance.now();
 let timeMs = 0;
 let stopBeat = null;
+let modeLabel = "本機模式";
+let socket = null;
 
 const viewport = () => ({ width: canvas.width, height: canvas.height, worldWidth: 16, worldHeight: 9 });
 const setStatus = (text) => {
-  statusEl.textContent = text;
+  statusEl.textContent = modeLabel ? `${text}　｜　${modeLabel}` : text;
 };
+
+function setMode(status) {
+  const labels = {
+    connected: "後端已連線（狀態同步）",
+    closed: "連線中斷（本機模式）",
+    error: "連線失敗（本機模式）",
+    unsupported: "此瀏覽器沒有 WebSocket（本機模式）",
+    idle: "本機模式",
+  };
+  modeLabel = labels[status] ?? "本機模式";
+}
 
 function frame(now) {
   const dt = Math.min(64, now - lastFrame);
@@ -97,6 +112,23 @@ async function boot() {
   spawnRoster(port, roster);
   for (const actor of port.actors.values()) port.play(actor.id, "idle_breath");
 
+  // S1: if a backend is up, it is authoritative; otherwise stay local.
+  try {
+    socket = createSpaceSocket({
+      url: window.SPACE_WS_URL || "ws://127.0.0.1:8000/ws/space",
+      roomId: room.room_id,
+      onSnapshot: (message) => applySnapshot(port, message),
+      onStatus: (status) => {
+        setMode(status);
+        setStatus("舞台");
+      },
+    });
+    socket.connect();
+  } catch (err) {
+    socket = null;
+    setStatus(`後端未連線：${err.message}`);
+  }
+
   // who you are talking to
   const selectSection = section("說話對象");
   const select = document.createElement("select");
@@ -118,6 +150,7 @@ async function boot() {
     try {
       port.say(selectedRole, line.value || "…", 4500);
       port.play(selectedRole, "nod");
+      socket?.send({ type: "say", actor_id: selectedRole, text: line.value || "…" });
       setStatus(`${selectedRole} 說完一句`);
     } catch (err) {
       setStatus(`說話失敗：${err.message}`);
@@ -141,6 +174,7 @@ async function boot() {
   for (const expression of avatars[0][1].expression_channels) {
     button(exSection, expression, () => {
       port.express(selectedRole, expression);
+      socket?.send({ type: "express", actor_id: selectedRole, expression });
       setStatus(`${selectedRole} → ${expression}`);
     });
   }
@@ -150,6 +184,7 @@ async function boot() {
   for (const motionId of Object.keys(motions)) {
     button(motionSection, motionId, () => {
       port.play(selectedRole, motionId);
+      socket?.send({ type: "play", actor_id: selectedRole, motion: motionId });
       setStatus(`${selectedRole} → ${motionId}`);
     });
   }
@@ -178,6 +213,7 @@ async function boot() {
   const moveSection = section("走動");
   button(moveSection, "走到中央", () => {
     port.move(selectedRole, [8, 0], 900);
+    socket?.send({ type: "move", actor_id: selectedRole, position: [8, 0] });
     setStatus(`${selectedRole} 走向中央`);
   });
 

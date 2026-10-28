@@ -122,6 +122,11 @@ from services.multimodal_ws_handler import multimodal_stream_handler  # noqa: E4
 
 app.websocket("/multimodal/stream")(multimodal_stream_handler)
 
+from services.space.space_ws import space_ws_handler  # noqa: E402
+
+# Stage state (S1): one room, many viewers, one authoritative snapshot.
+app.websocket("/ws/space")(space_ws_handler)
+
 from services.atlassian_api import atlassian_router  # noqa: E402
 
 # Include existing routers
