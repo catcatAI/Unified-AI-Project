@@ -292,13 +292,13 @@ class MultiRoleOrchestrator:
 
 > 落地備註：`RoleContext` 目前只管「誰看得到哪些訊息」與 token 估算；真正餵給 LLM 前的截斷與排序，屬 Phase 1 的 ContextScheduler。
 
-### Phase 1 — RolePlayAgent + 記憶命名空間 (2-3 天)
+### Phase 1 — RolePlayAgent + 記憶命名空間 (2-3 天) — 進行中
 
-- [ ] P1-1 實作 `RolePlayAgent(BaseAgent)`，持有 per-role persona、conversation、backend_slot。
-- [ ] P1-2 `respond()` 方法：merged context → 強制 backend_slot → persona 注入 → LLM 呼叫 → private overlay 持久化 → 記憶寫入 (namespace)。
+- [x] P1-1 實作 `RolePlayAgent(BaseAgent)`，持有 per-role persona、conversation、backend_slot。
+- [x] P1-2 `respond()` 方法：merged context → 強制 backend_slot → persona 注入 → LLM 呼叫 → private overlay（記憶體內）。**落盤/重啟倖存與 P1-3 的 HAM namespace 一起接**；LLM 與記憶都走注入 seam（`llm_service` / `memory_writer`），P1-3 不必改這個檔。
 - [ ] P1-3 HAM/vector store 加 `namespace` 參數 (向後相容，預設 None)。
 - [ ] P1-4 chat pipeline `_inject_*_context()` 讀 `context["_memory_namespace"]`。
-- [ ] P1-5 單元測試 `tests/ai/roleplay/test_role_play_agent.py` (>=20 tests)：mock LLM service，驗證 backend_slot 強制、namespace 寫入、private overlay。
+- [x] P1-5 單元測試 `tests/ai/roleplay/test_role_play_agent.py` (28 tests)：fake LLM / fake memory，驗證 backend_slot 強制、namespace、private overlay、降級路徑。
 
 ### Phase 2 — MultiRoleOrchestrator + 路由器改動 (2-3 天)
 
