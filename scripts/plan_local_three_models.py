@@ -93,6 +93,7 @@ class ModelSpec:
     kv_gb_per_2k: float
     repo: str
     filename: str
+    flags: Tuple[str, ...] = ()  # per-model runtime flags (e.g. broken FA)
 
     def footprint_gb(self, ctx: int = 2048) -> float:
         """Weights + KV cache + ~0.35 GB runtime overhead per server."""
@@ -139,6 +140,10 @@ CATALOG: Tuple[ModelSpec, ...] = (
         0.22,
         "bartowski/gemma-2-2b-it-GGUF",
         "gemma-2-2b-it-Q4_K_M.gguf",
+        # This build's flash-attention path returns garbage for gemma-2
+        # (empty or "Please provide a ..." regardless of prompt, on both CPU
+        # and Vulkan). `-fa off` produces coherent output; verified 2026-10-28.
+        flags=("-fa", "off"),
     ),
     ModelSpec(
         "qwen2.5-3b",
@@ -197,6 +202,7 @@ class Plan:
                         f"-c {self.ctx}",
                         f"-t {threads}",
                         "--no-webui",
+                        *model.flags,
                     ]
                 )
             )

@@ -159,3 +159,11 @@ def test_overlay_state_distinguishes_ours_from_theirs(tmp_path, monkeypatch):
         encoding="utf-8",
     )
     assert runner.overlay_state().startswith("generated")
+
+
+def test_gemma_command_disables_flash_attention():
+    """gemma-2 on this build needs -fa off; the command must carry it."""
+    plan = planner.plan_three(9.44, 7.0, has_display=True)
+    by_slot = {placement["slot"]: cmd for (placement, _), cmd in zip(plan.picks, plan.commands())}
+    assert "-fa off" in by_slot["llamacpp-gemma"]
+    assert "-fa off" not in by_slot["llamacpp-local"]

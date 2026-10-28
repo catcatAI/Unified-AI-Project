@@ -2,7 +2,7 @@
 
 > **這份文件是什麼**：在這台機器上，把 `main` / `role_b` / `role_c` 三個角色各自綁一個**本地**模型的具體做法——含實測硬體、模型選擇、啟動指令、以及「什麼時候會跑不動」。
 >
-> **這份文件不是什麼**：不是模型評測；沒有下載任何權重（本文件只規劃與驗證**能不能跑**）。
+> **這份文件不是什麼**：不是模型評測。**2026-10-28 已實際下載並跑起來**（見 §4.1）。
 
 ---
 
@@ -51,6 +51,18 @@ role_c   llamacpp-qwen     8081 Llama-3.2-1B-Instruct Q4   1.32
 
 ---
 
+## 3.1 一個必須知道的坑：gemma-2 要 `-fa off`
+
+`gemma-2-2b-it-Q4_K_M.gguf` 在這個 llama.cpp build（`0.8.0-dev, build 11960`）上，**開著 flash attention 會輸出垃圾**——不論 CPU 還是 Vulkan、不論 prompt 語言，結果都是空字串或 `"Please provide a ..."`。檔案本身沒壞（`hf cache verify` 檢查碼全對）。
+
+加 `-fa off` 之後立刻正常：
+
+```
+:8082 → '我是 Gemma，一個由 Google DeepMind 訓練的大型語言模型。'
+```
+
+所以規劃器把這個 flag 綁在 gemma 這個 model spec 上（`flags=("-fa", "off")`），不是綁在全域——其他模型不需要。
+
 ## 4. 怎麼開始
 
 ```bash
@@ -81,6 +93,28 @@ python scripts/run_local_three_models.py stop     # 關 server + 還原 overlay
 `-ngl 99` 是關鍵：RAM 只剩 3 GB，權重若留在 page cache 會被換出，速度掉一個數量級。
 
 ---
+
+## 4.1 2026-10-28 實際結果
+
+三個模型已下載（`~/models/gguf`，位元組數與 Hub 一致）：
+
+| 檔案 | 大小 | 實測 |
+| --- | --- | --- |
+| `qwen2.5-3b-instruct-q4_k_m.gguf` | 2,104,932,768 | ✅ 自稱 Qwen |
+| `gemma-2-2b-it-Q4_K_M.gguf` | 1,708,582,752 | ✅ 自稱 Gemma（需 `-fa off`） |
+| `Llama-3.2-1B-Instruct-Q4_K_M.gguf` | 807,694,464 | ✅ 自稱 AI assistant |
+
+```
+$ python scripts/run_local_three_models.py status
+llamacpp-local   :8080 healthy  Qwen2.5-3B-Instruct Q4
+llamacpp-gemma   :8082 healthy  Gemma-2-2B-IT Q4
+llamacpp-qwen    :8081 healthy  Llama-3.2-1B-Instruct Q4
+overlay: generated (three local models)
+```
+
+三個 server 同時常駐，系統 RAM 只用了 3 GB（權重都在 VRAM）。overlay 已寫入
+`configs/system/llm.evolved.yaml`，**重啟 backend 後**角色才會綁到這三個槽；
+`... stop` 會關 server 並把 overlay 還原。
 
 ## 5. 三個角色的模型綁定
 

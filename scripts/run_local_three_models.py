@@ -123,22 +123,22 @@ def start(threads: int = 6, ctx: int = 2048) -> int:
     LOGDIR.mkdir(parents=True, exist_ok=True)
     PIDFILE.parent.mkdir(parents=True, exist_ok=True)
     pids: List[int] = []
-    for pick, command in zip(plan.picks, plan.commands(threads)):
-        log = open(LOGDIR / f"{pick['slot']}.log", "ab")
+    for (placement, _model), command in zip(plan.picks, plan.commands(threads)):
+        log = open(LOGDIR / f"{placement['slot']}.log", "ab")
         proc = subprocess.Popen(shlex.split(command), stdout=log, stderr=subprocess.STDOUT)
         pids.append(proc.pid)
-        print(f"started {pick['slot']} (pid {proc.pid}) on port {pick['port']}")
+        print(f"started {placement['slot']} (pid {proc.pid}) on port {placement['port']}")
 
     PIDFILE.write_text("\n".join(str(pid) for pid in pids) + "\n", encoding="utf-8")
     install_overlay(plan.to_dict()["picks"])
 
     ok = True
-    for pick in plan.picks:
-        if wait_healthy(int(pick["port"])):
-            print(f"  {pick['slot']} healthy on :{pick['port']}")
+    for placement, _model in plan.picks:
+        if wait_healthy(int(placement["port"])):
+            print(f"  {placement['slot']} healthy on :{placement['port']}")
         else:
             ok = False
-            print(f"  {pick['slot']} NOT healthy on :{pick['port']} (see {LOGDIR})")
+            print(f"  {placement['slot']} NOT healthy on :{placement['port']} (see {LOGDIR})")
     print(f"\nconfig overlay: {OVERLAY}")
     print("restart the backend so it picks the overlay up, then roles bind to their slots.")
     return 0 if ok else 1
