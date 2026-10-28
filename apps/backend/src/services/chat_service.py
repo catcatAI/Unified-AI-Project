@@ -575,8 +575,11 @@ class ChatService:
             # not kill semantic memory for the process lifetime). The
             # underlying thread keeps the worker lock even after cancel,
             # so the backoff window (5min) lets it drain before retrying.
+            # Role memory is a hard partition (P1-4): the namespace rides in the
+            # chat context, so a role turn never recalls another role's rows.
+            _namespace = merged_context.get("_memory_namespace")
             vs_results = await asyncio.wait_for(
-                self._vector_store.semantic_search(user_message, 3),
+                self._vector_store.semantic_search(user_message, 3, None, _namespace),
                 timeout=1.0,
             )
             self._vector_store_recent_fail = False
@@ -1055,6 +1058,7 @@ class ChatService:
         self, user_text: str, assistant_text: str, context: Optional[Dict[str, Any]] = None
     ) -> None:
         """Shared write path for conversation memory (generate + gate 捷徑)."""
+        _namespace = (context or {}).get("_memory_namespace")
         if self._vector_store is not None:
             try:
                 import uuid as _uuid
@@ -1062,7 +1066,9 @@ class ChatService:
                 memory_id = f"chat_{_uuid.uuid4().hex[:12]}"
                 content = f"User: {user_text}\nAngela: {assistant_text}"
                 self._spawn_background_task(
-                    self._vector_store.add_memory(memory_id, content, {"type": "conversation"})
+                    self._vector_store.add_memory(
+                        memory_id, content, {"type": "conversation"}, namespace=_namespace
+                    )
                 )
             except Exception as e:
                 logger.warning("VectorStore memory store failed: %s", e, exc_info=True)
@@ -1078,6 +1084,7 @@ class ChatService:
                             raw_data={"user": user_text, "assistant": assistant_text},
                             data_type="conversation",
                             metadata=metadata,
+                            namespace=_namespace,
                         )
                     )
             except Exception as e:

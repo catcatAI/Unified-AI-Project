@@ -1,0 +1,27 @@
+# 角色註冊表（P2-4）
+#
+# chat 請求帶 role_id 時，這裡決定三件事：backend_slot（模型綁定）、
+# memory_namespace（記憶分區）、context_scope（誰看得到誰）。
+# 客戶端只能「選」角色，不能「定義」角色——未知 role_id 會被回 400。
+#
+# backend_slot 必須對應已註冊的 LLM backend id（見 services/llm/providers/registry.py），
+# 找不到時 router 會記 log 並回退正常選路，不會讓聊天壞掉。
+
+roles:
+  - role_id: main
+    display_name: Angela
+    context_scope: shared
+    memory_namespace: main
+    shared_memory_write: true
+
+  - role_id: role_b
+    display_name: Gemma 角色
+    context_scope: private
+    backend_slot: llamacpp-gemma
+    memory_namespace: role_b
+
+  - role_id: role_c
+    display_name: Qwen 角色
+    context_scope: private
+    backend_slot: llamacpp-qwen
+    memory_namespace: role_c

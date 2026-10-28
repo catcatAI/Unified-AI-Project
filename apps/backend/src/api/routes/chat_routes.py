@@ -2087,6 +2087,8 @@ async def _run_chat_pipeline(
 
     # Step 2: Initialize context + best-effort priming (EDA / dispatch / MSBA)
     context = _prime_chat_context(user_message, user_name, origin, extra_context, history)
+    # Step 2b: role binding (backend slot / memory namespace / trace id)
+    _apply_role_binding(context)
 
     # Step 3: Math dual-rail verification (IntentRegistry-confirmed result short-circuits)
     math_shortcircuit = await _gate_math(
@@ -2295,6 +2297,36 @@ def _prime_chat_context(
     _run_mainline_dispatch(context, user_message, origin, extra_context)
     _schedule_msba(context, user_message)
     return context
+
+
+def _apply_role_binding(context: Dict[str, Any]) -> None:
+    """P2-4: a ``role_id`` pins the role's backend slot, memory namespace, trace id.
+
+    The role comes from the server-side registry (``ai.roleplay.runtime``), never
+    from the payload: a client chooses a role, it cannot define one. Unknown ids
+    fail loudly (400) instead of silently answering as Angela — a wrong-voice
+    answer is worse than an error the caller can see.
+    """
+    role_id = str(context.get("role_id") or "").strip()
+    if not role_id:
+        return
+
+    from ai.roleplay.runtime import resolve_role
+
+    role = resolve_role(role_id)
+    if role is None:
+        raise HTTPException(status_code=400, detail=f"unknown role: {role_id}")
+
+    context["_role_id"] = role.role_id
+    context["_memory_namespace"] = role.memory_namespace
+    context["_force_backend_slot"] = role.backend_slot
+    context["_role_display_name"] = role.display_name
+    logger.info(
+        "Role binding: %s -> backend_slot=%s namespace=%s",
+        role.role_id,
+        role.backend_slot,
+        role.memory_namespace,
+    )
 
 
 async def _gate_math(
@@ -2922,6 +2954,57 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "/chat/with-audio."
     )
     return response
+
+
+MAX_GROUP_ROLES = 4
+
+
+@router.post("/chat/group")
+async def group_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Ask several roles the same message; replies are keyed by role id.
+
+    Each role runs the full pipeline (validation / math / crisis / gate), not a
+    stripped-down LLM call — a group turn must never be a way around the safety
+    gates. Sessions are namespaced per role so one transcript cannot bleed into
+    another.
+    """
+    user_message = request.get("message", request.get("text", ""))
+    role_ids = request.get("role_ids") or request.get("roles") or []
+    if not isinstance(role_ids, list) or not role_ids:
+        raise HTTPException(status_code=400, detail="role_ids must be a non-empty list")
+    if len(role_ids) > MAX_GROUP_ROLES:
+        raise HTTPException(
+            status_code=400, detail=f"at most {MAX_GROUP_ROLES} roles per group turn"
+        )
+
+    grouped = list(dict.fromkeys(str(role) for role in role_ids))
+    user_id = request.get("user_id") or request.get("user_name", "User")
+    user_name = _display_name(request.get("user_name"), user_id)
+    origin = request.get("origin", "desktop")
+    base_session = request.get("session_id") or f"group::{uuid.uuid4().hex[:8]}"
+    history = request.get("history", [])
+    if not isinstance(history, list):
+        history = []
+
+    replies: Dict[str, Any] = {}
+    for role_id in grouped:
+        replies[role_id] = await _handle_chat_request(
+            user_message=user_message,
+            user_name=user_name,
+            history=list(history),
+            session_id=f"{base_session}::{role_id}",
+            origin=origin,
+            extra_context={
+                "user_id": user_id,
+                "tenant_id": request.get("tenant_id", "default"),
+                "persona_id": role_id,
+                "client_id": origin,
+                "role_id": role_id,
+                "group_id": base_session,
+            },
+            mode="group",
+        )
+    return {"session_id": base_session, "role_ids": grouped, "replies": replies}
 
 
 async def _sse_pump(
