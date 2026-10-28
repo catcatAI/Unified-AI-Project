@@ -142,7 +142,10 @@ def test_remove_overlay_without_backup_deletes_the_generated_file(tmp_path, monk
     monkeypatch.setattr(runner, "OVERLAY_BACKUP", tmp_path / "none.yaml")
     monkeypatch.setattr(runner, "CONFIG_DIR", tmp_path)
 
-    overlay.write_text("generated\n", encoding="utf-8")
+    overlay.write_text(
+        runner.overlay_yaml([{"slot": "llamacpp-local", "port": 8080, "path": "/m/x.gguf"}]),
+        encoding="utf-8",
+    )
     runner.remove_overlay()
     assert not overlay.exists()
 
@@ -167,3 +170,13 @@ def test_gemma_command_disables_flash_attention():
     by_slot = {placement["slot"]: cmd for (placement, _), cmd in zip(plan.picks, plan.commands())}
     assert "-fa off" in by_slot["llamacpp-gemma"]
     assert "-fa off" not in by_slot["llamacpp-local"]
+
+
+def test_remove_overlay_leaves_a_foreign_overlay_alone(tmp_path, monkeypatch):
+    overlay = tmp_path / "llm.evolved.yaml"
+    monkeypatch.setattr(runner, "OVERLAY", overlay)
+    monkeypatch.setattr(runner, "OVERLAY_BACKUP", tmp_path / "none.yaml")
+
+    overlay.write_text("# Angela's self-evolution layer\n{}\n", encoding="utf-8")
+    runner.remove_overlay()
+    assert overlay.exists(), "stop must not delete a config it did not generate"

@@ -80,6 +80,10 @@ def install_overlay(picks: Sequence[Dict[str, object]]) -> None:
 
 
 def remove_overlay() -> None:
+    # Only touch a file we generated. The repo ships a real llm.evolved.yaml
+    # (ConfigMutator's output); deleting that on `stop` loses committed config.
+    if not overlay_state().startswith("generated"):
+        return
     if OVERLAY_BACKUP.exists():
         shutil.move(str(OVERLAY_BACKUP), str(OVERLAY))
     elif OVERLAY.exists():
