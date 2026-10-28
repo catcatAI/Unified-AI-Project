@@ -283,12 +283,14 @@ class MultiRoleOrchestrator:
 
 ## 4. 實作階段 (Phased Plan)
 
-### Phase 0 — 基礎資料模型 (1-2 天)
+### Phase 0 — 基礎資料模型 (1-2 天) ✅ 2026-10-28
 
-- [ ] P0-1 建立 `apps/backend/src/ai/roleplay/` 套件 (`__init__.py`, `role.py`, `context.py`)。
-- [ ] P0-2 實作 `Role` dataclass + `ContextScope` + `RoleContext`。
-- [ ] P0-3 單元測試 `tests/ai/roleplay/test_role_model.py` (>=15 tests)：資料類驗證、scope 列舉、預設值。
-- [ ] P0-4 確認 `PersonaEngine` 可實例化多份 (移除 singleton 強制，改 factory `get_persona_engine(role_id=None)` 向後相容)。
+- [x] P0-1 建立 `apps/backend/src/ai/roleplay/` 套件 (`__init__.py`, `role.py`, `context.py`)。
+- [x] P0-2 實作 `Role` dataclass + `ContextScope` + `RoleContext`。
+- [x] P0-3 單元測試 `tests/ai/roleplay/test_role_model.py` (25 tests)：資料類驗證、scope 列舉、預設值、可見性過濾、預算估算。
+- [x] P0-4 確認 `PersonaEngine` 可實例化多份：`get_persona_engine(role_id=None)` 無參數仍是原本的 singleton（向後相容），給 `role_id` 則回傳 per-role 快取實例。
+
+> 落地備註：`RoleContext` 目前只管「誰看得到哪些訊息」與 token 估算；真正餵給 LLM 前的截斷與排序，屬 Phase 1 的 ContextScheduler。
 
 ### Phase 1 — RolePlayAgent + 記憶命名空間 (2-3 天)
 
