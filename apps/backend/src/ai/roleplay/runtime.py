@@ -87,3 +87,19 @@ def reset_role_orchestrator() -> None:
 def resolve_role(role_id: str) -> Optional[Role]:
     agent = get_role_orchestrator().get((role_id or "").strip())
     return agent.role if agent is not None else None
+
+
+def build_role_persona(role: Role) -> str:
+    """The prompt block that makes a role turn speak as that role.
+
+    The core prompt opens with "you are Angela", so the override has to be
+    explicit and say it wins. Kept short: role identity is context, not a script
+    — the actual voice still comes from the model plus this role's memory.
+    """
+    return (
+        "[角色設定（本回合優先於上述身份）]\n"
+        f"你現在扮演「{role.display_name}」（role_id={role.role_id}）。"
+        "用第一人稱、維持此角色一貫的語氣與立場回答；"
+        "不要自稱 Angela，也不要聲稱自己是其他角色。"
+        "如果不知道答案，就用這個角色的方式誠實說不知道。"
+    )

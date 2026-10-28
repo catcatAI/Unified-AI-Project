@@ -100,3 +100,12 @@ def test_get_orchestrator_is_lazy_and_cached(monkeypatch):
     first = runtime.get_role_orchestrator()
     assert runtime.get_role_orchestrator() is first
     runtime.reset_role_orchestrator()
+
+
+def test_build_role_persona_names_the_role_and_overrides_angela():
+    block = runtime.build_role_persona(
+        Role(role_id="role_b", display_name="Gemma 角色", memory_namespace="ns_b")
+    )
+    assert "Gemma 角色" in block
+    assert "role_b" in block
+    assert "不要自稱 Angela" in block

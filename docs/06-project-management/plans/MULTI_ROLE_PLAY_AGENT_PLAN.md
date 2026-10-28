@@ -297,16 +297,16 @@ class MultiRoleOrchestrator:
 - [x] P1-1 實作 `RolePlayAgent(BaseAgent)`，持有 per-role persona、conversation、backend_slot。
 - [x] P1-2 `respond()` 方法：merged context → 強制 backend_slot → persona 注入 → LLM 呼叫 → private overlay（記憶體內）。**落盤/重啟倖存與 P1-3 的 HAM namespace 一起接**；LLM 與記憶都走注入 seam（`llm_service` / `memory_writer`），P1-3 不必改這個檔。
 - [x] P1-3 HAM/vector store 加 `namespace` 參數 (向後相容，預設 None)。落地：`VectorMemoryStore.add_memory/semantic_search` 與 `HAMMemoryManager.store_experience/query_core_memory` 都吃 `namespace`；numpy backend 用**硬分割**（先篩索引再排名，外來高分列不會擠進來），chroma 走 `where={"namespace": …}`。未標 namespace 的舊資料維持原本行為。
-- [x] P1-4 chat pipeline 讀 `context["_memory_namespace"]`。落地在 `ChatService`：`_inject_vector_context()` 用該 namespace 查（`semantic_search(..., None, ns)`），`_persist_conversation_text()` 用同一個 namespace 寫（vector `add_memory` + HAM `store_experience`）。沒有 role 時傳 `None`，行為與以前完全一樣。
+- [x] P1-4 chat pipeline 讀 `context["_memory_namespace"]`。落地在 `ChatService`：`_inject_vector_context()` 用該 namespace 查（`semantic_search(..., None, ns)`），`_persist_conversation_text()` 用同一個 namespace 寫（vector `add_memory` + HAM `store_experience`）。沒有 role 時走原本的呼叫形式（不是傳 None 進去），舊 store/測試替身不受影響。**人格文字也接了**：`build_role_persona(role)` → `context["_role_persona"]` → `prompt_builder._append_role_persona()` 明確覆寫「你是 Angela」。
 - [x] P1-5 單元測試 `tests/ai/roleplay/test_role_play_agent.py` (28 tests)：fake LLM / fake memory，驗證 backend_slot 強制、namespace、private overlay、降級路徑。
 
-### Phase 2 — MultiRoleOrchestrator + 路由器改動 (2-3 天) — 3/4
+### Phase 2 — MultiRoleOrchestrator + 路由器改動 (2-3 天) ✅ 2026-10-28
 
 - [x] P2-1 實作 `MultiRoleOrchestrator`：register/unregister role、turn()、group_turn()。**未接路由器**：group_turn 依註冊順序循序執行，主 AI 的回覆在同一輪就進共享基底，後面的角色讀得到；第二個 SHARED 角色會被擋。
 - [x] P2-2 路由器 `_call_llm_backend()` 加 `_force_backend_slot` 檢查 (在 `_select_light_backend()` 之前)。實作落在 `_choose_backend()`：強制槽用 exact token 比對（`llamacpp-qwen` 不會掉到 `llamacpp`），未知槽只記 log 並回退正常選路，不會讓聊天壞掉。
 - [x] P2-3 路由器 metadata 寫入 `_role_id`。落地為 `context["_role_id"]` → `response.metadata["role_id"]`（`setdefault`，不覆寫既有值；metadata 鍵沿用既有無底線慣例）。
 - [x] P2-4 整合進 chat_routes：`_run_chat_pipeline` 接 `role_id`/`group` 參數。落地：`/chat/unified` 收 `role_id` → `_apply_role_binding()` 寫入 `_role_id` / `_force_backend_slot` / `_memory_namespace`；新增 `POST /chat/group`（≤4 角色、逐角色跑**完整** pipeline、session 以 `{base}::{role_id}` 分離）。角色來自伺服器端註冊表 `ai/roleplay/runtime.py` + `configs/system/roles.default.yaml`，未知 id 回 400，不會靜默變成 Angela。
-- [ ] P2-5 單元 + 整合測試 `tests/ai/roleplay/test_orchestrator.py` + `tests/api/test_multi_role_chat.py` (>=25 tests)。**現況**：等價覆蓋已散在 `test_multi_role_orchestrator.py` (17)、`test_chat_role_binding.py` (7)、`test_runtime.py` (8)，但**還沒有走 HTTP 的端到端測試**（需要 TestClient + 假 LLM backend）。
+- [x] P2-5 單元 + 整合測試 `tests/ai/roleplay/test_orchestrator.py` + `tests/api/test_multi_role_chat.py` (>=25 tests)。**落地**：`test_multi_role_orchestrator.py` (17) + `test_chat_role_binding.py` (7) + `test_runtime.py` (9) + `test_multi_role_chat.py` (10，TestClient 走真路由、pipeline 以 stub 取代)。**這個測試抓到一個真 bug**：`/chat/unified` 根本沒把 body 的 `role_id` 放進 context，等於角色選擇在 HTTP 層就被吃掉——已修。
 
 ### Phase 3 — API + 配置 + 文件 (1-2 天)
 

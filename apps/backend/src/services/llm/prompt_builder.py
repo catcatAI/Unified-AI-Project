@@ -809,6 +809,7 @@ def construct_angela_prompt(
     messages = [{"role": "system", "content": system_prompt.strip()}]
 
     _append_persona(messages, context)
+    _append_role_persona(messages, context)
     _append_user_profile(messages, context)
     _append_drive_files(messages, context)
     _append_image_analysis(messages, context)
@@ -1356,6 +1357,21 @@ def _append_persona(messages: List[Dict], context: Dict) -> None:
     except Exception as exc:  # pragma: no cover - persona layer unavailable
         logger.warning("Persona block unavailable: %s", exc, exc_info=True)
         return
+    if not block:
+        return
+    messages[0]["content"] += f"\n\n{block}"
+
+
+def _append_role_persona(messages: List[Dict], context: Dict) -> None:
+    """Attach the per-request role block (multi-role play, P1-4 follow-up).
+
+    Distinct from ``_append_persona``: that one is *which Angela* the user is
+    talking to (workshop host vs their own instance); this one is *which
+    character answers this turn*. The core prompt still opens with "you are
+    Angela", so the block states explicitly that it wins — otherwise a role
+    turn produces Angela's voice with someone else's model and memory.
+    """
+    block = str(context.get("_role_persona") or "").strip()
     if not block:
         return
     messages[0]["content"] += f"\n\n{block}"

@@ -2311,7 +2311,7 @@ def _apply_role_binding(context: Dict[str, Any]) -> None:
     if not role_id:
         return
 
-    from ai.roleplay.runtime import resolve_role
+    from ai.roleplay.runtime import build_role_persona, resolve_role
 
     role = resolve_role(role_id)
     if role is None:
@@ -2321,6 +2321,8 @@ def _apply_role_binding(context: Dict[str, Any]) -> None:
     context["_memory_namespace"] = role.memory_namespace
     context["_force_backend_slot"] = role.backend_slot
     context["_role_display_name"] = role.display_name
+    # Without this the role gets its own model + memory but keeps Angela's voice.
+    context["_role_persona"] = build_role_persona(role)
     logger.info(
         "Role binding: %s -> backend_slot=%s namespace=%s",
         role.role_id,
@@ -2921,6 +2923,10 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "persona_id": request.get("persona_id", "angela"),
         "client_id": request.get("origin", request.get("client_id", "desktop")),
     }
+    # P2-4: role selection must reach the pipeline. Without this the binding
+    # step had nothing to read and every request answered as Angela.
+    if request.get("role_id"):
+        context["role_id"] = str(request["role_id"]).strip()
     user_name = _display_name(request.get("user_name"), user_id)
     history = request.get("history", [])
     # Bound history to prevent OOM from attacker-controlled large arrays
