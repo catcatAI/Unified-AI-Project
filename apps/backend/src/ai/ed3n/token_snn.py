@@ -566,7 +566,9 @@ class TokenSNN:
     def load(cls, path: Path | str, map_location: str = "cpu", device: str = "auto") -> "TokenSNN":
         import torch
 
-        payload = torch.load(str(path), map_location=map_location, weights_only=False)
+        # weights_only=True: the checkpoint is {vocab: dict, config: dict, state_dict}.
+        # Loading pickled objects would let a crafted checkpoint execute code.
+        payload = torch.load(str(path), map_location=map_location, weights_only=True)
         vocab_data = payload["vocab"]
         vocab_cls = TokenVocab if vocab_data.get("kind") == "token" else CharVocab
         vocab = vocab_cls.from_dict(vocab_data)
