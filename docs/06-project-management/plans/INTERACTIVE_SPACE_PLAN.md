@@ -198,7 +198,7 @@ class Actor:
 
 > 與原計畫的差異（誠實記錄）：角色是**程序繪製**，不是 Live2D——`avatar.model.path` 已預留 `models/Epsilon_free`，S1 再接載入器；測試數從「8」增加到 34（多出來的是 renderer 冒煙與錄影邊界）。
 
-### S1 — 多角色同場（3–5 天，**依賴 P1-3 / P2-4**）
+### S1 — 多角色同場（3–5 天，依賴 P1-3 ✅ / P2-4 ✅ —— 已解除封鎖）
 
 - [ ] 接 `MultiRoleOrchestrator`：每個 `Role` → 一個 Actor，`role.context_scope` 決定是否共享舞台狀態。
 - [ ] 共享/私有可見性：`Actor.visible_to` 決定「誰在誰的畫面裡」，與 `RoleContext` 同一套語意。

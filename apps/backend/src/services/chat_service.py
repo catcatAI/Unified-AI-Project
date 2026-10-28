@@ -577,11 +577,15 @@ class ChatService:
             # so the backoff window (5min) lets it drain before retrying.
             # Role memory is a hard partition (P1-4): the namespace rides in the
             # chat context, so a role turn never recalls another role's rows.
+            # Unscoped turns call the legacy 2-arg form on purpose — stores that
+            # predate `namespace` (and test doubles) keep working untouched.
             _namespace = merged_context.get("_memory_namespace")
-            vs_results = await asyncio.wait_for(
-                self._vector_store.semantic_search(user_message, 3, None, _namespace),
-                timeout=1.0,
+            _search = (
+                self._vector_store.semantic_search(user_message, 3)
+                if _namespace is None
+                else self._vector_store.semantic_search(user_message, 3, None, _namespace)
             )
+            vs_results = await asyncio.wait_for(_search, timeout=1.0)
             self._vector_store_recent_fail = False
             docs = vs_results.get("documents", [[]])[0]
             distances = vs_results.get("distances", [[]])[0]
@@ -1065,11 +1069,17 @@ class ChatService:
 
                 memory_id = f"chat_{_uuid.uuid4().hex[:12]}"
                 content = f"User: {user_text}\nAngela: {assistant_text}"
-                self._spawn_background_task(
-                    self._vector_store.add_memory(
+                # Unscoped turns keep the legacy 3-arg call: custom stores that
+                # predate `namespace` must not break for non-role chats.
+                if _namespace is None:
+                    _write = self._vector_store.add_memory(
+                        memory_id, content, {"type": "conversation"}
+                    )
+                else:
+                    _write = self._vector_store.add_memory(
                         memory_id, content, {"type": "conversation"}, namespace=_namespace
                     )
-                )
+                self._spawn_background_task(_write)
             except Exception as e:
                 logger.warning("VectorStore memory store failed: %s", e, exc_info=True)
         if getattr(self._llm_service, "enable_memory_enhancement", False):
@@ -1079,14 +1089,14 @@ class ChatService:
                     metadata = await self._build_memory_metadata(
                         f"{user_text}\n{assistant_text}", context
                     )
-                    self._spawn_background_task(
-                        mm.store_experience(
-                            raw_data={"user": user_text, "assistant": assistant_text},
-                            data_type="conversation",
-                            metadata=metadata,
-                            namespace=_namespace,
-                        )
-                    )
+                    _remember = {
+                        "raw_data": {"user": user_text, "assistant": assistant_text},
+                        "data_type": "conversation",
+                        "metadata": metadata,
+                    }
+                    if _namespace is not None:
+                        _remember["namespace"] = _namespace
+                    self._spawn_background_task(mm.store_experience(**_remember))
             except Exception as e:
                 logger.warning("Memory store failed: %s", e, exc_info=True)
 

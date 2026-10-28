@@ -110,4 +110,4 @@ async def test_storage_without_a_role_stays_unscoped():
     await drain(svc)
 
     assert svc._vector_store.writes[0]["namespace"] is None
-    assert memory.calls[0]["namespace"] is None
+    assert memory.calls[0].get("namespace") is None
