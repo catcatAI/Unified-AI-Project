@@ -43,9 +43,7 @@ async def _broadcast(room_id: str, payload: Dict[str, Any]) -> None:
         peers.discard(peer)
 
 
-async def _handle_frame(
-    websocket: WebSocket, room_id: str, service: Any, raw: str
-) -> None:
+async def _handle_frame(websocket: WebSocket, room_id: str, service: Any, raw: str) -> None:
     """One client frame: ping, action, or a polite error. Never raises."""
     try:
         message = json.loads(raw)
@@ -61,7 +59,9 @@ async def _handle_frame(
         await websocket.send_json({"type": "space.pong"})
         return
     if kind != "space.action":
-        await websocket.send_json({"type": "space.error", "message": f"unknown message type: {kind}"})
+        await websocket.send_json(
+            {"type": "space.error", "message": f"unknown message type: {kind}"}
+        )
         return
 
     try:
