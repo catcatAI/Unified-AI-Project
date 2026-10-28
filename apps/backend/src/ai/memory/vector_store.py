@@ -194,7 +194,11 @@ class _NumpyBackend:
         memory_id: str,
         content: str,
         metadata: Optional[Dict[str, Any]] = None,
+        namespace: Optional[str] = None,
     ) -> None:
+        if namespace is not None:
+            metadata = dict(metadata or {})
+            metadata.setdefault("namespace", namespace)
         self._pending_vecs.append(self._embed(content))
         if len(self._pending_vecs) >= self._flush_interval:
             self._flush_pending()
@@ -244,13 +248,30 @@ class _NumpyBackend:
         self._dirty = True
 
     async def semantic_search(
-        self, query: str, limit: int = 10, where_document: Optional[Dict[str, Any]] = None
+        self,
+        query: str,
+        limit: int = 10,
+        where_document: Optional[Dict[str, Any]] = None,
+        namespace: Optional[str] = None,
     ) -> Dict[str, Any]:
         self._flush_pending()
         if len(self.ids) == 0:
             return {}
         qvec = self._embed(query)
         sims = self.vectors @ qvec
+
+        # Namespace is a hard partition, not a ranking bias: role memory must
+        # never leak across roles even when a foreign row scores higher.
+        allowed: Optional[set] = None
+        if namespace is not None:
+            allowed = {
+                i
+                for i, meta in enumerate(self.metadatas)
+                if (meta or {}).get("namespace") == namespace
+            }
+            if not allowed:
+                return {}
+
         needle = None
         if isinstance(where_document, dict):
             needle = where_document.get("$contains")
@@ -263,7 +284,7 @@ class _NumpyBackend:
             kept = [
                 (i, float(s))
                 for i, (s, doc) in enumerate(zip(sims.tolist(), self.documents))
-                if needle in (doc or "")
+                if needle in (doc or "") and (allowed is None or i in allowed)
             ]
             if not kept:
                 return {}
@@ -274,15 +295,16 @@ class _NumpyBackend:
                 "documents": [[self.documents[i] for i in picked]],
                 "distances": [[float(1.0 - sims.tolist()[i]) for i in picked]],
             }
-        n = min(limit, len(sims))
-        if n == 0:
-            return {}
-        indices = np.argpartition(-sims, n - 1)[:n]
-        sorted_idx = indices[np.argsort(-sims[indices])]
+        if allowed is None:
+            n = min(limit, len(sims))
+            indices = np.argpartition(-sims, n - 1)[:n]
+            picked = indices[np.argsort(-sims[indices])].tolist()
+        else:
+            picked = sorted(allowed, key=lambda i: -float(sims[i]))[:limit]
         return {
-            "ids": [[self.ids[i] for i in sorted_idx]],
-            "documents": [[self.documents[i] for i in sorted_idx]],
-            "distances": [[float(1.0 - sims[i]) for i in sorted_idx]],
+            "ids": [[self.ids[i] for i in picked]],
+            "documents": [[self.documents[i] for i in picked]],
+            "distances": [[float(1.0 - sims[i]) for i in picked]],
         }
 
     def __len__(self) -> int:
@@ -383,7 +405,11 @@ class _ChromadbBackend:
         memory_id: str,
         content: str,
         metadata: Optional[Dict[str, Any]] = None,
+        namespace: Optional[str] = None,
     ) -> None:
+        if namespace is not None:
+            metadata = dict(metadata or {})
+            metadata.setdefault("namespace", namespace)
         # chromadb's collection.add is a blocking I/O call. Run it in a worker
         # thread so it yields the event loop (lets wait_for / timeouts work and
         # keeps the request path responsive).
@@ -395,13 +421,21 @@ class _ChromadbBackend:
         )
 
     async def semantic_search(
-        self, query: str, limit: int = 10, where_document: Optional[Dict[str, Any]] = None
+        self,
+        query: str,
+        limit: int = 10,
+        where_document: Optional[Dict[str, Any]] = None,
+        namespace: Optional[str] = None,
     ) -> Dict[str, Any]:
         # chromadb's collection.query is a blocking I/O call — offload to a
         # worker thread so the caller's asyncio.wait_for can actually bound it.
         kwargs: Dict[str, Any] = {"query_texts": [query], "n_results": limit}
         if where_document:
             kwargs["where_document"] = where_document
+        if namespace is not None:
+            # Metadata equality filter — the store-side equivalent of the
+            # numpy backend's hard partition.
+            kwargs["where"] = {"namespace": namespace}
         result = await asyncio.to_thread(self.collection.query, **kwargs)
         return dict(result)
 
@@ -469,15 +503,22 @@ class VectorMemoryStore:
         memory_id: str,
         content: str,
         metadata: Optional[Dict[str, Any]] = None,
+        namespace: Optional[str] = None,
     ) -> None:
         if self._numpy_backend is not None:
-            await self._numpy_backend.add_memory(memory_id, content, metadata)
+            await self._numpy_backend.add_memory(memory_id, content, metadata, namespace)
 
     async def semantic_search(
-        self, query: str, limit: int = 10, where_document: Optional[Dict[str, Any]] = None
+        self,
+        query: str,
+        limit: int = 10,
+        where_document: Optional[Dict[str, Any]] = None,
+        namespace: Optional[str] = None,
     ) -> Dict[str, Any]:
         if self._numpy_backend is not None:
-            return await self._numpy_backend.semantic_search(query, limit, where_document)
+            return await self._numpy_backend.semantic_search(
+                query, limit, where_document, namespace
+            )
         return {}
 
     def persist(self) -> None:

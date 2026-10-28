@@ -553,6 +553,7 @@ class HAMMemoryManager:
         data_type: str,
         metadata: Optional[Dict[str, Any]] = None,
         keywords: Optional[List[str]] = None,
+        namespace: Optional[str] = None,
     ) -> Optional[str]:
         """Store a raw experience entry into the memory store.
 
@@ -560,11 +561,16 @@ class HAMMemoryManager:
             raw_data: Content to store — str, dict, or any object.
             data_type: Category label for the experience.
             metadata: Optional metadata dict.
+            namespace: Optional memory namespace (default: none = legacy
+                unscoped bucket). Role play passes the role id so one role's
+                experiences never surface in another's recall.
             keywords: Optional explicit keywords. If not provided,
                       keywords are auto-extracted from raw_data.
         """
         resolved_keywords = keywords if keywords is not None else self._extract_keywords(raw_data)
         entry_meta = dict(metadata or {})
+        if namespace is not None:
+            entry_meta.setdefault("namespace", namespace)
         # 面板（/context/memory/recent）與時間衰減都讀 metadata.timestamp；
         # 沒人送時在這裡補一個，否則每列記憶的 timestamp 都是 null。
         if entry_meta.get("timestamp") in (None, ""):
@@ -753,16 +759,21 @@ class HAMMemoryManager:
         date_range: Optional[Tuple] = None,
         min_importance: float = 0.0,
         limit: int = 10,
+        namespace: Optional[str] = None,
     ) -> List[Any]:
         """依 keywords（任一命中）與 type/metadata 篩選核心記憶。
 
-        回傳含 `.content` 屬性的輕量物件。
+        回傳含 `.content` 屬性的輕量物件。``namespace`` 是硬分割：給了就
+        只回該命名空間的條目，未標 namespace 的舊資料不會混進來。
         """
         conversations = self._data.get("conversations", [])
         kws = [k.lower() for k in (keywords or []) if k]
         results: List[Any] = []
         for c in reversed(conversations):
             content = str(c.get("content", ""))
+            if namespace is not None:
+                if (c.get("metadata") or {}).get("namespace") != namespace:
+                    continue
             if data_type_filter:
                 # store_experience 寫的是 data_type；type 是舊 conversation 物件的鍵
                 ctype = str(c.get("data_type") or c.get("type") or "")

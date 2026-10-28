@@ -296,7 +296,7 @@ class MultiRoleOrchestrator:
 
 - [x] P1-1 實作 `RolePlayAgent(BaseAgent)`，持有 per-role persona、conversation、backend_slot。
 - [x] P1-2 `respond()` 方法：merged context → 強制 backend_slot → persona 注入 → LLM 呼叫 → private overlay（記憶體內）。**落盤/重啟倖存與 P1-3 的 HAM namespace 一起接**；LLM 與記憶都走注入 seam（`llm_service` / `memory_writer`），P1-3 不必改這個檔。
-- [ ] P1-3 HAM/vector store 加 `namespace` 參數 (向後相容，預設 None)。
+- [x] P1-3 HAM/vector store 加 `namespace` 參數 (向後相容，預設 None)。落地：`VectorMemoryStore.add_memory/semantic_search` 與 `HAMMemoryManager.store_experience/query_core_memory` 都吃 `namespace`；numpy backend 用**硬分割**（先篩索引再排名，外來高分列不會擠進來），chroma 走 `where={"namespace": …}`。未標 namespace 的舊資料維持原本行為。
 - [ ] P1-4 chat pipeline `_inject_*_context()` 讀 `context["_memory_namespace"]`。
 - [x] P1-5 單元測試 `tests/ai/roleplay/test_role_play_agent.py` (28 tests)：fake LLM / fake memory，驗證 backend_slot 強制、namespace、private overlay、降級路徑。
 
