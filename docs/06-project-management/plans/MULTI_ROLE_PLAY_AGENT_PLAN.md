@@ -303,8 +303,8 @@ class MultiRoleOrchestrator:
 ### Phase 2 — MultiRoleOrchestrator + 路由器改動 (2-3 天)
 
 - [x] P2-1 實作 `MultiRoleOrchestrator`：register/unregister role、turn()、group_turn()。**未接路由器**：group_turn 依註冊順序循序執行，主 AI 的回覆在同一輪就進共享基底，後面的角色讀得到；第二個 SHARED 角色會被擋。
-- [ ] P2-2 路由器 `_call_llm_backend()` 加 `_force_backend_slot` 檢查 (在 `_select_light_backend()` 之前)。
-- [ ] P2-3 路由器 metadata 寫入 `_role_id`。
+- [x] P2-2 路由器 `_call_llm_backend()` 加 `_force_backend_slot` 檢查 (在 `_select_light_backend()` 之前)。實作落在 `_choose_backend()`：強制槽用 exact token 比對（`llamacpp-qwen` 不會掉到 `llamacpp`），未知槽只記 log 並回退正常選路，不會讓聊天壞掉。
+- [x] P2-3 路由器 metadata 寫入 `_role_id`。落地為 `context["_role_id"]` → `response.metadata["role_id"]`（`setdefault`，不覆寫既有值；metadata 鍵沿用既有無底線慣例）。
 - [ ] P2-4 整合進 chat_routes：`_run_chat_pipeline` 接 `role_id`/`group` 參數。
 - [ ] P2-5 單元 + 整合測試 `tests/ai/roleplay/test_orchestrator.py` + `tests/api/test_multi_role_chat.py` (>=25 tests)。
 

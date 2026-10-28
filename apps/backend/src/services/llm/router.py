@@ -4585,6 +4585,45 @@ class AngelaLLMService:
             return None, None
         return self.backends[qwen_type], qwen_type
 
+    def _resolve_forced_backend(self, slot: Any) -> Tuple[Any, Any]:
+        """Resolve a role's forced backend slot to ``(backend, backend_type)``.
+
+        Exact token match only — the same rule as fallback pass 1 — so a
+        ``llamacpp-qwen`` slot never degrades onto the base ``llamacpp`` model
+        when both are registered. An unknown slot is not fatal: we log and let
+        normal selection run, because a deleted model must not brick chat.
+        """
+        if not slot:
+            return None, None
+        token = self._backend_token(slot)
+        for backend_type, backend in list(getattr(self, "backends", {}).items()):
+            if self._backend_token(getattr(backend_type, "value", backend_type)) == token:
+                return backend, backend_type
+        logger.warning("Role slot %r is not a registered backend; using normal selection", slot)
+        return None, None
+
+    async def _choose_backend(self, user_message: str, context: Dict[str, Any]) -> Tuple[Any, Any]:
+        """Pick the backend for this turn: forced role slot first, light model second."""
+        forced_backend, forced_type = self._resolve_forced_backend(
+            context.get("_force_backend_slot")
+        )
+        if forced_backend is not None:
+            logger.info("Role slot: forced backend %s", getattr(forced_type, "value", forced_type))
+            return forced_backend, forced_type
+
+        light_backend, light_type = await self._select_light_backend(user_message, context)
+        if light_backend is not None:
+            logger.info("Dual-model: simple query → executor (qwen)")
+        return light_backend, light_type
+
+    @staticmethod
+    def _stamp_role_metadata(response: Any, context: Dict[str, Any]) -> None:
+        """Tag the response with the playable role id (additive ``metadata`` key)."""
+        role_id = context.get("_role_id")
+        metadata = getattr(response, "metadata", None)
+        if role_id and isinstance(metadata, dict):
+            metadata.setdefault("role_id", role_id)
+
     async def _call_llm_backend(
         self, user_message: str, context: Dict[str, Any], params: GenerationParams
     ) -> LLMResponse:
@@ -4593,9 +4632,7 @@ class AngelaLLMService:
         await self._upgrade_digested_context(messages, context)
         _enforce_prompt_budget(messages, context)
 
-        light_backend, light_type = await self._select_light_backend(user_message, context)
-        if light_backend is not None:
-            logger.info("Dual-model: simple query → executor (qwen)")
+        light_backend, light_type = await self._choose_backend(user_message, context)
 
         async def _do_call() -> Optional[LLMResponse]:
             backend = light_backend if light_backend is not None else self.active_backend
@@ -4633,6 +4670,7 @@ class AngelaLLMService:
         self, response: LLMResponse, user_message: str, context: Dict[str, Any], start_time: float
     ) -> LLMResponse:
         _has_text = bool((getattr(response, "text", None) or "").strip())
+        self._stamp_role_metadata(response, context)
         backend_type = self.active_backend_type
         if (
             self.llm_mode == "auto"
