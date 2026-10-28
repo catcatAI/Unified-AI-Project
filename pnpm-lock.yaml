@@ -96,6 +96,8 @@ importers:
         specifier: ^26.15.3
         version: 26.15.3(electron-builder-squirrel-windows@26.15.3)(supports-color@10.2.2)
 
+  apps/space-studio: {}
+
   apps/web-dashboard:
     dependencies:
       next:
