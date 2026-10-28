@@ -14,7 +14,9 @@ import { isRecordingSupported, startRecording } from "./recorder.js";
 import { scriptedBeat, spawnRoster } from "./roster.js";
 import { rendererLabel } from "./live2d.js";
 import { hasFeature, resolveFeatures } from "./features.js";
-import { addKeyframe, CHANNELS, createMotion, removeKeyframe } from "./motion_editor.js";
+import { pickMotion, parseRules } from "./al_rules.js";
+import { inspectLive2D } from "./live2d_renderer.js";
+import { addKeyframe, CHANNELS, createMotion, moveKeyframe, removeKeyframe } from "./motion_editor.js";
 import { loadLibrary, persistLibrary, saveMotion, toLibraryJson } from "./motion_store.js";
 import { OutfitStore } from "./outfit_store.js";
 import { watchJson } from "./reload.js";
@@ -26,6 +28,7 @@ const DATA = {
   roster: "../../space/roles.json",
   motions: "../../space/motions/index.json",
   catalog: "../../space/wardrobe/catalog.json",
+  rules: "../../space/rules/al_motion.json",
 };
 
 const AVATARS = {
@@ -238,6 +241,24 @@ async function boot() {
         const row = document.createElement("div");
         row.className = "key";
         row.textContent = `${channel} @${t}ms = ${v}`;
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "0";
+        slider.max = String(editing.durationMs);
+        slider.step = "10";
+        slider.value = String(t);
+        slider.title = "拖曳調整時間";
+        slider.addEventListener("change", () => {
+          try {
+            editing = moveKeyframe(editing, channel, index, Number(slider.value));
+            port.motions[editing.id] = editing;
+            renderKeys();
+            setStatus(`${channel} 移到 ${slider.value}ms`);
+          } catch (err) {
+            setStatus(`拖曳失敗：${err.message}`);
+          }
+        });
+        row.appendChild(slider);
         const del = document.createElement("button");
         del.textContent = "×";
         del.addEventListener("click", () => {
@@ -332,6 +353,50 @@ async function boot() {
   });
 
   refreshMotionSelect();
+
+
+  // AL state → motion (S3 finish): the same vitals that colour the persona
+  const alSection = section("狀態 → 動作", "al_motion");
+  const { rules } = parseRules(await loadJson(DATA.rules));
+  const vitals = {};
+  for (const [key, label] of [["fatigue", "疲勞"], ["stress", "壓力"], ["valence", "情緒"]]) {
+    const wrap = document.createElement("label");
+    wrap.textContent = `${label} `;
+    const input = document.createElement("input");
+    input.type = "range";
+    input.min = "0";
+    input.max = "1";
+    input.step = "0.05";
+    input.value = key === "valence" ? "0.5" : "0.2";
+    vitals[key] = input;
+    wrap.appendChild(input);
+    alSection.appendChild(wrap);
+  }
+  button(alSection, "依狀態選動作", () => {
+    const state = Object.fromEntries(Object.entries(vitals).map(([k, el]) => [k, Number(el.value)]));
+    const picked = pickMotion(state, rules);
+    if (!picked) {
+      setStatus("沒有符合的規則（保持原動作）");
+      return;
+    }
+    if (!port.motions[picked.motion]) {
+      setStatus(`規則指向 ${picked.motion}，但動作庫沒有它`);
+      return;
+    }
+    port.play(selectedRole, picked.motion);
+    setStatus(`狀態 → ${picked.motion}（priority ${picked.priority}）`);
+  });
+
+  // Live2D probe (S1.5): checks the runtime and the model metadata, honestly
+  const live2dSection = section("Live2D（S1.5）", "live2d");
+  button(live2dSection, "檢查執行時", async () => {
+    const verdict = await inspectLive2D();
+    setStatus(
+      verdict.ok
+        ? `Live2D core OK、模型 metadata OK（${verdict.moc}）；繪製器尚未接`
+        : `Live2D 不可用（${verdict.stage}）：${verdict.reason}`
+    );
+  });
 
   // wardrobe (S2): slot → item → tint, with undo and persistence
   const wardrobeSection = section("穿著（對象）", "wardrobe");

@@ -12,6 +12,7 @@ import {
   addKeyframe,
   CHANNELS,
   createMotion,
+  moveKeyframe,
   parseMotion,
   removeKeyframe,
   sampleChannel,
@@ -139,4 +140,24 @@ test("every declared channel is usable", () => {
     const motion = createMotion({ id: `m_${channel}`, durationMs: 100, tracks: { [channel]: [[0, 1]] } });
     assert.equal(sampleMotion(motion, 50)[channel], 1);
   }
+});
+
+test("moveKeyframe keeps the value and re-sorts", () => {
+  const motion = moveKeyframe(base(), "arm_r", 1, 900);
+  assert.deepEqual(
+    motion.tracks.arm_r.map(([t]) => t),
+    [0, 900, 1000]
+  );
+  assert.equal(motion.tracks.arm_r[1][1], 1.2);
+});
+
+test("moveKeyframe onto an existing time replaces it", () => {
+  const motion = moveKeyframe(base(), "arm_r", 1, 0);
+  assert.equal(motion.tracks.arm_r.length, 2);
+  assert.deepEqual(motion.tracks.arm_r[0], [0, 1.2]);
+});
+
+test("moveKeyframe validates index and time", () => {
+  assert.throws(() => moveKeyframe(base(), "arm_r", 9, 100), /no keyframe/);
+  assert.throws(() => moveKeyframe(base(), "arm_r", 0, 9999), /past the duration/);
 });

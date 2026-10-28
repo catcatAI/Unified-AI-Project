@@ -72,6 +72,20 @@ export function removeKeyframe(motion, channel, index) {
   return { ...motion, tracks };
 }
 
+/** Move a key along the time axis (drag); same-time collisions replace. */
+export function moveKeyframe(motion, channel, index, newTMs) {
+  const keys = motion.tracks[channel] ?? [];
+  if (index < 0 || index >= keys.length) throw new Error(`no keyframe ${index} in ${channel}`);
+  if (!isFiniteNumber(newTMs) || newTMs < 0) throw new Error("key time must be >= 0");
+  if (newTMs > motion.durationMs) throw new Error(`key time ${newTMs} is past the duration`);
+  const [, value] = keys[index];
+  const rest = keys.filter((_, i) => i !== index).filter(([t]) => t !== newTMs);
+  return {
+    ...motion,
+    tracks: { ...motion.tracks, [channel]: normaliseKeys([...rest, [newTMs, value]]) },
+  };
+}
+
 /** Linear interpolation, clamped at both ends. */
 export function sampleChannel(keys, tMs) {
   if (!keys || keys.length === 0) return 0;

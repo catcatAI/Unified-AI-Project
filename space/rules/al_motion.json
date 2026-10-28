@@ -1,0 +1,9 @@
+{
+  "comment": "AL 狀態 → 動作。priority 大的先比；第一個符合的 rule 勝出。",
+  "rules": [
+    { "motion": "sit_down", "when": { "fatigue": { "gte": 0.85 } }, "priority": 100 },
+    { "motion": "nod", "when": { "stress": { "gte": 0.8 } }, "priority": 90 },
+    { "motion": "wave_hello", "when": { "valence": { "gte": 0.7 } }, "priority": 50 },
+    { "motion": "nod", "when": { "emotion": { "eq": "neutral" } }, "priority": 10 }
+  ]
+}
