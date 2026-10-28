@@ -726,7 +726,7 @@ async def _sd_broadcast(broadcast_task) -> None:
         try:
             await broadcast_task
         except asyncio.CancelledError:
-            raise  # propagate cancellation; swallowing it breaks task.cancel()
+            pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
         logger.info("[Broadcast] State broadcast task stopped")
 
 

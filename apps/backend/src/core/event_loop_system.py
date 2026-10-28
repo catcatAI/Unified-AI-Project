@@ -534,14 +534,14 @@ class EventLoopSystem:
             try:
                 await self._processor_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
 
         if self._metrics_task:
             self._metrics_task.cancel()
             try:
                 await self._metrics_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
 
         logger.info("[EventLoopSystem] Shutdown complete")
 

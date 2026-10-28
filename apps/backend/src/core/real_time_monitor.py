@@ -202,7 +202,7 @@ class MouseMonitor:
             try:
                 await self._monitor_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
 
     async def _monitor_loop(self) -> None:
         """Main monitoring loop - updates every 16ms"""
@@ -344,7 +344,7 @@ class FileSystemMonitor:
             try:
                 await self._monitor_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
 
     async def _scan_all_paths(self) -> None:
         """Initial scan of all watched paths"""
@@ -509,7 +509,7 @@ class TimeMonitor:
             try:
                 await self._monitor_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
 
     async def _monitor_loop(self) -> None:
         """Main monitoring loop"""
@@ -585,7 +585,7 @@ class SystemStateMonitor:
             try:
                 await self._monitor_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
 
     async def _monitor_loop(self) -> None:
         """Main monitoring loop"""
@@ -718,7 +718,7 @@ class UserActivityMonitor:
             try:
                 await self._monitor_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
 
     async def _monitor_loop(self) -> None:
         """Main monitoring loop"""

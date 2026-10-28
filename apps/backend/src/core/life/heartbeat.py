@@ -222,13 +222,13 @@ class MetabolicHeartbeat:
             try:
                 await self._task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
         if self._integration_task:
             self._integration_task.cancel()
             try:
                 await self._integration_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
         try:
             await self.bio_integrator.shutdown()
         except Exception as e:

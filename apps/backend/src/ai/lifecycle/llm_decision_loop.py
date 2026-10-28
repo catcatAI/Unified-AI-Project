@@ -210,7 +210,7 @@ class LLMDecisionLoop:
             try:
                 await self._decision_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
 
         logger.info("LLMDecisionLoop stopped")
 

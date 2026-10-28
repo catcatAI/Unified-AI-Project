@@ -519,7 +519,7 @@ class EndocrineSystem:
             try:
                 await self._update_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
         logger.info("EndocrineSystem shut down")
 
     def get_hormonal_profile(self) -> Dict[str, Any]:

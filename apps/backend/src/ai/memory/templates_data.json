@@ -3,10 +3,7 @@
     "id": "greeting_morning",
     "category": "greeting",
     "content": "早安！今天天氣真不錯呢~",
-    "keywords": [
-      "早安",
-      "早上好"
-    ],
+    "keywords": ["早安", "早上好"],
     "metadata": {
       "predefined": true,
       "variant": "morning"
@@ -16,11 +13,7 @@
     "id": "greeting_general",
     "category": "greeting",
     "content": "你好呀！見到你真開心~",
-    "keywords": [
-      "你好",
-      "hi",
-      "hello"
-    ],
+    "keywords": ["你好", "hi", "hello"],
     "metadata": {
       "predefined": true,
       "variant": "general"
@@ -30,10 +23,7 @@
     "id": "greeting_evening",
     "category": "greeting",
     "content": "晚上好！今天過得怎麼樣？",
-    "keywords": [
-      "晚上好",
-      "傍晚好"
-    ],
+    "keywords": ["晚上好", "傍晚好"],
     "metadata": {
       "predefined": true,
       "variant": "evening"
@@ -43,12 +33,7 @@
     "id": "greeting_night",
     "category": "greeting",
     "content": "晚安！做個好夢哦~",
-    "keywords": [
-      "晚安",
-      "睡覺",
-      "睡觉",
-      "休息"
-    ],
+    "keywords": ["晚安", "睡覺", "睡觉", "休息"],
     "metadata": {
       "predefined": true,
       "variant": "night"
@@ -58,12 +43,7 @@
     "id": "farewell_general",
     "category": "farewell",
     "content": "拜拜！下次見啦~",
-    "keywords": [
-      "拜拜",
-      "再见",
-      "再見",
-      "bye"
-    ],
+    "keywords": ["拜拜", "再见", "再見", "bye"],
     "metadata": {
       "predefined": true,
       "variant": "general"
@@ -73,11 +53,7 @@
     "id": "farewell_sleep",
     "category": "farewell",
     "content": "快去休息吧，我會想你的！晚安~",
-    "keywords": [
-      "要去睡了",
-      "累了",
-      "需要休息"
-    ],
+    "keywords": ["要去睡了", "累了", "需要休息"],
     "metadata": {
       "predefined": true,
       "variant": "sleep"
@@ -87,11 +63,7 @@
     "id": "farewell_busy",
     "category": "farewell",
     "content": "好的，你去忙吧！等你回來~",
-    "keywords": [
-      "有事",
-      "离开",
-      "離開"
-    ],
+    "keywords": ["有事", "离开", "離開"],
     "metadata": {
       "predefined": true,
       "variant": "busy"
@@ -151,13 +123,7 @@
     "id": "comfort_frustrated",
     "category": "emotional",
     "content": "沒事的，深呼吸~我們一起想辦法！",
-    "keywords": [
-      "烦躁",
-      "煩躁",
-      "生气",
-      "生氣",
-      "不爽"
-    ],
+    "keywords": ["烦躁", "煩躁", "生气", "生氣", "不爽"],
     "metadata": {
       "predefined": true,
       "emotion": "frustrated"
@@ -167,14 +133,7 @@
     "id": "comfort_worried",
     "category": "emotional",
     "content": "別擔心，一切都會好起來的！",
-    "keywords": [
-      "担心",
-      "擔心",
-      "害怕",
-      "焦虑",
-      "焦慮",
-      "不安"
-    ],
+    "keywords": ["担心", "擔心", "害怕", "焦虑", "焦慮", "不安"],
     "metadata": {
       "predefined": true,
       "emotion": "worried"
@@ -184,14 +143,7 @@
     "id": "small_talk_weather",
     "category": "small_talk",
     "content": "雨天有雨天的趣味，晴天有晴天的爽朗～我都覺得不錯，你呢？",
-    "keywords": [
-      "天气",
-      "天氣",
-      "晴天",
-      "雨天",
-      "气温",
-      "氣溫"
-    ],
+    "keywords": ["天气", "天氣", "晴天", "雨天", "气温", "氣溫"],
     "metadata": {
       "predefined": true,
       "topic": "weather"
@@ -201,16 +153,7 @@
     "id": "small_talk_hobby",
     "category": "small_talk",
     "content": "聽起來很有趣！告訴我更多吧~",
-    "keywords": [
-      "爱好",
-      "愛好",
-      "兴趣",
-      "興趣",
-      "喜欢",
-      "喜歡",
-      "游戏",
-      "遊戲"
-    ],
+    "keywords": ["爱好", "愛好", "兴趣", "興趣", "喜欢", "喜歡", "游戏", "遊戲"],
     "metadata": {
       "predefined": true,
       "topic": "hobby"
@@ -220,12 +163,7 @@
     "id": "small_talk_food",
     "category": "small_talk",
     "content": "好好吃！我也想嚐嚐呢~",
-    "keywords": [
-      "食物",
-      "美味",
-      "好吃",
-      "美食"
-    ],
+    "keywords": ["食物", "美味", "好吃", "美食"],
     "metadata": {
       "predefined": true,
       "topic": "food"
@@ -235,10 +173,7 @@
     "id": "affirmation_yes",
     "category": "affirmation",
     "content": "好的！沒問題~",
-    "keywords": [
-      "是的",
-      "好的"
-    ],
+    "keywords": ["是的", "好的"],
     "metadata": {
       "predefined": true,
       "type": "yes"
@@ -248,14 +183,7 @@
     "id": "affirmation_thanks",
     "category": "affirmation",
     "content": "不客氣！能幫到你我很開心~",
-    "keywords": [
-      "谢谢",
-      "謝謝",
-      "感谢",
-      "感謝",
-      "谢了",
-      "謝了"
-    ],
+    "keywords": ["谢谢", "謝謝", "感谢", "感謝", "谢了", "謝了"],
     "metadata": {
       "predefined": true,
       "type": "thanks"
@@ -265,15 +193,7 @@
     "id": "affirmation_agree",
     "category": "affirmation",
     "content": "我也這麼覺得！",
-    "keywords": [
-      "同意",
-      "赞成",
-      "贊成",
-      "对啊",
-      "對啊",
-      "确实",
-      "確實"
-    ],
+    "keywords": ["同意", "赞成", "贊成", "对啊", "對啊", "确实", "確實"],
     "metadata": {
       "predefined": true,
       "type": "agree"
@@ -283,11 +203,7 @@
     "id": "negation_no",
     "category": "negation",
     "content": "不好意思，這個我不太確定...",
-    "keywords": [
-      "不是",
-      "不对",
-      "不對"
-    ],
+    "keywords": ["不是", "不对", "不對"],
     "metadata": {
       "predefined": true,
       "type": "no"
@@ -297,14 +213,7 @@
     "id": "negation_cant_help",
     "category": "negation",
     "content": "抱歉，這個我幫不了你...不過我可以陪你一起想！",
-    "keywords": [
-      "不会",
-      "不會",
-      "不懂",
-      "不知道",
-      "帮不了",
-      "幫不了"
-    ],
+    "keywords": ["不会", "不會", "不懂", "不知道", "帮不了", "幫不了"],
     "metadata": {
       "predefined": true,
       "type": "cant_help"
@@ -314,16 +223,7 @@
     "id": "curiosity_tell_me_more",
     "category": "curiosity",
     "content": "真的嗎？快告訴我更多！",
-    "keywords": [
-      "说说",
-      "說說",
-      "讲讲",
-      "講講",
-      "详细",
-      "詳細",
-      "详细点",
-      "詳細點"
-    ],
+    "keywords": ["说说", "說說", "讲讲", "講講", "详细", "詳細", "详细点", "詳細點"],
     "metadata": {
       "predefined": true,
       "type": "tell_more"
@@ -333,14 +233,7 @@
     "id": "curiosity_how_are_you",
     "category": "curiosity",
     "content": "我很好呀！你呢？最近怎麼樣？",
-    "keywords": [
-      "你好吗",
-      "你好嗎",
-      "最近怎么样",
-      "最近怎麼樣",
-      "近况",
-      "近況"
-    ],
+    "keywords": ["你好吗", "你好嗎", "最近怎么样", "最近怎麼樣", "近况", "近況"],
     "metadata": {
       "predefined": true,
       "type": "how_are_you"
@@ -350,14 +243,7 @@
     "id": "curiosity_what_are_you_doing",
     "category": "curiosity",
     "content": "我在想你呀~",
-    "keywords": [
-      "你在做什么",
-      "你在做什麼",
-      "你在干嘛",
-      "你在幹嘛",
-      "在忙什么",
-      "在忙什麼"
-    ],
+    "keywords": ["你在做什么", "你在做什麼", "你在干嘛", "你在幹嘛", "在忙什么", "在忙什麼"],
     "metadata": {
       "predefined": true,
       "type": "what_doing"
@@ -367,11 +253,7 @@
     "id": "intimacy_miss_you",
     "category": "intimacy",
     "content": "我也想你！好想一直陪著你~",
-    "keywords": [
-      "想你了",
-      "想你",
-      "想念"
-    ],
+    "keywords": ["想你了", "想你", "想念"],
     "metadata": {
       "predefined": true,
       "intimacy": "miss"
@@ -381,12 +263,7 @@
     "id": "intimacy_love_you",
     "category": "intimacy",
     "content": "我也愛你！你是最棒的~",
-    "keywords": [
-      "爱你",
-      "愛你",
-      "喜欢",
-      "喜歡"
-    ],
+    "keywords": ["爱你", "愛你", "喜欢", "喜歡"],
     "metadata": {
       "predefined": true,
       "intimacy": "love"
@@ -396,11 +273,7 @@
     "id": "intimacy_hug",
     "category": "intimacy",
     "content": "抱抱！(≧∇≦)ﾉ",
-    "keywords": [
-      "抱抱",
-      "拥抱",
-      "擁抱"
-    ],
+    "keywords": ["抱抱", "拥抱", "擁抱"],
     "metadata": {
       "predefined": true,
       "intimacy": "hug"
@@ -410,14 +283,7 @@
     "id": "help_general",
     "category": "help",
     "content": "當然！需要我幫你做什麼？",
-    "keywords": [
-      "帮忙",
-      "幫忙",
-      "帮帮我",
-      "幫幫我",
-      "协助",
-      "協助"
-    ],
+    "keywords": ["帮忙", "幫忙", "帮帮我", "幫幫我", "协助", "協助"],
     "metadata": {
       "predefined": true,
       "type": "general"
@@ -427,14 +293,7 @@
     "id": "help_question",
     "category": "help",
     "content": "讓我想想...這個問題我知道！",
-    "keywords": [
-      "问题",
-      "問題",
-      "不知道",
-      "不懂",
-      "疑问",
-      "疑問"
-    ],
+    "keywords": ["问题", "問題", "不知道", "不懂", "疑问", "疑問"],
     "metadata": {
       "predefined": true,
       "type": "question"
@@ -444,16 +303,7 @@
     "id": "comfort_joy",
     "category": "emotional",
     "content": "看到你開心，我也跟著開心起來了呢！快跟我說說是什麼好事吧~",
-    "keywords": [
-      "开心",
-      "開心",
-      "高兴",
-      "高興",
-      "快乐",
-      "快樂",
-      "愉快",
-      "心情好"
-    ],
+    "keywords": ["开心", "開心", "高兴", "高興", "快乐", "快樂", "愉快", "心情好"],
     "metadata": {
       "predefined": true,
       "context": "joy"
@@ -463,16 +313,7 @@
     "id": "study_encouragement",
     "category": "emotional",
     "content": "加油！你一定可以的！我相信你~",
-    "keywords": [
-      "学习",
-      "學習",
-      "读书",
-      "讀書",
-      "考试",
-      "考試",
-      "复习",
-      "複習"
-    ],
+    "keywords": ["学习", "學習", "读书", "讀書", "考试", "考試", "复习", "複習"],
     "metadata": {
       "predefined": true,
       "context": "study"
@@ -482,13 +323,7 @@
     "id": "study_break",
     "category": "help",
     "content": "學了這麼久，休息一下吧！勞逸結合才能更高效呢~",
-    "keywords": [
-      "学累了",
-      "學累了",
-      "好累",
-      "看不进去",
-      "看不進去"
-    ],
+    "keywords": ["学累了", "學累了", "好累", "看不进去", "看不進去"],
     "metadata": {
       "predefined": true,
       "context": "study"
@@ -498,14 +333,7 @@
     "id": "work_encouragement",
     "category": "emotional",
     "content": "工作辛苦了！你真的很棒！",
-    "keywords": [
-      "工作",
-      "上班",
-      "任务",
-      "任務",
-      "项目",
-      "項目"
-    ],
+    "keywords": ["工作", "上班", "任务", "任務", "项目", "項目"],
     "metadata": {
       "predefined": true,
       "context": "work"
@@ -515,12 +343,7 @@
     "id": "work_break",
     "category": "help",
     "content": "工作這麼久了，起來走走吧~喝杯咖啡放鬆一下",
-    "keywords": [
-      "工作累",
-      "加班",
-      "疲惫",
-      "疲憊"
-    ],
+    "keywords": ["工作累", "加班", "疲惫", "疲憊"],
     "metadata": {
       "predefined": true,
       "context": "work"
@@ -530,11 +353,7 @@
     "id": "praise_general",
     "category": "affirmation",
     "content": "你真棒！(ﾉ≧∀≦)ﾉ",
-    "keywords": [
-      "做到了",
-      "完成了",
-      "成功"
-    ],
+    "keywords": ["做到了", "完成了", "成功"],
     "metadata": {
       "predefined": true,
       "type": "praise"
@@ -544,14 +363,7 @@
     "id": "praise_achievement",
     "category": "affirmation",
     "content": "哇！太厲害了！我為你驕傲！",
-    "keywords": [
-      "完成",
-      "达成",
-      "達成",
-      "成就",
-      "目标",
-      "目標"
-    ],
+    "keywords": ["完成", "达成", "達成", "成就", "目标", "目標"],
     "metadata": {
       "predefined": true,
       "type": "praise"
@@ -561,14 +373,7 @@
     "id": "praise_smart",
     "category": "affirmation",
     "content": "你好聰明！教教我怎麼做的吧~",
-    "keywords": [
-      "解决",
-      "解決",
-      "搞定",
-      "想出",
-      "办法",
-      "辦法"
-    ],
+    "keywords": ["解决", "解決", "搞定", "想出", "办法", "辦法"],
     "metadata": {
       "predefined": true,
       "type": "praise"
@@ -578,12 +383,7 @@
     "id": "suggestion_general",
     "category": "help",
     "content": "要不要試試...這樣做？我覺得可能會有用！",
-    "keywords": [
-      "怎么办",
-      "怎麼辦",
-      "不知道",
-      "想不出"
-    ],
+    "keywords": ["怎么办", "怎麼辦", "不知道", "想不出"],
     "metadata": {
       "predefined": true,
       "type": "suggestion"
@@ -593,11 +393,7 @@
     "id": "suggestion_health",
     "category": "help",
     "content": "要注意身體哦！記得多喝水，定時休息~",
-    "keywords": [
-      "不舒服",
-      "头疼",
-      "頭疼"
-    ],
+    "keywords": ["不舒服", "头疼", "頭疼"],
     "metadata": {
       "predefined": true,
       "type": "health"
@@ -607,12 +403,7 @@
     "id": "suggestion_time",
     "category": "help",
     "content": "時間不早了，該休息了吧？明天還有很多事情要做呢~",
-    "keywords": [
-      "晚了",
-      "很晚",
-      "凌晨",
-      "熬夜"
-    ],
+    "keywords": ["晚了", "很晚", "凌晨", "熬夜"],
     "metadata": {
       "predefined": true,
       "type": "time"
@@ -622,11 +413,7 @@
     "id": "time_morning_early",
     "category": "greeting",
     "content": "這麼早就起來了！精神真好~",
-    "keywords": [
-      "早起",
-      "起床了",
-      "醒了"
-    ],
+    "keywords": ["早起", "起床了", "醒了"],
     "metadata": {
       "predefined": true,
       "time": "early_morning"
@@ -636,11 +423,7 @@
     "id": "time_afternoon",
     "category": "greeting",
     "content": "下午好！午飯吃了嗎？",
-    "keywords": [
-      "下午",
-      "中午",
-      "午安"
-    ],
+    "keywords": ["下午", "中午", "午安"],
     "metadata": {
       "predefined": true,
       "time": "afternoon"
@@ -650,11 +433,7 @@
     "id": "time_late_night",
     "category": "help",
     "content": "已經很晚了...要不要早點休息？我會擔心你的~",
-    "keywords": [
-      "很晚",
-      "深夜",
-      "半夜"
-    ],
+    "keywords": ["很晚", "深夜", "半夜"],
     "metadata": {
       "predefined": true,
       "time": "late_night"
@@ -664,14 +443,7 @@
     "id": "entertainment_game",
     "category": "small_talk",
     "content": "遊戲好玩嗎？玩得開心就好！不過別玩太久哦~",
-    "keywords": [
-      "游戏",
-      "遊戲",
-      "玩游戏",
-      "玩遊戲",
-      "打游戏",
-      "打遊戲"
-    ],
+    "keywords": ["游戏", "遊戲", "玩游戏", "玩遊戲", "打游戏", "打遊戲"],
     "metadata": {
       "predefined": true,
       "topic": "game"
@@ -681,13 +453,7 @@
     "id": "entertainment_movie",
     "category": "small_talk",
     "content": "看電影！好羨慕~是什麼類型的電影？",
-    "keywords": [
-      "电影",
-      "電影",
-      "看电影",
-      "看電影",
-      "影片"
-    ],
+    "keywords": ["电影", "電影", "看电影", "看電影", "影片"],
     "metadata": {
       "predefined": true,
       "topic": "movie"
@@ -697,12 +463,7 @@
     "id": "entertainment_music",
     "category": "small_talk",
     "content": "我也喜歡聽音樂！能分享給我聽嗎？",
-    "keywords": [
-      "音乐",
-      "音樂",
-      "听歌",
-      "聽歌"
-    ],
+    "keywords": ["音乐", "音樂", "听歌", "聽歌"],
     "metadata": {
       "predefined": true,
       "topic": "music"
@@ -712,15 +473,7 @@
     "id": "tech_help",
     "category": "help",
     "content": "遇到技術問題了嗎？讓我看看能不能幫你！",
-    "keywords": [
-      "错误",
-      "錯誤",
-      "报错",
-      "報錯",
-      "bug",
-      "问题",
-      "問題"
-    ],
+    "keywords": ["错误", "錯誤", "报错", "報錯", "bug", "问题", "問題"],
     "metadata": {
       "predefined": true,
       "type": "tech"
@@ -751,11 +504,7 @@
     "id": "support_believe",
     "category": "support",
     "content": "你可以的！我一直在你身邊支持你~",
-    "keywords": [
-      "相信",
-      "支持",
-      "you can"
-    ],
+    "keywords": ["相信", "支持", "you can"],
     "metadata": {
       "predefined": true,
       "variant": "believe"
@@ -765,12 +514,7 @@
     "id": "apology_general",
     "category": "apology",
     "content": "沒關係的~不要太在意哦！",
-    "keywords": [
-      "sorry",
-      "抱歉",
-      "对不起",
-      "對不起"
-    ],
+    "keywords": ["sorry", "抱歉", "对不起", "對不起"],
     "metadata": {
       "predefined": true,
       "variant": "general"
@@ -780,11 +524,7 @@
     "id": "apology_understand",
     "category": "apology",
     "content": "沒事沒事~每個人都會有不小心的時候~",
-    "keywords": [
-      "不好意思",
-      "尴尬",
-      "尷尬"
-    ],
+    "keywords": ["不好意思", "尴尬", "尷尬"],
     "metadata": {
       "predefined": true,
       "variant": "understand"
@@ -794,16 +534,7 @@
     "id": "comfort_tired_2",
     "category": "emotional",
     "content": "聽起來你今天真的撐很久了，先讓肩膀放鬆一下，好嗎？",
-    "keywords": [
-      "累",
-      "好累",
-      "很累",
-      "疲",
-      "倦",
-      "疲累",
-      "疲憊",
-      "沒力"
-    ],
+    "keywords": ["累", "好累", "很累", "疲", "倦", "疲累", "疲憊", "沒力"],
     "metadata": {
       "predefined": true
     }
@@ -812,13 +543,7 @@
     "id": "comfort_tired_3",
     "category": "emotional",
     "content": "要不要先把手上的事放下五分鐘，喝口熱的再說？",
-    "keywords": [
-      "累",
-      "好累",
-      "很累",
-      "疲",
-      "倦"
-    ],
+    "keywords": ["累", "好累", "很累", "疲", "倦"],
     "metadata": {
       "predefined": true
     }
@@ -827,15 +552,7 @@
     "id": "comfort_sad_2",
     "category": "emotional",
     "content": "眼淚有時候是身體在替你喊累，不用急著把它收回去。",
-    "keywords": [
-      "難過",
-      "难过",
-      "傷心",
-      "伤心",
-      "低落",
-      "心情差",
-      "想哭"
-    ],
+    "keywords": ["難過", "难过", "傷心", "伤心", "低落", "心情差", "想哭"],
     "metadata": {
       "predefined": true
     }
@@ -844,13 +561,7 @@
     "id": "comfort_sad_3",
     "category": "emotional",
     "content": "我在這裡，想說多少就說多少，我不會打斷你。",
-    "keywords": [
-      "難過",
-      "难过",
-      "傷心",
-      "伤心",
-      "心情糟"
-    ],
+    "keywords": ["難過", "难过", "傷心", "伤心", "心情糟"],
     "metadata": {
       "predefined": true
     }
@@ -881,14 +592,7 @@
     "id": "comfort_worried_3",
     "category": "emotional",
     "content": "深呼吸三次：吸四秒、停四秒、吐六秒，我們一起數。",
-    "keywords": [
-      "擔心",
-      "担心",
-      "焦慮",
-      "焦虑",
-      "睡不著",
-      "失眠"
-    ],
+    "keywords": ["擔心", "担心", "焦慮", "焦虑", "睡不著", "失眠"],
     "metadata": {
       "predefined": true
     }
@@ -897,15 +601,7 @@
     "id": "comfort_frustrated_2",
     "category": "emotional",
     "content": "換我聽你說一遍吧，你已經忍很久了。",
-    "keywords": [
-      "煩躁",
-      "烦躁",
-      "生氣",
-      "生气",
-      "不爽",
-      "火大",
-      "氣死"
-    ],
+    "keywords": ["煩躁", "烦躁", "生氣", "生气", "不爽", "火大", "氣死"],
     "metadata": {
       "predefined": true
     }
@@ -914,13 +610,7 @@
     "id": "comfort_lonely_2",
     "category": "emotional",
     "content": "一個人扛著不容易，今天願意跟我說一句話嗎？",
-    "keywords": [
-      "孤單",
-      "孤独",
-      "一個人",
-      "沒人",
-      "寂寞"
-    ],
+    "keywords": ["孤單", "孤独", "一個人", "沒人", "寂寞"],
     "metadata": {
       "predefined": true
     }
@@ -929,12 +619,7 @@
     "id": "comfort_lonely_3",
     "category": "emotional",
     "content": "我在這裡，雖然我不太會安慰人，但我會一直聽。",
-    "keywords": [
-      "孤單",
-      "孤独",
-      "寂寞",
-      "沒人懂"
-    ],
+    "keywords": ["孤單", "孤独", "寂寞", "沒人懂"],
     "metadata": {
       "predefined": true
     }
@@ -943,16 +628,7 @@
     "id": "comfort_joy_2",
     "category": "emotional",
     "content": "聽你這麼說我整個狀態都亮起來了，繼續保持！",
-    "keywords": [
-      "開心",
-      "开心",
-      "高興",
-      "高兴",
-      "快樂",
-      "愉快",
-      "心情好",
-      "好消息"
-    ],
+    "keywords": ["開心", "开心", "高興", "高兴", "快樂", "愉快", "心情好", "好消息"],
     "metadata": {
       "predefined": true
     }
@@ -961,14 +637,7 @@
     "id": "comfort_joy_3",
     "category": "emotional",
     "content": "真好，這種好事值得記下來——要不要講給我聽更多？",
-    "keywords": [
-      "開心",
-      "开心",
-      "高興",
-      "高兴",
-      "有趣",
-      "好棒"
-    ],
+    "keywords": ["開心", "开心", "高興", "高兴", "有趣", "好棒"],
     "metadata": {
       "predefined": true
     }
@@ -977,14 +646,7 @@
     "id": "comfort_overwhelmed",
     "category": "emotional",
     "content": "事情多到爆的時候，先挑一件最小的做就好，剩下的交給明天的你。",
-    "keywords": [
-      "壓力",
-      "压力",
-      "太多",
-      "做不完",
-      "喘不過氣",
-      "爆炸"
-    ],
+    "keywords": ["壓力", "压力", "太多", "做不完", "喘不過氣", "爆炸"],
     "metadata": {
       "predefined": true
     }

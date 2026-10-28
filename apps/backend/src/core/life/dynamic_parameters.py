@@ -201,7 +201,7 @@ class DynamicThresholdManager:
             try:
                 await self._update_task
             except asyncio.CancelledError:
-                raise  # propagate cancellation; swallowing it breaks task.cancel()
+                pass  # awaiting a task we just cancelled: CancelledError is the expected outcome
             self._update_task = None
 
     async def _update_loop(self) -> None:
