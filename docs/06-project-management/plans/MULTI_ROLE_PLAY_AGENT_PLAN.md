@@ -302,7 +302,7 @@ class MultiRoleOrchestrator:
 
 ### Phase 2 — MultiRoleOrchestrator + 路由器改動 (2-3 天)
 
-- [ ] P2-1 實作 `MultiRoleOrchestrator`：register/unregister role、turn()、group_turn()。
+- [x] P2-1 實作 `MultiRoleOrchestrator`：register/unregister role、turn()、group_turn()。**未接路由器**：group_turn 依註冊順序循序執行，主 AI 的回覆在同一輪就進共享基底，後面的角色讀得到；第二個 SHARED 角色會被擋。
 - [ ] P2-2 路由器 `_call_llm_backend()` 加 `_force_backend_slot` 檢查 (在 `_select_light_backend()` 之前)。
 - [ ] P2-3 路由器 metadata 寫入 `_role_id`。
 - [ ] P2-4 整合進 chat_routes：`_run_chat_pipeline` 接 `role_id`/`group` 參數。
