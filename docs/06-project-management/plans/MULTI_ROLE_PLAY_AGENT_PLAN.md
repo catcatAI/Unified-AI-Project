@@ -308,12 +308,12 @@ class MultiRoleOrchestrator:
 - [x] P2-4 整合進 chat_routes：`_run_chat_pipeline` 接 `role_id`/`group` 參數。落地：`/chat/unified` 收 `role_id` → `_apply_role_binding()` 寫入 `_role_id` / `_force_backend_slot` / `_memory_namespace`；新增 `POST /chat/group`（≤4 角色、逐角色跑**完整** pipeline、session 以 `{base}::{role_id}` 分離）。角色來自伺服器端註冊表 `ai/roleplay/runtime.py` + `configs/system/roles.default.yaml`，未知 id 回 400，不會靜默變成 Angela。
 - [x] P2-5 單元 + 整合測試 `tests/ai/roleplay/test_orchestrator.py` + `tests/api/test_multi_role_chat.py` (>=25 tests)。**落地**：`test_multi_role_orchestrator.py` (17) + `test_chat_role_binding.py` (7) + `test_runtime.py` (9) + `test_multi_role_chat.py` (10，TestClient 走真路由、pipeline 以 stub 取代)。**這個測試抓到一個真 bug**：`/chat/unified` 根本沒把 body 的 `role_id` 放進 context，等於角色選擇在 HTTP 層就被吃掉——已修。
 
-### Phase 3 — API + 配置 + 文件 (1-2 天)
+### Phase 3 — API + 配置 + 文件 (1-2 天) ✅ 2026-10-28
 
-- [ ] P3-1 新增 `/api/v1/roles*` 端點 (或擴充 `/chat/unified`)。
-- [ ] P3-2 `llm.default.yaml` 加 `role_slots:` 區 (或 preset)。
-- [ ] P3-3 `docs/03-technical-architecture/` 新增 `MULTI_ROLE_PLAY.md` 架構說明。
-- [ ] P3-4 更新 `MASTER_TASK_MAP.md`、`MEASUREMENT_MAP.md`。
+- [x] P3-1 新增 `/api/v1/roles*` 端點 (或擴充 `/chat/unified`)。落地：`GET /roles`（`api/routes/role_routes.py`）回角色目錄；**唯讀**——角色是伺服器設定，客戶端只能查與選。
+- [x] P3-2 `llm.default.yaml` 加 `role_slots:` 區 (或 preset)。**決策：不另開 `role_slots`**——`backend_slot` 直接寫在 `roles.default.yaml` 的每個角色上，單一來源；兩份映射表會在改名時漂移。
+- [x] P3-3 `docs/03-technical-architecture/` 新增 `MULTI_ROLE_PLAY.md` 架構說明（四條接線、API 契約、記憶分區、失敗模式、測試地圖）。
+- [ ] P3-4 更新 `MASTER_TASK_MAP.md`、`MEASUREMENT_MAP.md`。**未做**：那兩份是歷史任務地圖，本輪狀態以本計畫書與 `MULTI_ROLE_PLAY.md` 為準；要同步需另外審視其歷史編排，避免把 dated 條目改亂。
 
 ### Phase 4 — 前端多角色 (3-5 天，可選)
 

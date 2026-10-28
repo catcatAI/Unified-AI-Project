@@ -135,6 +135,11 @@ from services.atlassian_api import atlassian_router  # noqa: E402
 app.include_router(api_v1_router)
 app.include_router(atlassian_router)
 
+from api.routes.role_routes import router as role_router  # noqa: E402
+
+# Role catalogue (P3-1): clients discover which role_ids chat will accept.
+app.include_router(role_router)
+
 
 @app.get("/health", tags=["health"])
 async def health() -> Dict[str, Any]:
