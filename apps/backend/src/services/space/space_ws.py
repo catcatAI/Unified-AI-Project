@@ -43,6 +43,35 @@ async def _broadcast(room_id: str, payload: Dict[str, Any]) -> None:
         peers.discard(peer)
 
 
+async def _handle_frame(
+    websocket: WebSocket, room_id: str, service: Any, raw: str
+) -> None:
+    """One client frame: ping, action, or a polite error. Never raises."""
+    try:
+        message = json.loads(raw)
+    except (TypeError, ValueError):
+        await websocket.send_json({"type": "space.error", "message": "malformed JSON"})
+        return
+    if not isinstance(message, dict):
+        await websocket.send_json({"type": "space.error", "message": "expected an object"})
+        return
+
+    kind = message.get("type")
+    if kind == "space.ping":
+        await websocket.send_json({"type": "space.pong"})
+        return
+    if kind != "space.action":
+        await websocket.send_json({"type": "space.error", "message": f"unknown message type: {kind}"})
+        return
+
+    try:
+        snapshot = service.apply(message.get("data") or {})
+    except (TypeError, ValueError, KeyError, IndexError) as exc:
+        await websocket.send_json({"type": "space.error", "message": str(exc)})
+        return
+    await _broadcast(room_id, snapshot)
+
+
 async def space_ws_handler(websocket: WebSocket) -> None:
     await websocket.accept()
     room_id = str(websocket.query_params.get("room_id") or DEFAULT_ROOM_ID)
@@ -53,34 +82,9 @@ async def space_ws_handler(websocket: WebSocket) -> None:
     try:
         await websocket.send_json(service.snapshot(room_id))
         while True:
-            raw = await websocket.receive_text()
-            try:
-                message = json.loads(raw)
-            except (TypeError, ValueError):
-                await websocket.send_json({"type": "space.error", "message": "malformed JSON"})
-                continue
-            if not isinstance(message, dict):
-                await websocket.send_json({"type": "space.error", "message": "expected an object"})
-                continue
-
-            kind = message.get("type")
-            if kind == "space.ping":
-                await websocket.send_json({"type": "space.pong"})
-                continue
-            if kind != "space.action":
-                await websocket.send_json(
-                    {"type": "space.error", "message": f"unknown message type: {kind}"}
-                )
-                continue
-
-            try:
-                snapshot = service.apply(message.get("data") or {})
-            except (TypeError, ValueError, KeyError, IndexError) as exc:
-                await websocket.send_json({"type": "space.error", "message": str(exc)})
-                continue
-            await _broadcast(room_id, snapshot)
+            await _handle_frame(websocket, room_id, service, await websocket.receive_text())
     except WebSocketDisconnect:
-        logger.debug("ignored WebSocketDisconnect (best-effort path)", exc_info=True)
+        logger.debug("space viewer disconnected", exc_info=True)
     except Exception as exc:  # noqa: BLE001 - never let a viewer crash the loop task
         logger.warning("space websocket closed with error: %s", exc, exc_info=True)
     finally:
