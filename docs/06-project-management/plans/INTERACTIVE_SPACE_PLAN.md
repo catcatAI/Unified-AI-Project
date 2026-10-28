@@ -4,7 +4,7 @@
 >
 > **這份文件不是什麼**：不是實作（目前全倉沒有這個空間的執行時）；不是角色大腦（那是 `MULTI_ROLE_PLAY_AGENT_PLAN.md`）；不是美術規格書（不規定模型面數、材質流程）。
 >
-> **狀態**：draft — 方向已定（§4 決策）。**S0 ✅、S1 ✅**（多角色同場、`/ws/space` 權威廣播＋前端同步）、**S2 一半**（衣櫃 UI／undo／localStorage；AI 自改未做）、**S6 一半**（房間熱載入＋feature flag）。S1.5（Live2D 載入器，目前程序繪製）、S3（動作編輯器）、S5（直播，需外部條件）未做。
+> **狀態**：draft — 方向已定（§4 決策）。**S0 ✅、S1 ✅**、**S2 一半**（衣櫃 UI／undo／localStorage；AI 自改未做）、**S3 核心 ✅**（動作模型＋編輯 UI＋持久化＋pose 接線）、**S6 一半**（房間熱載入＋feature flag）。S1.5（Live2D 載入器）、S3 的時間軸拖曳與 AL→動作規則、S5（直播，需外部條件）未做。
 >
 > - 作者：Angela AI Development Team
 > - 版本：7.5.0-dev
@@ -216,12 +216,15 @@ class Actor:
 - [ ] AI 自己改：`update_avatar(actor_id, slot, item, tint)` 尚未暴露成工具；目前只有人點 UI。
 - [ ] 驗收：換裝後重整仍在（localStorage 已可）——真機驗收待做；「AI 觸發換裝」依賴上一項。
 
-### S3 — 動作編輯（5–8 天）
+### S3 — 動作編輯（5–8 天）— 核心落地
 
-- [ ] 時間軸編輯器：加 keyframe、拖曳、loop、blend；預覽即時播放。
-- [ ] 動作庫：`wave_hello`、`nod`、`sit_down`、`turn_around`、`idle_a/b`（各 1–2 秒，先夠用）。
-- [ ] 觸發規則：`AL 狀態 → 動作`（疲勞→`yawn`、開心→`bounce`），與 `PersonaEngine` 的 tone 對齊。
-- [ ] 驗收：編輯一個 3 秒動作→存檔→別的角色也能用；`play(motion_id)` 在 100ms 內起播。
+- [x] 動作模型：`motion_editor.js` — 頻道（`offset_x/offset_y/tilt/arm_r`）× `[timeMs, value]` keyframes，線性插值、邊界夾取、驗證、序列化往返。
+- [x] 動作庫：`motion_store.js` — 存/刪/列表、localStorage 持久化、匯出成 `space/motions/index.json` 同構的 JSON。
+- [x] 舞台接線：`Actor.play()` 保留 `tracks`、每幀 `sampleMotion()` → `actor.pose`；renderer 用 pose 抬身體、歪頭、轉右手臂。
+- [x] UI：選動作 → 選頻道 → 時間/數值 → 加 keyframe → 列表可刪 → 預覽 → 存到動作庫 → 匯出 JSON → 新增動作。
+- [ ] 拖曳時間軸（目前是數值輸入，不是拖拉）。
+- [ ] `AL 狀態 → 動作` 的觸發表（`space/rules/al_motion.yaml`）。
+- [ ] 驗收：3 秒動作→存檔→別的角色可用（程式已具備，實機待驗）。
 
 ### S4 — 鏡頭與錄影（3–5 天）
 

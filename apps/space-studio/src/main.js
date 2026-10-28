@@ -14,6 +14,8 @@ import { isRecordingSupported, startRecording } from "./recorder.js";
 import { scriptedBeat, spawnRoster } from "./roster.js";
 import { rendererLabel } from "./live2d.js";
 import { hasFeature, resolveFeatures } from "./features.js";
+import { addKeyframe, CHANNELS, createMotion, removeKeyframe } from "./motion_editor.js";
+import { loadLibrary, persistLibrary, saveMotion, toLibraryJson } from "./motion_store.js";
 import { OutfitStore } from "./outfit_store.js";
 import { watchJson } from "./reload.js";
 import { applySnapshot } from "./snapshot_sync.js";
@@ -55,6 +57,7 @@ let modeLabel = "本機模式";
 let socket = null;
 let roomWatcher = null;
 const features = resolveFeatures(window);
+const storage = safeStorage();
 
 const viewport = () => ({ width: canvas.width, height: canvas.height, worldWidth: 16, worldHeight: 9 });
 function safeStorage() {
@@ -206,10 +209,133 @@ async function boot() {
     });
   }
 
+
+  // motion editor (S3): pick a motion, add/remove keys, preview, save, export
+  const editorSection = section("動作編輯", "motion_editor");
+  const library = loadLibrary(storage);
+  const motionSelect = document.createElement("select");
+  const channelSelect = document.createElement("select");
+  channelSelect.innerHTML = CHANNELS.map((channel) => `<option>${channel}</option>`).join("");
+  const tInput = document.createElement("input");
+  tInput.type = "number";
+  tInput.min = "0";
+  tInput.value = "0";
+  const vInput = document.createElement("input");
+  vInput.type = "number";
+  vInput.step = "0.1";
+  vInput.value = "0.5";
+  const keyList = document.createElement("div");
+  keyList.className = "keys";
+  let editing = null;
+
+  const motionOptions = () => ({ ...port.motions, ...library });
+
+  function renderKeys() {
+    keyList.innerHTML = "";
+    if (!editing) return;
+    for (const [channel, keys] of Object.entries(editing.tracks ?? {})) {
+      keys.forEach(([t, v], index) => {
+        const row = document.createElement("div");
+        row.className = "key";
+        row.textContent = `${channel} @${t}ms = ${v}`;
+        const del = document.createElement("button");
+        del.textContent = "×";
+        del.addEventListener("click", () => {
+          editing = removeKeyframe(editing, channel, index);
+          renderKeys();
+        });
+        row.appendChild(del);
+        keyList.appendChild(row);
+      });
+    }
+  }
+
+  function loadMotion(id) {
+    const source = motionOptions()[id];
+    editing = source ? { ...source, tracks: { ...(source.tracks ?? {}) } } : null;
+    tInput.max = String(editing?.durationMs ?? 2000);
+    renderKeys();
+  }
+
+  function refreshMotionSelect(preserve) {
+    const all = motionOptions();
+    motionSelect.innerHTML = Object.keys(all)
+      .map((id) => `<option value="${id}">${id}</option>`)
+      .join("");
+    if (preserve && all[preserve]) motionSelect.value = preserve;
+    loadMotion(motionSelect.value);
+  }
+
+  motionSelect.addEventListener("change", () => loadMotion(motionSelect.value));
+  editorSection.appendChild(motionSelect);
+  editorSection.appendChild(channelSelect);
+  editorSection.appendChild(tInput);
+  editorSection.appendChild(vInput);
+  editorSection.appendChild(keyList);
+
+  button(editorSection, "加關鍵影格", () => {
+    if (!editing) return;
+    try {
+      editing = addKeyframe(editing, channelSelect.value, Number(tInput.value), Number(vInput.value));
+      port.motions[editing.id] = editing;
+      renderKeys();
+      setStatus(`已加 ${channelSelect.value} @${tInput.value}ms`);
+    } catch (err) {
+      setStatus(`加不進去：${err.message}`);
+    }
+  });
+
+  button(editorSection, "預覽", () => {
+    if (!editing) return;
+    port.motions[editing.id] = editing;
+    port.play(selectedRole, editing.id);
+    setStatus(`${selectedRole} 預覽 ${editing.id}`);
+  });
+
+  button(editorSection, "存到動作庫", () => {
+    if (!editing) return;
+    try {
+      Object.assign(library, saveMotion(library, editing));
+      persistLibrary(storage, library);
+      port.motions[editing.id] = editing;
+      refreshMotionSelect(editing.id);
+      setStatus(`已存 ${editing.id}（${Object.keys(editing.tracks).length} 個頻道）`);
+    } catch (err) {
+      setStatus(`存不進去：${err.message}`);
+    }
+  });
+
+  button(editorSection, "匯出 JSON", () => {
+    const text = toLibraryJson(library);
+    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "motions.json";
+    link.click();
+    URL.revokeObjectURL(url);
+    setStatus(`已匯出 ${Object.keys(library).length} 個動作`);
+  });
+
+  button(editorSection, "新增動作", () => {
+    const id = window.prompt("動作 id（英數）", `custom_${Date.now().toString(36)}`);
+    if (!id) return;
+    try {
+      const motion = createMotion({ id, durationMs: 2000, tracks: { offset_y: [[0, 0], [1000, 0.4], [2000, 0]] } });
+      Object.assign(library, saveMotion(library, motion));
+      persistLibrary(storage, library);
+      port.motions[id] = motion;
+      refreshMotionSelect(id);
+      setStatus(`新動作 ${id}（2 秒，含一個示範 keyframe）`);
+    } catch (err) {
+      setStatus(`新增失敗：${err.message}`);
+    }
+  });
+
+  refreshMotionSelect();
+
   // wardrobe (S2): slot → item → tint, with undo and persistence
   const wardrobeSection = section("穿著（對象）", "wardrobe");
   const catalog = await loadJson(DATA.catalog);
-  const storage = safeStorage();
   const stores = new Map();
   for (const roleId of port.actors.keys()) {
     const store = new OutfitStore(port.get(roleId).avatar, { storage });

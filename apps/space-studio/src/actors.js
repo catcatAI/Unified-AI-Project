@@ -8,6 +8,8 @@
  * split is what lets S0 ship a stage before the Live2D renderer exists.
  */
 
+import { sampleMotion } from "./motion_editor.js";
+
 export class Actor {
   /**
    * @param {object} spec
@@ -31,6 +33,7 @@ export class Actor {
     this.motionElapsed = 0;
     this.breathPhase = 0;
     this.speech = null; // { text, remainingMs }
+    this.pose = {}; // channel -> value, sampled from motion.tracks
     this._move = null;
   }
 
@@ -46,6 +49,7 @@ export class Actor {
 
     if (this.motion) {
       this.motionElapsed += dtMs;
+      this.pose = this.motion.tracks ? sampleMotion(this.motion, this.motionElapsed) : {};
       if (!this.motion.loop && this.motionElapsed >= this.motion.durationMs) {
         this.clearMotion();
       }
@@ -90,13 +94,19 @@ export class Actor {
 
   play(motion) {
     if (!motion || !motion.id) throw new Error("play needs a motion with an id");
-    this.motion = { id: motion.id, durationMs: motion.durationMs ?? 1000, loop: !!motion.loop };
+    this.motion = {
+      id: motion.id,
+      durationMs: motion.durationMs ?? 1000,
+      loop: !!motion.loop,
+      ...(motion.tracks ? { tracks: motion.tracks } : {}),
+    };
     this.motionElapsed = 0;
   }
 
   clearMotion() {
     this.motion = null;
     this.motionElapsed = 0;
+    this.pose = {};
   }
 
   express(expression) {

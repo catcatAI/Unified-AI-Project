@@ -65,7 +65,13 @@ function drawFloorShadow(ctx, { camera, viewport }) {
 function drawActor(ctx, { actor, camera, viewport }) {
   const colors = outfitColors(actor.avatar);
   const scale = unitScale(camera, viewport);
-  const [px, py] = project(actor.position, camera, viewport);
+  const pose = actor.pose ?? {};
+  const [wx, wy] = project(actor.position, camera, viewport);
+  // Motion channels are in world units / radians; convert once here so the
+  // rest of the drawing code stays in pixels.
+  const px = wx + (pose.offset_x ?? 0) * scale;
+  const py = wy - (pose.offset_y ?? 0) * scale;
+  const headDx = (pose.tilt ?? 0) * w0(scale) * 0.6;
   const breath = 1 + 0.012 * Math.sin(actor.breathPhase * Math.PI * 2);
   const h = 1.7 * scale * breath;
   const w = 0.52 * scale;
@@ -93,25 +99,34 @@ function drawActor(ctx, { actor, camera, viewport }) {
   roundRect(ctx, px - w * 0.32, py - h * 0.82, w * 0.64, h * 0.4, w * 0.18);
   ctx.fill();
 
-  // arms
+  // arms — left stays a rect, right rotates with pose.arm_r (0 = hanging down)
   ctx.fillStyle = colors.top;
   ctx.fillRect(px - w * 0.46, py - h * 0.8, w * 0.14, h * 0.3);
-  ctx.fillRect(px + w * 0.32, py - h * 0.8, w * 0.14, h * 0.3);
+  const shoulderX = px + w * 0.38;
+  const shoulderY = py - h * 0.78;
+  const armLen = h * 0.3;
+  const armAngle = pose.arm_r ?? 0;
+  ctx.strokeStyle = colors.top;
+  ctx.lineWidth = w * 0.14;
+  ctx.beginPath();
+  ctx.moveTo(shoulderX, shoulderY);
+  ctx.lineTo(shoulderX + Math.sin(armAngle) * armLen, shoulderY + Math.cos(armAngle) * armLen);
+  ctx.stroke();
 
   // neck + head
   ctx.fillStyle = skin;
-  ctx.fillRect(px - w * 0.07, py - h * 0.9, w * 0.14, h * 0.08);
+  ctx.fillRect(px + headDx - w * 0.07, py - h * 0.9, w * 0.14, h * 0.08);
   ctx.beginPath();
-  ctx.ellipse(px, py - h * 0.97, w * 0.24, w * 0.27, 0, 0, Math.PI * 2);
+  ctx.ellipse(px + headDx, py - h * 0.97, w * 0.24, w * 0.27, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // hair cap
   ctx.fillStyle = hair;
   ctx.beginPath();
-  ctx.ellipse(px, py - h * 1.04, w * 0.25, w * 0.17, 0, Math.PI, Math.PI * 2);
+  ctx.ellipse(px + headDx, py - h * 1.04, w * 0.25, w * 0.17, 0, Math.PI, Math.PI * 2);
   ctx.fill();
 
-  drawFace(ctx, { px, py: py - h * 0.97, w, expression: actor.expression, skin });
+  drawFace(ctx, { px: px + headDx, py: py - h * 0.97, w, expression: actor.expression, skin });
 
   // accessory (ribbon)
   ctx.fillStyle = colors.accessory;
@@ -196,6 +211,10 @@ function chunkByChar(ctx, text, maxWidth) {
   }
   if (current) lines.push(current);
   return lines.length > 0 ? lines : [text];
+}
+
+function w0(scale) {
+  return 0.52 * scale;
 }
 
 function drawFace(ctx, { px, py, w, expression, skin }) {
