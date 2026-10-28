@@ -149,3 +149,49 @@ def test_seed_falls_back_to_the_role_config(monkeypatch, tmp_path):
     svc = mod.seed_default_stage(SpaceService())
     roles = [a["role_id"] for a in svc.snapshot()["data"]["actors"]]
     assert roles == ["main", "role_b", "role_c", "role_d"]
+
+
+# --------------------------------------------------------------------------
+# wardrobe (S2: the AI may change an outfit)
+# --------------------------------------------------------------------------
+def test_actor_starts_with_an_empty_outfit(service):
+    actor = service.get("main")
+    assert actor["outfit"] == {}
+    assert actor["outfit_rev"] == 0
+
+
+def test_update_avatar_sets_one_slot_and_bumps_rev(service):
+    service.update_avatar("role_b", "top", "jacket_purple", "#6a4f9e")
+    actor = service.get("role_b")
+    assert actor["outfit"]["top"] == {"item": "jacket_purple", "tint": "#6a4f9e"}
+    assert actor["outfit_rev"] == 1
+    service.update_avatar("role_b", "top", "hoodie", "#3b6ea5")
+    assert actor["outfit_rev"] == 2
+
+
+def test_update_avatar_keeps_previous_tint_when_omitted(service):
+    service.update_avatar("role_b", "top", "jacket", "#112233")
+    service.update_avatar("role_b", "top", "hoodie")
+    assert service.get("role_b")["outfit"]["top"] == {"item": "hoodie", "tint": "#112233"}
+
+
+def test_update_avatar_rejects_bad_input(service):
+    with pytest.raises(ValueError):
+        service.update_avatar("role_b", "hat", "beret")
+    with pytest.raises(ValueError):
+        service.update_avatar("role_b", "top", "")
+    with pytest.raises(ValueError):
+        service.update_avatar("role_b", "top", "x", "red")
+    with pytest.raises(ValueError):
+        service.update_avatar("ghost", "top", "x")
+
+
+def test_apply_dispatches_wardrobe(service):
+    service.apply({"type": "wardrobe", "actor_id": "main", "slot": "shoes", "item": "boots", "tint": "#3a2f2a"})
+    assert service.get("main")["outfit"]["shoes"]["item"] == "boots"
+
+
+def test_snapshot_carries_the_outfit(service):
+    service.update_avatar("main", "accessory", "ribbon", "#d94f70")
+    actor = next(a for a in service.snapshot()["data"]["actors"] if a["actor_id"] == "main")
+    assert actor["outfit"]["accessory"] == {"item": "ribbon", "tint": "#d94f70"}

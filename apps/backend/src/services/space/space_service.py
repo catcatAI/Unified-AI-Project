@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
@@ -25,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_ROOM_ID = "studio_a"
 DEFAULT_SPEECH_TTL_MS = 4000
+WARDROBE_SLOTS = ("top", "bottom", "shoes", "accessory")
+_HEX_TINT = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 ActorDict = Dict[str, Any]
 
@@ -73,6 +76,10 @@ class SpaceService:
             "motion": actor.get("motion"),
             "speech": None,
             "visible_to": actor.get("visible_to"),
+            # Wardrobe lives on the actor so the backend can change it too
+            # (S2: the AI decides an outfit, the stage renders it).
+            "outfit": dict(actor.get("outfit") or {}),
+            "outfit_rev": 0,
         }
         self._actors[actor_id] = stored
         self._touch()
@@ -118,6 +125,32 @@ class SpaceService:
         self._touch()
         return actor
 
+    def update_avatar(
+        self, actor_id: str, slot: str, item: str, tint: Optional[str] = None
+    ) -> ActorDict:
+        """Change one wardrobe slot (the tool a role may call).
+
+        Values are validated here, not in the renderer: an invalid tint must be
+        rejected at the seam, otherwise every viewer would have to defend itself.
+        """
+        if slot not in WARDROBE_SLOTS:
+            raise ValueError(f"unknown wardrobe slot: {slot}")
+        if not item:
+            raise ValueError("update_avatar needs an item id")
+        if tint is not None and not _HEX_TINT.match(str(tint)):
+            raise ValueError(f"tint must be #rrggbb, got {tint}")
+        actor = self.get(actor_id)
+        outfit = dict(actor.get("outfit") or {})
+        current = dict(outfit.get(slot) or {})
+        current.update({"item": str(item)})
+        if tint is not None:
+            current["tint"] = str(tint)
+        outfit[slot] = current
+        actor["outfit"] = outfit
+        actor["outfit_rev"] = int(actor.get("outfit_rev", 0)) + 1
+        self._touch()
+        return actor
+
     def say(self, actor_id: str, text: str, ttl_ms: int = DEFAULT_SPEECH_TTL_MS) -> ActorDict:
         spoken = str(text or "").strip()
         if not spoken:
@@ -147,6 +180,13 @@ class SpaceService:
             self.play(actor_id, action.get("motion"))
         elif kind == "express":
             self.express(actor_id, action.get("expression", "neutral"))
+        elif kind == "wardrobe":
+            self.update_avatar(
+                actor_id,
+                str(action.get("slot") or ""),
+                str(action.get("item") or ""),
+                action.get("tint"),
+            )
         elif kind == "say":
             self.say(
                 actor_id, action.get("text", ""), int(action.get("ttl_ms", DEFAULT_SPEECH_TTL_MS))

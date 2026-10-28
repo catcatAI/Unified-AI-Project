@@ -198,3 +198,31 @@ test("malformed snapshots are ignored", () => {
   applySnapshot(p, null);
   assert.equal(p.actors.size, 0);
 });
+
+test("snapshot outfit changes are applied to the avatar", () => {
+  const p = port();
+  applySnapshot(
+    p,
+    snapshot([
+      {
+        actor_id: "role_b",
+        role_id: "role_b",
+        avatar_id: "gemma_b",
+        outfit: { top: { item: "jacket_purple", tint: "#6a4f9e" } },
+        outfit_rev: 3,
+      },
+    ])
+  );
+  const actor = p.get("role_b");
+  assert.equal(actor.avatar.wardrobe.slots.top.item, "jacket_purple");
+  assert.equal(actor.avatar.wardrobe.slots.top.tint, "#6a4f9e");
+  assert.equal(actor.avatar.rev, 3);
+});
+
+test("snapshots without an outfit leave the avatar alone", () => {
+  const p = port();
+  applySnapshot(p, snapshot([{ actor_id: "main", role_id: "main", avatar_id: "angela_base" }]));
+  const before = p.get("main").avatar.wardrobe.slots;
+  applySnapshot(p, snapshot([{ actor_id: "main", role_id: "main", avatar_id: "angela_base" }]));
+  assert.deepEqual(p.get("main").avatar.wardrobe.slots, before);
+});

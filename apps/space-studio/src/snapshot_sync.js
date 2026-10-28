@@ -33,6 +33,16 @@ export function applySnapshot(port, message, { defaultSpeechMs = 4000 } = {}) {
     actor.expression = incoming.expression ?? "neutral";
     actor.visibleTo = incoming.visible_to ?? null;
 
+    // S2: the backend owns outfit changes too (a role may dress itself).
+    if (incoming.outfit && typeof incoming.outfit === "object") {
+      const slots = { ...(actor.avatar.wardrobe?.slots ?? {}), ...incoming.outfit };
+      actor.avatar = {
+        ...actor.avatar,
+        rev: incoming.outfit_rev ?? actor.avatar.rev ?? 0,
+        wardrobe: { ...(actor.avatar.wardrobe ?? {}), slots },
+      };
+    }
+
     const motion = incoming.motion ? port.motions?.[incoming.motion] : null;
     actor.motion = motion ? { id: motion.id, durationMs: motion.durationMs ?? 1000, loop: !!motion.loop } : null;
     actor.motionElapsed = 0;
