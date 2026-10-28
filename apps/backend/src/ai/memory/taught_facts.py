@@ -339,7 +339,7 @@ def _default_path() -> Path:
     if override:
         return Path(override)
     try:
-        from core.system.path_config import DATA_DIR
+        from path_config import DATA_DIR
 
         return Path(DATA_DIR) / "taught_facts.json"
     except Exception:  # pragma: no cover - path module unavailable

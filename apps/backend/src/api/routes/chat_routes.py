@@ -735,7 +735,7 @@ def _ctx_state_matrix(context: Dict[str, Any]) -> None:
             if dim:
                 axes[ax_name] = {"values": dim.values.copy()}
         zdim = sm.dimensions.get("zeta")
-        observed = getattr(sm, "zeta_observed_fields", frozenset())
+        observed: Any = getattr(sm, "zeta_observed_fields", frozenset())
         if zdim and observed:
             axes["zeta"] = {
                 "values": {k: zdim.values[k] for k in sorted(observed) if k in zdim.values}

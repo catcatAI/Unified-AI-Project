@@ -282,7 +282,7 @@ def _make_net(torch: Any, pad_id: int = 0) -> Any:
     """Define the nn.Module lazily so importing this file stays torch-free."""
     nn = torch.nn
 
-    class _SpikeNet(nn.Module):
+    class _SpikeNet(torch.nn.Module):
         def __init__(self, vocab_size: int, cfg: TokenConfig) -> None:
             super().__init__()
             self.cfg = cfg
@@ -547,7 +547,7 @@ class TokenSNN:
                     [cur, torch.tensor([[nxt]], dtype=torch.long, device=self.device)], dim=1
                 )
         self.net.train()
-        return self.vocab.decode(out)
+        return str(self.vocab.decode(out))
 
     # -- persistence --------------------------------------------------------
     def save(self, path: Path | str) -> None:
