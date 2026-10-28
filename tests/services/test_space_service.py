@@ -148,4 +148,4 @@ def test_seed_falls_back_to_the_role_config(monkeypatch, tmp_path):
     monkeypatch.delenv("SPACE_SEED_ROLES", raising=False)
     svc = mod.seed_default_stage(SpaceService())
     roles = [a["role_id"] for a in svc.snapshot()["data"]["actors"]]
-    assert roles == ["main", "role_b", "role_c"]
+    assert roles == ["main", "role_b", "role_c", "role_d"]

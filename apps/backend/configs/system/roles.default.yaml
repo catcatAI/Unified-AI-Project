@@ -25,3 +25,10 @@ roles:
     context_scope: private
     backend_slot: llamacpp-qwen
     memory_namespace: role_c
+
+  - role_id: role_d
+    display_name: DeepSeek 角色
+    context_scope: private
+    # 需要 DEEPSEEK_API_KEY；沒有 key 時這個槽不會註冊，router 會回退正常選路。
+    backend_slot: deepseek
+    memory_namespace: role_d

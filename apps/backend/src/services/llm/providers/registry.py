@@ -9,10 +9,12 @@ class LLMBackend(Enum):
 
     LLAMA_CPP = "llamacpp"
     LLAMA_CPP_QWEN = "llamacpp-qwen"
+    LLAMA_CPP_GEMMA = "llamacpp-gemma"
     OLLAMA = "ollama"
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
+    DEEPSEEK = "deepseek"
     ED3N = "ed3n"
     GARDEN = "garden"  # GARDEN-1G: Lightweight 1GB local model (PyTorch SNN + VectorDict)
     UNIFIED = "unified"  # Unified Engine: fixed-size statistical core + deterministic layers

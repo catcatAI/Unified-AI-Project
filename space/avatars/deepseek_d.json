@@ -1,0 +1,48 @@
+{
+  "avatar_id": "deepseek_d",
+  "display_name": "DeepSeek 角色",
+  "model": {
+    "type": "procedural",
+    "path": "models/miara_pro_en",
+    "scale": 1.0
+  },
+  "body": {
+    "height": 1.7,
+    "build": 0.5
+  },
+  "palette": {
+    "skin": "#e6cbb0",
+    "hair": "#1d2a3a"
+  },
+  "wardrobe": {
+    "outfit": "casual_04",
+    "slots": {
+      "top": {
+        "item": "shirt_white",
+        "tint": "#e8ecf5"
+      },
+      "bottom": {
+        "item": "trousers",
+        "tint": "#22303f"
+      },
+      "shoes": {
+        "item": "loafers",
+        "tint": "#111318"
+      },
+      "accessory": {
+        "item": "glasses",
+        "tint": "#8ab4ff"
+      }
+    }
+  },
+  "expression_channels": [
+    "neutral",
+    "smile",
+    "happy",
+    "blush",
+    "wink",
+    "sad"
+  ],
+  "motion_set": "role_d",
+  "rev": 0
+}

@@ -56,7 +56,15 @@ roles:
     context_scope: private
     backend_slot: llamacpp-gemma # 必須對應已註冊的 backend id
     memory_namespace: role_b
+  - role_id: role_d
+    display_name: DeepSeek 角色
+    context_scope: private
+    backend_slot: deepseek       # 需要 DEEPSEEK_API_KEY；沒 key 就回退 active
+    memory_namespace: role_d
 ```
+
+已註冊的槽（`llm.default.yaml`）：`llamacpp-local`、`llamacpp-qwen`、`llamacpp-gemma`（預設關）、
+`ollama-llama3`、`openai-gpt4`、`deepseek-chat`（有 key 才註冊）、`anthropic-claude`、`google-gemini`、`unified-1g`。
 
 - 未知 id → `400 unknown role: <id>`（不靜默回 Angela）。
 - `backend_slot` 找不到對應 backend → router 記 log 並回退正常選路（刪模型不該讓聊天癱瘓）。

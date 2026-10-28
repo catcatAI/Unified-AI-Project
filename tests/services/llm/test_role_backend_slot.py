@@ -141,3 +141,30 @@ def test_stamp_survives_missing_metadata_attribute():
         pass
 
     AngelaLLMService._stamp_role_metadata(Bare(), {"_role_id": "role_b"})  # must not raise
+
+
+# --------------------------------------------------------------------------
+# new slots: gemma (local) and deepseek (cloud)
+# --------------------------------------------------------------------------
+def test_gemma_and_deepseek_slots_resolve():
+    backends = {
+        LLMBackend.LLAMA_CPP_GEMMA: FakeBackend("gemma"),
+        LLMBackend.DEEPSEEK: FakeBackend("deepseek"),
+    }
+    router = make_router(backends)
+    assert router._resolve_forced_backend("llamacpp-gemma")[0].name == "gemma"
+    assert router._resolve_forced_backend("deepseek")[0].name == "deepseek"
+    assert router._resolve_forced_backend("deepseek")[1] is LLMBackend.DEEPSEEK
+
+
+def test_factory_table_knows_the_new_providers():
+    from services.llm.router import _BACKEND_FACTORIES
+
+    assert _BACKEND_FACTORIES["llama_cpp_gemma"] == "_init_llamacpp_gemma"
+    assert _BACKEND_FACTORIES["deepseek"] == "_init_deepseek"
+
+
+def test_deepseek_is_a_cloud_provider():
+    from services.llm.router import AngelaLLMService
+
+    assert "deepseek" in AngelaLLMService._CLOUD_PROVIDERS

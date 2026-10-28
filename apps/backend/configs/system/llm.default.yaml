@@ -107,6 +107,23 @@ backends:
     model_name: "qwen2.5-0.5b-instruct"
     timeout: 120
     note: "Second local slot: fast small executor for chitchat (dual-model Phase 3)."
+  llamacpp-gemma:
+    type: local
+    provider: llama_cpp_gemma
+    enabled: false
+    base_url: "http://localhost:8082"
+    model_name: "gemma-2-2b-it"
+    timeout: 120
+    note: "Third local slot: role_b (Gemma 2B). Disabled by default — enable when the model is served."
+  deepseek-chat:
+    type: cloud
+    provider: deepseek
+    enabled: true
+    base_url: "https://api.deepseek.com/v1"
+    model_name: "deepseek-chat"
+    api_key_env: "DEEPSEEK_API_KEY"
+    timeout: 120
+    note: "DeepSeek (OpenAI-compatible). Skipped automatically when DEEPSEEK_API_KEY is unset."
   ollama-llama3:
     type: local
     provider: ollama

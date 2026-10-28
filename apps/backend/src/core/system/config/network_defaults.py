@@ -18,6 +18,8 @@ LLAMACPP_HOST: str = f"http://{DEFAULT_HOST}:8080"
 OPENAI_API_BASE: str = "https://api.openai.com/v1"
 ANTHROPIC_API_BASE: str = "https://api.anthropic.com/v1"
 GOOGLE_API_BASE: str = "https://generativelanguage.googleapis.com/v1beta"
+# DeepSeek is OpenAI-compatible, so it reuses OpenAIAPIBackend with its own base.
+DEEPSEEK_API_BASE: str = "https://api.deepseek.com/v1"
 
 # Server bind address/port (ANGELA_SERVER_HOST / ANGELA_SERVER_PORT override).
 # Single source of truth for every uvicorn.run() entry point so CLI, REPL and
@@ -144,6 +146,7 @@ __all__ = [
     "LLAMACPP_HOST",
     "OPENAI_API_BASE",
     "ANTHROPIC_API_BASE",
+    "DEEPSEEK_API_BASE",
     "GOOGLE_API_BASE",
     "ED3N_HOST",
     "DEFAULT_ED3N_MODEL",

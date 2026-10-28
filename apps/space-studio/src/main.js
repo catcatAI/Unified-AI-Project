@@ -13,7 +13,9 @@ import { SpacePort } from "./space_port.js";
 import { isRecordingSupported, startRecording } from "./recorder.js";
 import { scriptedBeat, spawnRoster } from "./roster.js";
 import { rendererLabel } from "./live2d.js";
+import { hasFeature, resolveFeatures } from "./features.js";
 import { OutfitStore } from "./outfit_store.js";
+import { watchJson } from "./reload.js";
 import { applySnapshot } from "./snapshot_sync.js";
 import { createSpaceSocket } from "./ws_client.js";
 
@@ -28,6 +30,7 @@ const AVATARS = {
   angela_base: "../../space/avatars/angela_base.json",
   gemma_b: "../../space/avatars/gemma_b.json",
   qwen_c: "../../space/avatars/qwen_c.json",
+  deepseek_d: "../../space/avatars/deepseek_d.json",
 };
 
 async function loadJson(path) {
@@ -50,6 +53,8 @@ let timeMs = 0;
 let stopBeat = null;
 let modeLabel = "本機模式";
 let socket = null;
+let roomWatcher = null;
+const features = resolveFeatures(window);
 
 const viewport = () => ({ width: canvas.width, height: canvas.height, worldWidth: 16, worldHeight: 9 });
 function safeStorage() {
@@ -99,12 +104,15 @@ function button(parent, label, onClick, className = "") {
   return el;
 }
 
-function section(title) {
+function section(title, feature = null) {
   const el = document.createElement("div");
   el.className = "section";
   const h = document.createElement("h3");
   h.textContent = title;
   el.appendChild(h);
+  // S6: a disabled feature is built but not shown, so turning it on later needs
+  // no reload of the module graph.
+  if (feature && !hasFeature(features, feature)) el.hidden = true;
   panel.appendChild(el);
   return el;
 }
@@ -189,7 +197,7 @@ async function boot() {
   }
 
   // motions
-  const motionSection = section("動作");
+  const motionSection = section("動作", "motion");
   for (const motionId of Object.keys(motions)) {
     button(motionSection, motionId, () => {
       port.play(selectedRole, motionId);
@@ -199,7 +207,7 @@ async function boot() {
   }
 
   // wardrobe (S2): slot → item → tint, with undo and persistence
-  const wardrobeSection = section("穿著（對象）");
+  const wardrobeSection = section("穿著（對象）", "wardrobe");
   const catalog = await loadJson(DATA.catalog);
   const storage = safeStorage();
   const stores = new Map();
@@ -272,7 +280,7 @@ async function boot() {
   });
 
   // visibility
-  const visibilitySection = section("可見性");
+  const visibilitySection = section("可見性", "visibility");
   let hidden = false;
   button(visibilitySection, "對 role_c 隱藏 role_b", () => {
     hidden = !hidden;
@@ -290,7 +298,7 @@ async function boot() {
   });
 
   // camera
-  const camSection = section("鏡頭");
+  const camSection = section("鏡頭", "camera");
   for (const preset of room.camera_presets) {
     button(camSection, preset, () => {
       camera = resolveCamera(preset);
@@ -299,7 +307,7 @@ async function boot() {
   }
 
   // recording
-  const recSection = section("錄影");
+  const recSection = section("錄影", "record");
   const recBtn = button(
     recSection,
     "開始錄影",
@@ -332,7 +340,23 @@ async function boot() {
     recBtn.title = "此瀏覽器不支援 MediaRecorder";
   }
 
-  setStatus(`S1 舞台就緒｜3 個角色｜${rendererLabel()}`);
+  // S6: hot reload the room JSON; a palette/position edit lands without a restart.
+  try {
+    roomWatcher = watchJson(DATA.room, {
+      onChange: (room) => {
+        port.room = room;
+        setStatus("房間設定已熱載入");
+      },
+    });
+  } catch (err) {
+    console.warn("room hot reload unavailable", err);
+  }
+  window.addEventListener("beforeunload", () => {
+    roomWatcher?.stop();
+    socket?.close();
+  });
+
+  setStatus(`S1 舞台就緒｜${port.actors.size} 個角色｜${rendererLabel()}`);
   requestAnimationFrame(frame);
 }
 

@@ -10,6 +10,7 @@ Angela LLM Service - Angela 的智能對話引擎
 這個服務不是讓模型直接與用戶對話，
 而是讓 Angela 作為中介，調用模型來產生回應。
 """
+
 # LAYER: surface
 
 import asyncio
@@ -40,6 +41,7 @@ from core.prompt_manager import detect_response_language
 from core.system.config.magic_numbers import lifecycle_value, llm_param, timeout_value
 from core.system.config.network_defaults import (
     ANTHROPIC_API_BASE,
+    DEEPSEEK_API_BASE,
     DEFAULT_ANTHROPIC_MODEL,
     DEFAULT_GOOGLE_MODEL,
     DEFAULT_OLLAMA_MODEL,
@@ -363,8 +365,10 @@ def _pick_relevant_template(templates, message: str):
 _BACKEND_FACTORIES: Dict[str, str] = {
     "llama_cpp": "_init_llamacpp",
     "llama_cpp_qwen": "_init_llamacpp_qwen",
+    "llama_cpp_gemma": "_init_llamacpp_gemma",
     "ollama": "_init_ollama",
     "openai": "_init_openai",
+    "deepseek": "_init_deepseek",
     "anthropic": "_init_anthropic",
     "google": "_init_google",
     "unified": "_init_unified",
@@ -1021,7 +1025,7 @@ class AngelaLLMService:
 
     # Backend category -> whether it performs network calls to external vendors.
     # `type: cloud` backends are gated by deployment.mode; `type: local` are not.
-    _CLOUD_PROVIDERS = frozenset({"openai", "anthropic", "google"})
+    _CLOUD_PROVIDERS = frozenset({"openai", "anthropic", "google", "deepseek"})
 
     # Which backend categories each deployment mode allows.
     _MODE_ALLOWED_TYPES: Dict[str, frozenset] = {
@@ -1225,6 +1229,14 @@ class AngelaLLMService:
             )
             logger.info(f"已注冊 Ollama 後端: {model_name} (硬件自適應 need={need}GB)")
 
+    def _init_llamacpp_gemma(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
+        """Third local slot: role_b's model (Gemma)."""
+        self._init_llamacpp_slot(
+            LLMBackend.LLAMA_CPP_GEMMA, backend_id, base_url, model_name, api_key, config
+        )
+
     def _init_openai(
         self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
     ) -> None:
@@ -1237,6 +1249,25 @@ class AngelaLLMService:
             timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
         )
         logger.info(f"已注冊 OpenAI 後端: {model_name}")
+
+    def _init_deepseek(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
+        """DeepSeek cloud slot — OpenAI-compatible, so it reuses that backend class.
+
+        Without a key the slot is simply absent: the role that names it falls
+        back to normal selection (a missing cloud key must not break chat).
+        """
+        if not api_key:
+            logger.info("DeepSeek backend skipped: no DEEPSEEK_API_KEY")
+            return
+        self.backends[LLMBackend.DEEPSEEK] = OpenAIAPIBackend(
+            api_key=api_key,
+            base_url=base_url or DEEPSEEK_API_BASE,
+            model=model_name or "deepseek-chat",
+            timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
+        )
+        logger.info(f"已注冊 DeepSeek 後端: {model_name or 'deepseek-chat'}")
 
     def _init_anthropic(
         self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
@@ -3833,7 +3864,6 @@ class AngelaLLMService:
         """
         try:
             import numpy as np
-
             from ai.unified_engine.semantic_qa import _features
 
             query = np.asarray(_features(message or ""), dtype=np.float32)

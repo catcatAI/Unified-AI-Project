@@ -4,7 +4,7 @@
 >
 > **這份文件不是什麼**：不是實作（目前全倉沒有這個空間的執行時）；不是角色大腦（那是 `MULTI_ROLE_PLAY_AGENT_PLAN.md`）；不是美術規格書（不規定模型面數、材質流程）。
 >
-> **狀態**：draft — 方向已定（§4 決策）。**S0 已落地**、**S1 已落地**（三角色同場、說話氣泡、可見性、`/ws/space` 權威廣播＋前端同步；57 node tests + 21 backend tests）。S1.5（Live2D 載入器，目前程序繪製）與 S5 直播待外部條件。
+> **狀態**：draft — 方向已定（§4 決策）。**S0 ✅、S1 ✅**（多角色同場、`/ws/space` 權威廣播＋前端同步）、**S2 一半**（衣櫃 UI／undo／localStorage；AI 自改未做）、**S6 一半**（房間熱載入＋feature flag）。S1.5（Live2D 載入器，目前程序繪製）、S3（動作編輯器）、S5（直播，需外部條件）未做。
 >
 > - 作者：Angela AI Development Team
 > - 版本：7.5.0-dev
@@ -237,12 +237,13 @@ class Actor:
 - [ ] 安全：推流金鑰不落前端；`visible_to` 在直播時要能遮罩私有 overlay。
 - [ ] 驗收：本地 RTMP 伺服器（nginx-rtmp）收到畫面；聊天訊息 2 秒內被角色讀到。
 
-### S6 — 增量更新與微調（持續）
+### S6 — 增量更新與微調（持續）— 一半落地
 
-- [ ] 所有資料（room/avatar/motion/shot）熱載入：改 JSON 不用重啟。
-- [ ] feature flag：`SPACE_FEATURES=wardrobe,motion,camera,record,stream`，缺席的功能自動隱藏。
+- [x] 房間熱載入：`watchJson()` 每 5 秒輪詢 `space/roles.json` 對應的 room JSON，內容變了才回呼（改色盤不用重啟，也不用重新整理）。輪詢是刻意的——靜態伺服器也能用。
+- [x] feature flag：`SPACE_FEATURES=motion,camera,record`（或 localStorage `space.features`）→ 缺席的區塊建好但 `hidden`，之後打開不必重載模組。
+- [ ] 衣櫃／動作目錄熱載入（同一支 `watchJson` 可接，尚未接線）。
 - [ ] A/B：同一個 `motion_id` 兩個版本，用 `al_state` 分組看哪個更常被觸發。
-- [ ] 驗收：改 `room.json` 的燈光 → 5 秒內畫面變化；關掉 `stream` flag → UI 沒有直播按鈕。
+- [ ] 驗收：改 `room.json` 燈光 → 5 秒內生效（程式已具備，實機待驗）；關掉 `record` flag → UI 沒有錄影區塊。
 
 ---
 

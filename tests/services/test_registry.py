@@ -39,7 +39,8 @@ class TestLLMBackend:
         assert LLMBackend.UNIFIED.value == "unified"
 
     def test_members_count(self):
-        assert len(LLMBackend) == 11
+        # 11 base members + 2 role slots added 2026-10-28 (gemma, deepseek)
+        assert len(LLMBackend) == 13
 
     def test_from_value_valid(self):
         assert LLMBackend("ollama") == LLMBackend.OLLAMA

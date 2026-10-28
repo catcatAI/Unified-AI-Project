@@ -311,7 +311,7 @@ class MultiRoleOrchestrator:
 ### Phase 3 — API + 配置 + 文件 (1-2 天) ✅ 2026-10-28
 
 - [x] P3-1 新增 `/api/v1/roles*` 端點 (或擴充 `/chat/unified`)。落地：`GET /roles`（`api/routes/role_routes.py`）回角色目錄；**唯讀**——角色是伺服器設定，客戶端只能查與選。
-- [x] P3-2 `llm.default.yaml` 加 `role_slots:` 區 (或 preset)。**決策：不另開 `role_slots`**——`backend_slot` 直接寫在 `roles.default.yaml` 的每個角色上，單一來源；兩份映射表會在改名時漂移。
+- [x] P3-2 `llm.default.yaml` 加 `role_slots:` 區 (或 preset)。**決策：不另開 `role_slots`**——`backend_slot` 直接寫在 `roles.default.yaml` 的每個角色上，單一來源；兩份映射表會在改名時漂移。**2026-10-28 追加**：新增 `role_d`（DeepSeek 角色，`backend_slot: deepseek`）；同時補上 `llamacpp-gemma` 與 `deepseek` 兩個 backend 槽（enum + factory + `llm.default.yaml`），因為 `llamacpp-gemma` 原本根本沒定義，role_b 一直在靜默 fallback。
 - [x] P3-3 `docs/03-technical-architecture/` 新增 `MULTI_ROLE_PLAY.md` 架構說明（四條接線、API 契約、記憶分區、失敗模式、測試地圖）。
 - [ ] P3-4 更新 `MASTER_TASK_MAP.md`、`MEASUREMENT_MAP.md`。**未做**：那兩份是歷史任務地圖，本輪狀態以本計畫書與 `MULTI_ROLE_PLAY.md` 為準；要同步需另外審視其歷史編排，避免把 dated 條目改亂。
 
