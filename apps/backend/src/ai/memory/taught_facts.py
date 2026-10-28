@@ -319,9 +319,7 @@ class TaughtFacts:
                 return f"The {fact.relation} of {fact.subject} is {fact.object}."
             return f"{fact.subject}的{fact.relation}是 {fact.object}。"
         if english:
-            parts = [
-                f"{fact.subject}: {fact.object}" for fact in unique[:4]
-            ]
+            parts = [f"{fact.subject}: {fact.object}" for fact in unique[:4]]
             return "; ".join(parts) + "."
         parts = [f"{fact.subject}的{fact.relation}是 {fact.object}" for fact in unique[:4]]
         return "；".join(parts) + "。"

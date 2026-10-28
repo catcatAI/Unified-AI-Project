@@ -109,9 +109,7 @@ def test_held_out_words_are_not_in_the_curriculum() -> None:
     assert spec and spec.loader
     builder = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(builder)
-    problems = builder.heldout_word_leaks(
-        CURRICULUM_PATH.read_text(encoding="utf-8"), _payload()
-    )
+    problems = builder.heldout_word_leaks(CURRICULUM_PATH.read_text(encoding="utf-8"), _payload())
     assert not problems, problems
 
 

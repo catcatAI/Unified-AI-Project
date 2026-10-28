@@ -74,7 +74,11 @@ def read_marker(path: Path) -> Optional[str]:
     for line in lines:
         stripped = line.strip()
         if stripped.startswith(MARKER):
-            return stripped[len(MARKER) :].strip().split()[0].lower() if stripped[len(MARKER) :].strip() else None
+            return (
+                stripped[len(MARKER) :].strip().split()[0].lower()
+                if stripped[len(MARKER) :].strip()
+                else None
+            )
     return None
 
 

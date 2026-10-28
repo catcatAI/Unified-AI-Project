@@ -3,7 +3,6 @@
 import json
 
 import pytest
-
 from ai.memory.taught_facts import TaughtFacts, get_taught_facts, reset_taught_facts
 
 

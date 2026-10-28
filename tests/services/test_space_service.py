@@ -187,7 +187,15 @@ def test_update_avatar_rejects_bad_input(service):
 
 
 def test_apply_dispatches_wardrobe(service):
-    service.apply({"type": "wardrobe", "actor_id": "main", "slot": "shoes", "item": "boots", "tint": "#3a2f2a"})
+    service.apply(
+        {
+            "type": "wardrobe",
+            "actor_id": "main",
+            "slot": "shoes",
+            "item": "boots",
+            "tint": "#3a2f2a",
+        }
+    )
     assert service.get("main")["outfit"]["shoes"]["item"] == "boots"
 
 
@@ -219,7 +227,11 @@ def test_no_rule_match_changes_nothing(service):
 
 def test_rules_can_be_injected(service):
     rules = [
-        {"priority": 1, "when": {"stress": {"gte": 0.5}}, "outfit": {"shoes": {"item": "boots", "tint": "#111111"}}}
+        {
+            "priority": 1,
+            "when": {"stress": {"gte": 0.5}},
+            "outfit": {"shoes": {"item": "boots", "tint": "#111111"}},
+        }
     ]
     assert service.auto_dress("role_b", {"stress": 0.6}, rules=rules) == ["shoes"]
     assert service.get("role_b")["outfit"]["shoes"]["item"] == "boots"

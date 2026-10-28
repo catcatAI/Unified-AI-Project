@@ -495,11 +495,7 @@ class RelationMatcher:
         text = (phrase or "").strip().lower()
         if not text:
             return False
-        return any(
-            text == word.lower()
-            for words in self._concept_map().values()
-            for word in words
-        )
+        return any(text == word.lower() for words in self._concept_map().values() for word in words)
 
     def is_relation_phrase(self, phrase: str, score: float) -> bool:
         """True when the phrase can be a comparison word.

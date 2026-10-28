@@ -14,7 +14,6 @@ from __future__ import annotations
 import sqlite3
 
 import pytest
-
 from ai.knowledge import wiki_facts
 from ai.knowledge.wiki_facts import WikiFacts, looks_factual, route_general_knowledge
 

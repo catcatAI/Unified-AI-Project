@@ -290,7 +290,13 @@ class TestLightCollectorsRealRepo:
         partial = {
             "generated_at": "2026-01-02T00:00:00",
             "results": [
-                {"backend": "native", "suite": "knowledge", "accuracy": 46.7, "total": 15, "passed": 7}
+                {
+                    "backend": "native",
+                    "suite": "knowledge",
+                    "accuracy": 46.7,
+                    "total": 15,
+                    "passed": 7,
+                }
             ],
         }
         (results / "bench_20260101-000000.json").write_text(json.dumps(full), encoding="utf-8")

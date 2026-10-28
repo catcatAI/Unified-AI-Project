@@ -10,7 +10,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from ai.meta.layers import validate_entry, validate_registry
 
 REPO = Path(__file__).resolve().parents[2]
@@ -43,9 +42,13 @@ def _entry(tmp_path, layer, *, marker=None, must_not=None, source_deleted=False,
             "source_deleted": source_deleted,
         },
         "result": {"status": status, "value": "x", "measured_at": "2026-10-23"},
-        "must_not_be_used_as": must_not
-        if must_not is not None
-        else (["knowledge"] if layer == "learning" else ["knowledge", "learning", "intelligence"]),
+        "must_not_be_used_as": (
+            must_not
+            if must_not is not None
+            else (
+                ["knowledge"] if layer == "learning" else ["knowledge", "learning", "intelligence"]
+            )
+        ),
     }
 
 

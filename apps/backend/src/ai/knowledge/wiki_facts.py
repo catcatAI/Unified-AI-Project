@@ -42,8 +42,7 @@ DEFAULT_DB = Path("data/knowledge/wiki.sqlite")
 MIN_OVERLAP = 2.0
 MAX_CANDIDATES = 80
 
-_STOPWORDS = frozenset(
-    """
+_STOPWORDS = frozenset("""
     a about above after again against all am an and any are as at be because
     been before being below between both but by can could did do does doing
     down during each few for from further had has have having he her here hers
@@ -57,8 +56,7 @@ _STOPWORDS = frozenset(
     say says said make makes made get gets got take takes give gives use uses
     used work works help helps keep keeps put puts see sees seem seems become
     becomes come comes go goes want wants like likes need needs
-    """.split()
-)
+    """.split())
 
 _SUFFIXES = ("ing", "ed", "es", "s", "ly")
 _PLURAL_SIBILANT = ("ses", "xes", "zes", "ches", "shes")
@@ -85,16 +83,14 @@ _NUMBER_WORDS = {
 # capital of Atlantis?" is not answered by an article that never says
 # "capital"; the sentence has to be about the asked relation, not merely
 # the asked subject.
-_ANSWER_TYPE_HEADS = frozenset(
-    """
+_ANSWER_TYPE_HEADS = frozenset("""
     capital population height length width area weight mass author writer
     founder currency language president leader inventor director producer
     publisher diameter distance temperature speed age depth birthday
     birthplace location planet star element gas organ force animal insect
     bird metal colour color continent ocean country city river mountain
     number symbol formula
-    """.split()
-)
+    """.split())
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
 _UNIT_ALIASES = {
     "km/s": ("km/s", "kilometres per second", "kilometers per second"),
@@ -224,8 +220,7 @@ class WikiFacts:
         query = " OR ".join(f'"{term}"' for term in terms)
         try:
             return connection.execute(
-                "SELECT title, body, rank FROM pages WHERE pages MATCH ? "
-                "ORDER BY rank LIMIT ?",
+                "SELECT title, body, rank FROM pages WHERE pages MATCH ? " "ORDER BY rank LIMIT ?",
                 (query, MAX_CANDIDATES),
             ).fetchall()
         except sqlite3.Error as exc:  # pragma: no cover
@@ -354,9 +349,7 @@ class WikiFacts:
         )
         units = self._requested_units(question)
         approximate = bool(
-            re.search(
-                r"\b(approximately|approx\.?|roughly|about|around)\b", question.lower()
-            )
+            re.search(r"\b(approximately|approx\.?|roughly|about|around)\b", question.lower())
         )
         rows = self._candidates(words)
         if not rows:
@@ -398,9 +391,7 @@ class WikiFacts:
                     score += 1.2
                 elif index == 1:
                     score += 0.6
-                score += 0.6 * sum(
-                    self._idf(stem) for stem in (question_stems & title_stems)
-                )
+                score += 0.6 * sum(self._idf(stem) for stem in (question_stems & title_stems))
                 if subject:
                     score += 2.0
                 if head_stem and head_stem in window_stems:

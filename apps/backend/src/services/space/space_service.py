@@ -60,6 +60,7 @@ def _load_wardrobe_rules(path: Optional[Path] = None) -> List[Dict[str, Any]]:
         logger.warning("Wardrobe rules %s unreadable", cfg)
         return []
 
+
 ActorDict = Dict[str, Any]
 
 
