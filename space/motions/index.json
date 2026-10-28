@@ -1,0 +1,6 @@
+{
+  "idle_breath": { "id": "idle_breath", "durationMs": 2600, "loop": true },
+  "wave_hello": { "id": "wave_hello", "durationMs": 1800, "loop": false },
+  "nod": { "id": "nod", "durationMs": 900, "loop": false },
+  "sit_down": { "id": "sit_down", "durationMs": 1200, "loop": false }
+}

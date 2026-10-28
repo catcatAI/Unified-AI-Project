@@ -1,0 +1,19 @@
+{
+  "avatar_id": "angela_base",
+  "display_name": "Angela",
+  "model": { "type": "procedural", "path": "models/Epsilon_free", "scale": 1.0 },
+  "body": { "height": 1.62, "build": 0.5 },
+  "palette": { "skin": "#f0d3b8", "hair": "#2f2430" },
+  "wardrobe": {
+    "outfit": "casual_01",
+    "slots": {
+      "top": { "item": "hoodie_blue", "tint": "#3b6ea5" },
+      "bottom": { "item": "skirt_plaid", "tint": "#6b4f3a" },
+      "shoes": { "item": "sneakers", "tint": "#f2f2f2" },
+      "accessory": { "item": "ribbon", "tint": "#d94f70" }
+    }
+  },
+  "expression_channels": ["neutral", "smile", "happy", "blush", "wink", "sad"],
+  "motion_set": "angela_core",
+  "rev": 0
+}

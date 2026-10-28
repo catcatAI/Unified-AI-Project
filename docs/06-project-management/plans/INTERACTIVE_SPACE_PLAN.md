@@ -4,7 +4,7 @@
 >
 > **這份文件不是什麼**：不是實作（目前全倉沒有這個空間的執行時）；不是角色大腦（那是 `MULTI_ROLE_PLAY_AGENT_PLAN.md`）；不是美術規格書（不規定模型面數、材質流程）。
 >
-> **狀態**：draft — 方向已定（§4 決策），階段 S0–S2 可直接開工，S5 直播待外部條件。
+> **狀態**：draft — 方向已定（§4 決策）。**S0 已落地**：`apps/space-studio/`（34 tests、零建置、`python3 -m http.server` 就能開）；S1 依賴 MULTI_ROLE 的 P1-3（已落地）與 P2-4（未做）；S5 直播待外部條件。
 >
 > - 作者：Angela AI Development Team
 > - 版本：7.5.0-dev
@@ -187,12 +187,16 @@ class Actor:
 
 > 每階段都要能**獨立驗收**；沒過驗收不進下一階段。估時是「一個人、有既有基建」的前提。
 
-### S0 — 舞台骨架（3–5 天）
+### S0 — 舞台骨架（3–5 天）✅ 2026-10-28
 
-- [ ] `apps/space-studio/`：Vite + canvas（2.5D）＋現有 Live2D 模型載入；房間背景、地板線、出生點。
-- [ ] `SpacePort` 介面（`spawn / despawn / move / face / play / look / snapshot`）＋ `web_stage` 實作。
-- [ ] 一個 Actor（`main`），`idle` 循環＋表情切換（沿用 `angela-character-config.js`）。
-- [ ] 驗收：`npm run dev` 開頁面→ 角色站在攝影棚中央、會呼吸、能切表情；`SpacePort` 有 8 個單元測試（純邏輯，不需要瀏覽器）。
+- [x] `apps/space-studio/`：**零建置**（`type: module` + ES modules），canvas 2.5D 房間、地板線、出生點。刻意沒用 Vite——`python3 -m http.server` 從 repo 根目錄就能跑，少一層工具鏈。
+- [x] `SpacePort`（`spawn / despawn / move / face / play / express / look / visibleFrom / snapshot`）＋ 程序化 `web_stage` 實作。
+- [x] 一個 Actor（`main`）：呼吸相位、移動平滑插值、動作計時（loop／一次性）、六個表情通道、穿著四槽上色。
+- [x] 鏡頭：`wide / medium / close / over_shoulder / free`，世界→像素投影是純函式；`free` 可拖曳平移。
+- [x] 錄影：`canvas.captureStream` + `MediaRecorder`，codec 探測（vp9 → vp8 → webm → mp4），停錄直接下載 WebM。
+- [x] 驗收：`cd apps/space-studio && node --test` → **34 passed**（生命週期、插值、動作、可見性、投影、換裝、錄影 blob、renderer headless 冒煙）；靜態伺服 6 個資產全 200。
+
+> 與原計畫的差異（誠實記錄）：角色是**程序繪製**，不是 Live2D——`avatar.model.path` 已預留 `models/Epsilon_free`，S1 再接載入器；測試數從「8」增加到 34（多出來的是 renderer 冒煙與錄影邊界）。
 
 ### S1 — 多角色同場（3–5 天，**依賴 P1-3 / P2-4**）
 

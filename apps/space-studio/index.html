@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Angela Space Studio — S0</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d1016;
+        --panel: #151a23;
+        --line: #232b38;
+        --text: #dfe6f0;
+        --muted: #8b97a8;
+        --accent: #6aa9ff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+      canvas {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #000;
+        touch-action: none;
+      }
+      #status {
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        min-height: 1.5em;
+      }
+      aside {
+        width: 260px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px;
+        overflow-y: auto;
+      }
+      aside h1 { font-size: 15px; margin: 0 0 4px; }
+      aside p { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
+      .section { margin-bottom: 12px; }
+      .section h3 {
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      button {
+        display: inline-block;
+        margin: 0 4px 4px 0;
+        padding: 5px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: #1d2531;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 12px;
+      }
+      button:hover { border-color: var(--accent); color: #fff; }
+      button.record { border-color: #7a2f3a; background: #2a1418; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <canvas id="stage" width="960" height="540"></canvas>
+      <div id="status">載入中…</div>
+    </main>
+    <aside>
+      <h1>Space Studio · S0</h1>
+      <p>一個房間、一個角色、鏡頭與錄影。資料在 <code>space/</code>，舞台在 <code>apps/space-studio/</code>。</p>
+      <div id="panel"></div>
+    </aside>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

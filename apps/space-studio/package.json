@@ -1,0 +1,11 @@
+{
+  "name": "space-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "S0 interactive stage: one room, one actor, camera + recording seams",
+  "scripts": {
+    "test": "node --test tests/",
+    "dev": "python3 -m http.server 5174"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "room_id": "studio_a",
+  "name": "天使工房・攝影棚",
+  "kind": "stage",
+  "size": { "w": 16, "h": 9, "unit": "m" },
+  "palette": {
+    "sky": ["#151922", "#232b3a"],
+    "wall": "#242a36",
+    "floor": "#3a2f2a"
+  },
+  "spawn_points": [{ "id": "center", "x": 8, "y": 0 }],
+  "props": [{ "prop_id": "sofa", "x": 3, "y": 0, "w": 2.4 }],
+  "camera_presets": ["wide", "medium", "close", "over_shoulder"]
+}
