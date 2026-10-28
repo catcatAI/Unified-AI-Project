@@ -66,6 +66,11 @@ roles:
 已註冊的槽（`llm.default.yaml`）：`llamacpp-local`、`llamacpp-qwen`、`llamacpp-gemma`（預設關）、
 `ollama-llama3`、`openai-gpt4`、`deepseek-chat`（有 key 才註冊）、`anthropic-claude`、`google-gemini`、`unified-1g`。
 
+三個本地模型同時跑（Arc B570 實測）見
+[`LOCAL_THREE_MODELS.md`](LOCAL_THREE_MODELS.md)：`main`=Qwen2.5-3B、`role_b`=Gemma-2-2B、
+`role_c`=Llama-3.2-1B，共 6.34 GB VRAM（9.44 GB 的 70%），啟動與還原由
+`scripts/run_local_three_models.py` 負責。
+
 - 未知 id → `400 unknown role: <id>`（不靜默回 Angela）。
 - `backend_slot` 找不到對應 backend → router 記 log 並回退正常選路（刪模型不該讓聊天癱瘓）。
 - 第二個 `context_scope: shared` 的角色在註冊時就被拒（兩個主 AI 會讓「誰擁有基底」無定義）。
