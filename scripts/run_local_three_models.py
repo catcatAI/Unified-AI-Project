@@ -39,8 +39,9 @@ import plan_local_three_models as planner  # noqa: E402
 CONFIG_DIR = REPO_ROOT / "apps" / "backend" / "configs" / "system"
 OVERLAY = CONFIG_DIR / "llm.evolved.yaml"
 OVERLAY_BACKUP = CONFIG_DIR / "llm.evolved.yaml.pre-local"
-PIDFILE = REPO_ROOT / "run" / "local_models.pids"
 LOGDIR = REPO_ROOT / "logs" / "local_models"
+# logs/ is already ignored by git; the pidfile belongs next to the server logs.
+PIDFILE = LOGDIR / "servers.pids"
 
 
 def overlay_yaml(picks: Sequence[Dict[str, object]], mode: str = "local+llm") -> str:
