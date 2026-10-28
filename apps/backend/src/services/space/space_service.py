@@ -28,6 +28,37 @@ DEFAULT_ROOM_ID = "studio_a"
 DEFAULT_SPEECH_TTL_MS = 4000
 WARDROBE_SLOTS = ("top", "bottom", "shoes", "accessory")
 _HEX_TINT = re.compile(r"^#[0-9a-fA-F]{6}$")
+_WARDROBE_RULES_PATH = Path(__file__).resolve().parents[5] / "space" / "rules" / "al_wardrobe.json"
+
+
+def _ordered(rules: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return sorted(rules, key=lambda r: float(r.get("priority", 0)), reverse=True)
+
+
+def _state_matches(conditions: Dict[str, Any], state: Dict[str, Any]) -> bool:
+    for field, condition in conditions.items():
+        actual = state.get(field)
+        if actual is None:
+            return False
+        for op, expected in condition.items():
+            if op == "gte" and not actual >= expected:
+                return False
+            if op == "lte" and not actual <= expected:
+                return False
+            if op == "eq" and str(actual) != str(expected):
+                return False
+    return True
+
+
+def _load_wardrobe_rules(path: Optional[Path] = None) -> List[Dict[str, Any]]:
+    cfg = Path(path) if path is not None else _WARDROBE_RULES_PATH
+    if not cfg.exists():
+        return []
+    try:
+        return list(json.loads(cfg.read_text(encoding="utf-8")).get("rules") or [])
+    except (OSError, ValueError):
+        logger.warning("Wardrobe rules %s unreadable", cfg)
+        return []
 
 ActorDict = Dict[str, Any]
 
@@ -150,6 +181,25 @@ class SpaceService:
         actor["outfit_rev"] = int(actor.get("outfit_rev", 0)) + 1
         self._touch()
         return actor
+
+    def auto_dress(
+        self, actor_id: str, state: Dict[str, Any], rules: Optional[List[Dict[str, Any]]] = None
+    ) -> List[str]:
+        """Apply the first matching wardrobe rule for this AL state.
+
+        This is the *decision* seam S2 was missing: rules are data, so an LLM or
+        the chat pipeline can call this without embedding outfit policy in code.
+        Returns the slots that actually changed (empty when nothing matched).
+        """
+        for rule in _ordered(rules if rules is not None else _load_wardrobe_rules()):
+            if not _state_matches(rule.get("when") or {}, state):
+                continue
+            changed: List[str] = []
+            for slot, spec in (rule.get("outfit") or {}).items():
+                self.update_avatar(actor_id, slot, spec.get("item", ""), spec.get("tint"))
+                changed.append(slot)
+            return changed
+        return []
 
     def say(self, actor_id: str, text: str, ttl_ms: int = DEFAULT_SPEECH_TTL_MS) -> ActorDict:
         spoken = str(text or "").strip()

@@ -195,3 +195,36 @@ def test_snapshot_carries_the_outfit(service):
     service.update_avatar("main", "accessory", "ribbon", "#d94f70")
     actor = next(a for a in service.snapshot()["data"]["actors"] if a["actor_id"] == "main")
     assert actor["outfit"]["accessory"] == {"item": "ribbon", "tint": "#d94f70"}
+
+
+# --------------------------------------------------------------------------
+# wardrobe rules (S2: state -> outfit)
+# --------------------------------------------------------------------------
+def test_low_valence_dresses_down(service):
+    changed = service.auto_dress("main", {"valence": 0.1})
+    assert changed == ["top", "accessory"]
+    assert service.get("main")["outfit"]["top"]["tint"] == "#3f3f5f"
+
+
+def test_tired_role_gets_comfortable_clothes(service):
+    changed = service.auto_dress("main", {"valence": 0.5, "fatigue": 0.9})
+    assert "top" in changed
+    assert service.get("main")["outfit"]["top"]["item"] == "cardigan_green"
+
+
+def test_no_rule_match_changes_nothing(service):
+    assert service.auto_dress("main", {"valence": 0.5, "fatigue": 0.1}) == []
+    assert service.get("main")["outfit"] == {}
+
+
+def test_rules_can_be_injected(service):
+    rules = [
+        {"priority": 1, "when": {"stress": {"gte": 0.5}}, "outfit": {"shoes": {"item": "boots", "tint": "#111111"}}}
+    ]
+    assert service.auto_dress("role_b", {"stress": 0.6}, rules=rules) == ["shoes"]
+    assert service.get("role_b")["outfit"]["shoes"]["item"] == "boots"
+
+
+def test_rules_file_is_loadable():
+    rules = mod._load_wardrobe_rules()
+    assert rules and rules[0]["priority"] >= rules[-1]["priority"]

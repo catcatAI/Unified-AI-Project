@@ -1,0 +1,29 @@
+{
+  "comment": "AL 狀態 → 穿著。與 al_motion.json 同構；priority 大的先比，第一個符合的整套套用。",
+  "rules": [
+    {
+      "priority": 100,
+      "when": { "valence": { "lte": 0.25 } },
+      "outfit": {
+        "top": { "item": "jacket_purple", "tint": "#3f3f5f" },
+        "accessory": { "item": "scarf", "tint": "#2a2a3a" }
+      }
+    },
+    {
+      "priority": 60,
+      "when": { "fatigue": { "gte": 0.8 } },
+      "outfit": {
+        "top": { "item": "cardigan_green", "tint": "#5d6b4f" },
+        "shoes": { "item": "sneakers", "tint": "#c9c9c9" }
+      }
+    },
+    {
+      "priority": 30,
+      "when": { "valence": { "gte": 0.7 } },
+      "outfit": {
+        "top": { "item": "hoodie_blue", "tint": "#4f8fd0" },
+        "accessory": { "item": "ribbon", "tint": "#e0607f" }
+      }
+    }
+  ]
+}
