@@ -92,6 +92,11 @@
       "referenced": true,
       "purpose": "Batch direct optimization of CIFAR-10 images using differentiable renderer."
     },
+    "bench_local_roles.py": {
+      "category": "benchmark",
+      "referenced": true,
+      "purpose": "P5-4: latency of the three local role backends, sequentially and in parallel."
+    },
     "benchmark_500_framework.py": {
       "category": "benchmark",
       "referenced": false,
@@ -692,6 +697,11 @@
       "referenced": false,
       "purpose": "Phase 4 — MMLU 65%→75% 50 條（硬件規格自適應，分批+sleep，<100MB）"
     },
+    "plan_local_three_models.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Plan three local models that actually fit this machine."
+    },
     "prepare_core_training_data.py": {
       "category": "tool",
       "referenced": true,
@@ -806,6 +816,11 @@
       "category": "operations",
       "referenced": true,
       "purpose": "angela_bench — 可驗證的多後端基準 harness。"
+    },
+    "run_local_three_models.py": {
+      "category": "operations",
+      "referenced": true,
+      "purpose": "Start/stop three local llama.cpp servers for the three stage roles."
     },
     "run_luanti_agent.py": {
       "category": "operations",
@@ -1191,6 +1206,11 @@
       "category": "verification",
       "referenced": true,
       "purpose": "主流程端到端實測（R11 正式版實際使用證據）：用戶文本進 → 最終回應出。"
+    },
+    "verify_multi_role.py": {
+      "category": "verification",
+      "referenced": true,
+      "purpose": "Multi-role end-to-end verification (Phase 5) — no network, no LLM."
     },
     "verify_readiness.py": {
       "category": "verification",

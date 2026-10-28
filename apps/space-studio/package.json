@@ -1,6 +1,6 @@
 {
   "name": "space-studio",
-  "version": "0.1.0",
+  "version": "7.5.0-dev",
   "private": true,
   "type": "module",
   "description": "S0 interactive stage: one room, one actor, camera + recording seams",
