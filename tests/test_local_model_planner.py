@@ -114,7 +114,7 @@ def test_overlay_enables_three_slots(tmp_path, monkeypatch):
     for slot in ("llamacpp-local", "llamacpp-gemma", "llamacpp-qwen"):
         assert f"{slot}:" in text
         assert "enabled: true" in text
-    assert "mode: local+llm" in text
+    assert "deployment:" not in text  # the evolved layer must not choose cloud access
 
 
 def test_overlay_is_restored_not_deleted(tmp_path, monkeypatch):
@@ -129,7 +129,7 @@ def test_overlay_is_restored_not_deleted(tmp_path, monkeypatch):
     runner.install_overlay(plan.to_dict()["picks"])
 
     assert backup.read_text(encoding="utf-8") == "original: true\n"
-    assert "deployment:" in overlay.read_text(encoding="utf-8")
+    assert "llamacpp-local:" in overlay.read_text(encoding="utf-8")
 
     runner.remove_overlay()
     assert overlay.read_text(encoding="utf-8") == "original: true\n"
