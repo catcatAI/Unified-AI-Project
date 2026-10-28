@@ -208,12 +208,13 @@ class Actor:
 - [x] 前端同步：`ws_client.js`（重連、狀態回報）＋ `snapshot_sync.js`（把快照套回 `SpacePort`，快照裡沒有的演員會被移除）。**連不上後端就留在本機模式**，不是壞掉。
 - [ ] 驗收（兩個視窗同步、斷線重連恢復）——程式與測試已具備，實機雙視窗驗收待做。
 
-### S2 — 形象編輯（4–6 天）
+### S2 — 形象編輯（4–6 天）— 一半落地
 
-- [ ] 衣櫃 UI：slot × item × tint，即時預覽；存檔到 `space/avatars/`。
-- [ ] AI 自己改：`update_avatar(actor_id, slot, item, tint)` 暴露成工具，由角色自己決定（例：情緒低落→換深色）。
-- [ ] 版本化：每次換裝寫 `avatar_rev`，可回滾（撤銷上一套）。
-- [ ] 驗收：換一套衣服 → 重新載入頁面仍是新的一套；AI 觸發換裝後 200ms 內畫面更新。
+- [x] 衣櫃 UI：`space/wardrobe/catalog.json`（4 槽 × 3 件 × 各 2–4 色）→ 選槽 → 選件 → 點色票即時換。目錄由測試守住（每件都能套用、色碼合法、同槽 id 不重複）。
+- [x] 版本化與回滾：`OutfitStore` 每次換裝 `rev+1`，保留 20 步 undo；`restore()` 可從快照還原。
+- [ ] 存檔到 `space/avatars/`：**改成 localStorage**（瀏覽器不能寫檔），要寫回 JSON 需要後端端點（未做）。
+- [ ] AI 自己改：`update_avatar(actor_id, slot, item, tint)` 尚未暴露成工具；目前只有人點 UI。
+- [ ] 驗收：換裝後重整仍在（localStorage 已可）——真機驗收待做；「AI 觸發換裝」依賴上一項。
 
 ### S3 — 動作編輯（5–8 天）
 

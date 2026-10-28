@@ -1,0 +1,36 @@
+{
+  "slots": {
+    "top": {
+      "label": "上衣",
+      "items": [
+        { "id": "hoodie_blue", "label": "連帽外套", "tints": ["#3b6ea5", "#4e8f6d", "#6a4f9e", "#b8483f"] },
+        { "id": "cardigan_green", "label": "針織開衫", "tints": ["#4e8f6d", "#7a9e4f", "#c9a227"] },
+        { "id": "jacket_purple", "label": "短外套", "tints": ["#6a4f9e", "#3f4f8f", "#8a3f6f"] }
+      ]
+    },
+    "bottom": {
+      "label": "下身",
+      "items": [
+        { "id": "skirt_plaid", "label": "格紋裙", "tints": ["#6b4f3a", "#4a3b52", "#2f3b4a"] },
+        { "id": "trousers", "label": "長褲", "tints": ["#2f3b4a", "#3a2f2a", "#1f2430"] },
+        { "id": "skirt_dark", "label": "深色裙", "tints": ["#1f2430", "#2a2030", "#3a2f2a"] }
+      ]
+    },
+    "shoes": {
+      "label": "鞋",
+      "items": [
+        { "id": "sneakers", "label": "球鞋", "tints": ["#f2f2f2", "#d8d8d8", "#8ab4ff"] },
+        { "id": "boots", "label": "短靴", "tints": ["#3a2f2a", "#1f2430"] },
+        { "id": "loafers", "label": "樂福鞋", "tints": ["#111318", "#2a2030"] }
+      ]
+    },
+    "accessory": {
+      "label": "配件",
+      "items": [
+        { "id": "ribbon", "label": "緞帶", "tints": ["#d94f70", "#c9a227", "#8ab4ff"] },
+        { "id": "scarf", "label": "圍巾", "tints": ["#c9a227", "#b8483f", "#4e8f6d"] },
+        { "id": "headset", "label": "耳機", "tints": ["#8ab4ff", "#d8d8d8", "#6a4f9e"] }
+      ]
+    }
+  }
+}

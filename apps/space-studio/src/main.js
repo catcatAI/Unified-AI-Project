@@ -10,10 +10,10 @@
 import { drawStage } from "./renderer.js";
 import { resolveCamera } from "./camera.js";
 import { SpacePort } from "./space_port.js";
-import { cycleTint, SLOTS } from "./wardrobe.js";
 import { isRecordingSupported, startRecording } from "./recorder.js";
 import { scriptedBeat, spawnRoster } from "./roster.js";
 import { rendererLabel } from "./live2d.js";
+import { OutfitStore } from "./outfit_store.js";
 import { applySnapshot } from "./snapshot_sync.js";
 import { createSpaceSocket } from "./ws_client.js";
 
@@ -21,6 +21,7 @@ const DATA = {
   room: "../../space/rooms/studio_a.json",
   roster: "../../space/roles.json",
   motions: "../../space/motions/index.json",
+  catalog: "../../space/wardrobe/catalog.json",
 };
 
 const AVATARS = {
@@ -51,6 +52,14 @@ let modeLabel = "本機模式";
 let socket = null;
 
 const viewport = () => ({ width: canvas.width, height: canvas.height, worldWidth: 16, worldHeight: 9 });
+function safeStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 const setStatus = (text) => {
   statusEl.textContent = modeLabel ? `${text}　｜　${modeLabel}` : text;
 };
@@ -189,15 +198,78 @@ async function boot() {
     });
   }
 
-  // wardrobe
+  // wardrobe (S2): slot → item → tint, with undo and persistence
   const wardrobeSection = section("穿著（對象）");
-  for (const slot of SLOTS) {
-    button(wardrobeSection, `換 ${slot}`, () => {
-      const actor = port.get(selectedRole);
-      actor.avatar = cycleTint(actor.avatar, slot);
-      setStatus(`${selectedRole} ${slot} → rev ${actor.avatar.rev}`);
-    });
+  const catalog = await loadJson(DATA.catalog);
+  const storage = safeStorage();
+  const stores = new Map();
+  for (const roleId of port.actors.keys()) {
+    const store = new OutfitStore(port.get(roleId).avatar, { storage });
+    stores.set(roleId, store);
+    port.get(roleId).avatar = store.avatar;
   }
+
+  const slotSelect = document.createElement("select");
+  slotSelect.innerHTML = Object.entries(catalog.slots)
+    .map(([id, slot]) => `<option value="${id}">${slot.label}</option>`)
+    .join("");
+  wardrobeSection.appendChild(slotSelect);
+
+  const itemSelect = document.createElement("select");
+  wardrobeSection.appendChild(itemSelect);
+
+  const tints = document.createElement("div");
+  tints.className = "tints";
+  wardrobeSection.appendChild(tints);
+
+  function currentSlot() {
+    return catalog.slots[slotSelect.value];
+  }
+
+  function refreshTints() {
+    const slot = currentSlot();
+    const item = slot.items.find((entry) => entry.id === itemSelect.value) ?? slot.items[0];
+    tints.innerHTML = "";
+    for (const tint of item.tints) {
+      const swatch = document.createElement("button");
+      swatch.className = "tint";
+      swatch.style.background = tint;
+      swatch.title = tint;
+      swatch.addEventListener("click", () => applyWardrobe(item.id, tint));
+      tints.appendChild(swatch);
+    }
+  }
+
+  function refreshItems() {
+    const slot = currentSlot();
+    itemSelect.innerHTML = slot.items
+      .map((entry) => `<option value="${entry.id}">${entry.label}</option>`)
+      .join("");
+    refreshTints();
+  }
+
+  function applyWardrobe(item, tint) {
+    const store = stores.get(selectedRole);
+    if (!store) return;
+    store.set({ slot: slotSelect.value, item, tint });
+    port.get(selectedRole).avatar = store.avatar;
+    setStatus(`${selectedRole} ${slotSelect.value} → ${item} ${tint}（rev ${store.avatar.rev}）`);
+  }
+
+  slotSelect.addEventListener("change", refreshItems);
+  itemSelect.addEventListener("change", refreshTints);
+  refreshItems();
+
+  button(wardrobeSection, "復原", () => {
+    const store = stores.get(selectedRole);
+    if (!store || !store.canUndo) {
+      setStatus("沒有可復原的穿著");
+      return;
+    }
+    store.undo();
+    port.get(selectedRole).avatar = store.avatar;
+    setStatus(`${selectedRole} 穿著復原（rev ${store.avatar.rev}）`);
+  });
 
   // visibility
   const visibilitySection = section("可見性");
