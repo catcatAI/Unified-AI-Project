@@ -145,6 +145,7 @@ test("snapshot is plain data with a rounded position", () => {
     "motion",
     "position",
     "roleId",
+    "speech",
   ]);
 });
 

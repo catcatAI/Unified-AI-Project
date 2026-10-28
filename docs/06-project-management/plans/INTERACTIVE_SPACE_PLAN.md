@@ -4,7 +4,7 @@
 >
 > **這份文件不是什麼**：不是實作（目前全倉沒有這個空間的執行時）；不是角色大腦（那是 `MULTI_ROLE_PLAY_AGENT_PLAN.md`）；不是美術規格書（不規定模型面數、材質流程）。
 >
-> **狀態**：draft — 方向已定（§4 決策）。**S0 已落地**：`apps/space-studio/`（34 tests、零建置、`python3 -m http.server` 就能開）；S1 依賴 MULTI_ROLE 的 P1-3（已落地）與 P2-4（未做）；S5 直播待外部條件。
+> **狀態**：draft — 方向已定（§4 決策）。**S0 已落地**、**S1 前半已落地**（三角色同場、說話氣泡、可見性、Live2D 探測；47 tests、零建置）。S1 後半（後端 WebSocket 廣播）與 S1.5（Live2D 載入器）未做；S5 直播待外部條件。
 >
 > - 作者：Angela AI Development Team
 > - 版本：7.5.0-dev
@@ -198,12 +198,14 @@ class Actor:
 
 > 與原計畫的差異（誠實記錄）：角色是**程序繪製**，不是 Live2D——`avatar.model.path` 已預留 `models/Epsilon_free`，S1 再接載入器；測試數從「8」增加到 34（多出來的是 renderer 冒煙與錄影邊界）。
 
-### S1 — 多角色同場（3–5 天，依賴 P1-3 ✅ / P2-4 ✅ —— 已解除封鎖）
+### S1 — 多角色同場（3–5 天，依賴 P1-3 ✅ / P2-4 ✅）— 前半落地
 
-- [ ] 接 `MultiRoleOrchestrator`：每個 `Role` → 一個 Actor，`role.context_scope` 決定是否共享舞台狀態。
-- [ ] 共享/私有可見性：`Actor.visible_to` 決定「誰在誰的畫面裡」，與 `RoleContext` 同一套語意。
-- [ ] 後端 WebSocket 廣播演員狀態（位置／表情／動作／穿著版本號），前端插值。
-- [ ] 驗收：三個角色同場各自做自己的事；B 的密語不出現在 C 的 overlay；斷線重連可恢復（用最後一次快照）。
+- [x] 接角色：`space/roles.json` 名冊（main / role_b / role_c）→ `spawnRoster()` 每個角色一個 Actor，各自 avatar、位置、表情通道。
+- [x] 共享/私有可見性：`Actor.visibleTo` 決定「誰在誰的畫面裡」；`SpacePort.visibleFrom(viewer)` 已是純資料過濾，測試守住「對 role_c 隱藏 role_b」。
+- [x] 說話：`Actor.say()` 氣泡狀態（含 CJK 逐字換行），三人輪流說話的節奏由 `scriptedBeat()` 驅動。
+- [x] Live2D 探測：`detectLive2D()` 只回答「有沒有 Cubism runtime」，UI 誠實顯示目前是程序繪製（**載入器未接，S1.5**）。
+- [ ] 後端 WebSocket 廣播演員狀態（位置／表情／動作／穿著版本號）——**未做**，目前舞台是純前端狀態。
+- [ ] 驗收（斷線重連、跨視窗同步）——依賴上一項。
 
 ### S2 — 形象編輯（4–6 天）
 

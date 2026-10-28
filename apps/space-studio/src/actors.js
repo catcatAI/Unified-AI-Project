@@ -30,6 +30,7 @@ export class Actor {
     this.motion = null; // { id, durationMs, loop }
     this.motionElapsed = 0;
     this.breathPhase = 0;
+    this.speech = null; // { text, remainingMs }
     this._move = null;
   }
 
@@ -37,6 +38,11 @@ export class Actor {
   update(dtMs) {
     if (!(dtMs > 0)) return;
     this.breathPhase = (this.breathPhase + dtMs / 2600) % 1;
+
+    if (this.speech) {
+      this.speech.remainingMs -= dtMs;
+      if (this.speech.remainingMs <= 0) this.speech = null;
+    }
 
     if (this.motion) {
       this.motionElapsed += dtMs;
@@ -101,6 +107,14 @@ export class Actor {
     this.expression = expression;
   }
 
+  /** Speak for a while; the bubble is stage state, not a chat log. */
+  say(text, durationMs = 4000) {
+    const spoken = String(text ?? "").trim();
+    if (!spoken) throw new Error("say needs non-empty text");
+    this.speech = { text: spoken, remainingMs: durationMs };
+    return this.speech;
+  }
+
   /** Serialisable state — what the stage broadcasts over a socket later. */
   snapshot() {
     return {
@@ -110,6 +124,7 @@ export class Actor {
       facing: round3(this.facing),
       expression: this.expression,
       motion: this.motion ? this.motion.id : null,
+      speech: this.speech ? this.speech.text : null,
       avatarRev: this.avatar.rev ?? 0,
     };
   }

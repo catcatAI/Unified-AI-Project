@@ -130,6 +130,72 @@ function drawActor(ctx, { actor, camera, viewport }) {
     ctx.font = `${Math.max(10, Math.round(scale * 0.12))}px system-ui, sans-serif`;
     ctx.fillText(`▶ ${actor.motion.id}`, px, py - h * 1.1);
   }
+
+  if (actor.speech) drawSpeechBubble(ctx, { px, py: py - h * 1.24, w, text: actor.speech.text });
+}
+
+function drawSpeechBubble(ctx, { px, py, w, text }) {
+  const maxWidth = Math.max(160, w * 4.2);
+  const fontSize = Math.max(11, Math.round(w * 0.12));
+  ctx.font = `${fontSize}px system-ui, sans-serif`;
+  const lines = wrapText(ctx, text, maxWidth);
+  const lineHeight = fontSize * 1.35;
+  const boxW = Math.min(maxWidth, Math.max(...lines.map((line) => ctx.measureText(line).width)) + 16);
+  const boxH = lines.length * lineHeight + 10;
+  const x = px - boxW / 2;
+  const y = py - boxH;
+
+  ctx.fillStyle = "rgba(250,250,255,0.94)";
+  roundRect(ctx, x, y, boxW, boxH, 6);
+  ctx.fill();
+  // tail
+  ctx.beginPath();
+  ctx.moveTo(px - 5, y + boxH);
+  ctx.lineTo(px + 5, y + boxH);
+  ctx.lineTo(px, y + boxH + 7);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#1b1f2a";
+  ctx.textAlign = "center";
+  lines.forEach((line, index) => {
+    ctx.fillText(line, px, y + 6 + fontSize + index * lineHeight);
+  });
+}
+
+function wrapText(ctx, text, maxWidth) {
+  const raw = String(text);
+  // CJK has no spaces to break on, so fall back to per-character wrapping.
+  if (!/\s/.test(raw)) return chunkByChar(ctx, raw, maxWidth);
+  const words = raw.split(/\s+/);
+  const lines = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (ctx.measureText(next).width > maxWidth && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.length > 0 ? lines : [raw];
+}
+
+function chunkByChar(ctx, text, maxWidth) {
+  const lines = [];
+  let current = "";
+  for (const ch of text) {
+    if (current && ctx.measureText(current + ch).width > maxWidth) {
+      lines.push(current);
+      current = ch;
+    } else {
+      current += ch;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.length > 0 ? lines : [text];
 }
 
 function drawFace(ctx, { px, py, w, expression, skin }) {

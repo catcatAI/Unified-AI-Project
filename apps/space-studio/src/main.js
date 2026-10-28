@@ -2,10 +2,9 @@
  * =============================================================================
  * ANGELA-MATRIX: [L4] [βγδ] [B] [L3]
  * =============================================================================
- * main — wires the stage to the page: load data, run the loop, bind controls.
+ * main — three roles on one stage: roster, speech, visibility, camera, recording.
  *
- * No framework, no build step: `python3 -m http.server` at the repo root and
- * open /apps/space-studio/.
+ * No framework, no build step: serve the repo root and open /apps/space-studio/.
  */
 
 import { drawStage } from "./renderer.js";
@@ -13,11 +12,19 @@ import { resolveCamera } from "./camera.js";
 import { SpacePort } from "./space_port.js";
 import { cycleTint, SLOTS } from "./wardrobe.js";
 import { isRecordingSupported, startRecording } from "./recorder.js";
+import { scriptedBeat, spawnRoster } from "./roster.js";
+import { rendererLabel } from "./live2d.js";
 
 const DATA = {
   room: "../../space/rooms/studio_a.json",
-  avatar: "../../space/avatars/angela_base.json",
+  roster: "../../space/roles.json",
   motions: "../../space/motions/index.json",
+};
+
+const AVATARS = {
+  angela_base: "../../space/avatars/angela_base.json",
+  gemma_b: "../../space/avatars/gemma_b.json",
+  qwen_c: "../../space/avatars/qwen_c.json",
 };
 
 async function loadJson(path) {
@@ -32,18 +39,17 @@ const statusEl = document.getElementById("status");
 const panel = document.getElementById("panel");
 
 let port;
-let camera = resolveCamera("wide");
+let camera = resolveCamera("medium");
 let recording = null;
+let selectedRole = "main";
 let lastFrame = performance.now();
 let timeMs = 0;
+let stopBeat = null;
 
-function viewport() {
-  return { width: canvas.width, height: canvas.height, worldWidth: 16, worldHeight: 9 };
-}
-
-function setStatus(text) {
+const viewport = () => ({ width: canvas.width, height: canvas.height, worldWidth: 16, worldHeight: 9 });
+const setStatus = (text) => {
   statusEl.textContent = text;
-}
+};
 
 function frame(now) {
   const dt = Math.min(64, now - lastFrame);
@@ -80,30 +86,102 @@ function section(title) {
 }
 
 async function boot() {
-  const [room, avatar, motions] = await Promise.all([
+  const [room, roster, motions, ...avatars] = await Promise.all([
     loadJson(DATA.room),
-    loadJson(DATA.avatar),
+    loadJson(DATA.roster),
     loadJson(DATA.motions),
+    ...Object.entries(AVATARS).map(async ([id, path]) => [id, await loadJson(path)]),
   ]);
 
-  port = new SpacePort({ room, avatars: { angela_base: avatar }, motions });
-  port.spawn("main", {
-    roleId: "main",
-    avatarId: "angela_base",
-    position: [room.spawn_points[0].x, room.spawn_points[0].y],
-  });
-  port.play("main", "idle_breath");
+  port = new SpacePort({ room, avatars: Object.fromEntries(avatars), motions });
+  spawnRoster(port, roster);
+  for (const actor of port.actors.values()) port.play(actor.id, "idle_breath");
 
-  // Expressions
+  // who you are talking to
+  const selectSection = section("說話對象");
+  const select = document.createElement("select");
+  select.innerHTML = [...port.actors.keys()]
+    .map((id) => `<option value="${id}">${port.get(id).avatar.display_name ?? id}</option>`)
+    .join("");
+  select.addEventListener("change", () => {
+    selectedRole = select.value;
+    setStatus(`對象 → ${selectedRole}`);
+  });
+  selectSection.appendChild(select);
+
+  const line = document.createElement("input");
+  line.placeholder = "對她說一句話…";
+  line.value = "我回來了。";
+  selectSection.appendChild(line);
+
+  button(selectSection, "說話", () => {
+    try {
+      port.say(selectedRole, line.value || "…", 4500);
+      port.play(selectedRole, "nod");
+      setStatus(`${selectedRole} 說完一句`);
+    } catch (err) {
+      setStatus(`說話失敗：${err.message}`);
+    }
+  });
+
+  // three-way beat
+  const beatSection = section("三人對話");
+  button(beatSection, "示範一輪", () => {
+    if (stopBeat) stopBeat();
+    stopBeat = scriptedBeat(port, [
+      { role_id: "main", text: "歡迎回來，今天過得怎麼樣？" },
+      { role_id: "role_b", text: "我把今天的帳整理好了，數字不太好看。" },
+      { role_id: "role_c", text: "先別談帳，先說你吃飯了沒。" },
+    ]);
+    setStatus("三人輪流說話中…");
+  });
+
+  // expressions
   const exSection = section("表情");
-  for (const expression of avatar.expression_channels) {
+  for (const expression of avatars[0][1].expression_channels) {
     button(exSection, expression, () => {
-      port.express("main", expression);
-      setStatus(`表情 → ${expression}`);
+      port.express(selectedRole, expression);
+      setStatus(`${selectedRole} → ${expression}`);
     });
   }
 
-  // Camera
+  // motions
+  const motionSection = section("動作");
+  for (const motionId of Object.keys(motions)) {
+    button(motionSection, motionId, () => {
+      port.play(selectedRole, motionId);
+      setStatus(`${selectedRole} → ${motionId}`);
+    });
+  }
+
+  // wardrobe
+  const wardrobeSection = section("穿著（對象）");
+  for (const slot of SLOTS) {
+    button(wardrobeSection, `換 ${slot}`, () => {
+      const actor = port.get(selectedRole);
+      actor.avatar = cycleTint(actor.avatar, slot);
+      setStatus(`${selectedRole} ${slot} → rev ${actor.avatar.rev}`);
+    });
+  }
+
+  // visibility
+  const visibilitySection = section("可見性");
+  let hidden = false;
+  button(visibilitySection, "對 role_c 隱藏 role_b", () => {
+    hidden = !hidden;
+    port.get("role_b").visibleTo = hidden ? ["main", "role_b"] : null;
+    const visible = port.visibleFrom("role_c").map((a) => a.id);
+    setStatus(`role_c 看得到：${visible.join(", ") || "（無）"}`);
+  });
+
+  // movement
+  const moveSection = section("走動");
+  button(moveSection, "走到中央", () => {
+    port.move(selectedRole, [8, 0], 900);
+    setStatus(`${selectedRole} 走向中央`);
+  });
+
+  // camera
   const camSection = section("鏡頭");
   for (const preset of room.camera_presets) {
     button(camSection, preset, () => {
@@ -111,42 +189,8 @@ async function boot() {
       setStatus(`鏡頭 → ${preset}`);
     });
   }
-  button(camSection, "自由視角", () => {
-    camera = resolveCamera("free");
-    setStatus("鏡頭 → free（可拖曳平移）");
-  });
 
-  // Motion
-  const motionSection = section("動作");
-  for (const motionId of Object.keys(motions)) {
-    button(motionSection, motionId, () => {
-      port.play("main", motionId);
-      setStatus(`動作 → ${motionId}`);
-    });
-  }
-
-  // Wardrobe
-  const wardrobeSection = section("穿著");
-  for (const slot of SLOTS) {
-    button(wardrobeSection, `換 ${slot}`, () => {
-      const actor = port.get("main");
-      actor.avatar = cycleTint(actor.avatar, slot);
-      setStatus(`${slot} 換色 → rev ${actor.avatar.rev}`);
-    });
-  }
-
-  // Movement
-  const moveSection = section("走動");
-  button(moveSection, "走到左側", () => {
-    port.move("main", [5, 0], 900);
-    setStatus("移動 → (5, 0)");
-  });
-  button(moveSection, "走到中央", () => {
-    port.move("main", [8, 0], 900);
-    setStatus("移動 → (8, 0)");
-  });
-
-  // Recording
+  // recording
   const recSection = section("錄影");
   const recBtn = button(
     recSection,
@@ -180,20 +224,7 @@ async function boot() {
     recBtn.title = "此瀏覽器不支援 MediaRecorder";
   }
 
-  // Free-camera drag
-  let dragging = false;
-  canvas.addEventListener("pointerdown", () => {
-    dragging = camera.free === true;
-  });
-  canvas.addEventListener("pointerup", () => {
-    dragging = false;
-  });
-  canvas.addEventListener("pointermove", (event) => {
-    if (!dragging) return;
-    camera = { ...camera, panX: camera.panX - event.movementX / canvas.width };
-  });
-
-  setStatus("S0 舞台就緒：角色已站在攝影棚中央");
+  setStatus(`S1 舞台就緒｜3 個角色｜${rendererLabel()}`);
   requestAnimationFrame(frame);
 }
 

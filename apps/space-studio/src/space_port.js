@@ -20,7 +20,7 @@ export class SpacePort {
 
   /** What this stage can do; callers must not assume a capability exists. */
   capabilities() {
-    return ["spawn", "despawn", "move", "face", "play", "express", "look", "snapshot"];
+    return ["spawn", "despawn", "move", "face", "play", "express", "look", "say", "snapshot"];
   }
 
   spawn(actorId, { roleId = actorId, avatarId, position, facing = 0, visibleTo = null } = {}) {
@@ -69,6 +69,11 @@ export class SpacePort {
 
   express(actorId, expression) {
     this.get(actorId).express(expression);
+    return this;
+  }
+
+  say(actorId, text, durationMs = 4000) {
+    this.get(actorId).say(text, durationMs);
     return this;
   }
 

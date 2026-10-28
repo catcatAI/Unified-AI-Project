@@ -1,0 +1,19 @@
+{
+  "avatar_id": "qwen_c",
+  "display_name": "Qwen 角色",
+  "model": { "type": "procedural", "path": "models/miara_pro_en", "scale": 1.0 },
+  "body": { "height": 1.66, "build": 0.55 },
+  "palette": { "skin": "#e8c9ad", "hair": "#2b2b4a" },
+  "wardrobe": {
+    "outfit": "casual_03",
+    "slots": {
+      "top": { "item": "jacket_purple", "tint": "#6a4f9e" },
+      "bottom": { "item": "skirt_dark", "tint": "#1f2430" },
+      "shoes": { "item": "loafers", "tint": "#111318" },
+      "accessory": { "item": "headset", "tint": "#8ab4ff" }
+    }
+  },
+  "expression_channels": ["neutral", "smile", "happy", "blush", "wink", "sad"],
+  "motion_set": "role_c",
+  "rev": 0
+}

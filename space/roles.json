@@ -1,0 +1,8 @@
+{
+  "room_id": "studio_a",
+  "actors": [
+    { "role_id": "main", "avatar_id": "angela_base", "position": [5.5, 0] },
+    { "role_id": "role_b", "avatar_id": "gemma_b", "position": [8, 0] },
+    { "role_id": "role_c", "avatar_id": "qwen_c", "position": [10.5, 0] }
+  ]
+}

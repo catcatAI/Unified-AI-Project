@@ -1,0 +1,19 @@
+{
+  "avatar_id": "gemma_b",
+  "display_name": "Gemma 角色",
+  "model": { "type": "procedural", "path": "models/Epsilon_free", "scale": 1.0 },
+  "body": { "height": 1.58, "build": 0.45 },
+  "palette": { "skin": "#f2d9c2", "hair": "#5a3b2e" },
+  "wardrobe": {
+    "outfit": "casual_02",
+    "slots": {
+      "top": { "item": "cardigan_green", "tint": "#4e8f6d" },
+      "bottom": { "item": "trousers", "tint": "#2f3b4a" },
+      "shoes": { "item": "boots", "tint": "#3a2f2a" },
+      "accessory": { "item": "scarf", "tint": "#c9a227" }
+    }
+  },
+  "expression_channels": ["neutral", "smile", "happy", "blush", "wink", "sad"],
+  "motion_set": "role_b",
+  "rev": 0
+}
