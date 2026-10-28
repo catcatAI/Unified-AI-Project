@@ -13,11 +13,11 @@
  */
 
 export function detectLive2D(scope = globalThis) {
-  return Boolean(scope?.Live2D || scope?.Live2DCubismCore || scope?.CubismSdkForWeb);
+  return Boolean(scope?.Live2D || scope?.Live2DCubismCore || scope?.CubismSdkForWeb)
 }
 
 export function rendererLabel(scope = globalThis) {
   return detectLive2D(scope)
-    ? "Live2D SDK detected — loader not wired yet (procedural renderer active)"
-    : "procedural renderer (Live2D loader is S1.5)";
+    ? 'Live2D SDK detected — loader not wired yet (procedural renderer active)'
+    : 'procedural renderer (Live2D loader is S1.5)'
 }

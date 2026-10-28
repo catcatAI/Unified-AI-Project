@@ -8,58 +8,59 @@
  * exported library can replace that file without conversion.
  */
 
-import { parseMotion, serializeMotion } from "./motion_editor.js";
+import { parseMotion, serializeMotion } from './motion_editor.js'
 
-export const STORAGE_KEY = "space.motions.v1";
+export const STORAGE_KEY = 'space.motions.v1'
 
 export function saveMotion(library, motion) {
-  if (!motion || !motion.id) throw new Error("saveMotion needs a motion with an id");
-  return { ...library, [motion.id]: motion };
+  if (!motion || !motion.id) throw new Error('saveMotion needs a motion with an id')
+  return { ...library, [motion.id]: motion }
 }
 
 export function deleteMotion(library, id) {
-  const next = { ...library };
-  delete next[id];
-  return next;
+  const next = { ...library }
+  delete next[id]
+  return next
 }
 
 export function listMotions(library) {
-  return Object.values(library ?? {}).sort((a, b) => a.id.localeCompare(b.id));
+  return Object.values(library ?? {}).sort((a, b) => a.id.localeCompare(b.id))
 }
 
 /** JSON for `space/motions/index.json` (pretty, stable key order). */
 export function toLibraryJson(library) {
-  const ordered = {};
-  for (const motion of listMotions(library)) ordered[motion.id] = JSON.parse(serializeMotion(motion));
-  return JSON.stringify(ordered, null, 2) + "\n";
+  const ordered = {}
+  for (const motion of listMotions(library))
+    ordered[motion.id] = JSON.parse(serializeMotion(motion))
+  return JSON.stringify(ordered, null, 2) + '\n'
 }
 
 export function fromLibraryJson(json) {
-  const raw = typeof json === "string" ? JSON.parse(json) : json;
-  const library = {};
+  const raw = typeof json === 'string' ? JSON.parse(json) : json
+  const library = {}
   for (const [id, spec] of Object.entries(raw ?? {})) {
-    library[id] = parseMotion({ id, ...spec });
+    library[id] = parseMotion({ id, ...spec })
   }
-  return library;
+  return library
 }
 
 export function loadLibrary(storage, key = STORAGE_KEY) {
-  if (!storage) return {};
+  if (!storage) return {}
   try {
-    const raw = storage.getItem(key);
-    if (!raw) return {};
-    return fromLibraryJson(raw);
+    const raw = storage.getItem(key)
+    if (!raw) return {}
+    return fromLibraryJson(raw)
   } catch {
-    return {};
+    return {}
   }
 }
 
 export function persistLibrary(storage, library, key = STORAGE_KEY) {
-  if (!storage) return false;
+  if (!storage) return false
   try {
-    storage.setItem(key, toLibraryJson(library));
-    return true;
+    storage.setItem(key, toLibraryJson(library))
+    return true
   } catch {
-    return false; // full/blocked storage must not break editing
+    return false // full/blocked storage must not break editing
   }
 }

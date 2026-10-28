@@ -14,7 +14,9 @@
         --muted: #8b97a8;
         --accent: #6aa9ff;
       }
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
       body {
         margin: 0;
         min-height: 100vh;
@@ -23,9 +25,19 @@
         padding: 16px;
         background: var(--bg);
         color: var(--text);
-        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+        font:
+          14px/1.5 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
       }
-      main { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 0;
+      }
       canvas {
         width: 100%;
         aspect-ratio: 16 / 9;
@@ -47,9 +59,18 @@
         padding: 12px;
         overflow-y: auto;
       }
-      aside h1 { font-size: 15px; margin: 0 0 4px; }
-      aside p { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
-      .section { margin-bottom: 12px; }
+      aside h1 {
+        font-size: 15px;
+        margin: 0 0 4px;
+      }
+      aside p {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .section {
+        margin-bottom: 12px;
+      }
       .section h3 {
         margin: 0 0 6px;
         font-size: 12px;
@@ -69,9 +90,16 @@
         cursor: pointer;
         font-size: 12px;
       }
-      button:hover { border-color: var(--accent); color: #fff; }
-      button.record { border-color: #7a2f3a; background: #2a1418; }
-      select, input {
+      button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      button.record {
+        border-color: #7a2f3a;
+        background: #2a1418;
+      }
+      select,
+      input {
         width: 100%;
         margin: 0 0 6px;
         padding: 4px 6px;
@@ -81,10 +109,30 @@
         color: var(--text);
         font-size: 12px;
       }
-      .tints { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
-      .keys { max-height: 110px; overflow-y: auto; margin: 4px 0; font-size: 11px; color: var(--muted); }
-      .key { display: flex; justify-content: space-between; align-items: center; gap: 4px; padding: 2px 0; }
-      .key button { margin: 0; padding: 0 6px; }
+      .tints {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+        flex-wrap: wrap;
+      }
+      .keys {
+        max-height: 110px;
+        overflow-y: auto;
+        margin: 4px 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .key {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 0;
+      }
+      .key button {
+        margin: 0;
+        padding: 0 6px;
+      }
       .tint {
         width: 22px;
         height: 22px;
@@ -92,7 +140,10 @@
         border-radius: 50%;
         border: 1px solid rgba(255, 255, 255, 0.25);
       }
-      button:disabled { opacity: 0.45; cursor: not-allowed; }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
     </style>
   </head>
   <body>
@@ -102,7 +153,10 @@
     </main>
     <aside>
       <h1>Space Studio · S0</h1>
-      <p>一個房間、一個角色、鏡頭與錄影。資料在 <code>space/</code>，舞台在 <code>apps/space-studio/</code>。</p>
+      <p>
+        一個房間、一個角色、鏡頭與錄影。資料在 <code>space/</code>，舞台在
+        <code>apps/space-studio/</code>。
+      </p>
       <div id="panel"></div>
     </aside>
     <script type="module" src="./src/main.js"></script>

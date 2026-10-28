@@ -11,12 +11,12 @@
 
 export function spawnRoster(port, roster) {
   if (!roster || !Array.isArray(roster.actors)) {
-    throw new Error("roster needs an actors array");
+    throw new Error('roster needs an actors array')
   }
-  const spawned = [];
+  const spawned = []
   for (const entry of roster.actors) {
-    const roleId = entry.role_id;
-    if (!roleId) throw new Error("roster entry needs a role_id");
+    const roleId = entry.role_id
+    if (!roleId) throw new Error('roster entry needs a role_id')
     spawned.push(
       port.spawn(entry.actor_id ?? roleId, {
         roleId,
@@ -25,14 +25,14 @@ export function spawnRoster(port, roster) {
         facing: entry.facing ?? 0,
         visibleTo: entry.visible_to ?? null,
       })
-    );
+    )
   }
-  return spawned;
+  return spawned
 }
 
 /** Who a viewer can see, in stage order — privacy is data on the actor. */
 export function visibleFrom(port, viewerId) {
-  return port.visibleFrom(viewerId);
+  return port.visibleFrom(viewerId)
 }
 
 /**
@@ -40,13 +40,13 @@ export function visibleFrom(port, viewerId) {
  * the turn-taking that the backend will later drive for real.
  */
 export function scriptedBeat(port, lines, gapMs = 900) {
-  const timers = [];
+  const timers = []
   lines.forEach((line, index) => {
     timers.push(
       setTimeout(() => {
-        port.say(line.role_id, line.text, line.durationMs ?? 4000);
+        port.say(line.role_id, line.text, line.durationMs ?? 4000)
       }, index * gapMs)
-    );
-  });
-  return () => timers.forEach(clearTimeout);
+    )
+  })
+  return () => timers.forEach(clearTimeout)
 }

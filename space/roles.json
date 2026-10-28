@@ -4,34 +4,22 @@
     {
       "role_id": "main",
       "avatar_id": "angela_base",
-      "position": [
-        5.5,
-        0
-      ]
+      "position": [5.5, 0]
     },
     {
       "role_id": "role_b",
       "avatar_id": "gemma_b",
-      "position": [
-        8,
-        0
-      ]
+      "position": [8, 0]
     },
     {
       "role_id": "role_c",
       "avatar_id": "qwen_c",
-      "position": [
-        10.5,
-        0
-      ]
+      "position": [10.5, 0]
     },
     {
       "role_id": "role_d",
       "avatar_id": "deepseek_d",
-      "position": [
-        13.0,
-        0
-      ]
+      "position": [13.0, 0]
     }
   ]
 }

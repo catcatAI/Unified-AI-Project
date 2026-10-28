@@ -35,14 +35,7 @@
       }
     }
   },
-  "expression_channels": [
-    "neutral",
-    "smile",
-    "happy",
-    "blush",
-    "wink",
-    "sad"
-  ],
+  "expression_channels": ["neutral", "smile", "happy", "blush", "wink", "sad"],
   "motion_set": "role_d",
   "rev": 0
 }

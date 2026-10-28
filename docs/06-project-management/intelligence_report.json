@@ -518,38 +518,15 @@
     "band": "L2 本地可用",
     "band_summary": "多輪對話不跑題，記憶／推理／多模態能串起來當助手用",
     "attained_level": "L0",
-    "level_missing": [
-      "paraphrase 5.0/10 < 7.0/10"
-    ],
-    "failed_dimensions": [
-      "paraphrase 5.0/10 < 7.0/10",
-      "tools 0.0/10 < 5.4/10"
-    ],
+    "level_missing": ["paraphrase 5.0/10 < 7.0/10"],
+    "failed_dimensions": ["paraphrase 5.0/10 < 7.0/10", "tools 0.0/10 < 5.4/10"],
     "counted": [
-      [
-        "facts",
-        0.5333
-      ],
-      [
-        "math",
-        0.8
-      ],
-      [
-        "paraphrase",
-        0.5
-      ],
-      [
-        "dialogue",
-        0.7939
-      ],
-      [
-        "boundary",
-        0.8889
-      ],
-      [
-        "tools",
-        0.0
-      ]
+      ["facts", 0.5333],
+      ["math", 0.8],
+      ["paraphrase", 0.5],
+      ["dialogue", 0.7939],
+      ["boundary", 0.8889],
+      ["tools", 0.0]
     ],
     "skipped": [],
     "integrity": "量測有效（樣本有效性 ✅／少量-標準量一致性 ✅／非空轉 ✅）"

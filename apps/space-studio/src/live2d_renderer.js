@@ -13,26 +13,26 @@
  * Live2D must never be a blank screen.
  */
 
-export const CORE_URL = "../../apps/web-live2d-viewer/libs/live2dcubismcore.min.js";
+export const CORE_URL = '../../apps/web-live2d-viewer/libs/live2dcubismcore.min.js'
 export const MODEL_URL =
-  "../../apps/web-live2d-viewer/models/Epsilon_free/runtime/Epsilon_free.model3.json";
+  '../../apps/web-live2d-viewer/models/Epsilon_free/runtime/Epsilon_free.model3.json'
 
 export function coreAvailable(scope = globalThis) {
-  return Boolean(scope && scope.Live2DCubismCore);
+  return Boolean(scope && scope.Live2DCubismCore)
 }
 
 export function defaultLoader(url) {
   return new Promise((resolve, reject) => {
-    if (typeof document === "undefined") {
-      reject(new Error("no document: cannot load the Cubism core"));
-      return;
+    if (typeof document === 'undefined') {
+      reject(new Error('no document: cannot load the Cubism core'))
+      return
     }
-    const script = document.createElement("script");
-    script.src = url;
-    script.onload = () => resolve(true);
-    script.onerror = () => reject(new Error(`failed to load ${url}`));
-    document.head.appendChild(script);
-  });
+    const script = document.createElement('script')
+    script.src = url
+    script.onload = () => resolve(true)
+    script.onerror = () => reject(new Error(`failed to load ${url}`))
+    document.head.appendChild(script)
+  })
 }
 
 export async function ensureCore({
@@ -40,35 +40,35 @@ export async function ensureCore({
   loader = defaultLoader,
   url = CORE_URL,
 } = {}) {
-  if (coreAvailable(scope)) return { ok: true, loaded: false };
+  if (coreAvailable(scope)) return { ok: true, loaded: false }
   try {
-    await loader(url);
+    await loader(url)
   } catch (err) {
-    return { ok: false, loaded: false, error: err.message };
+    return { ok: false, loaded: false, error: err.message }
   }
   return coreAvailable(scope)
     ? { ok: true, loaded: true }
-    : { ok: false, loaded: true, error: "core script loaded but Live2DCubismCore is undefined" };
+    : { ok: false, loaded: true, error: 'core script loaded but Live2DCubismCore is undefined' }
 }
 
 export async function loadModelMeta(url = MODEL_URL, fetchImpl = globalThis.fetch) {
-  if (typeof fetchImpl !== "function") throw new Error("no fetch available");
-  const response = await fetchImpl(url, { cache: "no-store" });
-  if (!response.ok) throw new Error(`model metadata HTTP ${response.status}`);
-  const meta = await response.json();
-  const refs = meta && meta.FileReferences;
-  if (!refs || !refs.Moc) throw new Error("model metadata has no FileReferences.Moc");
-  return meta;
+  if (typeof fetchImpl !== 'function') throw new Error('no fetch available')
+  const response = await fetchImpl(url, { cache: 'no-store' })
+  if (!response.ok) throw new Error(`model metadata HTTP ${response.status}`)
+  const meta = await response.json()
+  const refs = meta && meta.FileReferences
+  if (!refs || !refs.Moc) throw new Error('model metadata has no FileReferences.Moc')
+  return meta
 }
 
 /** One call for the UI: returns a human-readable verdict, never throws. */
 export async function inspectLive2D(options = {}) {
-  const core = await ensureCore(options);
-  if (!core.ok) return { ok: false, stage: "core", reason: core.error };
+  const core = await ensureCore(options)
+  if (!core.ok) return { ok: false, stage: 'core', reason: core.error }
   try {
-    const meta = await loadModelMeta(options.modelUrl ?? MODEL_URL, options.fetchImpl);
-    return { ok: true, stage: "metadata", moc: meta.FileReferences.Moc };
+    const meta = await loadModelMeta(options.modelUrl ?? MODEL_URL, options.fetchImpl)
+    return { ok: true, stage: 'metadata', moc: meta.FileReferences.Moc }
   } catch (err) {
-    return { ok: false, stage: "metadata", reason: err.message };
+    return { ok: false, stage: 'metadata', reason: err.message }
   }
 }

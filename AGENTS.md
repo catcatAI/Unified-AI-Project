@@ -911,348 +911,300 @@ collected — 0 errors**).
 > 5,804 in 4.5min.
 
 > ✅ **NOTE (Updated 2026-10-21, 中間層)**: **中間層（神經 ↔ 確定性老師）**
-> 完成。新增 `apps/backend/src/ai/reasoning/neural_bridge.py`：使用者要求的
-> 「先接觸、再依反饋與神經網路對齊」三段式——**接觸**（ONNX
-> 多語編碼器把未見改述落到老師概念原型）／**對齊**（老師回饋只移動概念原型、
-> 不記題目）／**合成**（關係圖＋極值，語意同
+> 完成。新增
+> `apps/backend/src/ai/reasoning/neural_bridge.py`：使用者要求的「先接觸、再依反饋與神經網路對齊」三段式——**接觸**（ONNX多語編碼器把未見改述落到老師概念原型）／**對齊**（老師回饋只移動概念原型、不記題目）／**合成**（關係圖＋極值，語意同
 > `ai.symbolic_reasoner`）。概念原型的種子**只取老師詞彙**
 > （`_GREATER`/`_LESSER`/`_EXTRA_*`＋其「比較詞→最高級」對照表），
-> `tests/ai/test_neural_bridge.py` 有血緣測試守住。實測（`python
-> scripts/probe_neural_bridge.py`）：控制組（老師詞彙 12 題）中間層 12/12 vs
-> ＝老師 12/12（不迴歸；老師的冠詞實體抽取缺陷同期修好）；**留出集**（老師解不了的改述 20
-> 題，開發期未看過、未對齊）中間層 16/20（對齊後 17/20）vs 老師 2/20；
-> 對齊回饋讓開發組 3/5 → 5/5。留出集 3
-> 題未答＝編碼器接觸失敗（sweltering/compact/thicker），如實記錄。
-> `scripts/probe_reasoning_unseen.py` 三欄：確定性 100/100、純神經 0/100、純神經＋中間層
-> 87/100——**純神經門檻仍未達**（中間層不等於純神經）。**已接上生產路徑**：
+> `tests/ai/test_neural_bridge.py`
+> 有血緣測試守住。實測（`python scripts/probe_neural_bridge.py`）：控制組（老師詞彙 12 題）中間層 12/12
+> vs ＝老師 12/12（不迴歸；老師的冠詞實體抽取缺陷同期修好）；**留出集**（老師解不了的改述 20 題，開發期未看過、未對齊）中間層 16/20（對齊後 17/20）vs 老師 2/20；對齊回饋讓開發組 3/5
+> →
+> 5/5。留出集 3 題未答＝編碼器接觸失敗（sweltering/compact/thicker），如實記錄。
+> `scripts/probe_reasoning_unseen.py`
+> 三欄：確定性 100/100、純神經 0/100、純神經＋中間層 87/100——**純神經門檻仍未達**（中間層不等於純神經）。**已接上生產路徑**：
 > `ai.arithmetic/deterministic_router.py` 的 `try_neural_bridge()` 接在
-> `try_reasoning`（老師）之後，老師先答、橋接補老師看不到的改述；GARDEN／ED3N
-> 引擎經同一 router 一併受益；橋接對非比較問句 abstain（不亂答）。
-> **2026-10-21 續修（跑偏修正：像人 ≠ 是智能）**：使用者指出「這看起來像在複製
-> 模板而不是智能學習」。新增 `scripts/probe_intelligence_sources.py` 量**回答來源
-> 分布**——第一次量到 **神經層佔比 0%**：前幾輪擴充模板／斷言庫讓「人話標準」變好，
-> 但那是階梯定義的 **L0**（確定性＋反射＋字典「會回罐頭」），不是 L1／L2 的智能，
-> **量測被模板餵高了**。修正：① **對話教到回答用的那個模型**（unified engine 的語意
-> 檢索＋統計核心，都在回答路徑上；以前教的是 ED3N／GARDEN＝教了沒人聽）；② **神經
-> 層排在罐頭模板之前**（學到的對話要能浮出來），門檻嚴格（編碼器餘弦 ≥0.95）；
-> ③ **不把罐頭句與檢索引文回教回去**（自我石化）。另修：GARDEN 無槽位時學整句原文
-> （中文沒空格切詞 → 原樣端回使用者的句子）、hybrid 把回聲接在答案後面、SLS 配錯教過
-> 的對。**神經層 0% → 22.7%**；門禁新增 `neural_share`（只許往上）。
-> **2026-10-21 續修（斷言庫 16→36 條＋組合層依用詞選片語）**：斷言庫新增 20
-> 條真實斷言（每條帶條件＋例外＋不符合），**刻意不種標準集的主題**（那 324 題量
-> 知識缺口，種進去＝自己教自己）。NeuroBlender 的片語選擇加上「使用者的字」，
-> 問候片語只在真的問候時出現；組合層接回生產路徑（NeuroBlender 在誠實棄權之前，
-> 但有相關性門檻——不相關就寧可誠實說不知道；事實型問句一律誠實棄權）。
-> 斷言題 88% → 89%、人話標準通過率 61.0% → **62.6%**（標準集 1096 回合）。
-> **2026-10-21 續修（原生路徑往「像人」走）**：GARDEN 從「舊引擎」變成**結構
-> 學習器**（聊天時的學習不再被 `ANGELA_LEGACY_ED3N=1` 閘住——它學「怎麼說」，
-> 教過就照教的方式回）；**不重複自己**（同句連問三次 → 三句不同回應）；橋接用
-> **問題的維度**約束關係詞（留出集 16/20 → 19/20）；回憶層改**語意檢索**；橋接對
-> 非問句棄權。量測：人話標準通過率 57.8% → **63.0%**（問答 95%／斷言題 88%／
-> 對話 83%／多重事實 65%／**斷言庫外的邊界題 0%**）、學習效應 +0.436（22 組對）。
-> 少量 vs 標準量的一致性改用**統計比較**（區間是否重疊、2 個標準誤）而非固定容差。
+> `try_reasoning`（老師）之後，老師先答、橋接補老師看不到的改述；GARDEN／ED3N 引擎經同一 router 一併受益；橋接對非比較問句 abstain（不亂答）。
+> **2026-10-21 續修（跑偏修正：像人 ≠ 是智能）**：使用者指出「這看起來像在複製模板而不是智能學習」。新增
+> `scripts/probe_intelligence_sources.py` 量**回答來源分布**——第一次量到
+> **神經層佔比 0%**：前幾輪擴充模板／斷言庫讓「人話標準」變好，但那是階梯定義的
+> **L0**（確定性＋反射＋字典「會回罐頭」），不是 L1／L2 的智能，
+> **量測被模板餵高了**。修正：① **對話教到回答用的那個模型**（unified
+> engine 的語意檢索＋統計核心，都在回答路徑上；以前教的是 ED3N／GARDEN＝教了沒人聽）；②
+> **神經層排在罐頭模板之前**（學到的對話要能浮出來），門檻嚴格（編碼器餘弦 ≥0.95）；③
+> **不把罐頭句與檢索引文回教回去**（自我石化）。另修：GARDEN 無槽位時學整句原文（中文沒空格切詞 → 原樣端回使用者的句子）、hybrid 把回聲接在答案後面、SLS 配錯教過的對。**神經層 0%
+> → 22.7%**；門禁新增 `neural_share`（只許往上）。
+> **2026-10-21 續修（斷言庫 16→36 條＋組合層依用詞選片語）**：斷言庫新增 20 條真實斷言（每條帶條件＋例外＋不符合），**刻意不種標準集的主題**（那 324 題量知識缺口，種進去＝自己教自己）。NeuroBlender 的片語選擇加上「使用者的字」，問候片語只在真的問候時出現；組合層接回生產路徑（NeuroBlender 在誠實棄權之前，但有相關性門檻——不相關就寧可誠實說不知道；事實型問句一律誠實棄權）。斷言題 88%
+> → 89%、人話標準通過率 61.0% → **62.6%**（標準集 1096 回合）。
+> **2026-10-21 續修（原生路徑往「像人」走）**：GARDEN 從「舊引擎」變成**結構學習器**（聊天時的學習不再被
+> `ANGELA_LEGACY_ED3N=1`
+> 閘住——它學「怎麼說」，教過就照教的方式回）；**不重複自己**（同句連問三次 → 三句不同回應）；橋接用
+> **問題的維度**約束關係詞（留出集 16/20 →
+> 19/20）；回憶層改**語意檢索**；橋接對非問句棄權。量測：人話標準通過率 57.8% →
+> **63.0%**（問答 95%／斷言題 88%／對話 83%／多重事實 65%／**斷言庫外的邊界題 0%**）、學習效應 +0.436（22 組對）。少量 vs 標準量的一致性改用**統計比較**（區間是否重疊、2 個標準誤）而非固定容差。
 > **2026-10-21 續修（推理層補一級）**：新增
 > `apps/backend/src/ai/reasoning/claims.py` ＋
-> `apps/backend/configs/standard/reasoning/claims.yaml`——**斷言推理**：「X 這句話
-> 對嗎？」帶著**條件**與**例外**回答（「最正確」那一級）；知識庫不得回答斷言題
-> （原本回「答案是 100。」這種假答案，把條件藏掉）。**多重事實組合**：回憶層會
-> 拆子句並一次回答多個事實。標準集新增 `claim` 類（量機制）與 `state` 類（量知識
-> 缺口）刻意分開。
+> `apps/backend/configs/standard/reasoning/claims.yaml`——**斷言推理**：「X 這句話對嗎？」帶著**條件**與**例外**回答（「最正確」那一級）；知識庫不得回答斷言題（原本回「答案是 100。」這種假答案，把條件藏掉）。**多重事實組合**：回憶層會拆子句並一次回答多個事實。標準集新增
+> `claim` 類（量機制）與 `state` 類（量知識缺口）刻意分開。
 > **2026-10-21 續修（人話標準 + 千題標準集）**：
-> `apps/backend/src/ai/response/human_speech.py` 定義**可裁決的「人話標準」**（六條
-> 規則，含「有邊界條件時要指出例外」＝「最正確」與「近似正確」的差別）與
-> **≥1000 題的標準集**（帶邊界條件的題 324／多重事實 72／問答 492／**對話 166**）。
-> 實測（純本地、1054 回合）：**人話標準通過 56.5%**（對話 83%／問答 85%／多重
-> 事實 53%／**帶邊界條件的題 0% 全滅**）→ 誠實結論：**純本地基模目前不能算
-> 「會說人話」**，門禁把通過率、題數（≥1000）、邊界題通過率一起納入裁決。
-> **2026-10-21 續修（量測的樣本量）**：11 回合的小樣本報「人味 0.855、缺陷
-> 0%」是**假象**；標準量 68 回合／輪才量得出真話（修完後：人味 0.691、答對 41%、
-> 鸚鵡 6% 4/68 區間 2–14%、QA 機器 18%、雞同鴨講 13%、**學習效應 +0.625**）。
-> 量測工具新增：**少量 vs 標準量的一致性檢查**（不一致＝標準量需要重調整）、每個
-> 率的 **95% 區間**、**樣本有效性**（回合數／輸出是否全一樣——全一樣時鸚鵡捲舌與
-> 學習分不開／教→問對數）。門禁把有效性與一致性一起裁決。標準量才量得出的缺陷
-> 也一併修掉：名字分支不再回答所有「我剛才說…」、任務管理器不把問句當指令、鬧鐘
-> 不回答回憶問句、回憶只引用有內容詞匹配的句子、使用者自報事實時回「記住囉！」。
-> **2026-10-21 續修（純本地路徑的三個真缺陷）**：原生路徑的人味分數
-> 0.800 → **0.840**、答對 50% → **60%**、雞同鴨講 10% → **0%**、QA 機器 10%
-> → **0%**：① 原生路徑**不會用記憶**（使用者的話存了卻查不到）→ 新增對話回憶層
-> （`try_conversation_recall`：「我剛才說我叫什麼名字？」→「你叫小明。」）；②
-> 陳述句被當查詢、被不相關的舊事實蓋掉 → `_recall_user_fact` 只在問句時回舊事實；
-> ③ 罐頭句蓋掉情緒（「我今天很累」→「今天是个好日子！」）→ reflex 預設改成「整句
-> 就是那句問候」才觸發；情緒偵測正則的 `\b` 前綴讓中文分支永不匹配（已修）；
-> 疲累模板缺「累」（已補）；NeuroBlender 黏 6 句碎念（已限 3 句）。
-> **8,415 passed / 107 skipped / 0 failed**（`pytest tests/
-> apps/backend/tests/`）。
+> `apps/backend/src/ai/response/human_speech.py`
+> 定義**可裁決的「人話標準」**（六條規則，含「有邊界條件時要指出例外」＝「最正確」與「近似正確」的差別）與
+> **≥1000 題的標準集**（帶邊界條件的題 324／多重事實 72／問答 492／**對話 166**）。實測（純本地、1054 回合）：**人話標準通過 56.5%**（對話 83%／問答 85%／多重事實 53%／**帶邊界條件的題 0% 全滅**）→ 誠實結論：**純本地基模目前不能算「會說人話」**，門禁把通過率、題數（≥1000）、邊界題通過率一起納入裁決。
+> **2026-10-21 續修（量測的樣本量）**：11 回合的小樣本報「人味 0.855、缺陷 0%」是**假象**；標準量 68 回合／輪才量得出真話（修完後：人味 0.691、答對 41%、鸚鵡 6%
+> 4/68 區間 2–14%、QA 機器 18%、雞同鴨講 13%、**學習效應 +0.625**）。量測工具新增：**少量 vs 標準量的一致性檢查**（不一致＝標準量需要重調整）、每個率的
+> **95% 區間**、**樣本有效性**（回合數／輸出是否全一樣——全一樣時鸚鵡捲舌與學習分不開／教→問對數）。門禁把有效性與一致性一起裁決。標準量才量得出的缺陷也一併修掉：名字分支不再回答所有「我剛才說…」、任務管理器不把問句當指令、鬧鐘不回答回憶問句、回憶只引用有內容詞匹配的句子、使用者自報事實時回「記住囉！」。
+> **2026-10-21 續修（純本地路徑的三個真缺陷）**：原生路徑的人味分數0.800 →
+> **0.840**、答對 50% → **60%**、雞同鴨講 10% → **0%**、QA 機器 10% →
+> **0%**：① 原生路徑**不會用記憶**（使用者的話存了卻查不到）→ 新增對話回憶層（`try_conversation_recall`：「我剛才說我叫什麼名字？」→「你叫小明。」）；② 陳述句被當查詢、被不相關的舊事實蓋掉 →
+> `_recall_user_fact`
+> 只在問句時回舊事實；③ 罐頭句蓋掉情緒（「我今天很累」→「今天是个好日子！」）→
+> reflex 預設改成「整句就是那句問候」才觸發；情緒偵測正則的 `\b`
+> 前綴讓中文分支永不匹配（已修）；疲累模板缺「累」（已補）；NeuroBlender 黏 6 句碎念（已限 3 句）。
+> **8,415 passed / 107 skipped / 0
+> failed**（`pytest tests/ apps/backend/tests/`）。
 
-> ✅ **NOTE (Updated 2026-10-22, 統一定義)**: **§X #267**: 智能定義統一。盤點
-> 發現專案有**十一套**自稱 intelligence 的評分系統，同一個詞在不同檔案指不同
-> 的量尺（6.0/10 框架口徑、4.3/10 基底加權、0.5/10 純原生、人話 rubric、
-> neural_share、成熟度階級、美術品質階梯…），於是「智能幾分」永遠可以挑一個
-> 對自己有利的數字。新增**唯一**定義
+> ✅ **NOTE (Updated 2026-10-22, 統一定義)**: **§X
+> #267**: 智能定義統一。盤點發現專案有**十一套**自稱 intelligence 的評分系統，同一個詞在不同檔案指不同的量尺（6.0/10 框架口徑、4.3/10 基底加權、0.5/10 純原生、人話 rubric、neural_share、成熟度階級、美術品質階梯…），於是「智能幾分」永遠可以挑一個對自己有利的數字。新增**唯一**定義
 > `apps/backend/src/ai/meta/intelligence.py`：智能 = **能力 × 來源 × 誠實度**
-> 三軸正交——① 能力六維度（事實／數理／改述泛化／對話記憶／推理例外／工具）
-> 各 0–10，且**只有「驗證／實際」分計入**（架構分、框架分是準備度）；② 來源
-> （神經／模板／確定性／檢索）判斷是智能學習還是複製模板；③ 誠實度是**門**
-> （樣本有效性／少量-標準量一致性／非空轉／預算截斷）——不過就回「未定義」，
-> 不給數字。五套階梯各有命名空間（`L0..L3` 智能｜`Q0..Q4` 美術｜`X0..X11`
-> 經驗｜`R1..R3` 回應來源｜`claimed..production` 工程成熟度），L0 不再指五種
-> 東西。新增 `scripts/report_intelligence.py`（唯一總分→
+> 三軸正交——① 能力六維度（事實／數理／改述泛化／對話記憶／推理例外／工具）各 0–10，且**只有「驗證／實際」分計入**（架構分、框架分是準備度）；② 來源（神經／模板／確定性／檢索）判斷是智能學習還是複製模板；③ 誠實度是**門**
+> （樣本有效性／少量-標準量一致性／非空轉／預算截斷）——不過就回「未定義」，不給數字。五套階梯各有命名空間（`L0..L3`
+> 智能｜`Q0..Q4` 美術｜`X0..X11` 經驗｜`R1..R3` 回應來源｜`claimed..production`
+> 工程成熟度），L0 不再指五種東西。新增
+> `scripts/report_intelligence.py`（唯一總分→
 > `docs/06-project-management/intelligence_report.json`）＋
 > `scripts/check_intelligence_definition.py`＋事實門
 > `intelligence.definition_wellformed`；四份互相衝突的文件（
 > `INTELLIGENCE_ASSESSMENT` §0／`FRAMEWORK_OVERVIEW`／`MASTER_TASK_MAP`／
 > `AI_SUBSTRATE_ASSESSMENT`）加註口徑並指向統一定義，`AI_CAPABILITY_LADDER`
 > 補「20/20 是冒煙測試、不可與 1096 題標準集比較」。順手修掉兩個量測缺陷：
-> `probe_native_dialogue.py` 預設 `--max-turns 200` 會**截斷**標準集（1096 題）
-> 讓量測失效（現對齊預算檔 1300，且截斷會讓有效性判失敗）；報告改讀
-> 預算檔的上限、bench 的 `--out` 是目錄（取最新檔）而非檔案。
+> `probe_native_dialogue.py` 預設 `--max-turns 200`
+> 會**截斷**標準集（1096 題）讓量測失效（現對齊預算檔 1300，且截斷會讓有效性判失敗）；報告改讀預算檔的上限、bench 的
+> `--out` 是目錄（取最新檔）而非檔案。
 
 > ✅ **NOTE (Updated 2026-10-22, 及格線外接)**: **§X #268**: 智能的及格線改成
-> **由公開基準推導**，因為「門檻自己訂」＝自問自答（先把線調到剛好能過，再宣稱
-> 達標）。`ai/meta/intelligence.py` 新增 `Anchor`（benchmark／source／url／
-> protocol／chance／human_expert／published_baseline）與 `pass_line()`；三條
-> 統一規則：**R1 隨機 +20 個百分點**（MMLU 論文用此描述 GPT-3 的顯著進步）、
-> **R2 0.5 × 人類上限**、**R3 0.7 × 已發表強基線**（無人類基線時）；取大者。
-> 六維度各掛一個外部基準：facts←MMLU、math←GSM8K、paraphrase←PAWS、
-> dialogue←LoCoMo、boundary←FOLIO、tools←BFCL V4。`Dimension.threshold` 改成
-> **property**（由 `pass_line` 算出，手改不可能通過門禁）；門禁新增「必須有
-> anchor＋URL＋推導」「protocol 只能是 same/analogous」「文件裡的及格線必須等於
-> 重算值」。新及格線：45／61／70／44／53／54%，實測 3 過 3 不過
-> （facts 20%、paraphrase 0%、tools 0% 未達）——**這比原本自訂的
-> 25／75／40／60／30／85% 誠實得多**（原本 math／dialogue 過得太寬、
-> facts／boundary 被低估）。總分 4.41/10 不變（門檻不影響平均），達成階梯仍
-> L0。新文件 `docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md`
-> 逐條列引用與**協定等價性警告**：內部量測是「同題型、自己出題」
-> （`analogous`），及格線是**可比性下限**，不是「在 MMLU 上拿 45%」。
-> 32 條定義合約測試全過；`check_intelligence_definition` 0 violations。
+> **由公開基準推導**，因為「門檻自己訂」＝自問自答（先把線調到剛好能過，再宣稱達標）。`ai/meta/intelligence.py`
+> 新增
+> `Anchor`（benchmark／source／url／protocol／chance／human_expert／published_baseline）與
+> `pass_line()`；三條統一規則：**R1 隨機 +20 個百分點**（MMLU 論文用此描述 GPT-3 的顯著進步）、
+> **R2 0.5 × 人類上限**、**R3 0.7
+> × 已發表強基線**（無人類基線時）；取大者。六維度各掛一個外部基準：facts←MMLU、math←GSM8K、paraphrase←PAWS、dialogue←LoCoMo、boundary←FOLIO、tools←BFCL
+> V4。`Dimension.threshold` 改成 **property**（由 `pass_line`
+> 算出，手改不可能通過門禁）；門禁新增「必須有 anchor＋URL＋推導」「protocol 只能是 same/analogous」「文件裡的及格線必須等於重算值」。新及格線：45／61／70／44／53／54%，實測 3 過 3 不過（facts
+> 20%、paraphrase 0%、tools
+> 0% 未達）——**這比原本自訂的 25／75／40／60／30／85% 誠實得多**（原本 math／dialogue 過得太寬、facts／boundary 被低估）。總分 4.41/10 不變（門檻不影響平均），達成階梯仍 L0。新文件
+> `docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md`
+> 逐條列引用與**協定等價性警告**：內部量測是「同題型、自己出題」（`analogous`），及格線是**可比性下限**，不是「在 MMLU 上拿 45%」。32 條定義合約測試全過；`check_intelligence_definition`
+> 0 violations。
 
-> ✅ **NOTE (Updated 2026-10-23, 改述泛化)**: **§X #269**: 改述（L1 關鍵維度）
-> 有了**凍結基準**與**可量測的教學**，但沒有作弊。`benchmarks/data/
-> paraphrase_v1.json`（`scripts/build_paraphrase_benchmark.py`，`--check` 可驗）
-> 四個切分：`heldout_dimensions`（教過的詞 × 沒教過的維度，開發集）、
+> ✅ **NOTE (Updated 2026-10-23, 改述泛化)**: **§X
+> #269**: 改述（L1 關鍵維度）有了**凍結基準**與**可量測的教學**，但沒有作弊。`benchmarks/data/ paraphrase_v1.json`（`scripts/build_paraphrase_benchmark.py`，`--check`
+> 可驗）四個切分：`heldout_dimensions`（教過的詞 × 沒教過的維度，開發集）、
 > `unseen_surfaces`（沒教過的詞，開發診斷）、`test`（教過的詞、新句子，126 題）、
-> **`heldout_final`（從未教過、也沒調參的 4 個詞，56 題）＝分數**。
-> 課程 `configs/standard/reasoning/paraphrase_curriculum.yaml` 26 句
-> （把同義詞的**極性類別**教寬，不是記題目）；`get_neural_bridge()` 在生產路徑
-> 套課程，raw 保留給對照。中間層另修：`ANY_DIMENSION` 概念可由第一句建立、
-> 被動語態（尾隨 by）納入關係詞、`not as X as` 的推翻方向。
-> **實測**：教過的詞＋新句子 **100%**（126/126，這是回想＋組合，不當分數）；
-> 沒教過的詞：未教 21% → 教過 **36%**（`heldout_final`，即維度分數）；
-> 開發診斷 21% → 50%；學習效應（開發集）+39%。**改述仍 FAIL**（36% < 70%）。
-> 誠實維護：最終留出首輪若被事後補進課程，就不算留出——新增
-> `benchmarks.paraphrase_benchmark_wellformed` 門禁（基準＝產生器、held-out 詞
-> 不在課程、教過的詞在課程、評測句子不在課程）＋12 條資料合約測試。
-> 總分 4.41 → **5.00/10**（平均落 L2 帶，**達成階梯仍 L0**）。
+> **`heldout_final`（從未教過、也沒調參的 4 個詞，56 題）＝分數**。課程
+> `configs/standard/reasoning/paraphrase_curriculum.yaml`
+> 26 句（把同義詞的**極性類別**教寬，不是記題目）；`get_neural_bridge()`
+> 在生產路徑套課程，raw 保留給對照。中間層另修：`ANY_DIMENSION`
+> 概念可由第一句建立、被動語態（尾隨 by）納入關係詞、`not as X as` 的推翻方向。
+> **實測**：教過的詞＋新句子
+> **100%**（126/126，這是回想＋組合，不當分數）；沒教過的詞：未教 21% → 教過
+> **36%**（`heldout_final`，即維度分數）；開發診斷 21% →
+> 50%；學習效應（開發集）+39%。**改述仍 FAIL**（36% <
+> 70%）。誠實維護：最終留出首輪若被事後補進課程，就不算留出——新增
+> `benchmarks.paraphrase_benchmark_wellformed`
+> 門禁（基準＝產生器、held-out 詞不在課程、教過的詞在課程、評測句子不在課程）＋12 條資料合約測試。總分 4.41
+> → **5.00/10**（平均落 L2 帶，**達成階梯仍 L0**）。
 
 > ✅ **NOTE (Updated 2026-10-23, 事實維度)**: **§X #270**: `facts` 從 20% 到
-> **46.7%**（外部及格線 45%），方法是**讀公開語料**，不是改門檻、不是背題。
-> 新增 `scripts/download_knowledge_corpus.py`（下載 Simple English Wikipedia
+> **46.7%**（外部及格線 45%），方法是**讀公開語料**，不是改門檻、不是背題。新增
+> `scripts/download_knowledge_corpus.py`（下載 Simple English Wikipedia
 > dump，驗 bzip2 標頭／可選 sha256，壞檔刪除不留）＋
-> `scripts/build_knowledge_index.py`（串流 dump → `data/knowledge/wiki.sqlite`，
-> SQLite FTS5，只存導言段：279,525 篇、199MB）＋
-> `apps/backend/src/ai/knowledge/wiki_facts.py`（抽取式讀者：IDF 由索引自算、
-> FTS5 取候選、實體／句子兩種答案、head 詞與「數字緊鄰 head」約束、單位換算、
-> 重疊不足就棄權）。接了 `ai/knowledge_base.route_knowledge()`（精選庫之後、
-> 只在像事實問句時；`ANGELA_WIKI_FACTS=0` 可關）。
-> 同時修掉一個**誠實度**缺陷：精選庫以前只要問句提到某主體就回它的通用屬性
-> （`How many continents are there on Earth?` → `blue`），現在只有問句真的在問
-> 該屬性才回，`answer` 簡介只在定義問句（`what is X`）才用。
-> 量測：`knowledge` 3/15 → **7/15（46.7%）**、`knowledge_mc` 95%、
-> `facts` **4.7/10 PASS**；對話探針人味 0.685 → **0.689**、答對同為 45%、
-> 棄權 28.7% → 26%、神經層 23%（無迴歸）。總分 5.00 → **5.46/10**，
-> 4 過 2 不過，**達成階梯仍 L0**（paraphrase 3.6、tools 0）。
-> 檢索的兩個**一般性**守門（不是針對題目）：答案句必須連上問題的至少兩個實詞
-> （只有「capital」不算回答「capital of Atlantis」），且問題的類型詞
-> （gas／organ／planet…）必須出現在答案句（否則會回「Organ failure」而不是
-> 器官）。
-> 錨檔 `benchmarks/gate_anchor.json` 移除了 `know-004`：它先前以
-> 「Hypovolemic shock … let the heart pump」過關，但那是關鍵詞假陽性（句子在講
-> 休克，不在回答「哪個器官」），索引裡也沒有任何文章把 organ／pumps／blood 放在
-> 同一句——留著等於把假陽性當基準。
-> 照實記限制：(1) `knowledge` 套件判定當時是「任一關鍵詞命中」，46.7% 讀作
-> 「7/15 題答案句含正確關鍵詞」，離 45% 的及格線只有 1.7pp（**同日已被 §X #273
-> 的 strict 正確性判定取代**）；(2) 索引是衍生資料（`data/` 已 gitignore），
-> clone 後要跑兩支腳本才有一般知識層；(3) 中文題（know-010/015）仍答不出，
-> 索引只涵蓋 Simple English。測試 `tests/ai/test_wiki_facts.py`（14 條，用
-> 臨時小索引，題目刻意與評測集無關）。
+> `scripts/build_knowledge_index.py`（串流 dump →
+> `data/knowledge/wiki.sqlite`，SQLite FTS5，只存導言段：279,525 篇、199MB）＋
+> `apps/backend/src/ai/knowledge/wiki_facts.py`（抽取式讀者：IDF 由索引自算、FTS5 取候選、實體／句子兩種答案、head 詞與「數字緊鄰 head」約束、單位換算、重疊不足就棄權）。接了
+> `ai/knowledge_base.route_knowledge()`（精選庫之後、只在像事實問句時；`ANGELA_WIKI_FACTS=0`
+> 可關）。同時修掉一個**誠實度**缺陷：精選庫以前只要問句提到某主體就回它的通用屬性（`How many continents are there on Earth?`
+> → `blue`），現在只有問句真的在問該屬性才回，`answer`
+> 簡介只在定義問句（`what is X`）才用。量測：`knowledge` 3/15 →
+> **7/15（46.7%）**、`knowledge_mc` 95%、 `facts` **4.7/10
+> PASS**；對話探針人味 0.685 → **0.689**、答對同為 45%、棄權 28.7% →
+> 26%、神經層 23%（無迴歸）。總分 5.00 →
+> **5.46/10**，4 過 2 不過，**達成階梯仍 L0**（paraphrase 3.6、tools
+> 0）。檢索的兩個**一般性**守門（不是針對題目）：答案句必須連上問題的至少兩個實詞（只有「capital」不算回答「capital
+> of
+> Atlantis」），且問題的類型詞（gas／organ／planet…）必須出現在答案句（否則會回「Organ
+> failure」而不是器官）。錨檔 `benchmarks/gate_anchor.json` 移除了
+> `know-004`：它先前以「Hypovolemic shock … let the heart
+> pump」過關，但那是關鍵詞假陽性（句子在講休克，不在回答「哪個器官」），索引裡也沒有任何文章把 organ／pumps／blood 放在同一句——留著等於把假陽性當基準。照實記限制：(1)
+> `knowledge`
+> 套件判定當時是「任一關鍵詞命中」，46.7% 讀作「7/15 題答案句含正確關鍵詞」，離 45% 的及格線只有 1.7pp（**同日已被 §X
+> #273 的 strict 正確性判定取代**）；(2) 索引是衍生資料（`data/`
+> 已 gitignore），clone 後要跑兩支腳本才有一般知識層；(3) 中文題（know-010/015）仍答不出，索引只涵蓋 Simple
+> English。測試
+> `tests/ai/test_wiki_facts.py`（14 條，用臨時小索引，題目刻意與評測集無關）。
 
-> ✅ **NOTE (Updated 2026-10-23, 對話教學)**: **§X #271**: 量「只靠對話教會」——使用者
-> 要的湧現判準（不是手動編寫，而是教得會、糾得正）。新增
-> `apps/backend/src/ai/memory/taught_facts.py`（對話教的事實：三元組抽取、更正覆寫、
-> 關係詞同義詞由對話教會、問題永不入庫、無關聯就棄權；上限 5000 條，存
+> ✅ **NOTE (Updated 2026-10-23, 對話教學)**: **§X
+> #271**: 量「只靠對話教會」——使用者要的湧現判準（不是手動編寫，而是教得會、糾得正）。新增
+> `apps/backend/src/ai/memory/taught_facts.py`（對話教的事實：三元組抽取、更正覆寫、關係詞同義詞由對話教會、問題永不入庫、無關聯就棄權；上限 5000 條，存
 > `<資料目錄>/taught_facts.json`，`ANGELA_TAUGHT_FACTS` 可指定路徑）＋接線：
-> `chat_routes._run_chat_pipeline` Step 1b 每回合學、Step 1c 先答（freshest 勝過
-> recall/LLM，所以「不是 A，是 B」下一句就生效）、`knowledge_base.route_knowledge()`
+> `chat_routes._run_chat_pipeline` Step 1b 每回合學、Step
+> 1c 先答（freshest 勝過 recall/LLM，所以「不是 A，是 B」下一句就生效）、`knowledge_base.route_knowledge()`
 > 在精選庫之後／百科之前查同一份記憶。新增
-> `scripts/probe_dialogue_teaching.py`：**發明實體**（Zorblax／Ondrast…語料與題庫
-> 都沒有）＋7 題（dev 3／heldout 4，heldout 完全不參與開發），流程 cold → 教 →
-> 同問法 → 英文問 → 換句話問 → 再教（劑量）→ 更正 → 12 個無關回合後保留 → 兩事實
-> 組合；沙盒每跑必清。
-> **實測（乾淨沙盒，`--json`）**：冷問 **7/7 棄權**（不亂猜）；教後同問法、英文問、
-> 再教、**沒教過的說法**、更正、保留**全部 100%**，兩事實組合 ✓（順序依問句）；
-> 回答來源 `dialogue-teaching` 60／`COMPOSED` 12／`llm` 2／`knowledge` 1；探針前後
-> 程式碼未變（`git` 檢查）。五個傳統徵兆機械判定全部「有」。
-> **照實記限制**：(1) 抽取是**句型**（`X 的 Y 是 Z`／`the Y of X is Z`／`X's Y is Z`），
-> heldout 是**沒教過的實體**、不是沒教過的句型——換句話問必須先教「關係詞同義詞」
-> （一句），之後才對所有主詞生效；沒有句型就能描述的新事實仍學不到。(2) 它是記憶＋
-> 同義詞泛化，不是神經學習；六維度分數不因它改變（沒有任何基準會教事實），也不因此
-> 宣稱 L1／L2。(3) 教學品質取決於抽取正確：沒有 `是` 的陳述（「Zorblax 的首都？
-> Quuxville。」）不會入庫（寧缺勿錯）。測試 `tests/ai/test_taught_facts.py`（13 條）。
+> `scripts/probe_dialogue_teaching.py`：**發明實體**（Zorblax／Ondrast…語料與題庫都沒有）＋7 題（dev
+> 3／heldout 4，heldout 完全不參與開發），流程 cold
+> → 教 → 同問法 → 英文問 → 換句話問 → 再教（劑量）→ 更正 →
+> 12 個無關回合後保留 → 兩事實組合；沙盒每跑必清。
+> **實測（乾淨沙盒，`--json`）**：冷問
+> **7/7 棄權**（不亂猜）；教後同問法、英文問、再教、**沒教過的說法**、更正、保留**全部 100%**，兩事實組合 ✓（順序依問句）；回答來源
+> `dialogue-teaching` 60／`COMPOSED` 12／`llm` 2／`knowledge`
+> 1；探針前後程式碼未變（`git` 檢查）。五個傳統徵兆機械判定全部「有」。
+> **照實記限制**：(1) 抽取是**句型**（`X 的 Y 是 Z`／`the Y of X is Z`／`X's Y is Z`），heldout 是**沒教過的實體**、不是沒教過的句型——換句話問必須先教「關係詞同義詞」（一句），之後才對所有主詞生效；沒有句型就能描述的新事實仍學不到。(2) 它是記憶＋同義詞泛化，不是神經學習；六維度分數不因它改變（沒有任何基準會教事實），也不因此宣稱 L1／L2。(3) 教學品質取決於抽取正確：沒有
+> `是` 的陳述（「Zorblax 的首都？Quuxville。」）不會入庫（寧缺勿錯）。測試
+> `tests/ai/test_taught_facts.py`（13 條）。
 
-> ⚠️ **NOTE (Updated 2026-10-23, 分層契約／撤回 §X #271 的「湧現」解讀)**:
-> **§X #272**: #271 說「五個湧現徵兆全部有」——**撤回**。同一天的 falsifier 顯示：
-> 那個「學會」是正則抽取＋字典查表，教完**當場就答不出來**（教後 0%），事實以
-> 明碼存在 `dictionary.json`，刪掉文字後 0%。漏掉的對照實驗是：同一支探針換成
-> 20 行「正則＋dict」也會滿分——那量的是我的 parser。
-> **新增 falsifier** `scripts/probe_neural_learning.py`：發明實體 → 冷問 → 用生產
-> 學習入口（`learn_from_interaction`）教 → 問 → 只保留 SNN 權重（文字紀錄全刪）
-> → 再問。GARDEN 實測：冷 0%／教後 0%／刪來源後 0%；三個物件明碼在
+> ⚠️ **NOTE (Updated 2026-10-23, 分層契約／撤回 §X #271 的「湧現」解讀)**: **§X
+> #272**:
+> #271 說「五個湧現徵兆全部有」——**撤回**。同一天的 falsifier 顯示：那個「學會」是正則抽取＋字典查表，教完**當場就答不出來**（教後 0%），事實以明碼存在
+> `dictionary.json`，刪掉文字後 0%。漏掉的對照實驗是：同一支探針換成20 行「正則＋dict」也會滿分——那量的是我的 parser。
+> **新增 falsifier**
+> `scripts/probe_neural_learning.py`：發明實體 → 冷問 → 用生產學習入口（`learn_from_interaction`）教 → 問 → 只保留 SNN 權重（文字紀錄全刪）→ 再問。GARDEN 實測：冷 0%／教後 0%／刪來源後 0%；三個物件明碼在
 > `dictionary.json`；引擎學到的是 `(陳述 → 罐頭回覆)` 的配對，不是事實。結論：
 > **原生層目前不從對話學習事實**（記憶 ≠ 學習）。
 > **新增分層契約**（唯一一份）：`docs/06-project-management/LAYER_SEPARATION.md`
 > ＋`docs/06-project-management/LAYER_REGISTRY.json`＋
 > `apps/backend/src/ai/meta/layers.py`＋`scripts/check_layer_separation.py`，並併入
-> `check_fact_gates.py` 的 `layers` 域（第 12 域）。五層＝記憶／知識／思考／學習／
-> 表層，判位靠「刪掉來源還答得出來嗎」等五問；模組必須在標頭寫
-> `# LAYER: <layer>`；學習宣稱必須有 `source_deleted: true` 的證據；知識模組不得
-> import 記憶層（AST 檢查）。**降級**：`taught_facts` 從 `route_knowledge()` 移除
-> （記憶不再冒充知識、benchmark 的 `knowledge` 不可能被它餵高），聊天回覆改標
-> `source=memory` 並加「你教過我：」歸屬；`probe_dialogue_teaching.py` 改稱
+> `check_fact_gates.py` 的 `layers`
+> 域（第 12 域）。五層＝記憶／知識／思考／學習／表層，判位靠「刪掉來源還答得出來嗎」等五問；模組必須在標頭寫
+> `# LAYER: <layer>`；學習宣稱必須有 `source_deleted: true`
+> 的證據；知識模組不得 import 記憶層（AST 檢查）。**降級**：`taught_facts` 從
+> `route_knowledge()` 移除（記憶不再冒充知識、benchmark 的 `knowledge`
+> 不可能被它餵高），聊天回覆改標 `source=memory`
+> 並加「你教過我：」歸屬；`probe_dialogue_teaching.py` 改稱
 > **對話記憶量測**。測試：`tests/ai/test_layer_separation.py`（15 條）＋
 > `tests/ai/test_taught_facts.py`（13 條）。
 
-> ✅ **NOTE (Updated 2026-10-23, 正確性判定)**: **§X #273**: 「相關」曾被當成
-> 「正確」。`run_benchmarks.py` 的 free-text 知識題用「任一關鍵詞命中」，所以我
-> 一直在接模板／路由，量到的卻是相關性。改為 **strict 正確性**（預設）：答案必須
-> 含作者標定的正解，**且所有標定概念**都在；只沾到一個概念的句子＝錯。舊規則
-> 保留 `--scoring loose`，唯一用途是量兩者差距（錨檔加 `_scoring`，規則不同會
-> 警告，避免換規則時悄悄找回／丟掉錨題）。每個套件另印 `correct/wrong/abstain`
-> ——**答錯和誠實棄權同分但不同品質**。實測：knowledge 7/15 在 strict 與 loose
-> 下**同分**（所以那個 46.7% 沒被灌水），但同時量到 **8/15 是信心滿滿的錯答、
-> 0 次棄權**——這才是被忽略的部分。**同日再修一個量測缺陷**：知識層沒答案時
-> benchmark 退到 SNN bus 生成（中文題吐字詞湯），那不是生產路徑；移除後
-> 7/15 不變、**錯答 8→6、棄權 0→2**。順帶抓到一個真錯：`_ATTRIBUTE_RULES` 缺
-> `invented` 線索（只有 `inventor`），`Who invented the light bulb?` 因此落到
-> 百科層回「lava lamp」；補上後 `knowledge_mc` 40/40、`gate-native` OK。
-> 已知未修：百科層對「發明者」類問題仍可能回相關句（需要主詞覆蓋規則，未量測
-> 前不亂改）。測試 `tests/test_run_benchmarks.py`（+7 條評分契約）。
+> ✅ **NOTE (Updated 2026-10-23, 正確性判定)**: **§X
+> #273**: 「相關」曾被當成「正確」。`run_benchmarks.py`
+> 的 free-text 知識題用「任一關鍵詞命中」，所以我一直在接模板／路由，量到的卻是相關性。改為
+> **strict 正確性**（預設）：答案必須含作者標定的正解，**且所有標定概念**都在；只沾到一個概念的句子＝錯。舊規則保留
+> `--scoring loose`，唯一用途是量兩者差距（錨檔加
+> `_scoring`，規則不同會警告，避免換規則時悄悄找回／丟掉錨題）。每個套件另印
+> `correct/wrong/abstain` ——**答錯和誠實棄權同分但不同品質**。實測：knowledge
+> 7/15 在 strict 與 loose 下**同分**（所以那個 46.7% 沒被灌水），但同時量到
+> **8/15 是信心滿滿的錯答、0 次棄權**——這才是被忽略的部分。**同日再修一個量測缺陷**：知識層沒答案時 benchmark 退到 SNN
+> bus 生成（中文題吐字詞湯），那不是生產路徑；移除後 7/15 不變、**錯答 8→6、棄權 0→2**。順帶抓到一個真錯：`_ATTRIBUTE_RULES`
+> 缺 `invented` 線索（只有 `inventor`），`Who invented the light bulb?`
+> 因此落到百科層回「lava lamp」；補上後 `knowledge_mc` 40/40、`gate-native`
+> OK。已知未修：百科層對「發明者」類問題仍可能回相關句（需要主詞覆蓋規則，未量測前不亂改）。測試
+> `tests/test_run_benchmarks.py`（+7 條評分契約）。
 >
-> **隔一句話追來源**（`scripts/trace_reply.py`）：實跑生產聊天路徑並記錄每個
-> 階段的回傳值。實測 7 句：`你好`／`我今天很累` → `composed-template`；
-> `天空為什麼是藍色的?` → 回覆＝問句原文＋「蓝色。」（逐字複製 9 字）；
-> `水的沸點是多少?` → `route_knowledge` 回 "100" 再套「答案是 …」；
-> 對話記憶 → 「你教過我：…」原樣端回；只有 `2加3等於多少?` 是
-> `deterministic-math`（計算，非生成）。**0/7 是產生的。**
+> **隔一句話追來源**（`scripts/trace_reply.py`）：實跑生產聊天路徑並記錄每個階段的回傳值。實測 7 句：`你好`／`我今天很累`
+> → `composed-template`； `天空為什麼是藍色的?`
+> → 回覆＝問句原文＋「蓝色。」（逐字複製 9 字）； `水的沸點是多少?` →
+> `route_knowledge`
+> 回 "100" 再套「答案是 …」；對話記憶 → 「你教過我：…」原樣端回；只有
+> `2加3等於多少?` 是 `deterministic-math`（計算，非生成）。**0/7 是產生的。**
 > **正確答案的生產者**（`scripts/census_reply_provenance.py`，量同一條被計分的
-> `NativeBackend` 路徑）：knowledge 7 正確＝**7 lookup、0 produced**；
-> math 32 正確＝32 computed；routing 10 正確＝10 分類器標籤；code 0。
-> **49 個正確答案中由模型產生的：0。** 5.49/10 是分層聚合分，不是「模型智能
-> 5.49」；寫進 `intelligence_report.json` 的 `provenance` 欄，與分數並列，
-> 不再讓聚合掩蓋來源。順帶修掉 `run_benchmarks.py` 的 gate 早退 bug
-> （`--gate-native` 在 `save_results` 前 return，CI 讀到的是舊檔）。
+> `NativeBackend` 路徑）：knowledge 7 正確＝**7 lookup、0 produced**；math
+> 32 正確＝32 computed；routing 10 正確＝10 分類器標籤；code 0。
+> **49 個正確答案中由模型產生的：0。**
+> 5.49/10 是分層聚合分，不是「模型智能 5.49」；寫進 `intelligence_report.json`
+> 的 `provenance` 欄，與分數並列，不再讓聚合掩蓋來源。順帶修掉
+> `run_benchmarks.py` 的 gate 早退 bug（`--gate-native` 在 `save_results`
+> 前 return，CI 讀到的是舊檔）。
 
-> ✅ **NOTE (Updated 2026-10-21, 純本地對話 + 門禁登記簿)**: **純本地基模的對話
-> 量測**完成。新增 `scripts/probe_native_dialogue.py`（不註冊任何外部後端：雲端
-> 金鑰與本地 ollama/llama.cpp 都不啟用，只留專案自己的引擎，啟動時斷言）＋
-> `scripts/native_dialogue_budget_gate.py`（預算門禁，**可中斷**：每回合前查預算，
-> 超了乾淨收束輸出 partial；門檻只會變緊）＋`scripts/open_gates.json` 與
-> `scripts/check_open_gates.py`（**未拆門禁登記簿**：只收臨時門禁，每條要有正當、
-> 可驗證的拆除理由——模糊字眼／缺欄位／檔案不存在／沒接 CI 一律拒收，永久門禁
-> 不得入簿）＋`scripts/check_default_config.py`（**提交的配置必須等於預設**）。
-> 實測：確定性題全答對（比較題在對話路徑原本被丟成「不知道」，現由老師與中間層
-> 接手）；但**兩輪 20 次對話的演進是 +0.000**（開 `ANGELA_LEGACY_ED3N=1` 也一樣）
-> ——純本地基模目前**不會**因對話而變得像人，剩下的是情緒／上下文題的罐頭模板。
-> 同時修掉**非預設配置被提交**的問題：`llm.user.yaml`（執行期狀態）已移出版本
-> 控制並進 .gitignore（本機檔案保留），事實門新增 `config.committed_config_is_default`、
+> ✅ **NOTE (Updated 2026-10-21, 純本地對話 + 門禁登記簿)**:
+> **純本地基模的對話量測**完成。新增
+> `scripts/probe_native_dialogue.py`（不註冊任何外部後端：雲端金鑰與本地 ollama/llama.cpp 都不啟用，只留專案自己的引擎，啟動時斷言）＋
+> `scripts/native_dialogue_budget_gate.py`（預算門禁，**可中斷**：每回合前查預算，超了乾淨收束輸出 partial；門檻只會變緊）＋`scripts/open_gates.json`
+> 與
+> `scripts/check_open_gates.py`（**未拆門禁登記簿**：只收臨時門禁，每條要有正當、可驗證的拆除理由——模糊字眼／缺欄位／檔案不存在／沒接 CI 一律拒收，永久門禁不得入簿）＋`scripts/check_default_config.py`（**提交的配置必須等於預設**）。實測：確定性題全答對（比較題在對話路徑原本被丟成「不知道」，現由老師與中間層接手）；但**兩輪 20 次對話的演進是 +0.000**（開
+> `ANGELA_LEGACY_ED3N=1`
+> 也一樣）——純本地基模目前**不會**因對話而變得像人，剩下的是情緒／上下文題的罐頭模板。同時修掉**非預設配置被提交**的問題：`llm.user.yaml`（執行期狀態）已移出版本控制並進 .gitignore（本機檔案保留），事實門新增
+> `config.committed_config_is_default`、
 > `gates.open_gates_wellformed`、`gates.open_gates_count`（INFO，不會被忘記）。
 
-> ⚠️ **NOTE (Updated 2026-10-23, 智能只認核心)**: **§X #275**: 表層（模板／
-> 路由／查表／規則）的正確答案**不算智能**。`report_intelligence.py` 同時印
-> **核心分**（只算 `neural/snn/llm` 產生且正確；分母=全部題目）與**系統分**
-> （含表層，只供對照）。實測核心 **0.00/10**（六維度全 0；1,168 個對話回合
-> 沒有任一個是 SNN/ED3N/GARDEN/LLM 產生，`source=neural` 的 250 個其實是
-> `semantic-qa` 的相似度檢索），系統分 5.75。對外數字只認核心分；
-> 兩份文件（`INTELLIGENCE_ASSESSMENT`、`MEASUREMENT_MAP` 第五條）已同步。
-> 這不是扣分，是把「桶子有沒有裝水」和「木片有沒有對齊」分開量。
+> ⚠️ **NOTE (Updated 2026-10-23, 智能只認核心)**: **§X
+> #275**: 表層（模板／路由／查表／規則）的正確答案**不算智能**。`report_intelligence.py`
+> 同時印 **核心分**（只算 `neural/snn/llm`
+> 產生且正確；分母=全部題目）與**系統分** （含表層，只供對照）。實測核心
+> **0.00/10**（六維度全 0；1,168 個對話回合沒有任一個是 SNN/ED3N/GARDEN/LLM 產生，`source=neural`
+> 的 250 個其實是 `semantic-qa`
+> 的相似度檢索），系統分 5.75。對外數字只認核心分；兩份文件（`INTELLIGENCE_ASSESSMENT`、`MEASUREMENT_MAP`
+> 第五條）已同步。這不是扣分，是把「桶子有沒有裝水」和「木片有沒有對齊」分開量。
 >
-> **對照組**：`scripts/probe_core_control.py` 用同一批凍結題目、同一條評分跑
-> 表現層／GARDEN／ED3N／TOK-SNN／LLM（Qwen2.5-1.5B），回答「哪些是智能問題」
-> ——LLM 也不會＝能力或量測問題；LLM 會而 SNN 不會＝SNN 缺口；表現層會而 LLM
-> 不會＝表層假象。實測：math 表現層 80%／GARDEN 0%／ED3N 0%／TOK-SNN 0%／
-> LLM 60%（12 題只有表層會、24 題 SNN 缺口）、knowledge 47/0/0/0/67、code
-> 0/0/0/0/0、routing 100/0/0/0/0（表現層任務）。**0% 要看 coverage**：
-> GARDEN 0/40 有回答（缺席）、ED3N 40/40 但 22 個不同答案（亂答）、TOK-SNN
+> **對照組**：`scripts/probe_core_control.py`
+> 用同一批凍結題目、同一條評分跑表現層／GARDEN／ED3N／TOK-SNN／LLM（Qwen2.5-1.5B），回答「哪些是智能問題」——LLM 也不會＝能力或量測問題；LLM 會而 SNN 不會＝SNN 缺口；表現層會而 LLM 不會＝表層假象。實測：math 表現層 80%／GARDEN
+> 0%／ED3N 0%／TOK-SNN 0%／LLM 60%（12 題只有表層會、24 題 SNN 缺口）、knowledge
+> 47/0/0/0/67、code 0/0/0/0/0、routing
+> 100/0/0/0/0（表現層任務）。**0% 要看 coverage**：GARDEN
+> 0/40 有回答（缺席）、ED3N 40/40 但 22 個不同答案（亂答）、TOK-SNN
 > 40/40 只有 2 個不同答案（模式崩潰）、LLM 40/40（有能力）。核心邊界只有一處：
-> `ai/meta/intelligence.py::is_core_backend()`；`neural` 這個字不等於核心
-> （`semantic-qa`／`neural-bridge`／`unified` 是 encoder／統計檢索，屬表現層）。
+> `ai/meta/intelligence.py::is_core_backend()`；`neural`
+> 這個字不等於核心（`semantic-qa`／`neural-bridge`／`unified`
+> 是 encoder／統計檢索，屬表現層）。
 >
-> **SNN 為何訓練後仍 0**（`docs/06-project-management/CORE_GAP_ANALYSIS.md`）：
-> 不是 epoch 不夠。ED3N 在 20,000 對上訓練到 `acc=0.9997`，生成仍 0%；因為
-> `DictionaryLayer.encode()` 把詞變成**字典釋義**（`encode("12 + 7")` 回
-> `m2`／`cedict_..._abacus_rule`／…），輸入本身不可區分，解碼再把釋義表面形式
-> 接成字詞湯。修法是換 token 表徵＋可微的 next-token 輸出層（surrogate
-> gradient BPTT，Neftci 2019；SLAYER 2018；蒸餾 Hinton 2015），不是往核心塞
-> 模板／路由。已修的機械缺陷：CLI 從未建 `SeqBatch`（生成路徑沒訓練）、alpaca
-> 的 `instruction` 被丟掉（只讀 `input`）、訓練資料未整理／未防洩漏（新增
+> **SNN 為何訓練後仍 0**（`docs/06-project-management/CORE_GAP_ANALYSIS.md`）：不是 epoch 不夠。ED3N 在 20,000 對上訓練到
+> `acc=0.9997`，生成仍 0%；因為 `DictionaryLayer.encode()`
+> 把詞變成**字典釋義**（`encode("12 + 7")` 回
+> `m2`／`cedict_..._abacus_rule`／…），輸入本身不可區分，解碼再把釋義表面形式接成字詞湯。修法是換 token 表徵＋可微的 next-token 輸出層（surrogate
+> gradient BPTT，Neftci 2019；SLAYER 2018；蒸餾 Hinton
+> 2015），不是往核心塞模板／路由。已修的機械缺陷：CLI 從未建
+> `SeqBatch`（生成路徑沒訓練）、alpaca的 `instruction` 被丟掉（只讀
+> `input`）、訓練資料未整理／未防洩漏（新增
 > `scripts/prepare_core_training_data.py`，157,311 對，丟棄 26 筆與評測重疊）。
 >
-> **表徵／目標已換掉並實測**（`ai/ed3n/token_snn.py`＋`scripts/train_token_snn.py`）：
-> 字元詞表 → LIF（surrogate gradient）→ next-token head，只在答案 token 上算
-> 交叉熵。架構可學（複製任務 5/5、loss 0.005），但規模不足（~0.1M 參數）：
-> 算術 held-out（`arithmetic_test.csv`）20 epochs 後 **0/500 exact**、核心凍結題
-> **0%**（loss 2.49，未收斂；teacher-forced 字元 38.5%）。因此對外核心分仍是
-> **0.00/10**；跨過外部及格線需要 ≥10⁸ 參數＋GPU surrogate BPTT，或從 LLM
-> 蒸餾。
+> **表徵／目標已換掉並實測**（`ai/ed3n/token_snn.py`＋`scripts/train_token_snn.py`）：字元詞表 →
+> LIF（surrogate gradient）→ next-token
+> head，只在答案 token 上算交叉熵。架構可學（複製任務 5/5、loss
+> 0.005），但規模不足（~0.1M 參數）：算術 held-out（`arithmetic_test.csv`）20
+> epochs 後 **0/500 exact**、核心凍結題 **0%**（loss
+> 2.49，未收斂；teacher-forced 字元 38.5%）。因此對外核心分仍是
+> **0.00/10**；跨過外部及格線需要 ≥10⁸ 參數＋GPU surrogate BPTT，或從 LLM 蒸餾。
 
-> ✅ **NOTE (Updated 2026-10-23, 改述中間層)**: **§X #274**: 改述泛化從 35.7%
-> → **50%**（外部及格線 70%，仍 FAIL）。編碼器換成
+> ✅ **NOTE (Updated 2026-10-23, 改述中間層)**: **§X #274**: 改述泛化從 35.7% →
+> **50%**（外部及格線 70%，仍 FAIL）。編碼器換成
 > `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`（離線／CPU；
-> `ANGELA_PARAPHRASE_ENCODER=onnx|off` 或缺少 ml 依賴時自動退回專案內 ONNX）。
-> 通用修正：被動語態（裸分詞反轉、片語式被動不反轉、老師對齊過的豁免）、
-> 維度提示只改標籤不得翻極性、未見關係詞不帶維度、關係窗取「去填充詞後最長／
-> 起點最早」（原本比分數會選到片段 "over" 把動詞留在主詞）、多詞窗允許內部
-> 短功能詞、名詞片語守門改判最高級而非介系詞。另修**教學反效果**：對齊種子
-> 原本以最佳種子計分，教十個 lesser 同義詞會讓不相干的片語也靠近該類
-> （未教 100% → 教過 50%）；現在只在輸入就是那句（餘弦 ≥0.95）時計分。
-> 量測：最終留出（盲測 4 個沒教過的說法）**50%**、教過的詞＋新句子 100%
-> （回想，不計分）、開發診斷 81%、學習效應 +11%。**最終留出當天換過三次**
+> `ANGELA_PARAPHRASE_ENCODER=onnx|off`
+> 或缺少 ml 依賴時自動退回專案內 ONNX）。通用修正：被動語態（裸分詞反轉、片語式被動不反轉、老師對齊過的豁免）、維度提示只改標籤不得翻極性、未見關係詞不帶維度、關係窗取「去填充詞後最長／起點最早」（原本比分數會選到片段 "over" 把動詞留在主詞）、多詞窗允許內部短功能詞、名詞片語守門改判最高級而非介系詞。另修**教學反效果**：對齊種子原本以最佳種子計分，教十個 lesser 同義詞會讓不相干的片語也靠近該類（未教 100%
+> → 教過 50%）；現在只在輸入就是那句（餘弦 ≥0.95）時計分。量測：最終留出（盲測 4 個沒教過的說法）**50%**、教過的詞＋新句子 100%（回想，不計分）、開發診斷 81%、學習效應 +11%。**最終留出當天換過三次**
 > （每批被用來找 bug 後就降級為開發集，過程寫在 `paraphrase_v1.json` 的
-> `description`）——這是誠實記錄，不是把線調到剛好能過；剩下的差距是 118M
-> 編碼器對罕見比較動詞（outdone／beaten）的極性不穩，不是切分。總分
+> `description`）——這是誠實記錄，不是把線調到剛好能過；剩下的差距是 118M編碼器對罕見比較動詞（outdone／beaten）的極性不穩，不是切分。總分
 > **5.75/10**，4 過 2 不過（paraphrase 5.0、tools 0.0）。`heldout_word_leaks`
 > 改成詞界比對（子字串會把 "in" 判成洩漏），`tests/ai/test_paraphrase_curriculum.py`
 > 共用同一個判定。
 
-> ✅ **NOTE (Updated 2026-10-24, token-SNN 架構升級輪)**: **§X #276**: 同預算
-> A/B 決定取捨，**不碰及格線、不碰評測題**。修**β 參數化 bug**（設定 0.9 被
-> `sigmoid()` 二次變 0.711，10 步後只剩 3% 記憶；參數改存 logit，有測試守住）。
-> 新增 `readout="membrane"`（SLAYER：頭讀膜電位，遞歸仍 spiking；量測贏家，
-> 已設為預設）、`layers`、`timesteps` 旗標與 `tf_accuracy()` 診斷。實測（算術
-> 30k／12 epochs／held-out 200，兩輪共 8 組）：membrane **loss 1.78→1.60、
-> tf 35.4%→39.7%**（核心資料同預算複現 2.488→2.336）；2 層、β0.99、K=4 展開
-> **全部變差**→旗標保留、預設關。30 epochs 平台 1.558、exact 0/200，仍高於同
-> 尺寸 GRU 1.13 → **排除「架構有缺陷」這個變因，剩餘缺口乾淨地只剩規模**。
-> probe 重測：TOK-SNN 模式崩潰修复（math distinct 2→40）但**0 題對**（變樣≠
-> 能力，分數不加）；LLM 對照組 chat 模板修復（`db8cc6d28`）code 0/10→9/10、
-> math 60%→68%——對照組可信度，不是本專案分數。機器有 Intel Arc B570（Vulkan）
-> 但 torch 是 CPU build，SNN 訓練沒吃到 GPU（GPU 預算是待決策項）。
+> ✅ **NOTE (Updated 2026-10-24, token-SNN 架構升級輪)**: **§X
+> #276**: 同預算 A/B 決定取捨，**不碰及格線、不碰評測題**。修**β 參數化 bug**（設定 0.9 被
+> `sigmoid()`
+> 二次變 0.711，10 步後只剩 3% 記憶；參數改存 logit，有測試守住）。新增
+> `readout="membrane"`（SLAYER：頭讀膜電位，遞歸仍 spiking；量測贏家，已設為預設）、`layers`、`timesteps`
+> 旗標與 `tf_accuracy()` 診斷。實測（算術 30k／12 epochs／held-out
+> 200，兩輪共 8 組）：membrane **loss 1.78→1.60、tf
+> 35.4%→39.7%**（核心資料同預算複現 2.488→2.336）；2 層、β0.99、K=4 展開
+> **全部變差**→旗標保留、預設關。30 epochs 平台 1.558、exact
+> 0/200，仍高於同尺寸 GRU 1.13 →
+> **排除「架構有缺陷」這個變因，剩餘缺口乾淨地只剩規模**。probe 重測：TOK-SNN 模式崩潰修复（math
+> distinct
+> 2→40）但**0 題對**（變樣≠ 能力，分數不加）；LLM 對照組 chat 模板修復（`db8cc6d28`）code
+> 0/10→9/10、math 60%→68%——對照組可信度，不是本專案分數。機器有 Intel Arc
+> B570（Vulkan）但 torch 是 CPU
+> build，SNN 訓練沒吃到 GPU（GPU 預算是待決策項）。
 > **官方核心分不變：0.00/10**。實測表：`CORE_GAP_ANALYSIS.md` 第七節。
 
-> ✅ **NOTE (Updated 2026-10-24, 表現層稽核＋防洩漏)**: **§X #277**: 三件事。
-> (1) **順序確認**：路由 manifest tier0 確定性快徑→tier1（神經/記憶**先於**模板，
-> anti-fossilization）→tier2 主 LLM→terminal fallback 釘尾；實測 trace：事實問句
-> 到達知識層、code 寫入跳過全部模板層、placement 7/7；**生產路徑本來就沒有核心
-> SNN 在鏈上**（core_share 0%）——不是被劫持，是缺席，與旧 NOTE §X #275 一致。
-> (2) **census 防洩漏加固**：`census_reply_provenance --check` 包了
-> template／rule-store／memory／dictionary 四類預存生產者＋按題靜態掃描＋自動
-> verdict；本次實測**預存命中 0**→「分數不是答案洩漏」；+8 契約測試。
-> (3) **wiki 評分修復**：移除「窗口必含問句類型詞」過濾（它殺掉答案句：「植物吸收
-> 二氧化碳」從不重複「gas」；型別安全保留在定義式實體路徑）；knowledge
+> ✅ **NOTE (Updated 2026-10-24, 表現層稽核＋防洩漏)**: **§X #277**: 三件事。(1)
+> **順序確認**：路由 manifest
+> tier0 確定性快徑→tier1（神經/記憶**先於**模板，anti-fossilization）→tier2 主 LLM→terminal
+> fallback 釘尾；實測 trace：事實問句到達知識層、code 寫入跳過全部模板層、placement
+> 7/7；**生產路徑本來就沒有核心 SNN 在鏈上**（core_share
+> 0%）——不是被劫持，是缺席，與旧 NOTE §X #275 一致。(2)
+> **census 防洩漏加固**：`census_reply_provenance --check`
+> 包了 template／rule-store／memory／dictionary 四類預存生產者＋按題靜態掃描＋自動 verdict；本次實測**預存命中 0**→「分數不是答案洩漏」；+8 契約測試。(3)
+> **wiki 評分修復**：移除「窗口必含問句類型詞」過濾（它殺掉答案句：「植物吸收二氧化碳」從不重複「gas」；型別安全保留在定義式實體路徑）；knowledge
 > **7→8/15**、knowledge_mc **40/40**、facts **4.7→5.3/10**、系統分
-> **5.75→5.86/10**；+1 回歸測試。**加持效應證據**：知識層 ablation 8/5/0
-> （wiki +3）、對話記憶 lift 100%/冷啟 0%——智能面向的提升真實存在但都在
-> 表層/記憶層。**核心分仍 0.00/10（未動）**。前端：dashboard typecheck+build ✓、
-> live2d 47 JS 語法 ✓、electron 語法 ✓。全部實測重跑（bench＋census＋report
+> **5.75→5.86/10**；+1 回歸測試。**加持效應證據**：知識層 ablation 8/5/0（wiki
+> +3）、對話記憶 lift
+> 100%/冷啟 0%——智能面向的提升真實存在但都在表層/記憶層。**核心分仍 0.00/10（未動）**。前端：dashboard
+> typecheck+build ✓、live2d 47
+> JS 語法 ✓、electron 語法 ✓。全部實測重跑（bench＋census＋report
 > --from-cache），pytest 全量過。
 
 ### JavaScript/TypeScript
@@ -1449,38 +1401,38 @@ tests/
 
 ## Quick Commands Reference
 
-| Task                               | Command                               |
-| ---------------------------------- | ------------------------------------- |
-| Dev server (backend)               | `pnpm dev:backend`                    |
-| Dev server (desktop)               | `pnpm dev:desktop`                    |
-| All dev servers                    | `pnpm dev:all`                        |
-| Single test                        | `pytest tests/path.py::test_func -v`  |
-| Format Python                      | `black apps/backend/src tests/`       |
-| Format JS                          | `prettier --write "**/*.js"`          |
-| Type check                         | `mypy apps/backend/src`               |
-| Lint all                           | `pnpm lint`                           |
-| Run all tests                      | `pnpm test`                           |
-| Single check (facts + definitions) | `python3 scripts/check_fact_gates.py` |
-| Config hygiene gate (the committed config must equal the default) | `python3 scripts/check_default_config.py` |
-| Open-gates registry (a temporary gate needs a legitimate removal reason) | `python3 scripts/check_open_gates.py` |
-| Native-only dialogue measurement / budget gate | `python3 scripts/probe_native_dialogue.py` / `python3 scripts/native_dialogue_budget_gate.py` |
-| Dialogue **memory** probe (invented entities; recall/correction/retention — NOT learning) | `python3 scripts/probe_dialogue_teaching.py` |
-| Neural learning falsifier (teach → delete the text → ask; GARDEN currently fails) | `python3 scripts/probe_neural_learning.py` |
-| Layer separation gate (memory/knowledge/reasoning/learning/surface) | `python3 scripts/check_layer_separation.py` |
-| Trace one reply (every stage + what it returned) | `python3 scripts/trace_reply.py "…"` |
-| Where the correct answers came from (lookup/computed/classifier) | `python3 scripts/census_reply_provenance.py` |
-| Placement audit (declared layer == traced producer) | `python3 scripts/audit_placement.py` |
-| What belongs where, and where each layer is measured | `docs/06-project-management/MEASUREMENT_MAP.md` |
-| Unified intelligence score (the only one; core vs performance) | `python3 scripts/report_intelligence.py` |
-| Core vs LLM control vs performance layer (which failures are intelligence) | `python3 scripts/probe_core_control.py` |
-| Why the SNN core is still 0 after training (root cause + fix path) | `docs/06-project-management/CORE_GAP_ANALYSIS.md` |
-| Prepare core training data (normalise, dedup, leak check, 95-5 split) | `python3 scripts/prepare_core_training_data.py` |
-| Train the token-level SNN (tokens + surrogate gradient, next-token CE) | `PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_token_snn.py --limit 20000 --epochs 5 --max-len 160` |
-| Train ED3N (associations **and** the sequence decoder `generate()` reads) | `PYTHONPATH=apps/backend/src ./.venv/bin/python -m ai.ed3n train apps/backend/data/processed/core_train.jsonl --epochs 1 -o apps/backend/data/models/ed3n_core.json` |
-| Unified intelligence definition gate | `python3 scripts/check_intelligence_definition.py` |
-| Paraphrase generalisation probe (frozen splits + learning effect) | `python3 scripts/probe_paraphrase.py` |
-| Offline knowledge corpus (dump → FTS5 index, then the general layer) | `python3 scripts/download_knowledge_corpus.py && python3 scripts/build_knowledge_index.py` |
-| Where the pass lines come from (external benchmarks, never self-set) | `docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md` |
+| Task                                                                                      | Command                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dev server (backend)                                                                      | `pnpm dev:backend`                                                                                                                                                   |
+| Dev server (desktop)                                                                      | `pnpm dev:desktop`                                                                                                                                                   |
+| All dev servers                                                                           | `pnpm dev:all`                                                                                                                                                       |
+| Single test                                                                               | `pytest tests/path.py::test_func -v`                                                                                                                                 |
+| Format Python                                                                             | `black apps/backend/src tests/`                                                                                                                                      |
+| Format JS                                                                                 | `prettier --write "**/*.js"`                                                                                                                                         |
+| Type check                                                                                | `mypy apps/backend/src`                                                                                                                                              |
+| Lint all                                                                                  | `pnpm lint`                                                                                                                                                          |
+| Run all tests                                                                             | `pnpm test`                                                                                                                                                          |
+| Single check (facts + definitions)                                                        | `python3 scripts/check_fact_gates.py`                                                                                                                                |
+| Config hygiene gate (the committed config must equal the default)                         | `python3 scripts/check_default_config.py`                                                                                                                            |
+| Open-gates registry (a temporary gate needs a legitimate removal reason)                  | `python3 scripts/check_open_gates.py`                                                                                                                                |
+| Native-only dialogue measurement / budget gate                                            | `python3 scripts/probe_native_dialogue.py` / `python3 scripts/native_dialogue_budget_gate.py`                                                                        |
+| Dialogue **memory** probe (invented entities; recall/correction/retention — NOT learning) | `python3 scripts/probe_dialogue_teaching.py`                                                                                                                         |
+| Neural learning falsifier (teach → delete the text → ask; GARDEN currently fails)         | `python3 scripts/probe_neural_learning.py`                                                                                                                           |
+| Layer separation gate (memory/knowledge/reasoning/learning/surface)                       | `python3 scripts/check_layer_separation.py`                                                                                                                          |
+| Trace one reply (every stage + what it returned)                                          | `python3 scripts/trace_reply.py "…"`                                                                                                                                 |
+| Where the correct answers came from (lookup/computed/classifier)                          | `python3 scripts/census_reply_provenance.py`                                                                                                                         |
+| Placement audit (declared layer == traced producer)                                       | `python3 scripts/audit_placement.py`                                                                                                                                 |
+| What belongs where, and where each layer is measured                                      | `docs/06-project-management/MEASUREMENT_MAP.md`                                                                                                                      |
+| Unified intelligence score (the only one; core vs performance)                            | `python3 scripts/report_intelligence.py`                                                                                                                             |
+| Core vs LLM control vs performance layer (which failures are intelligence)                | `python3 scripts/probe_core_control.py`                                                                                                                              |
+| Why the SNN core is still 0 after training (root cause + fix path)                        | `docs/06-project-management/CORE_GAP_ANALYSIS.md`                                                                                                                    |
+| Prepare core training data (normalise, dedup, leak check, 95-5 split)                     | `python3 scripts/prepare_core_training_data.py`                                                                                                                      |
+| Train the token-level SNN (tokens + surrogate gradient, next-token CE)                    | `PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_token_snn.py --limit 20000 --epochs 5 --max-len 160`                                                   |
+| Train ED3N (associations **and** the sequence decoder `generate()` reads)                 | `PYTHONPATH=apps/backend/src ./.venv/bin/python -m ai.ed3n train apps/backend/data/processed/core_train.jsonl --epochs 1 -o apps/backend/data/models/ed3n_core.json` |
+| Unified intelligence definition gate                                                      | `python3 scripts/check_intelligence_definition.py`                                                                                                                   |
+| Paraphrase generalisation probe (frozen splits + learning effect)                         | `python3 scripts/probe_paraphrase.py`                                                                                                                                |
+| Offline knowledge corpus (dump → FTS5 index, then the general layer)                      | `python3 scripts/download_knowledge_corpus.py && python3 scripts/build_knowledge_index.py`                                                                           |
+| Where the pass lines come from (external benchmarks, never self-set)                      | `docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md`                                                                                                           |
 
 > 🔎 **單一檢查入口**：所有「非編譯器」檢查集中在
 > `scripts/check_fact_gates.py`（edge/audit/chat/cluster/config/version/docs/modules/gates/hygiene/intelligence/benchmarks/layers/placement/definitions）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。定義稽核 MD 報告：`python3 scripts/check_fact_gates.py --write-definitions-audit`。

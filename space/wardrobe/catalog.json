@@ -3,7 +3,11 @@
     "top": {
       "label": "上衣",
       "items": [
-        { "id": "hoodie_blue", "label": "連帽外套", "tints": ["#3b6ea5", "#4e8f6d", "#6a4f9e", "#b8483f"] },
+        {
+          "id": "hoodie_blue",
+          "label": "連帽外套",
+          "tints": ["#3b6ea5", "#4e8f6d", "#6a4f9e", "#b8483f"]
+        },
         { "id": "cardigan_green", "label": "針織開衫", "tints": ["#4e8f6d", "#7a9e4f", "#c9a227"] },
         { "id": "jacket_purple", "label": "短外套", "tints": ["#6a4f9e", "#3f4f8f", "#8a3f6f"] }
       ]

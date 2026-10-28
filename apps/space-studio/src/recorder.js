@@ -9,53 +9,53 @@
  */
 
 const MIME_CANDIDATES = [
-  "video/webm;codecs=vp9",
-  "video/webm;codecs=vp8",
-  "video/webm",
-  "video/mp4",
-];
+  'video/webm;codecs=vp9',
+  'video/webm;codecs=vp8',
+  'video/webm',
+  'video/mp4',
+]
 
 export function isRecordingSupported(canvas, scope = globalThis) {
   return !!(
     canvas &&
-    typeof canvas.captureStream === "function" &&
-    typeof scope.MediaRecorder === "function"
-  );
+    typeof canvas.captureStream === 'function' &&
+    typeof scope.MediaRecorder === 'function'
+  )
 }
 
 export function pickMimeType(MediaRecorderCtor) {
-  const supported = MediaRecorderCtor?.isTypeSupported?.bind(MediaRecorderCtor);
-  if (typeof supported !== "function") return "";
-  return MIME_CANDIDATES.find((type) => supported(type)) ?? "";
+  const supported = MediaRecorderCtor?.isTypeSupported?.bind(MediaRecorderCtor)
+  if (typeof supported !== 'function') return ''
+  return MIME_CANDIDATES.find((type) => supported(type)) ?? ''
 }
 
 export function startRecording(canvas, { fps = 30, mimeType, scope = globalThis } = {}) {
   if (!isRecordingSupported(canvas, scope)) {
-    throw new Error("recording is not supported in this browser");
+    throw new Error('recording is not supported in this browser')
   }
-  const stream = canvas.captureStream(fps);
-  const type = mimeType ?? pickMimeType(scope.MediaRecorder);
-  const recorder = new scope.MediaRecorder(stream, type ? { mimeType: type } : undefined);
-  const chunks = [];
+  const stream = canvas.captureStream(fps)
+  const type = mimeType ?? pickMimeType(scope.MediaRecorder)
+  const recorder = new scope.MediaRecorder(stream, type ? { mimeType: type } : undefined)
+  const chunks = []
 
   recorder.ondataavailable = (event) => {
-    if (event.data && event.data.size > 0) chunks.push(event.data);
-  };
-  recorder.start();
+    if (event.data && event.data.size > 0) chunks.push(event.data)
+  }
+  recorder.start()
 
   return {
     get state() {
-      return recorder.state;
+      return recorder.state
     },
     get mimeType() {
-      return type || "video/webm";
+      return type || 'video/webm'
     },
     stop() {
       return new Promise((resolve) => {
-        recorder.onstop = () => resolve(new Blob(chunks, { type: type || "video/webm" }));
-        recorder.stop();
-        for (const track of stream.getTracks?.() ?? []) track.stop();
-      });
+        recorder.onstop = () => resolve(new Blob(chunks, { type: type || 'video/webm' }))
+        recorder.stop()
+        for (const track of stream.getTracks?.() ?? []) track.stop()
+      })
     },
-  };
+  }
 }

@@ -21,34 +21,40 @@ export function watchJson(
     initial = null,
   } = {}
 ) {
-  if (!url) throw new Error("watchJson needs a url");
-  if (typeof fetchImpl !== "function") throw new Error("watchJson needs fetch");
+  if (!url) throw new Error('watchJson needs a url')
+  if (typeof fetchImpl !== 'function') throw new Error('watchJson needs fetch')
 
-  let last = initial === null ? null : JSON.stringify(initial);
-  let stopped = false;
+  let last = initial === null ? null : JSON.stringify(initial)
+  let stopped = false
 
   async function tick() {
-    if (stopped) return;
+    if (stopped) return
     try {
-      const response = await fetchImpl(url, { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      const serialised = JSON.stringify(data);
+      const response = await fetchImpl(url, { cache: 'no-store' })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const data = await response.json()
+      const serialised = JSON.stringify(data)
       if (serialised !== last) {
-        last = serialised;
-        onChange(data);
+        last = serialised
+        onChange(data)
       }
     } catch (err) {
-      onError(err);
+      onError(err)
     }
   }
 
-  const handle = setIntervalImpl(tick, intervalMs);
+  const handle = setIntervalImpl(tick, intervalMs)
 
   function stop() {
-    stopped = true;
-    clearIntervalImpl(handle);
+    stopped = true
+    clearIntervalImpl(handle)
   }
 
-  return { stop, tick, get stopped() { return stopped; } };
+  return {
+    stop,
+    tick,
+    get stopped() {
+      return stopped
+    },
+  }
 }
