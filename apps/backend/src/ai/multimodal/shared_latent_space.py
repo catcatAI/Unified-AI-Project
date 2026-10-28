@@ -172,7 +172,9 @@ class SharedLatentSpace:
                         ts, tz=datetime.timezone.utc
                     ).isoformat(timespec="seconds")
             except (OSError, ValueError, OverflowError):
-                pass
+                logger.debug(
+                    "ignored (OSError, ValueError, OverflowError) (best-effort path)", exc_info=True
+                )
 
     def load_weights(self, path: str) -> bool:
         """Load modality projection weights from a .npz file.

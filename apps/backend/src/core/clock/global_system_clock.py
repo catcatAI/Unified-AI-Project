@@ -141,7 +141,7 @@ class GlobalSystemClock:
             try:
                 await self._task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
             self._task = None
         logger.info(
             f"[GlobalSystemClock] Stopped after {self._tick_count} ticks "

@@ -135,6 +135,9 @@ def substitute(text: str, params: Dict[str, str], depth: int = 0) -> str:
             # exit with the substitution still unresolved.
             return f"{float(eval(expr, {'__builtins__': {}}, {})):.10g}"  # nosec B307
         except (ValueError, ZeroDivisionError, TypeError, SyntaxError, NameError):
+            # Not a numeric literal: this is the NORMAL path for symbolic
+            # expressions, which are resolved by name substitution below.
+            # Deliberately not logged — it would flood the rewrite pass.
             pass
         for name in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", expr):
             if name in params:

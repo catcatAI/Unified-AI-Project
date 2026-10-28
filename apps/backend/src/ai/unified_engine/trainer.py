@@ -85,7 +85,7 @@ def _numeric_match(got: str, want: str) -> bool:
         if f_want != 0 and abs((f_got - f_want) / f_want) < 1e-6:
             return True
     except (ValueError, TypeError):
-        pass
+        logger.debug("ignored (ValueError, TypeError) (best-effort path)", exc_info=True)
     return False
 
 
@@ -216,7 +216,7 @@ def train_with_holdout_bpc(
             try:
                 os.remove(tmp_path)
             except OSError:
-                pass
+                logger.debug("ignored OSError (best-effort path)", exc_info=True)
 
 
 def evaluate_generalisation(

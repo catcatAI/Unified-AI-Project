@@ -205,7 +205,7 @@ class InMemoryProtocol(BaseFallbackProtocol):
             try:
                 await self.listener_task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
         logger.info("In-memory fallback protocol stopped")
 
     async def _message_listener(self) -> None:
@@ -288,7 +288,7 @@ class FileBasedProtocol(BaseFallbackProtocol):
             try:
                 await self.listener_task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
         logger.info("File fallback protocol stopped")
 
     async def _file_listener(self) -> None:
@@ -635,7 +635,7 @@ class FallbackProtocolManager:
             try:
                 await self.manager_task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
 
         for _, protocol in self.protocols:
             try:

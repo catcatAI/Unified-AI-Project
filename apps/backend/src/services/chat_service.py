@@ -1176,7 +1176,7 @@ class ChatService:
             try:
                 await self._ham_sync_task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
 
     async def _final_ham_sync(self) -> None:
         """Final HAM sync on shutdown."""

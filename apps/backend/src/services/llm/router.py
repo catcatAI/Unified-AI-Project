@@ -2285,7 +2285,7 @@ class AngelaLLMService:
                 if is_claim_question(user_message):
                     return None
             except Exception:
-                pass
+                logger.debug("ignored Exception (best-effort path)", exc_info=True)
 
             answer = route_knowledge(user_message)
             if answer:
@@ -3901,7 +3901,7 @@ class AngelaLLMService:
             if self._is_factual_query(user_message, context or {}):
                 return True
         except Exception:
-            pass
+            logger.debug("ignored Exception (best-effort path)", exc_info=True)
         text = (user_message or "").lower()
         return bool(
             re.search(

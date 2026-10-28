@@ -157,7 +157,7 @@ class ProactiveInteractionSystem:
             try:
                 await self._proactive_task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
 
         logger.info("ProactiveInteractionSystem stopped")
 

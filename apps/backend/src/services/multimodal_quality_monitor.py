@@ -78,7 +78,7 @@ class MultimodalQualityMonitor:
             try:
                 await self._task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
             self._task = None
         logger.info(
             "QualityMonitor stopped (samples=%d, alerts=%d)",

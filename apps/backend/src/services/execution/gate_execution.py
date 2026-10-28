@@ -614,7 +614,7 @@ class GateExecutionOwner:
                 # operation to confirm (it used to answer "你想要执行操作吗？").
                 return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
         except Exception:
-            pass
+            logger.debug("ignored Exception (best-effort path)", exc_info=True)
         if str(getattr(decision, "handler", "") or "") != "task_mgr":
             return None
         is_question = text.endswith(("?", "？")) or bool(

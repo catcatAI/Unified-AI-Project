@@ -205,7 +205,7 @@ def __getattr__(name: str) -> Any:
         _lazy_cache[name] = module
         return module
     except ImportError:
-        pass
+        logger.debug("ignored ImportError (best-effort path)", exc_info=True)
 
     # Fallback: return sentinel (allows test patches with create=True)
     return _SubmoduleSentinel(name)

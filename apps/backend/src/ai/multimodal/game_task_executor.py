@@ -310,7 +310,7 @@ class GameTaskExecutor:
             if float(hunger) > float(max_hunger) * 0.3:
                 failed.append("飢餓度未低")
         except (TypeError, ValueError):
-            pass
+            logger.debug("ignored (TypeError, ValueError) (best-effort path)", exc_info=True)
 
     @staticmethod
     def _precondition_tool(cond: str, inv: dict, failed: List[str]) -> None:
@@ -322,7 +322,9 @@ class GameTaskExecutor:
                 try:
                     total += int(val)
                 except (TypeError, ValueError):
-                    pass
+                    logger.debug(
+                        "ignored (TypeError, ValueError) (best-effort path)", exc_info=True
+                    )
         if total <= 0:
             failed.append(f"缺少工具: {tool}")
 
@@ -340,7 +342,9 @@ class GameTaskExecutor:
                 try:
                     have += int(val)
                 except (TypeError, ValueError):
-                    pass
+                    logger.debug(
+                        "ignored (TypeError, ValueError) (best-effort path)", exc_info=True
+                    )
         if need is not None and have < int(need):
             failed.append(f"缺少材料: {item} ({have}/{need})")
         elif need is None and have <= 0:

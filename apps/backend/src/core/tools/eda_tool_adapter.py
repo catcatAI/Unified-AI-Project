@@ -296,7 +296,7 @@ class EdaToolAdapter:
                 else:
                     process.kill()
             except ProcessLookupError:
-                pass
+                logger.debug("ignored ProcessLookupError (best-effort path)", exc_info=True)
             await self._finish_process(process)
             return {
                 "return_code": None,

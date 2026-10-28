@@ -367,7 +367,7 @@ class ActionExecutor:
                         timeout=loop_sleep("sleep_short", 0.1) * 1000,
                     )
                 except asyncio.TimeoutError:
-                    pass
+                    logger.debug("ignored asyncio.TimeoutError (best-effort path)", exc_info=True)
                 finally:
                     self.queue._notify_event.clear()
 

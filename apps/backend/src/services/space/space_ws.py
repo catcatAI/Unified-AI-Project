@@ -80,7 +80,7 @@ async def space_ws_handler(websocket: WebSocket) -> None:
                 continue
             await _broadcast(room_id, snapshot)
     except WebSocketDisconnect:
-        pass
+        logger.debug("ignored WebSocketDisconnect (best-effort path)", exc_info=True)
     except Exception as exc:  # noqa: BLE001 - never let a viewer crash the loop task
         logger.warning("space websocket closed with error: %s", exc, exc_info=True)
     finally:

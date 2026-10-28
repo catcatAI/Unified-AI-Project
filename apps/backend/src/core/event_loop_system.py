@@ -534,14 +534,14 @@ class EventLoopSystem:
             try:
                 await self._processor_task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
 
         if self._metrics_task:
             self._metrics_task.cancel()
             try:
                 await self._metrics_task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
 
         logger.info("[EventLoopSystem] Shutdown complete")
 
@@ -622,7 +622,7 @@ class EventLoopSystem:
 
             except asyncio.TimeoutError:
                 # No events, continue
-                pass
+                logger.debug("ignored asyncio.TimeoutError (best-effort path)", exc_info=True)
             except (
                 Exception
             ) as e:  # broad exception acceptable: event processor must be resilient to any error

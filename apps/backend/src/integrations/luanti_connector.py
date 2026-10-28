@@ -407,13 +407,13 @@ class LuantiConnector:
             try:
                 await self._reader_task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
         if self._ping_task:
             self._ping_task.cancel()
             try:
                 await self._ping_task
             except asyncio.CancelledError:
-                pass
+                raise  # propagate cancellation; swallowing it breaks task.cancel()
         if self._ws:
             await self._ws.close()
             self._ws = None
