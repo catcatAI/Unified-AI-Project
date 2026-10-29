@@ -24,8 +24,8 @@ from engine import (
     EntityState,
     GroupContract,
     SignalSpec,
+    content,
 )
-from engine import content
 
 
 def make_space(tick_rate: float = 30.0) -> AxisGroup:

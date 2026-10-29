@@ -7,6 +7,7 @@ M1：軸/實體/契約註冊驗證、空間+戰鬥兩群組、組間訊號下一
 """
 
 from engine.axes import AxisGroup, AxisSpec, AxisType, Entity, Value
+from engine.clock import GroupClock, MasterClock
 from engine.contracts import (
     SIGNAL_DTYPES,
     ContractError,
@@ -14,7 +15,6 @@ from engine.contracts import (
     MissingSignalError,
     SignalSpec,
 )
-from engine.clock import GroupClock, MasterClock
 from engine.pipeline import EnginePipeline, TickContext
 from engine.quantize import (
     from_fixed,

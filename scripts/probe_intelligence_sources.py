@@ -70,10 +70,11 @@ def _classify(backend: str, route: str) -> str:
 
 async def _run(questions: List[str]) -> Tuple[List[Dict[str, object]], object]:
     """Run the native-only path and collect the answers + the engine state."""
+    import copy
+
     from core.system.config.tiered_loader import get_config
     from services.chat_service import ChatService
     from services.llm.router import AngelaLLMService
-    import copy
 
     config = copy.deepcopy(get_config("system/llm") or {})
     config.setdefault("deployment", {})["mode"] = "local"

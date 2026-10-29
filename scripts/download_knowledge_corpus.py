@@ -30,12 +30,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_URL = (
-    "https://dumps.wikimedia.org/simplewiki/latest/"
-    "simplewiki-latest-pages-articles.xml.bz2"
+    "https://dumps.wikimedia.org/simplewiki/latest/" "simplewiki-latest-pages-articles.xml.bz2"
 )
-DEFAULT_DEST = (
-    REPO_ROOT / "data" / "knowledge" / "simplewiki-latest-pages-articles.xml.bz2"
-)
+DEFAULT_DEST = REPO_ROOT / "data" / "knowledge" / "simplewiki-latest-pages-articles.xml.bz2"
 LICENSE = "CC BY-SA 4.0 (Simple English Wikipedia contributors)"
 
 

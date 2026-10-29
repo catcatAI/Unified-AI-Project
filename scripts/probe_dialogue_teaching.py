@@ -251,7 +251,9 @@ class Recorder:
         return self.turns[-1]["route"] if self.turns else ""
 
 
-async def run_item(service, session: str, history, item: Dict[str, Any], rec: Recorder) -> Dict[str, Any]:
+async def run_item(
+    service, session: str, history, item: Dict[str, Any], rec: Recorder
+) -> Dict[str, Any]:
     """cold → teach → taught → transfer → (correction) → retention."""
     result: Dict[str, Any] = {"subject": item["subject"], "relation": item["relation"]}
 
@@ -334,9 +336,7 @@ async def run_set(
     )
     if pair:
         first, second = pair
-        combo = (
-            f"{first['subject']} 和 {second['subject']} 的{first['relation']}分別是什麼？"
-        )
+        combo = f"{first['subject']} 和 {second['subject']} 的{first['relation']}分別是什麼？"
         text = await rec.say(service, session, history, combo)
         composition = {
             "question": combo,
@@ -375,8 +375,7 @@ def summarise(rows: Sequence[Dict[str, Any]], extra: Dict[str, Any]) -> Dict[str
         "correct": _rate(rows, "correct"),
         "retention": extra.get("retention", 0.0),
         "composition_both": bool(
-            extra.get("composition", {}).get("first")
-            and extra.get("composition", {}).get("second")
+            extra.get("composition", {}).get("first") and extra.get("composition", {}).get("second")
         ),
         "stale_after_correction": sum(1 for r in rows if r.get("correct") == "stale"),
     }
@@ -385,7 +384,11 @@ def summarise(rows: Sequence[Dict[str, Any]], extra: Dict[str, Any]) -> Dict[str
 def verdict(measured: Dict[str, Any]) -> List[Tuple[str, str, str]]:
     """The classic emergence markers, each with its measured number."""
     rows = [
-        ("回想（教完同一問法）", f"{measured['taught']:.0%}", "yes" if measured["taught"] >= 0.6 else "no"),
+        (
+            "回想（教完同一問法）",
+            f"{measured['taught']:.0%}",
+            "yes" if measured["taught"] >= 0.6 else "no",
+        ),
         (
             "泛化（沒教過的說法）",
             f"{measured['transfer']:.0%}",
@@ -440,9 +443,7 @@ async def main() -> int:
         dev = await run_set(service, "probe-teach-dev", DEV_ITEMS, rec, DEV_ALIASES)
         out["sets"]["dev"] = {"summary": summarise(dev["items"], dev), **dev}
     if args.set in ("heldout", "both"):
-        held = await run_set(
-            service, "probe-teach-heldout", HELDOUT_ITEMS, rec, HELDOUT_ALIASES
-        )
+        held = await run_set(service, "probe-teach-heldout", HELDOUT_ITEMS, rec, HELDOUT_ALIASES)
         out["sets"]["heldout"] = {"summary": summarise(held["items"], held), **held}
 
     out["routing"] = {}
@@ -463,8 +464,10 @@ async def main() -> int:
             print(f"      教後回應：{row['taught_text']}")
             print(f"      換句話問：{row['transfer_text']}")
         comp = payload["composition"]
-        print(f"  組合：A={'✓' if comp['first'] else '✗'} B={'✓' if comp['second'] else '✗'}"
-              f"  → {comp['response'][:120]}")
+        print(
+            f"  組合：A={'✓' if comp['first'] else '✗'} B={'✓' if comp['second'] else '✗'}"
+            f"  → {comp['response'][:120]}"
+        )
         print(f"  保留（10 回合後）：{payload['retention']}")
 
     print("\n── 記憶層驗收（門檻 60%，機械判定；不代表學習／智能） ──")

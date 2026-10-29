@@ -8,11 +8,12 @@
 
 from __future__ import annotations
 
+import axis_system
 import pytest
 from engine.content import (
     STORY_GROUP,
-    STORY_ROLES,
     STORY_ROLE_BY_CARD_TYPE,
+    STORY_ROLES,
     card_to_lineage,
     card_to_values,
     cards_to_axis_snapshot,
@@ -23,8 +24,6 @@ from engine.content import (
     load_cards,
     story_group,
 )
-
-import axis_system
 
 
 class TestCardsToStoryAxes:

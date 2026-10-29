@@ -45,32 +45,27 @@ except ImportError:
 
                 def health_check(self):
                     raise RuntimeError(
-                        "The backend client could not be imported "
-                        f"({_MISSING_CLIENT_REASON})."
+                        "The backend client could not be imported " f"({_MISSING_CLIENT_REASON})."
                     )
 
                 def chat(self, message, *args, **kwargs):
                     raise RuntimeError(
-                        "The backend client could not be imported "
-                        f"({_MISSING_CLIENT_REASON})."
+                        "The backend client could not be imported " f"({_MISSING_CLIENT_REASON})."
                     )
 
                 def analyze_code(self, code, language="auto"):
                     raise RuntimeError(
-                        "The backend client could not be imported "
-                        f"({_MISSING_CLIENT_REASON})."
+                        "The backend client could not be imported " f"({_MISSING_CLIENT_REASON})."
                     )
 
                 def search(self, query):
                     raise RuntimeError(
-                        "The backend client could not be imported "
-                        f"({_MISSING_CLIENT_REASON})."
+                        "The backend client could not be imported " f"({_MISSING_CLIENT_REASON})."
                     )
 
                 def generate_image(self, prompt, style="realistic"):
                     raise RuntimeError(
-                        "The backend client could not be imported "
-                        f"({_MISSING_CLIENT_REASON})."
+                        "The backend client could not be imported " f"({_MISSING_CLIENT_REASON})."
                     )
 
 

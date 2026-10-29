@@ -460,9 +460,7 @@ def _layers_facts():
     violations.extend(mod.structural_problems())
     claims = registry.get("claims") or []
     learning = [c for c in claims if c.get("layer") == "learning"]
-    learning_passing = [
-        c for c in learning if (c.get("result") or {}).get("status") == "pass"
-    ]
+    learning_passing = [c for c in learning if (c.get("result") or {}).get("status") == "pass"]
 
     return [
         Fact(
@@ -472,8 +470,7 @@ def _layers_facts():
             "le",
             "violations",
             "layer registry",
-            f"violations={len(violations)}"
-            + (f": {violations[0]}" if violations else ""),
+            f"violations={len(violations)}" + (f": {violations[0]}" if violations else ""),
             measured_at=MEASURED_AT,
         ),
         Fact(
@@ -483,8 +480,7 @@ def _layers_facts():
             "ge",
             "claims",
             "layer registry",
-            f"{len(claims)} claims across "
-            f"{sorted({str(c.get('layer')) for c in claims})}",
+            f"{len(claims)} claims across " f"{sorted({str(c.get('layer')) for c in claims})}",
             must_pass=False,
             measured_at=MEASURED_AT,
         ),

@@ -103,13 +103,11 @@ FINAL_SURFACES: List[Tuple[str, str]] = [
 #: Function words that may appear in a held-out surface without teaching it.
 #: Content words (the verbs and particles that carry the relation) are not
 #: here: those are what the split holds out.
-FUNCTION_WORDS = frozenset(
-    """
+FUNCTION_WORDS = frozenset("""
     a an the is are was were be been being am
     by to of in on at with from into over under above below behind ahead
     for as than and or not its it
-    """.split()
-)
+    """.split())
 
 
 def heldout_word_leaks(curriculum_text: str, payload: Dict[str, Any]) -> List[str]:

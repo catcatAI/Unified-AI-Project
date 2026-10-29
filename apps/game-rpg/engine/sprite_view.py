@@ -19,10 +19,9 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence, Tuple
 
-from PIL import Image
-
 from engine.quantize import quantize
 from engine.render_bridge import EntityState, RenderBridge, RenderState
+from PIL import Image
 
 RGB = Tuple[int, int, int]
 DEFAULT_BACKGROUND: RGB = (16, 16, 32)

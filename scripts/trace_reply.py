@@ -113,9 +113,11 @@ class Recorder:
         if isinstance(value, dict):
             value_text = str(value.get("response") or value.get("text") or "")
             preview = {
-                k: value.get(k)
-                if isinstance(value.get(k), (str, int, float, bool, type(None)))
-                else str(value.get(k))
+                k: (
+                    value.get(k)
+                    if isinstance(value.get(k), (str, int, float, bool, type(None)))
+                    else str(value.get(k))
+                )
                 for k in ("response", "text", "source", "backend", "model", "route")
                 if k in value
             }
@@ -243,9 +245,7 @@ async def trace(questions: List[str], as_json: Optional[Path]) -> int:
                     f"{event['stage'][:38]:38s} {returned[:52]:52s} "
                     f"{event['copied_from_input']:4d}"
                 )
-            shortcircuits = [
-                e["stage"] for e in recorder.events if not e["is_none"]
-            ]
+            shortcircuits = [e["stage"] for e in recorder.events if not e["is_none"]]
             copied = longest_common_run(question, text)
             lookup = [
                 e
