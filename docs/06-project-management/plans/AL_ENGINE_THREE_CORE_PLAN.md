@@ -393,7 +393,10 @@ hunk 在 HEAD 同樣不合，非本輪所觸，未動）。
 > ✅（`d31786a4e`——§10 retention/decay
 > policy：AL 側純函式、HAM 執行＋接活 prune、 `submit_event`
 > 種子回報＋`al_events`
-> dump，見下方完成記錄）。「驗」段的 E1 干預測試**未寫**（方法先例：`tests/ai/meta/test_state_intervention.py`）。
+> dump，見下方完成記錄）。「驗」段的 E1 干預測試 ✅（2026-10-29，
+> `5fea2c42b`——**嚴格版**（只動快照欄位），要等 Phase 3 item
+> 3 的 voter 改讀快照之後才寫得成，見 Phase 3 完成記錄；方法先例：
+> `tests/ai/meta/test_state_intervention.py`）。
 
 - **做**：
   1. 定義 **`ALState` snapshot
@@ -689,6 +692,9 @@ passed；flake8 0、black 過。
 
 ### Phase 3 — 割邊：把 AL 從 AI 層拔出來（3–5 天，**主戰場**）
 
+> **狀態（2026-10-29）**：item 3 ✅（`5fea2c42b`——state
+> voter 改讀單一快照，見下方完成記錄）；item 1／2／4 未動。
+
 - **做**：
   1. `prompt_builder` 不再自建
      `LifeIntensityFormula`，改讀 snapshot；ζ/η 文字注入改由 snapshot 供應（消除「AI 層替 AL 算狀態」）。
@@ -703,6 +709,33 @@ passed；flake8 0、black 過。
      `get_al_state()`。併入 `check_fact_gates.py` 新域 **`al`**。
 - **驗**：新門禁 0 violations；`flake8`/`black` 乾淨；全 testpaths 綠；
   `gen_project_map.py --budget 10000` 不超標。
+
+**完成記錄（2026-10-29，item 3 — `5fea2c42b`）**：
+
+- **快照契約 v1→v2**：+`life_cycle_state`（class `invariant`）、
+  `AL_STATE_VERSION = 2`、`PROVIDABLE_SOURCES` 增第 4 名，由 lifespan 組裝層註冊
+  `_al_life_cycle_state`（DLI 未建 → `None`，D11）。兩套階段詞彙（DLI
+  `LifeCycleState` vs ALC
+  `LifePhase`）**照實報兩欄、尚未收斂**——記為開放問題，不假裝已統一。
+- **兩個 state voter 改讀快照**：`heartbeat_voter` / `dli_state_voter` 讀
+  `context["al_state"]`；router 每回合注入一次
+  `get_al_state().as_dict()`（`_inject_al_state`），legacy
+  `_inject_heartbeat_health` / `_inject_dli_state`
+  刪除（零回退，全庫無殘留鍵）。
+- **行為變化**：心跳未觀測（`health=None`）時 voter
+  **棄權**，不再拿沒有觀測背書的 0.5 預設投票（D11）。`_bus_gate_routing_mode`
+  （L3380，無注入路徑）下兩 voter 棄權＝與改動前一致。
+- **誠實範圍**：其餘 7 個 voter 讀的是各系統的**建議 dict**
+  （emotional/intent/angela_emotion/causal/meta_calibration＝AI 側建議、abstain＝router 自身、lifecycle_behavior＝chat_routes 側建議）——屬 item
+  2 `_ctx_al_state()` 領域，本項不動；「9 voter 全改讀快照」要等 item 2 一併收。
+- **E1 嚴格版落地**（閉合 Phase 2「驗」段缺口）：
+  `tests/ai/meta/test_e1_snapshot_intervention.py`
+  —— 固定文本、只動快照欄位、`resolved_by`
+  指名對應 voter、三跑一致、文字對照組（換文本不翻模）、生產注入路徑（裸 router＋真 9
+  voter 權重）。
+- **驗證**：全量 `pytest tests/ apps/backend/tests/` **8,942 passed / 107
+  skipped / 0 failed**；flake8/black/isort 乾淨、mypy 0 issue；
+  `check_fact_gates.py` → ALL PASS。
 
 ### Phase 4 — 拆庫評估（0.5 天，Phase 3 之後才做）
 
