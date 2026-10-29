@@ -112,7 +112,7 @@ class TestMetabolicHeartbeat:
         assert result.routing_mode is None
 
     def test_heartbeat_voter_unobserved_health_abstains(self):
-        """D11：快照 health=None（心跳沒重算過）→ 弃權，不拿預設值投票。"""
+        """D11：快照 health=None（心跳沒重算過）→ 棄權，不拿預設值投票。"""
         from ai.meta.priority_negotiator import heartbeat_voter
 
         assert heartbeat_voter({"al_state": {"health": None}}) is None

@@ -81,7 +81,7 @@ class TestHealthFieldIntervention:
         assert high == {"exploratory"}
 
     def test_unobserved_health_abstains(self) -> None:
-        """D11：``health=None``（未觀測）→ heartbeat 弃權，不拿預設投票。"""
+        """D11：``health=None``（未觀測）→ heartbeat 棄權，不拿預設投票。"""
         result = _negotiator().resolve(_context(None))
         assert "heartbeat" not in result["voter_contributions"]
 
