@@ -384,22 +384,80 @@ epochs、2,556 秒、CPU：
   **knowledge/code 仍是 0**，所以「第一次非零」≠「可用」；**官方核心分仍然0.00/10**（probe 是診斷，`core_share`
   在生產路徑仍是 0）。
 
-### 4. GPU 線：重開機後仍阻塞（誠實記錄，不改口）
+### 4. GPU 線：根因＝wrapper 的 CSR 覆寫（2026-10-29 定位、10-30 更正）
 
-重開機（GuC 回到 70.72.1、sha `de81c75f…`）＋私有 runtime（libze 26.27／igc
-2.40.14／OpenCL ICD 26.27）＋`SYCL_UR_USE_LEVEL_ZERO_V2=0`
-下的乾淨壓力測試（`/tmp/xpu_stress.py` 經 `scripts/xpu_run.sh`）：
+重開機（GuC 70.72.1、sha `de81c75f…`）＋私有 runtime（libze 26.27／igc
+2.40.14／OpenCL ICD
+26.27）下，用「單變因分離」把故障面磨出來（每項測試前先 tiny-op 健康閘門，故障後等 60–120s 恢復再測，journal 計 delta
+`CAT error`）：
 
-- warmup（10 次 256² 矩陣乘）**通過**、`torch.xpu.is_available()=True`；
-- 進入持續負載（1024²、500 步 fwd/bwd）**第 1 步就
-  `UR_RESULT_ERROR_DEVICE_LOST`**；
-- kernel log 同時：`Check job timeout: … guc_id=52, not started` →
-  `Engine reset: engine_class=ccs` → 連續
-  `exec queue reset detected`（另有 devcoredump 提示），同一 GT 上 Xorg 也在排隊。
+**能跑的（全部重複驗證、零故障）**
 
-結論：**torch
-XPU 訓練路線仍不可用**，瓶頸在 xe/GuC 層而非 torch 與 runtime 版本；要再戰需要顯示與計算分離（或多卡）才能排除顯示引擎爭用。在此之前主線走
-**CPU**，不把 GPU 當成已解決的變因。
+- 純 GEMM／矩陣乘：連續 45 秒、21,909 步；H2D 拷貝 4,671 步；
+- 記憶體：單張量分配到 **1 GB**（分配＋逐元素算＋釋放）無故障；
+- 微算子全電池：embed／linear／SiLU／LayerNorm／CE fwd+bwd／Adam（各 50 次），
+  **含 Run-B 精確形狀 `64×191×12005` 的 CE fwd+bwd ×5**；
+- 真模型**前向**（d512、len 192、token 詞表）×5；
+- **小模型訓練**（char 詞表、len 48）：60
+  epochs／180 步、3-epoch 多輪全過——訓練路線本身不是先天不可用。
+
+**一定掛的（多次複現）**
+
+- **真模型訓練步驟**（d512×len 192，token 詞表 V≈10k）：batch
+  64/32/16 全數在 0–50 步內死，`Engine memory CAT error [18] class=ccs` →
+  `Timedout job` → UR
+  `DEVICE_LOST`；`limit 500`（V=5037）同樣掛，所以不是詞表大小單一因素；
+- 死亡點隨**單步成本**反向移動（batch
+  64＝4s、16≈6 步、8≈10 步、4≈10–20 步），但故障時記憶體只有 **274 MB
+  reserved**——不是容量、不是分配大小、不是動態形狀、不是步內佇列深度（forward 每 16 步強制 sync 仍掛）；
+- 佔空比停頓無效（每步 `0.05s` sleep 照掛）、L0 v2 開關不是變數。
+
+**已修的系統性掛死（代碼層，非硬體）**
+
+- 原先「訓練 3 個 epoch 全部完成、loss 正常下降，卻在**收尾 eval**
+  掛死、.pt 沒存」：同一配置 4/4 掛；改成**先存檔再 eval**＋`--eval-on-cpu` 後
+  **3/3 通過、零故障**。eval 的自回歸 `generate`（每 token 一個 host
+  sync）是放大器。
+- 附帶健壯性：每 epoch 存檔、`--resume`（vocab 不一致拒載）、`--epoch-pause`。
+
+**風暴後的設備狀態**：故障後進入劣化態（tiny
+op 過、任何真工作立刻風暴），需 60–120s 沉澱；日誌風暴是**單秒重試刷屏**（曾在 1 秒内 2,820 條），不是持續崩潰。測試間若不等恢復，下一個進程會在 setup 階段就掛死（會誤判成「新問題」）。
+
+**2026-10-30 更正：觸發器是 wrapper 的 CSR 覆寫，不是硬體對持續負載的先天限制**
+
+上面「一定掛」各項都是在**舊 `xpu_run.sh` 環境**下測的——那時它 export 了
+`NEOReadDebugKeys=1` +
+`OverrideCsrAllocationSize=65536`。對 wrapper 的四組變數做二分（同一訓練協議各跑 3 次、故障後等設備恢復再測下一項）：
+
+| 環境變數                        | 故障率                                 |
+| ------------------------------- | -------------------------------------- |
+| control（不加任何變數）         | **0/3**                                |
+| `SYCL_UR_USE_LEVEL_ZERO_V2=0`   | 0/1（乾淨）                            |
+| OpenCL ICD 路徑                 | 0/1（乾淨）                            |
+| 私有 26.27 `LD_LIBRARY_PATH` 棧 | 0/1（乾淨）                            |
+| **CSR 覆寫兩行成對**            | **2/3**（CAT 792、8 條，epoch 跑不完） |
+| 完整 wrapper（舊版）            | **3/3**（CAT 173／1810／4057 條）      |
+
+單獨一行各自測都過、**成對時**才觸發；統計上這是真變因，不是運氣。移除這兩行之後：同協議
+**3/3 全過、CAT 0**；連續 soak（token 詞表、d512×L192、5000×3
+epochs、無停頓、含收尾 CPU eval）**rc=0、kernel
+fault 增量 0**，259s 跑完。`xpu_run.sh`
+已改為不設定這兩行，並把上述量測寫進檔案註解。上面那批「一定掛」的形狀記錄（batch 越大死越快、eval 放大器、故障時僅 274MB
+reserved）仍然描述了故障形態，但**歸因作廢**：不是 torch、不是 runtime 版本、也不是 xe 對持續異構負載的先天問題。
+
+**資源佔用實測**（`gputop` +
+`top`，真訓練逐秒採樣 40 秒，回答「使用率沒上去」）：計算引擎
+**ccs 平均 46%（峰值 95%）**、拷貝引擎 **bcs 平均 42%（峰值 100%）**、GPU 記憶體
+**2 GB**（進程 MEM 欄），整機 CPU 只有 **~9%
+us**——工作確實在 GPU 上，主機端只負責餵數據與逐步 host
+sync。桌面小工具多半只顯示合成/3D 引擎，看到「GPU 沒動」是**看錯了引擎**；先前那種「主機 RSS 上漲、GPU 引擎全 0%」的樣子才是佇列堵死的病態，修後已不復現。
+
+結論（2026-10-30 更新）：**GPU 規模訓練恢復可用**。根因是 wrapper 的 CSR 覆寫變數在這張 B570 上觸發 xe
+CAT／DEVICE_LOST（與其 capability 表回報 `requiredPreemptionSurfaceSize=0`
+的已知家族一致），已移除並通過 3/3 重複驗證＋連續 soak。主線仍可選 CPU（Run
+B 已實證 13 小時跑完），但
+**Run-B 尺度（d512×len192×V10k）現在可以放上 GPU**；下一輪規模訓練在 GPU 上跑，並逐輪監控 CAT 增量與
+`gputop` 的 ccs 佔用作為健康指標。
 
 ### 5. Run B（進行中）：只換資料量這一個變因
 
@@ -437,4 +495,4 @@ PYTHONPATH=apps/backend/src OMP_NUM_THREADS=6 ./.venv/bin/python \
 1/40（`core_control_core149k.json`，與 `core_control_distill.json`
 同題同評分）。混雜要承認：Run A 是 100 epochs × 5.4k，Run B 是 5 epochs ×
 149k，所以 A/B 同時變了「資料量」與「每對更新次數」——但兩者指向同一個結論：**在固定 0.1M 容量、固定 CPU 預算下，加資料換不到升分，只換來更少的優化**（loss
-2.77→2.05仍在下降、未收斂）。還沒被排除的變因只剩**容量＋算力**（≥10⁸ 參數需 GPU，而 GPU 線仍阻塞，見第四節）與**蒸餾目標**（學 teacher 分佈而非單一正解）。及格線、評測題、規則三者沒動；**官方核心分維持 0.00/10**。
+2.77→2.05仍在下降、未收斂）。還沒被排除的變因只剩**容量＋算力**（≥10⁸ 參數需 GPU；GPU 線已在 2026-10-30 解除阻塞，見第四節，下一輪可直接上 GPU 規模）與**蒸餾目標**（學 teacher 分佈而非單一正解）。及格線、評測題、規則三者沒動；**官方核心分維持 0.00/10**。

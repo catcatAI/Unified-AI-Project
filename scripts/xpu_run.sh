@@ -14,9 +14,14 @@
 # libigc's single GLIBC_2.43 verneed (sqrtf) is patched to the GLIBC_2.2.5
 # node — noble ships glibc 2.39; see .xpu_runtime/shim.c for the fallback.
 #
-# NEOReadDebugKeys/OverrideCsrAllocationSize: B570's capability table reports
-# requiredPreemptionSurfaceSize=0 in this build, which aborts CSR creation
-# (command_stream_receiver.cpp); 64K overrides it.
+# NEOReadDebugKeys/OverrideCsrAllocationSize are deliberately NOT set. They
+# used to be (B570's capability table reports requiredPreemptionSurfaceSize=0,
+# which aborts CSR creation in command_stream_receiver.cpp; 64K overrides it),
+# but 2026-10-29 bisection showed they are the fault trigger on this stack:
+#   control (neither) 0/3 clean | CSR pair alone 2/3 faulted | this wrapper
+#   (CSR pair + everything below) 3/3 faulted, 173/1810/4057 xe CAT errors
+#   -> UR_DEVICE_LOST mid-training, protocol: token vocab d512/L192/limit 500.
+# Device init and CSR creation both succeed without them on libze 26.27.
 #
 # Usage: scripts/xpu_run.sh <command> [args...]
 #   e.g. scripts/xpu_run.sh ./.venv/bin/python scripts/train_token_snn.py ...
@@ -29,8 +34,6 @@ export LD_LIBRARY_PATH="$ZE:$ZE/intel-opencl${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH
 # ("OpenCL device not found" -> "could not create a primitive"). The ICD
 # entry lives in the private root so the system /etc stays untouched.
 export OCL_ICD_VENDORS="$REPO_ROOT/.xpu_runtime/root/etc/OpenCL/vendors"
-export NEOReadDebugKeys=1
-export OverrideCsrAllocationSize=65536
 # Level-Zero-v2 opt-out: sustained-load ccs resets + UR_DEVICE_LOST are a
 # known 26.27 failure family; a 20-min soak ran clean with v2 off
 # (riceharvest/awesome-b70 bug table, upstream llama.cpp #27595/#27198).
