@@ -459,7 +459,12 @@ B 已實證 13 小時跑完），但
 **Run-B 尺度（d512×len192×V10k）現在可以放上 GPU**；下一輪規模訓練在 GPU 上跑，並逐輪監控 CAT 增量與
 `gputop` 的 ccs 佔用作為健康指標。
 
-### 5. Run B（進行中）：只換資料量這一個變因
+**真訓練在 XPU 上的實測確認（2026-10-30，AI+AL 第一輪，見第六節）**：不是合成 soak，而是 3,180 對真資料、d512×len192×V12005、30
+epochs、無停頓、含收尾 CPU eval ——
+**`rc=0`、`CAT_before=0 CAT_after=0 delta=0`**，訓練 396s／全 run
+2,091s。這一輪把第四節的「可用」從**探針層**推到**真訓練層**。
+
+### 5. Run B（已收官，2026-10-28）：只換資料量這一個變因
 
 Run A 卡在 train_exact
 38%（連 5k 都記不完）與平台化，下一個單變因是**資料量**：同容量（`d_emb 96`／`d_hidden 512`）改餵
@@ -496,3 +501,108 @@ PYTHONPATH=apps/backend/src OMP_NUM_THREADS=6 ./.venv/bin/python \
 同題同評分）。混雜要承認：Run A 是 100 epochs × 5.4k，Run B 是 5 epochs ×
 149k，所以 A/B 同時變了「資料量」與「每對更新次數」——但兩者指向同一個結論：**在固定 0.1M 容量、固定 CPU 預算下，加資料換不到升分，只換來更少的優化**（loss
 2.77→2.05仍在下降、未收斂）。還沒被排除的變因只剩**容量＋算力**（≥10⁸ 參數需 GPU；GPU 線已在 2026-10-30 解除阻塞，見第四節，下一輪可直接上 GPU 規模）與**蒸餾目標**（學 teacher 分佈而非單一正解）。及格線、評測題、規則三者沒動；**官方核心分維持 0.00/10**。
+
+---
+
+## 六、AI+AL 第一輪：10 筆 → 3,180 筆、XPU 全程無故障，但 free-running exact 仍是 0（2026-10-30）
+
+使用者循環的第一圈：**AI 側語料現成，AL 側才是要準備的**。第一輪把兩者接起來，並回答了幾個前五節懸著的問題。
+
+### 1. 資料（兩支腳本，各有 `--check` 閘門）
+
+```bash
+./.venv/bin/python scripts/generate_al_dataset.py --rows 4000 --seed 7
+./.venv/bin/python scripts/prepare_ai_al_training_data.py \
+  --src apps/backend/data/processed/ai_al_round1_dataset.json
+```
+
+- 遷移用契約 §5 的**同一個算子**
+  `v ← target + (v−target)·e^(−dt/τ)`，目標表從 10 筆 pilot
+  **擬合**（不自編）；`routing_mode`
+  沿用 pilot（10 筆全部遷移不變），所以生成器**不發明模式切換**。
+- 分割 **3,180 train / 820
+  val**，**benchmark 洩漏 0**（生成器與 prepare 各一道門，另有「可重現」「10 筆 pilot 必須被用上」「答案不得等於輸入」三道）。
+- ⚠️ **一半資料進不去**：`max_len=192` 下只有 **1,528/3,180（48%）** train 列、
+  **400/820（49%）**
+  val 列放得下——狀態前綴＋回應＋狀態尾段太長，**進模型前就丟了**。這是下一輪第一個要修的（截斷／摘要狀態，或拉長
+  `max_len` 並付算力）。
+- 誠實範圍：遷移目標表是 10 筆 pilot 擬合的**占位**（不是 AL 動態），intent 標注是關鍵詞規則（占位，生產版應走
+  `query_classifier`）；這些列教的是**對應關係** (狀態, 文字) →
+  (回應, 狀態′)，不是 AL 狀態模型正確的證據。
+
+### 2. 訓練（真資料、真 XPU）
+
+```bash
+scripts/xpu_run.sh env PYTHONPATH=apps/backend/src OMP_NUM_THREADS=4 \
+  ./.venv/bin/python scripts/train_token_snn.py --vocab token \
+  --train apps/backend/data/processed/ai_al_train.jsonl \
+  --val apps/backend/data/processed/ai_al_val.jsonl \
+  --epochs 30 --batch 32 --lr 3e-3 --d-emb 96 --d-hidden 512 \
+  --max-len 192 --device xpu --eval-on-cpu \
+  --out data/checkpoints/ai_al_round1.pt \
+  --report data/intelligence_reports/ai_al_round1.json
+```
+
+| 指標                          | 值                                                 |
+| ----------------------------- | -------------------------------------------------- |
+| loss                          | 3.7085 → **0.4565**（30 epochs，持續下降、未收斂） |
+| 時間                          | 訓練 396s／全 run 2,091s（含收尾 CPU eval）        |
+| **GPU 穩定性**                | **`rc=0`、`CAT_before=0 CAT_after=0 delta=0`**     |
+| train exact（記憶，200 題）   | **0/200**                                          |
+| val exact（200 題）           | **0/200**                                          |
+| 淨 holdout exact（100 題）    | **0/100**                                          |
+| **淨 holdout teacher-forced** | **61.76%**（29,501 tokens，400 列全量）            |
+
+淨 holdout 那兩行用不重訓的回填量測（同一 checkpoint、同一資料，只補跑評估）：
+
+```bash
+./.venv/bin/python scripts/train_token_snn.py --vocab token --epochs 0 --resume \
+  --train apps/backend/data/processed/ai_al_train.jsonl \
+  --val apps/backend/data/processed/ai_al_val.jsonl \
+  --eval-data apps/backend/data/processed/ai_al_val.jsonl --eval-sample 100 \
+  --device cpu --eval-on-cpu --out data/checkpoints/ai_al_round1.pt \
+  --report data/intelligence_reports/ai_al_round1_eval.json
+```
+
+### 3. 這一輪回答了什麼（照實寫）
+
+1. **GPU 線正式過關**：第四節原本只有探針層證據（soak、單變因二分），這一輪是
+   **真資料 3,180 對 × 30 epochs ×
+   d512×len192×V12005**，`rc=0`、CAT 增量 0。「GPU 規模訓練可用」現在是訓練層的結論，不是探針層的。
+2. **`--eval-on-cpu` 的 150 秒逾時不是故障**（ISSUES §五.4）：全 run
+   2,091s、eval 正常完成；先前的 rc=124 是**被 timeout 殺的**。
+3. **AI+AL 資料不再是 10 筆**（ISSUES §五.5）：10 → 4,000 → 3,180/820，洩漏 0。
+4. **瓶頸不在「記不記得」，在「生成」**：train
+   exact 也是 0/200，而 teacher-forced 已有
+   **61.76%**——給定前綴時它知道下一個 token，自回歸展開時逐步漂移。這與§5（Run
+   A/B）同一個病，**加資料、加 epoch 都不改這個性質**；能改的是目標（teacher 分佈／scheduled
+   sampling）與容量。
+5. **資料格式本身是變因**：48% 的列被 `max_len`
+   擋在門外，而輸出＝回應＋狀態遷移，長度直接決定 exact 的難度（每一 token 都要對）。
+6. **及格線、評測題、規則沒動**：`generate_al_dataset` 與 `prepare`
+   都有 benchmark 洩漏門（實測 0），所以這一輪的分數不是自己教自己的分數。**官方核心分維持 0.00/10**。
+
+### 4. 對照表重測（`probe_core_control.py`，2026-10-30，同題同評分）
+
+只換
+`--token-checkpoint data/checkpoints/ai_al_round1.pt`，其餘（題目、評分、表現層／GARDEN／ED3N／LLM 四個對照欄）不變：
+
+| suite     | n   | 表現層 | GARDEN | ED3N | **TOK-SNN（ai_al_round1）** | LLM（Qwen2.5-1.5B） |
+| --------- | --- | ------ | ------ | ---- | --------------------------- | ------------------- |
+| math      | 40  | 80%    | 0%     | 0%   | **0%**                      | 68%                 |
+| knowledge | 15  | 53%    | 0%     | 0%   | **0%**                      | 73%                 |
+| code      | 10  | 0%     | 0%     | 0%   | **0%**                      | 90%                 |
+| routing   | 10  | 100%   | 0%     | 0%   | 0%                          | 0%                  |
+
+報告：`data/intelligence_reports/core_control_ai_al_round1.json`（本機，`/data/*`
+不入倉，數字以本表為準）。
+
+**照實寫**：
+
+- **TOK-SNN 歷次：distill 3/40 → core149k 1/40 → ai_al_round1
+  0/40**，三個 checkpoint 都沒能穩定通過核心凍結題——與 §5／§6 的結論一致（**容量＋目標**才是變因，資料量、資料格式、GPU 都已排除或解決）。AI+AL 第一輪練的是
+  `(狀態, 文字) → (回應, 狀態′)`
+  的對應，**本來就不是核心問答**，所以 0% 不意外，但它也**不能被拿來說核心分上升了**。
+- 對照欄與 2026-10-23 的記錄有小幅差異（knowledge 表現層 47%→53%、LLM
+  67%→73%），是 **15 題小樣本的一題之差**；code LLM 90% 與 `MEASUREMENT_MAP.md`
+  註記的「0/10 → 9/10（chat 模板修復）」一致。

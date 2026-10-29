@@ -86,6 +86,18 @@ TOK-SNN **0% →
 **37.9% → 13.9%**，而記憶上升（train/val 47%／45%）。記憶升、泛化降 →
 **資料量不是下一個變因**，剩下的是容量＋算力（GPU 仍阻塞）與蒸餾目標。
 
+**2026-10-30 換 checkpoint＝AI+AL 第一輪**（`core_control_ai_al_round1.json`，同題同評分，只換 tok 欄）：math
+TOK-SNN **1/40 → 0/40**，knowledge／code／routing 仍 0。該模型練的是
+`(狀態, 文字) → (回應, 狀態′)`（3,180 對、XPU 30
+epochs），不是核心問答，**不能拿來說核心分上升**；它的成績單在
+[`CORE_GAP_ANALYSIS.md`](CORE_GAP_ANALYSIS.md) 第六節（holdout teacher-forced
+61.76%、free-running exact
+0/100）。同一次實測的對照欄：knowledge 表現層 53%／LLM
+73%（15 題小樣本，較 10-23 的 47%／67% 差一題）、code LLM
+90%（與「chat 模板修復後 0/10 →
+9/10」一致）。**GPU 線已解除阻塞**（同日，根因＝wrapper 的 CSR 覆寫，見
+`CORE_GAP_ANALYSIS.md` §4）。
+
 根因、實測與規模需求見
 [`CORE_GAP_ANALYSIS.md`](CORE_GAP_ANALYSIS.md)；不要用模板／路由補這個缺口。
 
