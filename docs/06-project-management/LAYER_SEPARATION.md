@@ -9,6 +9,8 @@
 > [`LAYER_REGISTRY.json`](LAYER_REGISTRY.json)，門禁是
 > `scripts/check_layer_separation.py`（也併入 `scripts/check_fact_gates.py` 的
 > `layers` 域）。
+>
+> 分層只回答「**能力由什麼承載**」，不回答「**誰有權改哪份狀態**」——後者是執行期職權，另有一張表：[`../03-technical-architecture/RESPONSIBILITY_MAP.md`](../03-technical-architecture/RESPONSIBILITY_MAP.md)。兩者衝突時的裁定：**能力歸五層、職權歸那張表。**
 
 ## 一句話規則
 
