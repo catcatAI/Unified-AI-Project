@@ -5,12 +5,19 @@ Configuration for pytest: Add project source directories to the Python path.
 import logging
 import os
 import sys
+import tempfile
 import time
 from typing import Any, Callable, Dict
 
 import pytest
 
 logger = logging.getLogger(__name__)
+
+# Importing the API entry point runs setup_logging() at module level. Without this
+# redirect every test run appended its Mock-object errors to the developer's real
+# logs/angela_ai.log (620 MB, ~all of it test noise). Must happen before any test
+# module import, hence here at conftest import time.
+os.environ.setdefault("ANGELA_LOG_DIR", tempfile.mkdtemp(prefix="angela-test-logs-"))
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SRC_PATH = os.path.join(PROJECT_ROOT, "apps", "backend", "src")

@@ -122,6 +122,7 @@ class TestLogRotation:
         root_logger_state: logging.Logger,
     ) -> None:
         monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANGELA_LOG_DIR", raising=False)
         monkeypatch.delenv("ANGELA_LOG_MAX_BYTES", raising=False)
         monkeypatch.delenv("ANGELA_LOG_BACKUP_COUNT", raising=False)
 
@@ -176,3 +177,33 @@ class TestLogRotation:
 
         assert (tmp_path / "logs" / "rot.log.1").exists()
         assert (tmp_path / "logs" / "rot.log").stat().st_size <= 2000 + 200
+
+
+class TestLogDirectory:
+    """The suite must never write into the developer's real logs/ directory."""
+
+    def test_the_suite_runs_with_a_redirected_log_dir(self) -> None:
+        """Pins the conftest redirect: drop it and every test run pollutes logs/."""
+        import os
+
+        configured = os.environ.get("ANGELA_LOG_DIR", "")
+        assert configured, "tests/conftest.py must set ANGELA_LOG_DIR before imports"
+        assert os.path.abspath(configured) != os.path.abspath("logs")
+
+    def test_the_environment_redirects_the_directory(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path,
+        root_logger_state: logging.Logger,
+    ) -> None:
+        target = tmp_path / "elsewhere"
+        monkeypatch.setenv("ANGELA_LOG_DIR", str(target))
+        monkeypatch.chdir(tmp_path)
+
+        setup_logging(log_file="redir.log")
+        logging.getLogger("redir.test").warning("hello")
+        for handler in logging.getLogger().handlers:
+            handler.flush()
+
+        assert (target / "redir.log").exists()
+        assert not (tmp_path / "logs").exists()

@@ -17,6 +17,7 @@ warnings.filterwarnings(
 )
 
 LOG_LEVEL_ENV = "ANGELA_LOG_LEVEL"
+LOG_DIR_ENV = "ANGELA_LOG_DIR"
 LOG_MAX_BYTES_ENV = "ANGELA_LOG_MAX_BYTES"
 LOG_BACKUP_COUNT_ENV = "ANGELA_LOG_BACKUP_COUNT"
 DEFAULT_LOG_MAX_BYTES = 50 * 1024 * 1024
@@ -84,8 +85,11 @@ def setup_logging(
         level = resolve_log_level()
     elif isinstance(level, str):
         level = getattr(logging, level.upper(), logging.INFO)
-    # 1. Ensure log directory exists
-    log_dir = Path("logs")
+    # 1. Ensure log directory exists. ANGELA_LOG_DIR lets a caller redirect it: the
+    # test suite points it at a temp dir, because importing the API entry point
+    # runs setup_logging at module level and used to append every test run's
+    # Mock-object errors to the real logs/angela_ai.log.
+    log_dir = Path(os.getenv(LOG_DIR_ENV, "").strip() or "logs")
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # 2. Configure the root logger

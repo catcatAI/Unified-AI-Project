@@ -12,6 +12,11 @@ extends to this path, so the same path setup must live here too:
 
 import os
 import sys
+import tempfile
+
+# Same redirect as tests/conftest.py (this tree can run standalone): keep the API
+# entry point's import-time setup_logging() off the developer's real logs/.
+os.environ.setdefault("ANGELA_LOG_DIR", tempfile.mkdtemp(prefix="angela-test-logs-"))
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 _SRC_PATH = os.path.join(_PROJECT_ROOT, "apps", "backend", "src")
