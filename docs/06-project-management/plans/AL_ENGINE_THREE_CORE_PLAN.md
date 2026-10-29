@@ -390,8 +390,9 @@ hunk 在 HEAD 同樣不合，非本輪所觸，未動）。
 > ✅＋η.drift ✅（2a `ff2b19a93`、2b `ca1d8e350`、2c `f087df2f1`——item 2
 > **全數完成**）／③ ✅（`3c38586c8`——lifespan AL
 > source 登記、ALState 入 backbone、server 執行下 dump 驗證，見下方完成記錄）／④
-> ✅（本提交——§10 retention/decay policy：AL 側純函式、HAM 執行＋接活 prune、
-> `submit_event` 種子回報＋`al_events`
+> ✅（`d31786a4e`——§10 retention/decay
+> policy：AL 側純函式、HAM 執行＋接活 prune、 `submit_event`
+> 種子回報＋`al_events`
 > dump，見下方完成記錄）。「驗」段的 E1 干預測試**未寫**（方法先例：`tests/ai/meta/test_state_intervention.py`）。
 
 - **做**：
