@@ -49,6 +49,7 @@
   "angela.theta.mismatch_doubt": "錯配質疑: {value}（需要校正）",
   "angela.theta.novelty": "新穎度: {value}",
   "angela.theta.correction": "校正驅動: {value}",
+  "angela.zeta.drift": "連續漂移: {value}",
   "angela.eta.active_modules": "活躍模組: {count}個",
   "angela.eta.success_rate": "成功率: {value}",
   "angela.eta.drift": "漂移: {value} (穩定)",

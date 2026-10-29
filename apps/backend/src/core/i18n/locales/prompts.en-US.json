@@ -49,6 +49,7 @@
   "angela.theta.mismatch_doubt": "Mismatch doubt: {value} (needs correction)",
   "angela.theta.novelty": "Novelty: {value}",
   "angela.theta.correction": "Correction drive: {value}",
+  "angela.zeta.drift": "Continuity drift: {value}",
   "angela.eta.active_modules": "Active modules: {count}",
   "angela.eta.success_rate": "Success rate: {value}",
   "angela.eta.drift": "Drift: {value} (stable)",

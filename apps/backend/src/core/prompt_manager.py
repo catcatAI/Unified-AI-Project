@@ -472,6 +472,15 @@ class PromptManager:
             )
         )
 
+        # ── Zeta (continuity) drift — AL snapshot only (three-core Phase 3)
+        self.register(
+            PromptTemplate(
+                key="angela.zeta.drift",
+                templates={"en": "Continuity drift: {value}", "zh": "連續漂移: {value}"},
+                tags=["system"],
+            )
+        )
+
         # ── Eta (execution) axis fields ──────────────────────────────────
         self.register(
             PromptTemplate(

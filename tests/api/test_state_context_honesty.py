@@ -20,7 +20,10 @@ Evidence behind each assertion:
   ``None`` whenever that baseline is missing (bare fake, restored state) —
   the stored ``0.0`` on such a state is not a comparison anyone made — and
   as a real number once the baseline exists, where ``0.0`` means
-  "composition unchanged since boot" and is shown.
+  "composition unchanged since boot" and is shown. Since Phase 3 item 1 it
+  travels a single route: the AL snapshot (``drift.eta``) into the prompt;
+  the AI layer's own context copy was removed because nothing read it, and
+  ``drift.zeta`` renders the same way through ``angela.zeta.drift``.
 """
 
 import sys
@@ -159,11 +162,16 @@ class TestStateContextInjection:
         # dashboard and this test both read it to tell "0 runs" from "0.0%".
         assert eta["execution_count"] == 0
         assert eta["success_rate"] is None
-        assert eta["structural_drift"] is None
+        # Phase 3 item 1: drift is AL snapshot state (drift.eta) and never
+        # enters the AI layer's own context — there is no reader for it here.
+        assert "structural_drift" not in eta
 
-    def test_ctx_state_matrix_sends_measured_drift_once_observed(self, monkeypatch):
-        # Phase 2 item 2 flip: the producer landed (boot baseline marked), so
-        # the real number — even a measured 0.0 — flows into the LLM context.
+    def test_measured_drift_reaches_the_prompt_only_via_the_al_snapshot(self, monkeypatch):
+        # Phase 3 item 1 flip: the AI-side copy of η.structural_drift is gone
+        # (no key in state_for_llm), and the same measured number reaches the
+        # prompt when — and only when — the AL snapshot carries it.
+        from core.life import al_state
+
         state_matrix = SimpleNamespace(
             dimensions={"alpha": SimpleNamespace(values={"energy": 0.7})},
             theta=SimpleNamespace(values={}),
@@ -178,8 +186,35 @@ class TestStateContextInjection:
         chat_routes._ctx_state_matrix(context)
 
         sent = context["state_for_llm"]["eta"]
-        assert sent["structural_drift"] == 0.0
+        assert "structural_drift" not in sent, "the AI layer must not carry AL drift"
         assert sent["success_rate"] == 0.9
+
+        state = {
+            "axes": {"alpha": {"values": {"energy": 0.7}}},
+            "theta": {
+                "novelty": 0.4,
+                "theta_negativity": 0.1,
+                "creation_urge": 0.2,
+                "correction_urge": 0.1,
+            },
+            "eta": sent,
+            "guidance": [],
+        }
+        # Snapshot supplies drift.eta -> the line renders (a measured 0.0
+        # included: the observation gate already passed in measured_eta_metrics).
+        monkeypatch.setattr(al_state, "_AL_SOURCES", {"drift": lambda: {"eta": 0.0}})
+        prompt_text = _build_core_prompt(state, None, "")
+        # The locale templates are authoritative (prompts.*.json): the value
+        # line carries the "(stable)"/"(穩定)" suffix, which nothing else does.
+        assert ("(stable)" in prompt_text) or ("(穩定)" in prompt_text)
+
+        # Snapshot supplies nothing -> no line (D11: unobserved, not 0.0).
+        monkeypatch.setattr(al_state, "_AL_SOURCES", {})
+        prompt_text = _build_core_prompt(state, None, "")
+        for marker in ("(stable)", "(穩定)"):
+            assert (
+                marker not in prompt_text
+            ), f"drift reached the prompt without the snapshot: {marker}"
 
 
 class TestPromptRendering:
@@ -200,9 +235,14 @@ class TestPromptRendering:
             "guidance": [],
         }
 
-    def test_unmeasured_eta_and_unobserved_zeta_are_not_printed(self):
+    def test_unmeasured_eta_and_unobserved_zeta_are_not_printed(self, monkeypatch):
         # The cold gate output: no zeta in axes (nothing observed), eta
-        # present but every unmeasured quantity None.
+        # present but every unmeasured quantity None. Patch the provider
+        # registry empty so a provider registered by an earlier test in the
+        # same process cannot smuggle drift into this prompt.
+        from core.life import al_state
+
+        monkeypatch.setattr(al_state, "_AL_SOURCES", {})
         prompt_text = _build_core_prompt(
             self._state(
                 {
@@ -217,15 +257,20 @@ class TestPromptRendering:
         )
         assert "ALPHA" in prompt_text
         assert "ZETA" not in prompt_text
-        # Both locales' templates, whichever the manager is set to.
-        for marker in ("Structural drift", "結構漂移", "Success rate", "成功率"):
+        # Both locales' templates, whichever the manager is set to. The drift
+        # markers are the locale texts (prompts.*.json), not the registration
+        # defaults — "(stable)"/"(穩定)" is unique to a rendered drift value.
+        for marker in ("(stable)", "(穩定)", "Success rate", "成功率"):
             assert marker not in prompt_text, f"an unmeasured value reached the prompt: {marker}"
         # The module count is a real fact and still belongs there.
         assert ("Active modules" in prompt_text) or ("活躍模組" in prompt_text)
 
-    def test_observed_zeta_is_rendered(self):
+    def test_observed_zeta_is_rendered(self, monkeypatch):
         # Phase 2 item 2: observed keys arrive through the gate and the
         # prompt renders them — computed values may be shown as current state.
+        from core.life import al_state
+
+        monkeypatch.setattr(al_state, "_AL_SOURCES", {})
         prompt_text = _build_core_prompt(
             self._state(
                 {
@@ -242,18 +287,22 @@ class TestPromptRendering:
         assert "ZETA" in prompt_text
         assert "memory_depth" in prompt_text
         assert "temporal_coherence" in prompt_text
-        # The unmeasured eta quantities still stay out.
-        for marker in ("Structural drift", "結構漂移", "Success rate", "成功率"):
+        # The unmeasured eta quantities still stay out (locale-text markers).
+        for marker in ("(stable)", "(穩定)", "Success rate", "成功率"):
             assert marker not in prompt_text
 
-    def test_measured_eta_values_are_still_rendered(self):
+    def test_measured_eta_values_are_still_rendered(self, monkeypatch):
+        # Phase 3 item 1: success_rate stays an AI-layer stat in
+        # state_for_llm; structural_drift now comes from the AL snapshot.
+        from core.life import al_state
+
+        monkeypatch.setattr(al_state, "_AL_SOURCES", {"drift": lambda: {"eta": 0.05}})
         prompt_text = _build_core_prompt(
             self._state(
                 {
                     "module_count": 3,
                     "execution_count": 7,
                     "success_rate": 0.9,
-                    "structural_drift": 0.05,
                 }
             ),
             None,
@@ -262,6 +311,50 @@ class TestPromptRendering:
         assert "Active modules" in prompt_text or "活躍模組" in prompt_text
         assert "90.0%" in prompt_text
         assert "0.05" in prompt_text
+
+    def test_zeta_drift_line_follows_the_al_snapshot(self, monkeypatch):
+        # Phase 3 item 1: drift.zeta is an AL snapshot field — the prompt's
+        # continuity-drift line renders if and only if the snapshot has it.
+        from core.life import al_state
+
+        state = self._state(
+            {
+                "module_count": 3,
+                "execution_count": 0,
+                "success_rate": None,
+            }
+        )
+        monkeypatch.setattr(al_state, "_AL_SOURCES", {"drift": lambda: {"zeta": 0.12}})
+        prompt_text = _build_core_prompt(state, None, "")
+        assert ("Continuity drift" in prompt_text) or ("連續漂移" in prompt_text)
+        assert "0.12" in prompt_text
+
+        monkeypatch.setattr(al_state, "_AL_SOURCES", {})
+        prompt_text = _build_core_prompt(state, None, "")
+        for marker in ("Continuity drift", "連續漂移", "0.12"):
+            assert marker not in prompt_text, f"unobserved ζ drift reached the prompt: {marker}"
+
+
+class TestFormulaSnapshotRead:
+    """Phase 3 item 1: the life-intensity formula line reads the AL snapshot.
+
+    The prompt no longer reaches for the formula singleton itself — the value
+    flows through ``get_al_state()`` (§9 exchange), and an unobserved value
+    (None) drops the line entirely (D11).
+    """
+
+    def test_intensity_line_follows_the_snapshot(self, monkeypatch):
+        from core.life import al_state
+        from services.llm.prompt_builder import _formula_life_intensity_line
+
+        monkeypatch.setattr(al_state, "_read_intensity", lambda: 0.4321)
+        line = _formula_life_intensity_line()
+        assert line is not None
+        assert "0.4321" in line
+
+        # Unobserved -> no line, never a fabricated 0.0000.
+        monkeypatch.setattr(al_state, "_read_intensity", lambda: None)
+        assert _formula_life_intensity_line() is None
 
 
 class TestReplStateSnapshot:

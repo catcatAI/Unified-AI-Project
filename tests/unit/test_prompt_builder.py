@@ -481,7 +481,9 @@ class TestConstructAngelaPrompt:
                     "creation_urge": 0.3,
                     "correction_urge": 0.2,
                 },
-                "eta": {"module_count": 3, "success_rate": 0.9, "structural_drift": 0.05},
+                # Phase 3 item 1: structural_drift is not part of state_for_llm
+                # anymore — AL drift reaches the prompt through the snapshot.
+                "eta": {"module_count": 3, "success_rate": 0.9},
                 "guidance": ["保持友好"],
             },
             "user_profile": {},

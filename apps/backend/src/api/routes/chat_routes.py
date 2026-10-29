@@ -745,6 +745,12 @@ def _ctx_state_matrix(context: Dict[str, Any]) -> None:
 
         # None = "not measured", never 0.0 — see measured_eta_metrics(), the
         # single place that decides which η numbers have an observation.
+        eta_metrics = measured_eta_metrics(eta_state)
+        # Phase 3 item 1: η.structural_drift belongs to the AL snapshot
+        # (drift.eta, §9) — the prompt reads it there, so this AI-side copy
+        # would have no reader left. AI-layer execution stats (module_count,
+        # execution_count, success_rate) are not snapshot fields and stay.
+        eta_metrics.pop("structural_drift", None)
         context["state_for_llm"] = {
             "axes": axes,
             "theta": {
@@ -753,7 +759,7 @@ def _ctx_state_matrix(context: Dict[str, Any]) -> None:
                 "creation_urge": th.get("creation_urge", 0.0),
                 "correction_urge": th.get("correction_urge", 0.0),
             },
-            "eta": measured_eta_metrics(eta_state),
+            "eta": eta_metrics,
             "guidance": [],
         }
     except Exception as e:

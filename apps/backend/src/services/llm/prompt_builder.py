@@ -556,19 +556,15 @@ _STATE_CACHE_TTL = 2
 # beside the real ones (three-core plan Phase 1 item 3). They now live in
 # their own modules: one shared instance per formula, so what the prompt
 # shows is the one life's state. The _get_* shims remain as the single
-# indirection point for the _formula_*_line helpers above.
+# indirection point for the _formula_*_line helpers above — except life
+# intensity, which since Phase 3 item 1 goes through the AL snapshot
+# (_al_snapshot) like every other AL quantity in the prompt.
 
 
 def _get_hsm():
     from core.hsm_formula_system import get_hsm_formula
 
     return get_hsm_formula()
-
-
-def _get_life_intensity():
-    from core.life_intensity_formula import get_life_intensity_formula
-
-    return get_life_intensity_formula()
 
 
 def _get_active_cognition():
@@ -598,19 +594,35 @@ def _formula_hsm_line() -> Optional[str]:
     return None
 
 
-def _formula_life_intensity_line() -> Optional[str]:
-    """Life-intensity formula prompt line; None when unavailable."""
+def _al_snapshot():
+    """Phase 3 item 1: the prompt's AL quantities come from ``get_al_state()``.
+
+    The snapshot is the single exchange quantity (contract §9) — the AI layer
+    never reaches past it for AL state. Snapshot unavailable -> ``None``, and
+    every caller renders nothing for that quantity (D11: unobserved is never
+    dressed up as a value).
+    """
     try:
-        # peek, not calculate: reading must not append to the shared
-        # instance's history or fire its callbacks (contract §9 — one
-        # writer path; calculate() also books the time integral).
-        return prompt(
-            "angela.formula.life_intensity",
-            value=f"{_get_life_intensity().peek_life_intensity():.4f}",
-        )
-    except (ImportError, AttributeError) as e:
-        logger.debug(f"LifeIntensity formula unavailable: {e}")
-    return None
+        from core.life.al_state import get_al_state
+
+        return get_al_state()
+    except Exception as e:  # a broken snapshot degrades to "no observation"
+        logger.debug(f"AL snapshot unavailable: {e}")
+        return None
+
+
+def _formula_life_intensity_line() -> Optional[str]:
+    """Life-intensity prompt line; None when the snapshot carries no value.
+
+    Phase 3 item 1: read through the snapshot (§9), not by reaching for the
+    formula singleton directly. ``_read_intensity`` inside the snapshot peeks
+    (never ``calculate()``), so reading still appends nothing to the shared
+    instance's history and fires no callbacks — one writer path preserved.
+    """
+    snap = _al_snapshot()
+    if snap is None or snap.intensity is None:
+        return None
+    return prompt("angela.formula.life_intensity", value=f"{snap.intensity:.4f}")
 
 
 def _formula_active_cognition_line() -> Optional[str]:
@@ -836,6 +848,29 @@ def construct_angela_prompt(
     return messages
 
 
+def _eta_lines(eta: Dict[str, Any], al_drift: Dict[str, Any]) -> List[str]:
+    """Execution (η) prompt lines: AI-layer execution stats + AL-owned drift.
+
+    ``module_count``/``success_rate`` are AI-layer execution statistics (the AL
+    snapshot does not carry them); ``structural_drift`` is AL contract state
+    (``drift.eta``) and arrives from the snapshot only — Phase 3 item 1, never
+    from an AI-side copy. Measured values only: a quantity nobody observed
+    sends ``None`` and must not fall back to 0, which is exactly how a ghost
+    metric ends up in the prompt.
+    """
+    lines: List[str] = []
+    if not eta:
+        return lines
+    lines.append(prompt("angela.eta.active_modules", count=eta.get("module_count", 0)))
+    success_rate = eta.get("success_rate")
+    if success_rate is not None:
+        lines.append(prompt("angela.eta.success_rate", value=f"{success_rate:.1%}"))
+    eta_drift = al_drift.get("eta")
+    if eta_drift is not None:
+        lines.append(prompt("angela.eta.drift", value=f"{eta_drift:.2f}"))
+    return lines
+
+
 def _build_core_prompt(
     state_for_llm: Optional[Dict],
     neuro_vocabulary: Optional[Any],
@@ -845,6 +880,12 @@ def _build_core_prompt(
     """Build the core system prompt from state, bio, and axis data."""
     axis_lines, theta_lines, eta_lines, guidance_lines = [], [], [], []
     if state_for_llm:
+        # Phase 3 item 1: the AL-owned drift values (drift{zeta,eta}) reach
+        # the prompt only through the AL snapshot (§9) — the AI layer no
+        # longer carries its own copy of state it does not own. Snapshot
+        # missing or a key unobserved -> None -> no line (D11).
+        snap = _al_snapshot()
+        al_drift = (snap.drift if snap is not None else None) or {}
         axes = state_for_llm.get("axes", {})
         # zeta is rendered only through the upstream observation gate:
         # _ctx_state_matrix puts the axis in `axes` solely with keys that
@@ -864,6 +905,13 @@ def _build_core_prompt(
                     )
                     parts.append(f"{k}={v:.4f}（{desc}）" if desc else f"{k}={v:.4f}")
                 axis_lines.append(f"{axis_name.upper()}: {', '.join(parts)}")
+
+        # ζ 的快照量（drift.zeta = 觀測窗口的值漂移）同樣只從快照來。軸行
+        # 上面的 ZETA 子指標仍是狀態矩陣狀態（與 alpha 同質、同一觀測源），
+        # 不是 prompt 自己算的 AL 狀態。
+        zeta_drift = al_drift.get("zeta")
+        if zeta_drift is not None:
+            axis_lines.append(prompt("angela.zeta.drift", value=f"{zeta_drift:.2f}"))
 
         th = state_for_llm.get("theta", {})
         nv = th.get("novelty", 0)
@@ -885,21 +933,7 @@ def _build_core_prompt(
         theta_lines.append(prompt("angela.theta.creation_urge", value=f"{cr:.2f}"))
         theta_lines.append(prompt("angela.theta.correction", value=f"{co:.2f}"))
 
-        eta = state_for_llm.get("eta", {})
-        if eta:
-            eta_lines.append(prompt("angela.eta.active_modules", count=eta.get("module_count", 0)))
-            # Render measured values only. The state builder sends None for a
-            # quantity nobody has observed (success_rate before the first
-            # module execution, structural_drift before mark_structural_
-            # baseline() — Phase 2 item 2's producer), and a missing value
-            # must never fall back to 0 — that is exactly how a ghost metric
-            # ends up in the prompt.
-            success_rate = eta.get("success_rate")
-            if success_rate is not None:
-                eta_lines.append(prompt("angela.eta.success_rate", value=f"{success_rate:.1%}"))
-            drift = eta.get("structural_drift")
-            if drift is not None:
-                eta_lines.append(prompt("angela.eta.drift", value=f"{drift:.2f}"))
+        eta_lines = _eta_lines(state_for_llm.get("eta", {}), al_drift)
 
         guidance = state_for_llm.get("guidance", [])
         if guidance:

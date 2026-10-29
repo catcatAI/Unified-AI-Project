@@ -39,19 +39,58 @@ from core.non_paradox_existence import get_non_paradox  # noqa: E402
 
 class TestOneInstancePerFormula:
     def test_prompt_shims_return_the_shared_instances(self):
+        # Phase 3 item 1 removed the ``_get_life_intensity`` shim: the prompt
+        # no longer reaches past the snapshot for life intensity (contract
+        # §9 — the snapshot is the only exchange quantity). The four remaining
+        # shims still resolve to the one shared instance each, and the
+        # life-intensity line's route is pinned by the test below.
         from services.llm.prompt_builder import (
             _get_active_cognition,
             _get_cdm,
             _get_hsm,
-            _get_life_intensity,
             _get_non_paradox,
         )
 
-        assert _get_life_intensity() is get_life_intensity_formula()
         assert _get_cdm() is get_cdm_model()
         assert _get_hsm() is get_hsm_formula()
         assert _get_active_cognition() is get_active_cognition_formula()
         assert _get_non_paradox() is get_non_paradox()
+
+    def test_life_intensity_line_reads_the_shared_instance_via_the_snapshot(self):
+        """Phase 3 item 1: one life's state, now delivered by the snapshot.
+
+        ``_formula_life_intensity_line`` fetches ``get_al_state().intensity``,
+        and ``_read_intensity`` inside the snapshot *is*
+        ``get_life_intensity_formula().peek_life_intensity()`` — so what the
+        prompt shows is still the single shared instance, not a private copy,
+        and the read books nothing (contract §9 / D11: no observation -> no
+        line, never a dressed-up default).
+        """
+        from core.life.al_state import get_al_state
+        from services.llm.prompt_builder import _formula_life_intensity_line
+
+        shared = get_life_intensity_formula()
+        before = (
+            len(shared.intensity_history),
+            shared.accumulated_gap_integral,
+            shared.last_calculation,
+        )
+
+        snap_intensity = get_al_state().intensity
+        line = _formula_life_intensity_line()
+
+        if snap_intensity is None:
+            assert line is None, "an unobserved intensity must render nothing"
+        else:
+            assert abs(snap_intensity - shared.peek_life_intensity()) < 1e-9
+            assert line is not None
+            assert f"{snap_intensity:.4f}" in line
+
+        assert (
+            len(shared.intensity_history),
+            shared.accumulated_gap_integral,
+            shared.last_calculation,
+        ) == before, "the prompt must read the shared instance without writing it"
 
     def test_lifecycle_borrows_the_shared_instances(self, tmp_path):
         alc = AutonomousLifeCycle(config=None, persist_path=tmp_path / "state.json")
