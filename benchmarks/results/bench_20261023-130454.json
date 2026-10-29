@@ -1,0 +1,535 @@
+{
+  "generated_at": "2026-10-23T13:04:54",
+  "dataset": "native_bench_v1.json",
+  "results": [
+    {
+      "backend": "native",
+      "suite": "knowledge",
+      "total": 15,
+      "passed": 7,
+      "wrong": 6,
+      "abstained": 2,
+      "skipped": 0,
+      "errors": 0,
+      "comparable": true,
+      "scoring": "strict",
+      "accuracy": 46.67,
+      "loose_accuracy": 46.67,
+      "avg_latency_ms": 393.4,
+      "details": [
+        {
+          "id": "know-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "Its main functions are photosynthesis and gas exchange. A leaf is flat so it absorbs the most light, and thin, so that the sunlight can get to the chloroplasts ",
+          "loose_passed": false,
+          "latency_ms": 5755.6,
+          "error": ""
+        },
+        {
+          "id": "know-002",
+          "passed": true,
+          "skipped": false,
+          "answer": "Mars",
+          "loose_passed": true,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-003",
+          "passed": true,
+          "skipped": false,
+          "answer": "A continent is a large area of the land on Earth that is joined. There are no strict rules for what land is considered a continent, but in general the Earth is ",
+          "loose_passed": true,
+          "latency_ms": 31.3,
+          "error": ""
+        },
+        {
+          "id": "know-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "Organ failure is a condition of the human body in which an important internal organ is unable to perform its necessities as it would if it were still functionin",
+          "loose_passed": false,
+          "latency_ms": 22.6,
+          "error": ""
+        },
+        {
+          "id": "know-005",
+          "passed": true,
+          "skipped": false,
+          "answer": "H2O",
+          "loose_passed": true,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "know-006",
+          "passed": true,
+          "skipped": false,
+          "answer": "100",
+          "loose_passed": true,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "Normal force is the force that the ground (or any surface) pushes back up with; if there was no normal force, you would fall into the ground. The normal force o",
+          "loose_passed": false,
+          "latency_ms": 16.7,
+          "error": ""
+        },
+        {
+          "id": "know-008",
+          "passed": true,
+          "skipped": false,
+          "answer": "Bees make honey from nectar that they collect from flowers. After bees collect nectar from flowers, and make it into honey, the bees then put the honey in the s",
+          "loose_passed": true,
+          "latency_ms": 9.6,
+          "error": ""
+        },
+        {
+          "id": "know-009",
+          "passed": true,
+          "skipped": false,
+          "answer": "Pacific",
+          "loose_passed": true,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "loose_passed": false,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "know-011",
+          "passed": false,
+          "skipped": false,
+          "answer": "The speed of light, in any medium, which is usually denoted by c, is a physical constant important in many areas of physics. It is denoted by \"c0\" especially in",
+          "loose_passed": false,
+          "latency_ms": 18.4,
+          "error": ""
+        },
+        {
+          "id": "know-012",
+          "passed": false,
+          "skipped": false,
+          "answer": "The Earth's atmosphere is the layer of gases around the Earth. It is held in place by Earth's gravity.",
+          "loose_passed": false,
+          "latency_ms": 18.4,
+          "error": ""
+        },
+        {
+          "id": "know-013",
+          "passed": true,
+          "skipped": false,
+          "answer": "8",
+          "loose_passed": true,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-014",
+          "passed": false,
+          "skipped": false,
+          "answer": "The Department of Energy & Climate Change (DECC) was a British government department. It was created to make sure the UK has secure, clean, affordable energy su",
+          "loose_passed": false,
+          "latency_ms": 27.4,
+          "error": ""
+        },
+        {
+          "id": "know-015",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "loose_passed": false,
+          "latency_ms": 0.2,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "native",
+      "suite": "knowledge_mc",
+      "total": 40,
+      "passed": 40,
+      "wrong": 0,
+      "abstained": 0,
+      "skipped": 0,
+      "errors": 0,
+      "comparable": true,
+      "scoring": "strict",
+      "accuracy": 100.0,
+      "loose_accuracy": 0.0,
+      "avg_latency_ms": 1.1,
+      "details": [
+        {
+          "id": "mc-001",
+          "passed": true,
+          "skipped": false,
+          "answer": "Paris",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-002",
+          "passed": true,
+          "skipped": false,
+          "answer": "Tokyo",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-003",
+          "passed": true,
+          "skipped": false,
+          "answer": "Washington",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-004",
+          "passed": true,
+          "skipped": false,
+          "answer": "Beijing",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-005",
+          "passed": true,
+          "skipped": false,
+          "answer": "London",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-006",
+          "passed": true,
+          "skipped": false,
+          "answer": "Berlin",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-007",
+          "passed": true,
+          "skipped": false,
+          "answer": "Rome",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-008",
+          "passed": true,
+          "skipped": false,
+          "answer": "Moscow",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-009",
+          "passed": true,
+          "skipped": false,
+          "answer": "H2O",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-010",
+          "passed": true,
+          "skipped": false,
+          "answer": "salt = NaCl",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-011",
+          "passed": true,
+          "skipped": false,
+          "answer": "carbon dioxide = CO2",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-012",
+          "passed": true,
+          "skipped": false,
+          "answer": "methane = CH4",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-013",
+          "passed": true,
+          "skipped": false,
+          "answer": "ammonia = NH3",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-014",
+          "passed": true,
+          "skipped": false,
+          "answer": "Shakespeare",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-015",
+          "passed": true,
+          "skipped": false,
+          "answer": "Edison",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-016",
+          "passed": true,
+          "skipped": false,
+          "answer": "The Americas, or America, were discovered by Europeans in the late 15th century during the Age of Exploration. Christopher Columbus, sailing for Spain, reached ",
+          "loose_passed": null,
+          "latency_ms": 21.2,
+          "error": ""
+        },
+        {
+          "id": "mc-017",
+          "passed": true,
+          "skipped": false,
+          "answer": "Nile",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-018",
+          "passed": true,
+          "skipped": false,
+          "answer": "Everest",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-019",
+          "passed": true,
+          "skipped": false,
+          "answer": "Pacific",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-020",
+          "passed": true,
+          "skipped": false,
+          "answer": "Sahara",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-021",
+          "passed": true,
+          "skipped": false,
+          "answer": "Mercury",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-022",
+          "passed": true,
+          "skipped": false,
+          "answer": "Hydrogen",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-023",
+          "passed": true,
+          "skipped": false,
+          "answer": "1945",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-024",
+          "passed": true,
+          "skipped": false,
+          "answer": "1918",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-025",
+          "passed": true,
+          "skipped": false,
+          "answer": "1492",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-026",
+          "passed": true,
+          "skipped": false,
+          "answer": "3.14",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-027",
+          "passed": true,
+          "skipped": false,
+          "answer": "8",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-028",
+          "passed": true,
+          "skipped": false,
+          "answer": "6",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-029",
+          "passed": true,
+          "skipped": false,
+          "answer": "3",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-030",
+          "passed": true,
+          "skipped": false,
+          "answer": "6",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-031",
+          "passed": true,
+          "skipped": false,
+          "answer": "7",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-032",
+          "passed": true,
+          "skipped": false,
+          "answer": "4",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-033",
+          "passed": true,
+          "skipped": false,
+          "answer": "blue",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-034",
+          "passed": true,
+          "skipped": false,
+          "answer": "white",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-035",
+          "passed": true,
+          "skipped": false,
+          "answer": "meow",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-036",
+          "passed": true,
+          "skipped": false,
+          "answer": "moo",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-037",
+          "passed": true,
+          "skipped": false,
+          "answer": "cold",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-038",
+          "passed": true,
+          "skipped": false,
+          "answer": "sad",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-039",
+          "passed": true,
+          "skipped": false,
+          "answer": "liquid",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-040",
+          "passed": true,
+          "skipped": false,
+          "answer": "Between 1902 and 1909 he made the theory of special relativity to fix it. Einstein also thought that Isaac Newton's idea of gravity was not completely correct.",
+          "loose_passed": null,
+          "latency_ms": 20.2,
+          "error": ""
+        }
+      ]
+    }
+  ]
+}

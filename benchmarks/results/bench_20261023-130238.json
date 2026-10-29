@@ -1,0 +1,535 @@
+{
+  "generated_at": "2026-10-23T13:02:38",
+  "dataset": "native_bench_v1.json",
+  "results": [
+    {
+      "backend": "native",
+      "suite": "knowledge",
+      "total": 15,
+      "passed": 6,
+      "wrong": 7,
+      "abstained": 2,
+      "skipped": 0,
+      "errors": 0,
+      "comparable": true,
+      "scoring": "strict",
+      "accuracy": 40.0,
+      "loose_accuracy": 40.0,
+      "avg_latency_ms": 348.4,
+      "details": [
+        {
+          "id": "know-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "Nitrous oxide",
+          "loose_passed": false,
+          "latency_ms": 5118.1,
+          "error": ""
+        },
+        {
+          "id": "know-002",
+          "passed": true,
+          "skipped": false,
+          "answer": "Mars",
+          "loose_passed": true,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "Many of the Earth's volcanoes are islands in the Pacific or on continents within a few hundred kilometers of the ocean's edge.",
+          "loose_passed": false,
+          "latency_ms": 26.8,
+          "error": ""
+        },
+        {
+          "id": "know-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "Organ failure is a condition of the human body in which an important internal organ is unable to perform its necessities as it would if it were still functionin",
+          "loose_passed": false,
+          "latency_ms": 18.3,
+          "error": ""
+        },
+        {
+          "id": "know-005",
+          "passed": true,
+          "skipped": false,
+          "answer": "H2O",
+          "loose_passed": true,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "know-006",
+          "passed": true,
+          "skipped": false,
+          "answer": "100",
+          "loose_passed": true,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "Normal force",
+          "loose_passed": false,
+          "latency_ms": 14.4,
+          "error": ""
+        },
+        {
+          "id": "know-008",
+          "passed": true,
+          "skipped": false,
+          "answer": "Bees make honey from nectar that they collect from flowers.",
+          "loose_passed": true,
+          "latency_ms": 7.4,
+          "error": ""
+        },
+        {
+          "id": "know-009",
+          "passed": true,
+          "skipped": false,
+          "answer": "Pacific",
+          "loose_passed": true,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "loose_passed": false,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-011",
+          "passed": false,
+          "skipped": false,
+          "answer": "The special theory of relativity is based on the prediction, so far upheld by observations, that the measured speed of light in a vacuum is the same whether or ",
+          "loose_passed": false,
+          "latency_ms": 13.6,
+          "error": ""
+        },
+        {
+          "id": "know-012",
+          "passed": false,
+          "skipped": false,
+          "answer": "Air",
+          "loose_passed": false,
+          "latency_ms": 13.4,
+          "error": ""
+        },
+        {
+          "id": "know-013",
+          "passed": true,
+          "skipped": false,
+          "answer": "8",
+          "loose_passed": true,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-014",
+          "passed": false,
+          "skipped": false,
+          "answer": "The Department of Energy & Climate Change (DECC) was a British government department.",
+          "loose_passed": false,
+          "latency_ms": 13.3,
+          "error": ""
+        },
+        {
+          "id": "know-015",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "loose_passed": false,
+          "latency_ms": 0.1,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "native",
+      "suite": "knowledge_mc",
+      "total": 40,
+      "passed": 38,
+      "wrong": 2,
+      "abstained": 0,
+      "skipped": 0,
+      "errors": 0,
+      "comparable": true,
+      "scoring": "strict",
+      "accuracy": 95.0,
+      "loose_accuracy": 0.0,
+      "avg_latency_ms": 0.6,
+      "details": [
+        {
+          "id": "mc-001",
+          "passed": true,
+          "skipped": false,
+          "answer": "Paris",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-002",
+          "passed": true,
+          "skipped": false,
+          "answer": "Tokyo",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-003",
+          "passed": true,
+          "skipped": false,
+          "answer": "Washington",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-004",
+          "passed": true,
+          "skipped": false,
+          "answer": "Beijing",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-005",
+          "passed": true,
+          "skipped": false,
+          "answer": "London",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-006",
+          "passed": true,
+          "skipped": false,
+          "answer": "Berlin",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-007",
+          "passed": true,
+          "skipped": false,
+          "answer": "Rome",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-008",
+          "passed": true,
+          "skipped": false,
+          "answer": "Moscow",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-009",
+          "passed": true,
+          "skipped": false,
+          "answer": "H2O",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-010",
+          "passed": true,
+          "skipped": false,
+          "answer": "salt = NaCl",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-011",
+          "passed": true,
+          "skipped": false,
+          "answer": "carbon dioxide = CO2",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-012",
+          "passed": true,
+          "skipped": false,
+          "answer": "methane = CH4",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-013",
+          "passed": true,
+          "skipped": false,
+          "answer": "ammonia = NH3",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-014",
+          "passed": true,
+          "skipped": false,
+          "answer": "Shakespeare",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-015",
+          "passed": true,
+          "skipped": false,
+          "answer": "Edison",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-016",
+          "passed": false,
+          "skipped": false,
+          "answer": "The Americas, or America, were discovered by Europeans in the late 15th century during the Age of Exploration.",
+          "loose_passed": null,
+          "latency_ms": 11.4,
+          "error": ""
+        },
+        {
+          "id": "mc-017",
+          "passed": true,
+          "skipped": false,
+          "answer": "Nile",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-018",
+          "passed": true,
+          "skipped": false,
+          "answer": "Everest",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-019",
+          "passed": true,
+          "skipped": false,
+          "answer": "Pacific",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-020",
+          "passed": true,
+          "skipped": false,
+          "answer": "Sahara",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-021",
+          "passed": true,
+          "skipped": false,
+          "answer": "Mercury",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-022",
+          "passed": true,
+          "skipped": false,
+          "answer": "Hydrogen",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-023",
+          "passed": true,
+          "skipped": false,
+          "answer": "1945",
+          "loose_passed": null,
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "mc-024",
+          "passed": true,
+          "skipped": false,
+          "answer": "1918",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-025",
+          "passed": true,
+          "skipped": false,
+          "answer": "1492",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-026",
+          "passed": true,
+          "skipped": false,
+          "answer": "3.14",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-027",
+          "passed": true,
+          "skipped": false,
+          "answer": "8",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-028",
+          "passed": true,
+          "skipped": false,
+          "answer": "6",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-029",
+          "passed": true,
+          "skipped": false,
+          "answer": "3",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-030",
+          "passed": true,
+          "skipped": false,
+          "answer": "6",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-031",
+          "passed": true,
+          "skipped": false,
+          "answer": "7",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-032",
+          "passed": true,
+          "skipped": false,
+          "answer": "4",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-033",
+          "passed": true,
+          "skipped": false,
+          "answer": "blue",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-034",
+          "passed": true,
+          "skipped": false,
+          "answer": "white",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-035",
+          "passed": true,
+          "skipped": false,
+          "answer": "meow",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-036",
+          "passed": true,
+          "skipped": false,
+          "answer": "moo",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-037",
+          "passed": true,
+          "skipped": false,
+          "answer": "cold",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-038",
+          "passed": true,
+          "skipped": false,
+          "answer": "sad",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-039",
+          "passed": true,
+          "skipped": false,
+          "answer": "liquid",
+          "loose_passed": null,
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "mc-040",
+          "passed": false,
+          "skipped": false,
+          "answer": "The Superstring theory is an approach to realize Albert Einstein’s dream of a united theory of physics.",
+          "loose_passed": null,
+          "latency_ms": 13.5,
+          "error": ""
+        }
+      ]
+    }
+  ]
+}
