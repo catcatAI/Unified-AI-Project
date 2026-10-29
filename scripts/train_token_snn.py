@@ -138,6 +138,32 @@ def main() -> int:
     ap.add_argument("--out", default=str(OUT_DIR / "token_snn.pt"))
     ap.add_argument("--report", default=str(REPORT_DIR / "token_snn.json"))
     ap.add_argument(
+        "--epoch-pause",
+        type=float,
+        default=0.0,
+        help="seconds to sleep after each epoch. A safety valve: it drains "
+        "the SYCL command queue between epochs. The 2026-10-29 bisection "
+        "traced the xe CAT / DEVICE_LOST faults to the CSR override env vars "
+        "that xpu_run.sh no longer sets, not to duty cycle -- with them gone "
+        "a continuous soak ran clean, so this pause is optional.",
+    )
+    ap.add_argument(
+        "--eval-on-cpu",
+        action="store_true",
+        help="run the post-training evaluation on CPU. A safety valve: the "
+        "autoregressive eval does one host sync per token and was where a "
+        "faulted run used to be lost. The device fault itself was traced to "
+        "the CSR env vars (removed from xpu_run.sh); with them gone a full "
+        "run including eval completed cleanly, so this stays optional.",
+    )
+    ap.add_argument(
+        "--resume",
+        action="store_true",
+        help="load weights/vocab/config from --out before training (continue "
+        "an interrupted run; refuses if the data vocab differs from the "
+        "checkpoint).",
+    )
+    ap.add_argument(
         "--vocab",
         choices=("char", "token"),
         default="char",
@@ -183,6 +209,19 @@ def main() -> int:
     device = resolve_device(torch, args.device)
     print(f"device={device}")
     model = TokenSNN(vocab, cfg, device=device)
+    if args.resume:
+        if Path(args.out).is_file():
+            model = TokenSNN.load(args.out, map_location="cpu", device=device)
+            if model.vocab.to_dict() != vocab.to_dict():
+                print(
+                    f"refusing --resume: vocab at {args.out} differs from the "
+                    "training data vocab (dataset changed?); delete the "
+                    "checkpoint to start fresh",
+                )
+                return 1
+            print(f"resumed from {args.out}", flush=True)
+        else:
+            print(f"--resume: no checkpoint at {args.out}, starting fresh", flush=True)
     started = time.time()
     curve: List[dict] = []
     held_out = []
@@ -202,15 +241,33 @@ def main() -> int:
                 f"exact={point['exact']:.3f} (n={point['n']})"
             )
 
+    def log_row(row: dict) -> None:
+        print(f"  epoch {row['epoch'] + 1}: loss={row['loss']:.4f}", flush=True)
+        # Per-epoch checkpoint: the B570 faults stochastically mid-run, and a
+        # 300 KB save costs nothing next to one epoch of training.
+        model.save(args.out)
+        if args.epoch_pause > 0:
+            time.sleep(args.epoch_pause)
+
     history = model.train_on(
         train_fit,
         epochs=args.epochs,
         batch_size=args.batch,
         lr=args.lr,
-        log=lambda row: print(f"  epoch {row['epoch'] + 1}: loss={row['loss']:.4f}"),
+        log=log_row,
         on_epoch=on_epoch,
     )
-    elapsed = time.time() - started
+    train_elapsed = time.time() - started
+
+    # Persist the finished training run *before* evaluation: on the B570 the
+    # eval phase has been observed to hang the device (xe CAT error / UR
+    # DEVICE_LOST), which used to discard a completed run.
+    model.save(args.out)
+    print(f"saved {args.out} (pre-eval checkpoint)", flush=True)
+    if args.eval_on_cpu:
+        model.net.to("cpu")
+        model.device = "cpu"
+        print("eval on cpu", flush=True)
 
     # Train-side match is a memorisation check (it must not be reported as skill).
     train_match = exact_match(model, train_fit, 200, seed=1)
@@ -220,6 +277,7 @@ def main() -> int:
     if held_out:
         eval_match = exact_match(model, held_out, args.eval_sample, seed=3)
         eval_tf = model.tf_accuracy(held_out)
+    elapsed = time.time() - started  # total incl. evaluation
     report = {
         "train": str(train_path),
         "vocab_kind": args.vocab,
@@ -231,6 +289,7 @@ def main() -> int:
         "lr": args.lr,
         "device": device,
         "seconds": round(elapsed, 1),
+        "train_seconds": round(train_elapsed, 1),
         "loss_history": history,
         "train_exact_200": train_match,
         "val_exact_200": val_match,
@@ -243,7 +302,7 @@ def main() -> int:
             "model counts as core intelligence."
         ),
     }
-    model.save(args.out)
+    model.save(args.out)  # unchanged state; keeps the path idempotent
     report_path = Path(args.report)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
