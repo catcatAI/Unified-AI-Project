@@ -24,7 +24,8 @@
 > 1.5B，然後做共享上下文（主 AI，角色扮演 A）+ 角色扮演 B（分隔上下文（Gemma 4
 > 2B））+ 角色扮演 C（分隔上下文（Qwen 3 1.5B））。
 
-> **狀態**：draft（規劃階段，尚未實作；需切換到 Build agent 才能動檔）。
+> **狀態**：Phase 0–3 已落地（2026-10-28，各階段標題有 ✅）；Phase
+> 5 驗證大部分落地（P5-1…P5-4，見下）；Phase 4（前端多角色）與 P5-5 未做。
 
 ---
 
@@ -417,13 +418,25 @@ class MultiRoleOrchestrator:
 - [ ] P4-2 角色切換 UI + group chat 顯示。
 - [ ] P4-3 角色狀態面板 (per-role context/memory)。
 
-### Phase 5 — 驗證與基準 (1-2 天)
+### Phase 5 — 驗證與基準 (1-2 天) — 大部分落地
 
-- [ ] P5-1 整合測試：主 AI + 角色 B (gemma) + 角色 C
-      (qwen) 同時運行，驗證 context 隔離。
-- [ ] P5-2 記憶洩漏測試：角色 B 的私人對話不應出現在角色 C 的檢索結果。
-- [ ] P5-3 模型綁定測試：角色 B 的請求必須走 gemma slot，角色 C 走 qwen slot。
-- [ ] P5-4 效能測試：三角色同時回應的延遲與記憶體。
+> 證據由 `671edfef8`（2026-10-28）實跑落地，當時誤寫進
+> `INTERACTIVE_SPACE_PLAN.md`（改錯檔，該檔整份被覆寫）；2026-10-29歸位本檔、舞台計畫從
+> `8a172cd1c` 還原。測試數已複核：17/15/17。
+
+- [x] P5-1 整合測試：主 AI + 角色 B (gemma) + 角色 C
+      (qwen) 同時運行，驗證 context 隔離。落地為
+      `tests/ai/roleplay/test_multi_role_orchestrator.py`（共享/私有可見性，17）＋
+      `scripts/verify_multi_role.py` 的 14 項檢查。
+- [x] P5-2 記憶洩漏測試：`tests/ai/memory/test_memory_namespace.py`（15）＋
+      `verify_multi_role.py`（在 chromadb 上實測：role_a 寫入後 role_c 查不到）。
+- [x] P5-3 模型綁定測試：`tests/services/llm/test_role_backend_slot.py`（17）驗證
+      `_resolve_forced_backend` 的 exact 比對與回退；`verify_multi_role.py`
+      對 gemma/qwen/deepseek 三個槽各驗一次。
+- [x] P5-4 效能測試：`scripts/bench_local_roles.py`（本地三模型實測：main 0.65s
+      / gemma 5.12s / llama 0.34s
+      → 循序 6.11s，並行 3.58s，1.7×）。gemma 是瓶頸（`-fa off`
+      換穩定性的代價）。
 - [ ] P5-5 更新 `check_fact_gates.py` 加 `multi_role` 域 (可選)。
 
 ---
