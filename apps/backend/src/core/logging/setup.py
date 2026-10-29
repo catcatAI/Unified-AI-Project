@@ -4,6 +4,7 @@ Centralizes logging configuration to prevent 'log-jacking' by submodules.
 """
 
 import logging
+import logging.handlers
 import os
 import warnings
 from pathlib import Path
@@ -16,6 +17,31 @@ warnings.filterwarnings(
 )
 
 LOG_LEVEL_ENV = "ANGELA_LOG_LEVEL"
+LOG_MAX_BYTES_ENV = "ANGELA_LOG_MAX_BYTES"
+LOG_BACKUP_COUNT_ENV = "ANGELA_LOG_BACKUP_COUNT"
+DEFAULT_LOG_MAX_BYTES = 50 * 1024 * 1024
+DEFAULT_LOG_BACKUP_COUNT = 5
+
+
+def _env_int(name: str, default: int) -> int:
+    """Read a non-negative int from the environment; fall back on blank or junk.
+
+    Same rule as ``resolve_log_level``: a mistyped value must not stop the server
+    from starting. ``0`` is valid and means "never rotate" for ``MAX_BYTES``.
+    """
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        value = -1
+    if value < 0:
+        warnings.warn(
+            f"{name}={raw!r} is not a non-negative integer; using {default}", stacklevel=2
+        )
+        return default
+    return value
 
 
 def resolve_log_level(default: int = logging.INFO) -> int:
@@ -72,8 +98,15 @@ def setup_logging(
         for handler in root.handlers[:]:
             root.removeHandler(handler)
 
-    # Main file handler
-    file_handler = logging.FileHandler(log_dir / log_file, encoding="utf-8")
+    # Main file handler: rotating, so one long-lived server (or every test run that
+    # imports an entry point) cannot grow a single file without bound. A plain
+    # FileHandler had let logs/angela_ai.log reach ~620 MB.
+    file_handler = logging.handlers.RotatingFileHandler(
+        log_dir / log_file,
+        maxBytes=_env_int(LOG_MAX_BYTES_ENV, DEFAULT_LOG_MAX_BYTES),
+        backupCount=_env_int(LOG_BACKUP_COUNT_ENV, DEFAULT_LOG_BACKUP_COUNT),
+        encoding="utf-8",
+    )
     file_handler.setFormatter(
         logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     )

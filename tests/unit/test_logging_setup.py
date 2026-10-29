@@ -9,6 +9,7 @@ ANGELA-MATRIX: [L4] [δ] [B] [L1]
 """
 
 import logging
+import logging.handlers
 
 import pytest
 
@@ -104,3 +105,74 @@ def test_setup_logging_keeps_a_sane_default(
     setup_logging(log_file="test_env_level.log")
 
     assert root_logger_state.level == logging.INFO
+
+
+class TestLogRotation:
+    """A plain FileHandler let logs/angela_ai.log grow to ~620 MB on one machine.
+
+    `setup_logging` writes under the *relative* `logs/`, so every case chdirs into
+    a tmp dir: nothing here touches the developer's real log directory.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _isolated(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path,
+        root_logger_state: logging.Logger,
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANGELA_LOG_MAX_BYTES", raising=False)
+        monkeypatch.delenv("ANGELA_LOG_BACKUP_COUNT", raising=False)
+
+    @staticmethod
+    def _file_handler() -> logging.handlers.RotatingFileHandler:
+        handlers = [
+            h
+            for h in logging.getLogger().handlers
+            if isinstance(h, logging.handlers.RotatingFileHandler)
+        ]
+        assert len(handlers) == 1
+        return handlers[0]
+
+    def test_the_default_is_bounded(self) -> None:
+        setup_logging(log_file="rot.log")
+
+        handler = self._file_handler()
+        assert handler.maxBytes == 50 * 1024 * 1024
+        assert handler.backupCount == 5
+
+    def test_the_environment_overrides_both_limits(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("ANGELA_LOG_MAX_BYTES", "4096")
+        monkeypatch.setenv("ANGELA_LOG_BACKUP_COUNT", "2")
+
+        setup_logging(log_file="rot.log")
+
+        handler = self._file_handler()
+        assert (handler.maxBytes, handler.backupCount) == (4096, 2)
+
+    @pytest.mark.parametrize("junk", ["lots", "-1", "1.5"])
+    def test_a_malformed_limit_falls_back_instead_of_raising(
+        self, monkeypatch: pytest.MonkeyPatch, junk: str
+    ) -> None:
+        monkeypatch.setenv("ANGELA_LOG_MAX_BYTES", junk)
+
+        with pytest.warns(UserWarning):
+            setup_logging(log_file="rot.log")
+
+        assert self._file_handler().maxBytes == 50 * 1024 * 1024
+
+    def test_an_oversized_log_actually_rolls_over(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path
+    ) -> None:
+        """Not just the attribute: writing past the cap must create a backup."""
+        monkeypatch.setenv("ANGELA_LOG_MAX_BYTES", "2000")
+        monkeypatch.setenv("ANGELA_LOG_BACKUP_COUNT", "1")
+        setup_logging(level=logging.INFO, log_file="rot.log")
+
+        for i in range(200):
+            logging.getLogger("rotation.test").info("line %03d %s", i, "x" * 40)
+        self._file_handler().flush()
+
+        assert (tmp_path / "logs" / "rot.log.1").exists()
+        assert (tmp_path / "logs" / "rot.log").stat().st_size <= 2000 + 200
