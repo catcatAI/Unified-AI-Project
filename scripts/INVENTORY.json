@@ -702,6 +702,11 @@
       "referenced": true,
       "purpose": "Plan three local models that actually fit this machine."
     },
+    "prepare_ai_al_training_data.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Prepare the AI+AL joint training data (pilot records -> trainable jsonl)."
+    },
     "prepare_core_training_data.py": {
       "category": "tool",
       "referenced": true,
