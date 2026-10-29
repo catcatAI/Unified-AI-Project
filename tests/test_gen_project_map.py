@@ -91,6 +91,107 @@ def test_orphan_entry_like_is_L2_folded(tiny_tree):
     assert any("orphan.py" in line and "L1" in line for line in rels)
 
 
+def test_orphan_registry_exempt_with_filename(tiny_tree):
+    """registry 豁免：tuple 檔名幹 + import_module（動態載入），列檔名不列 L1。"""
+    mod = load_tool()
+    base = os.path.join(tiny_tree, "apps", "backend", "src", "pkg")
+    with open(os.path.join(base, "__init__.py"), "w", encoding="utf-8") as f:
+        f.write('import importlib\nREG = ("widget",)\nimportlib.import_module(".widget")\n')
+    with open(os.path.join(base, "widget.py"), "w", encoding="utf-8") as f:
+        f.write("W = 1\n")
+    text = "\n".join(mod.block_orphans(tiny_tree, mod.walk_files(tiny_tree)))
+    assert "registry 豁免 ×1" in text
+    assert "widget.py" in text
+    assert not any("widget.py" in line for line in _orphan_lines(mod, tiny_tree))
+
+
+def test_orphan_main_guard_is_L2_folded(tiny_tree):
+    """`__main__` 守衛＝真實入口證據：非入口詞的孤兒也升 L2 折疊。"""
+    mod = load_tool()
+    base = os.path.join(tiny_tree, "apps", "backend", "src", "pkg")
+    # worker_tool 不在入口詞表（grade_orphan 會判 L1）——只有守衛能升 L2
+    with open(os.path.join(base, "worker_tool.py"), "w", encoding="utf-8") as f:
+        f.write('def main():\n    pass\n\n\nif __name__ == "__main__":\n    main()\n')
+    text = "\n".join(mod.block_orphans(tiny_tree, mod.walk_files(tiny_tree)))
+    assert "__main__ 守衛" in text and "worker_tool.py" in text
+    assert not any("worker_tool.py" in line for line in _orphan_lines(mod, tiny_tree))
+
+
+def test_orphan_tests_dir_exempt_from_candidates(tiny_tree):
+    """非慣例測試目錄不入候選（packages/*/tests 曾漏網），豁免列檔名留證。"""
+    mod = load_tool()
+    tdir = os.path.join(tiny_tree, "packages", "demo", "tests")
+    os.makedirs(tdir)
+    with open(os.path.join(tdir, "test_smoke.py"), "w", encoding="utf-8") as f:
+        f.write("def test_x():\n    assert True\n")
+    text = "\n".join(mod.block_orphans(tiny_tree, mod.walk_files(tiny_tree)))
+    assert "測試目錄豁免 ×1" in text and "test_smoke.py" in text
+    assert not any("test_smoke.py" in line for line in _orphan_lines(mod, tiny_tree))
+
+
+def test_orphan_config_gate_ignores_comments(tiny_tree):
+    """配置門控先去 # 註釋（假陽性回歸：註釋提到檔名幹不得觸發 L3）。"""
+    mod = load_tool()
+    cfg = os.path.join(tiny_tree, "apps", "backend", "configs")
+    with open(os.path.join(cfg, "app.yaml"), "a", encoding="utf-8") as f:
+        f.write("# legacy_widget_store.js was retired in Phase 12\n")
+    base = os.path.join(tiny_tree, "apps", "backend", "src", "pkg")
+    with open(os.path.join(base, "legacy_widget_store.py"), "w", encoding="utf-8") as f:
+        f.write("V = 1\n")
+    text = "\n".join(mod.block_orphans(tiny_tree, mod.walk_files(tiny_tree)))
+    # 若註釋沒被剝掉 → 誤判 L3 折疊，檔名不會出現在 L1 展開行
+    assert any("legacy_widget_store.py" in line for line in _orphan_lines(mod, tiny_tree))
+    assert "legacy_widget_store.py（配置鍵）" not in text
+
+
+def test_orphan_config_gate_keeps_trailing_comment(tiny_tree):
+    """行尾註釋綁真實鍵值＝真門控（67c6d84f rlaif 翻案不可因去註釋回退）。"""
+    mod = load_tool()
+    cfg = os.path.join(tiny_tree, "apps", "backend", "configs")
+    with open(os.path.join(cfg, "app.yaml"), "a", encoding="utf-8") as f:
+        f.write("feature_enabled: false # opt-in module (dyn_score_buffer)\n")
+    base = os.path.join(tiny_tree, "apps", "backend", "src", "pkg")
+    with open(os.path.join(base, "dyn_score_buffer.py"), "w", encoding="utf-8") as f:
+        f.write("U = 1\n")
+    text = "\n".join(mod.block_orphans(tiny_tree, mod.walk_files(tiny_tree)))
+    assert "dyn_score_buffer.py（配置鍵）" in text
+    assert not any("dyn_score_buffer.py" in line for line in _orphan_lines(mod, tiny_tree))
+
+
+def test_orphan_l1_evidence_and_reverse_lookup(tiny_tree):
+    """L1 必附生產路徑證據與「進生產/進測試」反查行；子行不得破折疊契約。"""
+    mod = load_tool()
+    lines = mod.block_orphans(tiny_tree, mod.walk_files(tiny_tree))
+    assert any(ln.strip().startswith("- 生產路徑：") for ln in lines)
+    assert any("反查（進生產）" in ln for ln in lines)
+    assert any("反查（進測試）" in ln for ln in lines)
+    assert any("目前零測試引用" in ln for ln in lines)
+    evidence = [ln for ln in lines if "反查（進" in ln or ln.strip().startswith("- 生產路徑")]
+    assert all(not ln.strip().startswith("- `") for ln in evidence)
+
+
+def test_orphan_ref_kind_detects_multiline_patch(tiny_tree):
+    """跨行 patch 常量要標 mock patch 目標（AST 走樹取 call 範圍，不按行漏判）。"""
+    mod = load_tool()
+    tdir = os.path.join(tiny_tree, "tests")
+    os.makedirs(tdir)
+    with open(os.path.join(tdir, "test_orphan.py"), "w", encoding="utf-8") as f:
+        f.write(
+            "from unittest.mock import patch\n"
+            "\n"
+            "def test_x():\n"
+            "    with patch(\n"
+            '        "pkg.orphan.VALUE",\n'
+            "        new=1,\n"
+            "    ):\n"
+            "        pass\n"
+        )
+    files = mod.walk_files(tiny_tree)
+    trees = mod.parse_trees(tiny_tree, files)
+    refs = mod.orphan_refs(tiny_tree, files, trees, "apps/backend/src/pkg/orphan.py")
+    assert ("測試", "mock patch 目標") in {(a, k) for a, k, _, _ in refs}
+
+
 def test_domain_budgets_ok_and_over(tiny_tree):
     mod = load_tool()
     files = mod.walk_files(tiny_tree)

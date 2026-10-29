@@ -11,6 +11,10 @@
 
 P0：分域檔案預算（超任一域亦 exit 1）+ `## DIAG` 機器可讀尾段 +
 孤兒 L1/L2/L3 分級（僅 L1 展開）。退出碼：0 內 / 1 超標 / 2 工具錯。
+孤兒逐檔出**路徑證據與反查**（2026-10-29）：生產途徑（靜態 import／
+registry 註冊／`__main__`／console_scripts／配置鍵）與測試途徑（字串引用
+含性質——mock patch ≠ 行為覆蓋）分開查；L1 附「進生產/進測試缺什麼」，
+對照著裁決即可，不再靠人肉考古成因。
 P1：`## TREND` 快照（jsonl 輪轉 20 次，只報告不進門；--no-history 可關）。
 P2（R75）：區塊四實時結構（入口點/路由/模組樹/callers/測試映射/
 STATUS_MATRIX 交叉核對）+ `--module` 查詢模式（不寫檔）。
@@ -132,6 +136,22 @@ def grade_orphan(rel, gated):
     if stem in ENTRY_LIKE_STEMS or stem.startswith(ENTRY_LIKE_PREFIXES):
         return "L2"
     return "L1"
+
+
+def has_main_guard(tree):
+    """模組級 `if __name__ == "__main__":` 守衛 — **真實**入口證據。
+
+    比 stem 猜測（`grade_orphan` 的入口詞表）強一級：守衛存在＝此檔設計上
+    可被 `python -m` 直接執行。孤兒分級用它把 L1 升 L2，區塊四的
+    Runtime Entry Points 用同一判定（單一事實源，不兩處各寫一遍）。
+    """
+    return any(
+        isinstance(n, ast.If)
+        and isinstance(n.test, ast.Compare)
+        and getattr(n.test.left, "id", "") == "__name__"
+        and any(isinstance(c, ast.Constant) and c.value == "__main__" for c in n.test.comparators)
+        for n in tree.body
+    )
 
 
 # 運行期未驗證登錄（P2）：有些聲稱（例如 Electron 選單、設定開關、proactive 氣泡）
@@ -489,24 +509,298 @@ def lazy_ref_index(root, files, trees):
     return lazy, script_entries
 
 
-def block_orphans(root, files, trees=None, script_entries=None):
-    """疑似孤兒檔：無任何靜態 import 指向（候選，非判決）。
+# 孤兒字串引用的非 .py 掃描範圍（型別白名單，擋二進位與大檔）。
+REF_TEXT_EXTS = (".md", ".yaml", ".yml", ".sh", ".toml", ".json", ".txt", ".cfg", ".ini")
 
-    方法局限（已驗證）：相對導入已解析、`__init__` 基已修正；
-    字串路由（PEP 562 __getattr__、importlib 映射）由 lazy_ref_index
-    補盲；package.json scripts/bin 指向的入口由 script_entries 豁免。
-    入口檔（cli/desktop/game）按性質即根，不算賬。
-    配置門控識別：檔名幹出現在 configs/* 即標註（rlaif 教訓：靜態孤兒
-    可能是有意關閉的功能，不可亂判死刑）。
+
+def strip_cfg_comments(text):
+    """配置文本去**整行** `#` 註釋、保留行尾註釋（配置門控前必做）。
+
+    兩個實測案例定的分界：
+    - 整行註釋＝旁述，提到的檔名可與本倉無關——keys.default.yaml:56 拿
+      `.js` 檔當例子，曾把 config_manager 假判 L3「休眠有覆蓋」（真孤兒
+      被註釋藏住）。
+    - 行尾註釋綁在真實鍵值上——compute.default.yaml:89 的 `rlaif_enabled`
+      行尾標註 `(rlaif_buffer)` 是真門控，必須保住（67c6d84f rlaif 翻案
+      「不可亂判孤兒」不可因去註釋而回退）。
+    """
+    return "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
+
+
+def registry_refs(trees):
+    """registry 豁免索引：動態 import + 同/上層目錄 tuple 含檔名幹。
+
+    `_ENDPOINT_MODULES` 模式：註冊表 tuple 存檔名幹、同檔用
+    importlib.import_module 載入——AST import 圖看不見，靜態孤兒但有
+    生產路徑。回傳 {目錄: {檔名幹: 註冊檔 rel}}；查時從孤兒目錄逐層上溯。
+    """
+    reg = {}
+    for rel, tree in trees.items():
+        has_dyn = any(
+            isinstance(n, ast.Call)
+            and (
+                (isinstance(n.func, ast.Name) and n.func.id == "__import__")
+                or (
+                    isinstance(n.func, ast.Attribute)
+                    and n.func.attr in ("import_module", "__import__")
+                )
+            )
+            for n in ast.walk(tree)
+        )
+        if not has_dyn:
+            continue
+        stems = set()
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Tuple, ast.List, ast.Set)):
+                vals = node.elts
+            elif isinstance(node, ast.Dict):
+                vals = node.keys
+            else:
+                continue
+            for el in vals:
+                if isinstance(el, ast.Constant) and isinstance(el.value, str) and el.value:
+                    stems.add(el.value[:-3] if el.value.endswith(".py") else el.value)
+        if stems:
+            d = os.path.dirname(rel)
+            bucket = reg.setdefault(d, {})
+            for s in stems:
+                bucket.setdefault(s, rel)
+    return reg
+
+
+def _registry_hit(reg, rel):
+    """孤兒目錄 → 祖先目錄逐層上溯查 registry；命中回註冊檔 rel。"""
+    if not reg:
+        return None
+    stem = os.path.splitext(os.path.basename(rel))[0]
+    d = os.path.dirname(rel)
+    while True:
+        entry = reg.get(d)
+        if entry and stem in entry:
+            return entry[stem]
+        if not d:
+            return None
+        d = os.path.dirname(d)
+
+
+def console_script_modules(root, files):
+    """console_scripts 入口（pyproject [project.scripts] / setup.py）→ 模組路徑集。"""
+    mods = set()
+    dotted = re.compile(r"([A-Za-z_][\w]*(?:\.[\w]+)+)")
+    for rel, _, _ in files:
+        base = os.path.basename(rel)
+        if base not in ("pyproject.toml", "setup.py"):
+            continue
+        try:
+            with open(os.path.join(root, rel), encoding="utf-8") as f:
+                text = f.read()
+        except OSError:
+            continue
+        segs = []
+        if base == "pyproject.toml":
+            m = re.search(r"\[project\.scripts\][^\[]*", text)
+            if m:
+                segs.append(m.group(0))
+        else:
+            i = text.find("console_scripts")
+            if i >= 0:
+                segs.append(text[i : i + 500])
+        for seg in segs:
+            for m in dotted.finditer(seg):
+                mods.add(m.group(1))
+    return mods
+
+
+def _ref_area(rel):
+    """引用檔的區域標籤（測試/工具/文件/CI/配置/生產字串/其他）。"""
+    parts = rel.split("/")
+    if "tests" in parts:
+        return "測試"
+    if parts[0] == "scripts":
+        return "工具"
+    if parts[0] == "docs":
+        return "文件"
+    if parts[0] == ".github":
+        return "CI"
+    if "configs" in parts or parts[0] == "config":
+        return "配置"
+    if parts[:3] == ["apps", "backend", "src"] or parts[0] == "packages":
+        return "生產字串"
+    return "其他"
+
+
+def _dotted_call_name(func):
+    """呼叫節點 → 點式名（subprocess.run / mock.patch / importlib.import_module）。"""
+    parts = []
+    while isinstance(func, ast.Attribute):
+        parts.append(func.attr)
+        func = func.value
+    if isinstance(func, ast.Name):
+        parts.append(func.id)
+    return ".".join(reversed(parts))
+
+
+def _call_ref_kind(name):
+    """呼叫上下文 → 引用性質（mock patch ≠ 行為覆蓋；subprocess ≠ import）。
+
+    無法歸類回 ""（繼承外層上下文），呼叫端再兜底成「字串」。
+    """
+    n = name.lower()
+    if "mock" in n or n == "patch" or n.endswith(".patch") or "setattr" in n:
+        return "mock patch 目標"
+    if "import_module" in n or "importlib" in n or "__import__" in n:
+        return "動態 import"
+    if n.startswith(("subprocess.", "runpy.")) or n.rsplit(".", 1)[-1] in (
+        "run",
+        "popen",
+        "check_output",
+        "check_call",
+        "call",
+    ):
+        return "subprocess 執行"
+    return ""
+
+
+def _orphan_ref_keys(rel):
+    """四把匹配鑰：點式模組路徑（含全點式）／完整 rel／去 src 前綴 rel／檔名.py。"""
+    keys = {rel, os.path.basename(rel)}
+    if rel.startswith("apps/backend/src/"):
+        keys.add(rel[len("apps/backend/src/") :])
+    keys.add(rel_module_of(rel))
+    keys.add(rel[:-3].replace("/", "."))
+    return keys
+
+
+def _is_ref(keys):
+    """精確鍵，或屬性延伸（`patch("pkg.mod.Klass.method")` 是測試常態寫法）。"""
+    return lambda s: s in keys or any(s.startswith(k + ".") for k in keys)
+
+
+def _py_string_refs(tree, is_ref):
+    """AST 字串引用 + 呼叫上下文性質。
+
+    patch 常量可跨行——AST 走樹（非行匹配）天然是整個 call 範圍，無跨行漏判。
+    """
+    hits = []
+
+    def visit(node, kind):
+        for child in ast.iter_child_nodes(node):
+            k = kind
+            if isinstance(child, ast.Call):
+                k = _call_ref_kind(_dotted_call_name(child.func)) or kind
+            if (
+                isinstance(child, ast.Constant)
+                and isinstance(child.value, str)
+                and is_ref(child.value)
+            ):
+                hits.append((child.lineno, k or "字串"))
+            visit(child, k)
+
+    visit(tree, "")
+    return hits
+
+
+def orphan_refs(root, files, trees, rel):
+    """孤兒的字串引用：按區域分組，含引用性質（判「有沒有覆蓋」的證據）。"""
+    keys = _orphan_ref_keys(rel)
+    is_ref = _is_ref(keys)
+    refs = []
+    for srcrel, tree in trees.items():
+        if srcrel == rel or ".egg-info" in srcrel:
+            continue
+        area = _ref_area(srcrel)
+        for lineno, kind in _py_string_refs(tree, is_ref):
+            refs.append((area, kind, srcrel, lineno))
+    for srcrel, size, _ in files:
+        if srcrel == rel or not srcrel.endswith(REF_TEXT_EXTS) or size > 4_000_000:
+            continue
+        if ".egg-info" in srcrel:
+            continue  # 打包產物（SOURCES.txt 恆列全檔），非真引用
+        try:
+            with open(os.path.join(root, srcrel), encoding="utf-8", errors="ignore") as f:
+                text = f.read()
+        except OSError:
+            continue
+        if not any(k in text for k in keys):
+            continue
+        area = _ref_area(srcrel)
+        for i, line in enumerate(text.splitlines(), 1):
+            if any(k in line for k in keys):
+                refs.append((area, "字串", srcrel, i))
+    refs.sort()
+    return refs
+
+
+_REF_AREA_LABEL = {
+    "測試": "測試引用",
+    "工具": "工具引用",
+    "文件": "文件引用",
+    "CI": "CI 引用",
+    "配置": "配置引用",
+    "生產字串": "生產字串引用",
+    "其他": "其他引用",
+}
+
+
+def _fmt_ref_lines(refs):
+    """L1 的證據＋反查子行。
+
+    格式紅線：子行不得以 '- `' 開頭（_orphan_lines 契約：那種行＝L1 展開
+    行，折疊的 L2/L3 檔名不得出現在裡面）。
     """
     from collections import defaultdict
 
+    groups = defaultdict(list)
+    for area, kind, srcrel, lineno in refs:
+        groups[area].append((srcrel, lineno, kind))
+    lines = [
+        "- 生產路徑：無（靜態 import／registry 註冊／`__main__`／"
+        "console_scripts／配置鍵 皆未命中）"
+    ]
+    for area in ("測試", "工具", "文件", "CI", "配置", "生產字串", "其他"):
+        entries = groups.get(area)
+        if not entries:
+            continue
+        shown = "、".join(f"{r}:{n}（{k}）" for r, n, k in entries[:5])
+        if len(entries) > 5:
+            shown += f"…×{len(entries)}"
+        lines.append(f"- {_REF_AREA_LABEL[area]}：{shown}")
+    lines.append(
+        "- 反查（進生產）：擇一接線——靜態 import 使用端／同目錄 registry "
+        "tuple＋import_module／模組級 `__main__` 守衛／pyproject "
+        "[project.scripts]／configs/* 配置鍵；接上任一條即自動脫離本清單"
+    )
+    test_kinds = sorted({k for a, k, _, _ in refs if a == "測試"})
+    if test_kinds:
+        lines.append(
+            f"- 反查（進測試）：現有引用性質＝{'、'.join(test_kinds)}；"
+            "補真 import＋呼叫公開 API 的行為測試（mock patch 只測到替身，"
+            "不算覆蓋）"
+        )
+    else:
+        lines.append(
+            "- 反查（進測試）：目前零測試引用；新增行為測試＝import 模組＋"
+            "呼叫公開 API＋斷言輸出（mock patch 不算覆蓋）"
+        )
+    return lines
+
+
+def block_orphans(root, files, trees=None, script_entries=None):
+    """疑似孤兒檔：無任何靜態 import 指向（候選，非判決）——逐檔出路徑證據。
+
+    生產途徑分級序：字串路由（lazy_ref_index）→ registry 註冊（registry_refs）
+    → console_scripts → `__main__` 守衛（升 L2）→ 配置鍵（L3）→ 入口詞（L2）
+    → L1 高疑。L1 附生產/測試證據與「進生產/進測試缺什麼」反查行——照表
+    裁決即可，不再人肉考古成因。
+    配置門控識別：檔名幹出現在 configs/* 即標註（rlaif 教訓：靜態孤兒
+    可能是有意關閉的功能，不可亂判死刑）。
+    """
     cfg_text = ""
     for rel, _, _ in files:
         if "/configs/" in rel and rel.endswith((".yaml", ".yml", ".json")):
             try:
                 with open(os.path.join(root, rel), encoding="utf-8") as f:
-                    cfg_text += f.read() + "\n"
+                    cfg_text += strip_cfg_comments(f.read()) + "\n"
             except OSError:
                 continue
 
@@ -515,12 +809,18 @@ def block_orphans(root, files, trees=None, script_entries=None):
     if script_entries is None:
         _, script_entries = lazy_ref_index(root, files, trees)
     orphans = []
+    test_exempt = []
     for rel in trees:
         if os.path.basename(rel) in ("__init__.py", "__main__.py"):
             continue
-        if rel.startswith(("scripts/", "tests/", "apps/backend/tests/")):
-            continue
+        if rel.startswith("scripts/"):
+            continue  # 工具檔本就不生產，不入候選
         if not rel.startswith(("apps/backend/src/", "packages/")):
+            continue  # 非生產碼區（含 apps/game-rpg/tests 等）不入候選
+        if "tests" in rel.split("/"):
+            # 只會剩 packages/*/tests（慣例 tests/ 已在上一步出界）：
+            # 測試非生產碼，整批豁免但列檔名留證（曾漏進 L1 的位置）
+            test_exempt.append(rel)
             continue
         parts = rel[:-3].split("/")
         dots = [".".join(parts[i:]) for i in range(len(parts))]
@@ -531,47 +831,74 @@ def block_orphans(root, files, trees=None, script_entries=None):
             orphans.append(rel)
     lines = ["### 疑似孤兒檔（候選，分級）", ""]
     lazy, _ = lazy_ref_index(root, files, trees)
-    graded = {"L1": [], "L2": 0, "L3": 0, "lazy": []}
+    reg = registry_refs(trees)
+    console = console_script_modules(root, files)
+    graded = {"L1": [], "lazy": [], "exempt": [], "fold": []}
     for rel in sorted(orphans):
         parts = rel[:-3].split("/")
         dots = [".".join(parts[i:]) for i in range(len(parts))]
         if any(d in lazy for d in dots):
             graded["lazy"].append(rel)
             continue  # 字串路由懶載入（註冊表映射），非孤兒
+        hit = _registry_hit(reg, rel)
+        if hit:
+            graded["exempt"].append((rel, f"registry 註冊（{hit}）"))
+            continue  # 有生產路徑（動態 import 圖盲區），非孤兒
+        if any(d in console for d in dots):
+            graded["fold"].append((rel, "L2", "console_scripts"))
+            continue
+        if has_main_guard(trees[rel]):
+            graded["fold"].append((rel, "L2", "__main__ 守衛"))
+            continue
         stem = os.path.splitext(os.path.basename(rel))[0]
         norm = lambda s: s.replace("_", "").replace("-", "")
         # 短通用詞（app/config）在配置文本恆命中——只信長特徵名
         gated = len(norm(stem)) >= 10 and norm(stem) in norm(cfg_text)
-        level = grade_orphan(rel, gated)
-        if level == "L1":
-            graded["L1"].append(rel)
-        elif level == "L2":
-            graded["L2"] += 1
+        if gated:
+            graded["fold"].append((rel, "L3", "配置鍵"))
+        elif grade_orphan(rel, False) == "L2":
+            graded["fold"].append((rel, "L2", "入口詞"))
         else:
-            graded["L3"] += 1
+            graded["L1"].append(rel)
+    l2 = [rel for rel, lv, _ in graded["fold"] if lv == "L2"]
+    l3 = [rel for rel, lv, _ in graded["fold"] if lv == "L3"]
     _LAST_ORPHAN_COUNTS.update(
         {
             "L1": len(graded["L1"]),
-            "L2": graded["L2"],
-            "L3": graded["L3"],
+            "L2": len(l2),
+            "L3": len(l3),
             "lazy": len(graded["lazy"]),
+            "registry": len(graded["exempt"]),
+            "tests": len(test_exempt),
         }
     )
     lines.append(
         f"- 共 {len(orphans)} 檔（L1={len(graded['L1'])} 高疑 / "
-        f"L2={graded['L2']} 疑似入口 / L3={graded['L3']} 配置門控 / "
+        f"L2={len(l2)} 疑似入口 / L3={len(l3)} 配置門控 / "
         f"字串路由 ×{len(graded['lazy'])}（折疊豁免）；"
         "動態加載盲區已由 lazy_ref_index 補掃，個案定性前不刪）"
     )
     for rel in graded["L1"][:40]:
         lines.append(f"  - `{rel}`（L1 高疑）")
+        refs = orphan_refs(root, files, trees, rel)
+        lines.extend("  " + ln for ln in _fmt_ref_lines(refs))
     if len(graded["L1"]) > 40:
         lines.append(f"  - …{len(graded['L1']) - 40} L1 未展開")
-    lines.append(f"  - L2 疑似入口 ×{graded['L2']}（折疊，不展開）")
-    lines.append(f"  - L3 配置門控 ×{graded['L3']}（折疊，不展開）")
+    if l2:
+        shown = "、".join(f"{r}（{w}）" for r, lv, w in graded["fold"] if lv == "L2")
+        lines.append(f"  - L2 疑似入口 ×{len(l2)}（折疊，不展開）：{shown}")
+    if l3:
+        shown = "、".join(f"{r}（{w}）" for r, lv, w in graded["fold"] if lv == "L3")
+        lines.append(f"  - L3 配置門控 ×{len(l3)}（折疊，不展開）：{shown}")
     if graded["lazy"]:
         shown = ", ".join(os.path.basename(r) for r in graded["lazy"][:8])
         lines.append(f"  - 字串路由豁免 ×{len(graded['lazy'])}：{shown}…")
+    if graded["exempt"]:
+        shown = "、".join(f"{r}（{w}）" for r, w in graded["exempt"][:8])
+        lines.append(f"  - registry 豁免 ×{len(graded['exempt'])}：{shown}")
+    if test_exempt:
+        shown = "、".join(test_exempt[:8])
+        lines.append(f"  - 測試目錄豁免 ×{len(test_exempt)}：{shown}（測試非生產碼，不入候選）")
     lines.append("")
     return lines
 
@@ -643,19 +970,7 @@ def block_structure(root, files, trees):
     lines = ["## 區塊四：實時結構（工具推導，永不過期）", ""]
 
     # --- Runtime Entry Points ---
-    entries = sorted(
-        rel
-        for rel, tree in trees.items()
-        if any(
-            isinstance(n, ast.If)
-            and isinstance(n.test, ast.Compare)
-            and getattr(n.test.left, "id", "") == "__name__"
-            and any(
-                isinstance(c, ast.Constant) and c.value == "__main__" for c in n.test.comparators
-            )
-            for n in tree.body
-        )
-    )
+    entries = sorted(rel for rel, tree in trees.items() if has_main_guard(tree))
     lines.append(f"### Runtime Entry Points（{len(entries)}）")
     lines.append("")
     for rel in entries[:60]:
