@@ -6,15 +6,18 @@
 三分法 Phase 2 item 1 —— schema 先行；item ④ 補上 §8 事件寫入口。
 本模組只有四件事：
 
-1. **欄位類別表**（``FIELD_CLASSES``）：v1 八個欄位各屬 ``invariant`` /
+1. **欄位類別表**（``FIELD_CLASSES``）：九個欄位各屬 ``invariant`` /
    ``slow`` / ``fast`` / ``derived``（§3.1–§3.2）。類別決定是否落盤、
-   時常數上界、是否參與漂移修正。
+   時常數上界、是否參與漂移修正。v1 八欄；**v2 +``life_cycle_state``**
+   （Phase 3 item 3：DLI 的生命週期狀態是路由 voter 的 AL 輸入，
+   改讀快照後必須進交換量，見 ``AL_STATE_VERSION``）。
 2. **單一時鐘**（``born_at`` / ``ticks``）：首次初始化持久化、每次推進
    持久化；進程啟動先讀檔，**不得以當前時間重建**（§4.4）。
 3. **唯讀快照** ``get_al_state() -> ALSnapshot``：讀走快照（§9）。
    來源在 core 側的直接讀（``intensity`` / ``tendency``）；實例握在 api
-   側的（``life_phase`` / ``health`` / ``drift``）經 provider 登記簿注入 ——
-   AL 出站不 import ``ai.*`` / ``api.*``（I8），所以永遠不會自己伸手去拿。
+   側的（``life_phase`` / ``life_cycle_state`` / ``health`` / ``drift``）
+   經 provider 登記簿注入 —— AL 出站不 import ``ai.*`` / ``api.*``（I8），
+   所以永遠不會自己伸手去拿。
 4. **事件寫入口**（``submit_event()``，§8/§9）—— 對 AL 的寫只走這裡
    （I7）。v1 只有 ``MEMORY_RESULT``（記憶層執行 §10 retention policy
    的結果回報，item ④ 種子）；事件先落地、可回放，視窗聚合與轉移函數
@@ -52,16 +55,19 @@ from core.system.config.magic_numbers import threshold_value
 
 logger = logging.getLogger(__name__)
 
-# 快照 schema 版本 — 讀者靠它判斷欄位語義（I9）
-AL_STATE_VERSION = 1
+# 快照 schema 版本 — 讀者靠它判斷欄位語義（I9）。
+# v1 = §3.2 的八欄；v2 = +``life_cycle_state``（Phase 3 item 3：AL 的
+# 第二條生命軸 DLI 週期狀態進交換量，voter 改讀快照後不再直摸 DLI）。
+AL_STATE_VERSION = 2
 
 # =========================================================================
-# §3.1–§3.2 欄位類別表（v1 八欄；maturity 依 D9 不進 schema）
+# §3.1–§3.2 欄位類別表（v2 九欄；maturity 依 D9 不進 schema）
 # =========================================================================
 FIELD_CLASSES: Dict[str, str] = {
     "born_at": "invariant",
     "ticks": "invariant",
     "life_phase": "invariant",
+    "life_cycle_state": "invariant",
     "health": "fast",
     "intensity": "slow",
     "emotion": "fast",
@@ -94,7 +100,7 @@ WEIGHT_EPS = 1e-6
 DEFAULT_W_SELF_MIN = 0.5
 
 # provider 登記簿可提供的來源。emotion 故意不在其中（見模組 docstring）
-PROVIDABLE_SOURCES: Tuple[str, ...] = ("life_phase", "health", "drift")
+PROVIDABLE_SOURCES: Tuple[str, ...] = ("life_phase", "life_cycle_state", "health", "drift")
 
 
 class ALValidationError(RuntimeError):
@@ -156,6 +162,7 @@ class ALSnapshot:
     born_at: Optional[float]
     ticks: Optional[int]
     life_phase: Optional[str]
+    life_cycle_state: Optional[str]
     health: Optional[float]
     intensity: Optional[float]
     emotion: Optional[Dict[str, float]]
@@ -397,6 +404,7 @@ def get_al_state() -> ALSnapshot:
     """取 AL 唯讀快照（contract §9 的讀路徑，唯一的對外交換量）。"""
     born_at, ticks = load_clock()
     life_phase_raw = _call_source("life_phase")
+    life_cycle_raw = _call_source("life_cycle_state")
     health_raw = _call_source("health")
     drift_raw = _call_source("drift")
     intensity = _read_intensity()
@@ -406,6 +414,7 @@ def get_al_state() -> ALSnapshot:
         "born_at": "al_state.clock" if born_at is not None else None,
         "ticks": "al_state.clock" if ticks is not None else None,
         "life_phase": "provider:life_phase" if life_phase_raw is not None else None,
+        "life_cycle_state": ("provider:life_cycle_state" if life_cycle_raw is not None else None),
         "health": "provider:health" if health_raw is not None else None,
         "intensity": (
             "core.life_intensity_formula.peek_life_intensity" if intensity is not None else None
@@ -429,6 +438,7 @@ def get_al_state() -> ALSnapshot:
         born_at=born_at,
         ticks=ticks,
         life_phase=_phase_str(life_phase_raw),
+        life_cycle_state=_phase_str(life_cycle_raw),
         health=_as_float(health_raw),
         intensity=intensity,
         emotion=None,

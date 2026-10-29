@@ -164,7 +164,7 @@ class TestDliC3Feedback:
     def test_dli_state_voter_dormant(self):
         from ai.meta.priority_negotiator import dli_state_voter
 
-        r = dli_state_voter({"dli_state": {"life_cycle_state": "DORMANT"}})
+        r = dli_state_voter({"al_state": {"life_cycle_state": "DORMANT"}})
         assert r is not None
         assert r.routing_mode == "conservative"
         assert r.response_style == "minimal"
@@ -172,19 +172,19 @@ class TestDliC3Feedback:
     def test_dli_state_voter_mature_exploratory(self):
         from ai.meta.priority_negotiator import dli_state_voter
 
-        r = dli_state_voter({"dli_state": {"life_cycle_state": "MATURE"}})
+        r = dli_state_voter({"al_state": {"life_cycle_state": "MATURE"}})
         assert r is not None
         assert r.routing_mode == "exploratory"
 
     def test_dli_state_voter_initializing_neutral(self):
         from ai.meta.priority_negotiator import dli_state_voter
 
-        r = dli_state_voter({"dli_state": {"life_cycle_state": "INITIALIZING"}})
+        r = dli_state_voter({"al_state": {"life_cycle_state": "INITIALIZING"}})
         assert r is not None
         assert r.routing_mode == "neutral"
 
     def test_dli_state_voter_growing_returns_none(self):
         from ai.meta.priority_negotiator import dli_state_voter
 
-        r = dli_state_voter({"dli_state": {"life_cycle_state": "GROWING"}})
+        r = dli_state_voter({"al_state": {"life_cycle_state": "GROWING"}})
         assert r is None

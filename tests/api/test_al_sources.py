@@ -224,11 +224,13 @@ class TestDetailedEndpointDump:
     def test_detailed_al_state_is_the_snapshot_dump(self):
         """``/status/detailed`` 的 al_state 段 = §9 快照原樣（I9 歸因可取證）。"""
         from api.routes.system_routes import _detailed_al_state
+        from core.life.al_state import AL_STATE_VERSION
 
         lifespan._register_al_sources()
         data = _detailed_al_state()
 
-        assert data["version"] == 1
+        # 版本對齊 schema 而非硬編碼：v2 起 +life_cycle_state（Phase 3 item 3）
+        assert data["version"] == AL_STATE_VERSION
         assert data["life_phase"] == "EMERGENCE"
         assert data["source"]["life_phase"] == "provider:life_phase"
         assert data["source"]["health"] == "provider:health"

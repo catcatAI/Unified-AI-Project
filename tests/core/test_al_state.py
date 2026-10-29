@@ -6,7 +6,7 @@ computation (schema-first per the plan, then one field per commit); the
 one field already wired — `age` (item 2, birth adopts the persisted
 clock) — is asserted at the bottom.
 
-1. **Schema matches the contract**: the eight v1 fields with their
+1. **Schema matches the contract**: the nine v2 fields with their
    §3.1 class tags, `maturity` excluded per D9, `drift` the only
    `derived` field — and `derived` can never reach disk (I3 is enforced
    by `_persist()` refusing, not by remembering).
@@ -62,11 +62,12 @@ from core.life.al_state import (  # noqa: E402
     validate_weights,
 )
 
-# 契約 §3.2 的 v1 最小欄位集（8 個）
+# 契約 §3.2 的 v2 欄位集（9 個；v2 = v1 八欄 + life_cycle_state）
 CONTRACT_FIELDS = {
     "born_at",
     "ticks",
     "life_phase",
+    "life_cycle_state",
     "health",
     "intensity",
     "emotion",
@@ -84,16 +85,18 @@ def _isolated_source_registry():
 
 
 class TestSchemaMatchesContract:
-    def test_v1_field_set_is_the_contract_eight(self):
+    def test_v2_field_set_is_the_contract_nine(self):
+        # v2 = §3.2 八欄 + life_cycle_state（Phase 3 item 3 的 voter 輸入）
         assert set(FIELD_CLASSES) == CONTRACT_FIELDS
-        assert len(FIELD_CLASSES) == 8
+        assert len(FIELD_CLASSES) == 9
 
     def test_field_classes_match_contract_table(self):
-        # §3.2: born_at/ticks/life_phase=invariant, health/emotion=fast,
-        # intensity/tendency=slow, drift=derived
+        # §3.2: born_at/ticks/life_phase/life_cycle_state=invariant,
+        # health/emotion=fast, intensity/tendency=slow, drift=derived
         assert FIELD_CLASSES["born_at"] == "invariant"
         assert FIELD_CLASSES["ticks"] == "invariant"
         assert FIELD_CLASSES["life_phase"] == "invariant"
+        assert FIELD_CLASSES["life_cycle_state"] == "invariant"
         assert FIELD_CLASSES["health"] == "fast"
         assert FIELD_CLASSES["emotion"] == "fast"
         assert FIELD_CLASSES["intensity"] == "slow"
@@ -211,13 +214,16 @@ class TestAggregationReadPath:
         assert snap.source["tendency"] == ("core.life.life_essence.get_all_blended_tendencies")
 
     def test_unregistered_sources_are_none(self):
-        # health/life_phase/drift 的實例握在 api 側（I8 禁 AL 自己伸手）→
-        # 未經 provider 登記 = 未觀測 = None（D11），source 同步 None
+        # health/life_phase/life_cycle_state/drift 的實例握在 api 側
+        # （I8 禁 AL 自己伸手）→ 未經 provider 登記 = 未觀測 = None（D11），
+        # source 同步 None
         snap = get_al_state()
         assert snap.life_phase is None
+        assert snap.life_cycle_state is None
         assert snap.health is None
         assert snap.drift is None
         assert snap.source["life_phase"] is None
+        assert snap.source["life_cycle_state"] is None
         assert snap.source["health"] is None
         assert snap.source["drift"] is None
 
@@ -233,6 +239,19 @@ class TestAggregationReadPath:
         snap = get_al_state()
         assert snap.health == 0.42
         assert snap.source["health"] == "provider:health"
+
+    def test_life_cycle_state_enum_flows_in_as_name(self):
+        # DLI 的 LifeCycleState 是 Enum —— 快照照 _phase_str 規則取 .name，
+        # voter 端拿到的是 "MATURE" 這種字串（與 router 舊注入同詞彙）。
+        from enum import Enum
+
+        class _Cycle(Enum):
+            MATURE = "mature"
+
+        register_al_source("life_cycle_state", lambda: _Cycle.MATURE)
+        snap = get_al_state()
+        assert snap.life_cycle_state == "MATURE"
+        assert snap.source["life_cycle_state"] == "provider:life_cycle_state"
 
     def test_failing_source_degrades_to_none(self):
         def boom():

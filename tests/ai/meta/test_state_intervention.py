@@ -28,7 +28,8 @@ def _negotiator() -> PriorityNegotiator:
 
 def _context(user_text: str, health: float, mode: str | None, confidence: float) -> dict:
     context: dict = {"user_text": user_text}
-    context["heartbeat_health"] = {"system_health": health}
+    # AL 狀態只經快照欄位進來（Phase 3 item 3）：干預面 = al_state["health"]。
+    context["al_state"] = {"health": health}
     if mode is not None:
         context["lifecycle_behavior"] = {
             "routing_mode": mode,

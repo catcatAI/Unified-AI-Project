@@ -272,14 +272,22 @@ def meta_calibration_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
 def heartbeat_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
     """Extract Heartbeat system health as a confidence multiplier.
 
+    Reads ``context["al_state"]["health"]`` — the AL snapshot injected once
+    per turn by the router (Phase 3 item 3: every AL-sourced voter reads the
+    same snapshot instead of its own scattered key). ``None`` means the
+    heartbeat has not recomputed health yet (D11 unobserved) → abstain,
+    rather than voting from a default that no observation backs.
+
     When system health is low (<HB_UNHEALTHY), biases toward conservative
     routing (the system is stressed/unstable). When health is high (>0.7),
     allows more exploratory routing. The effect scales proportionally.
     """
-    hb = context.get("heartbeat_health")
-    if not hb:
+    al = context.get("al_state")
+    if not al:
         return None
-    health = hb.get("system_health", 0.5)
+    health = al.get("health")
+    if health is None:
+        return None
     health_bias = round((health - HB_NEUTRAL) * HB_BIAS_SCALE, 3)
     return VoterVote(
         routing_mode="conservative" if health < HB_UNHEALTHY else None,
@@ -293,15 +301,21 @@ def heartbeat_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
 def dli_state_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
     """Extract DigitalLifeIntegrator lifecycle state as routing preference.
 
+    Reads ``context["al_state"]["life_cycle_state"]`` — same snapshot
+    contract as :func:`heartbeat_voter` (Phase 3 item 3). Unobserved
+    (``None``: DLI not created yet) → abstain.
+
     The DLI lifecycle state reflects Angela's long-term developmental phase.
     Earlier states (INITIALIZING, AWAKENING) favor conservative/neutral
     routing. Later states (MATURE, RESTING) allow exploratory routing.
     DORMANT forces conservative.
     """
-    dli = context.get("dli_state")
-    if not dli:
+    al = context.get("al_state")
+    if not al:
         return None
-    state = dli.get("life_cycle_state", "").upper()
+    state = str(al.get("life_cycle_state") or "").upper()
+    if not state:
+        return None
     if state == "DORMANT":
         return VoterVote(
             routing_mode="conservative",

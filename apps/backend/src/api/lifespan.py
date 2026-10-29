@@ -825,6 +825,19 @@ def _al_life_phase():
     return getattr(get_lifecycle(), "current_phase", None)
 
 
+def _al_life_cycle_state():
+    """``life_cycle_state`` ← DLI 的生命週期狀態（``LifeCycleState`` enum）。
+
+    AL 的第二條生命軸：與 ``life_phase``（ALC 認知階段）是兩個獨立狀態機
+    （§3.7 的「生命狀態散在 5 處」只收斂了 4 處，兩個階段詞彙尚未統一 ——
+    快照照實報兩欄，不假裝已收斂）。DLI 尚未建立 → ``None``（D11）。
+    """
+    dli = get_digital_life()
+    if dli is None:
+        return None
+    return getattr(dli, "life_cycle_state", None)
+
+
 def _al_health():
     """``health`` ← 代謝心跳的系統健康分。
 
@@ -901,7 +914,8 @@ def _al_drift() -> Optional[Dict[str, float]]:
 def _register_al_sources() -> None:
     """Phase 2 item ③：三個 provider 由 lifespan 統一註冊進 AL 登記簿。
 
-    item 1 的契約：``life_phase``/``health``/``drift`` 的實例握在 api 側，
+    item 1 的契約：``life_phase``/``life_cycle_state``/``health``/``drift``
+    的實例握在 api 側，
     AL 出站不 import ``ai.*``/``api.*``（I8），所以由組裝層（本檔）在
     啟動序列裡注入。註冊後讀一次快照並落 log —— server 執行下的自檢：
     來源解析到值與否，直接進 server log，不需要額外面。
@@ -910,6 +924,7 @@ def _register_al_sources() -> None:
         from core.life.al_state import register_al_source
 
         register_al_source("life_phase", _al_life_phase)
+        register_al_source("life_cycle_state", _al_life_cycle_state)
         register_al_source("health", _al_health)
         register_al_source("drift", _al_drift)
     except Exception:
@@ -921,12 +936,13 @@ def _register_al_sources() -> None:
 
         snap = get_al_state()
         logger.info(
-            "[ALState] providers live: life_phase=%r health=%r drift=%r "
-            "sources=%s al_state_on_backbone=%s",
+            "[ALState] providers live: life_phase=%r life_cycle_state=%r "
+            "health=%r drift=%r sources=%s al_state_on_backbone=%s",
             snap.life_phase,
+            snap.life_cycle_state,
             snap.health,
             snap.drift,
-            {k: snap.source[k] for k in ("life_phase", "health", "drift")},
+            {k: snap.source[k] for k in ("life_phase", "life_cycle_state", "health", "drift")},
             get_backbone().get_module("al_state") is not None,
         )
     except Exception:

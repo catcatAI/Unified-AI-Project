@@ -100,16 +100,22 @@ class TestMetabolicHeartbeat:
     def test_heartbeat_voter_low_health_forces_conservative(self):
         from ai.meta.priority_negotiator import heartbeat_voter
 
-        result = heartbeat_voter({"heartbeat_health": {"system_health": 0.2}})
+        result = heartbeat_voter({"al_state": {"health": 0.2}})
         assert result is not None
         assert result.routing_mode == "conservative"
 
     def test_heartbeat_voter_healthy_does_not_force_mode(self):
         from ai.meta.priority_negotiator import heartbeat_voter
 
-        result = heartbeat_voter({"heartbeat_health": {"system_health": 0.8}})
+        result = heartbeat_voter({"al_state": {"health": 0.8}})
         assert result is not None
         assert result.routing_mode is None
+
+    def test_heartbeat_voter_unobserved_health_abstains(self):
+        """D11：快照 health=None（心跳沒重算過）→ 弃權，不拿預設值投票。"""
+        from ai.meta.priority_negotiator import heartbeat_voter
+
+        assert heartbeat_voter({"al_state": {"health": None}}) is None
 
     def test_pulse_event_includes_system_health(self):
         from core.life.heartbeat import MetabolicHeartbeat

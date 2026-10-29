@@ -4354,15 +4354,29 @@ class AngelaLLMService:
     # ========== 记忆增强系统 - 辅助方法 ==========
 
     def _inject_negotiator_signals(self, context: Dict[str, Any]) -> None:
-        """Inject MetaController calibration / Heartbeat health / DLI state
-        into context for PriorityNegotiator.
+        """Inject the AL snapshot + MetaController calibration into context
+        for PriorityNegotiator.
         """
         # Each signal is injected by its own helper: one broken source must
-        # not take the other three down with it.
+        # not take the others down with it.
+        self._inject_al_state(context)
         self._inject_meta_calibration(context)
-        self._inject_heartbeat_health(context)
         self._inject_abstain_routing(context)
-        self._inject_dli_state(context)
+
+    def _inject_al_state(self, context: Dict[str, Any]) -> None:
+        """Inject the single AL snapshot (contract §9 exchange quantity).
+
+        Phase 3 item 3: the AL-sourced voters (heartbeat health, DLI life
+        cycle state) read this one dict instead of the router reaching into
+        AL internals one getter at a time. No key (snapshot unavailable) →
+        those voters abstain (D11: unobserved never votes).
+        """
+        try:
+            from core.life.al_state import get_al_state
+
+            context["al_state"] = get_al_state().as_dict()
+        except Exception:
+            logger.warning("AL snapshot unavailable", exc_info=True)
 
     def _inject_meta_calibration(self, context: Dict[str, Any]) -> None:
         """Inject MetaController calibration into context for PriorityNegotiator."""
@@ -4373,16 +4387,6 @@ class AngelaLLMService:
             context["meta_calibration"] = {"weighted_adjustment": adj}
         except Exception:
             logger.warning("MetaController calibration unavailable", exc_info=True)
-
-    def _inject_heartbeat_health(self, context: Dict[str, Any]) -> None:
-        """Inject Heartbeat system health into context for PriorityNegotiator."""
-        try:
-            from api.lifespan import get_metabolic_heartbeat
-
-            hb = get_metabolic_heartbeat()
-            context["heartbeat_health"] = hb.get_system_health()
-        except Exception:
-            logger.warning("Heartbeat health unavailable", exc_info=True)
 
     def _inject_abstain_routing(self, context: Dict[str, Any]) -> None:
         """Inject the recent abstain rate for abstain_voter.
@@ -4396,20 +4400,6 @@ class AngelaLLMService:
                 context["abstain_routing"] = ar
         except Exception:
             logger.warning("Abstain routing snapshot unavailable", exc_info=True)
-
-    def _inject_dli_state(self, context: Dict[str, Any]) -> None:
-        """Inject DLI lifecycle state into context for PriorityNegotiator."""
-        try:
-            from api.lifespan import get_digital_life
-
-            dli = get_digital_life()
-            context["dli_state"] = {
-                "life_cycle_state": (
-                    dli.life_cycle_state.name if hasattr(dli, "life_cycle_state") else "UNKNOWN"
-                ),
-            }
-        except Exception:
-            logger.warning("DLI state unavailable", exc_info=True)
 
     async def _auto_select_generation(
         self,
@@ -4510,7 +4500,7 @@ class AngelaLLMService:
         gen_temperature = defaults.get("temperature", 0.7)
         gen_max_tokens = defaults.get("max_tokens", 512)
 
-        # Inject MetaController calibration + Heartbeat health + DLI state
+        # Inject the AL snapshot + MetaController calibration
         self._inject_negotiator_signals(context)
 
         if self.llm_mode == "auto" and self.auto_selector is not None:
