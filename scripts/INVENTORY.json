@@ -562,6 +562,11 @@
       "referenced": true,
       "purpose": "繁→簡字元對照表生成器 — 從倉庫自帶的 CC-CEDICT 推導，零外部依賴。"
     },
+    "generate_al_dataset.py": {
+      "category": "generation",
+      "referenced": true,
+      "purpose": "Generate round-1 AL data at scale from the ready-made AI corpus."
+    },
     "generate_association_100k.py": {
       "category": "generation",
       "referenced": true,

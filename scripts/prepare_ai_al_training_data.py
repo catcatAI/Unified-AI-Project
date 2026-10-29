@@ -28,6 +28,7 @@ fails if the files on disk drift from the source records.
 Usage:
     python scripts/prepare_ai_al_training_data.py
     python scripts/prepare_ai_al_training_data.py --val-ratio 0.3
+    python scripts/prepare_ai_al_training_data.py --src <round-1 dataset>
     python scripts/prepare_ai_al_training_data.py --check
 """
 
@@ -115,8 +116,8 @@ def _benchmark_norms() -> List[str]:
     return texts
 
 
-def build(val_ratio: float) -> Dict[str, object]:
-    pairs = load_records()
+def build(val_ratio: float, src: Path = SRC) -> Dict[str, object]:
+    pairs = load_records(src)
     bench = set(_benchmark_norms())
     kept = [p for p in pairs if _norm(p["input"].split("|", 1)[-1]) not in bench]
     leaked = len(pairs) - len(kept)
@@ -125,8 +126,8 @@ def build(val_ratio: float) -> Dict[str, object]:
         "train": train,
         "val": val,
         "manifest": {
-            "source": str(SRC.relative_to(REPO_ROOT)),
-            "source_sha256": hashlib.sha256(SRC.read_bytes()).hexdigest(),
+            "source": str(src.relative_to(REPO_ROOT)),
+            "source_sha256": hashlib.sha256(src.read_bytes()).hexdigest(),
             "records": len(pairs),
             "leaked": leaked,
             "train": len(train),
@@ -152,9 +153,19 @@ def main(argv: List[str] | None = None) -> int:
         action="store_true",
         help="verify the files on disk match a fresh build (no writes)",
     )
+    ap.add_argument(
+        "--src",
+        default=str(SRC),
+        help="AL source in the pilot shape (default: the 10 hand-written rows); "
+        "point it at scripts/generate_al_dataset.py's output for round 1+",
+    )
     args = ap.parse_args(argv)
 
-    built = build(args.val_ratio)
+    src = Path(args.src).expanduser().resolve()
+    if not src.is_file():
+        print(f"check failed: missing source {src}")
+        return 1
+    built = build(args.val_ratio, src)
     train_body = "".join(
         json.dumps({"input": r["input"], "output": r["output"]}, ensure_ascii=False) + "\n"
         for r in built["train"]
