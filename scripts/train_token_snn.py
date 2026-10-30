@@ -125,6 +125,16 @@ def main() -> int:
         "not change.",
     )
     ap.add_argument("--d-hidden", type=int, default=192)
+    ap.add_argument(
+        "--ss-final",
+        type=float,
+        default=0.0,
+        help="scheduled-sampling ceiling (0.0 = off, plain teacher forcing). "
+        "The mixing probability ramps linearly to this value across epochs: "
+        "late training feeds the model its own predictions, the regime greedy "
+        "decoding runs in. Round-2 evidence: response_tf 23% teacher-forced "
+        "but exact 0 free-running (exposure bias).",
+    )
     ap.add_argument("--d-emb", type=int, default=96)
     ap.add_argument("--beta", type=float, default=0.9, help="membrane leak (used as-is)")
     ap.add_argument(
@@ -268,6 +278,7 @@ def main() -> int:
         log=log_row,
         on_epoch=on_epoch,
         tail_weight=args.tail_weight,
+        ss_final=args.ss_final,
     )
     train_elapsed = time.time() - started
 
@@ -305,6 +316,7 @@ def main() -> int:
         "batch": args.batch,
         "lr": args.lr,
         "tail_weight": args.tail_weight,
+        "ss_final": args.ss_final,
         "device": device,
         "seconds": round(elapsed, 1),
         "train_seconds": round(train_elapsed, 1),

@@ -2,10 +2,13 @@
 # =============================================================================
 # ANGELA-MATRIX: [L3] [βδ] [B] [L2]
 # =============================================================================
-"""Generate round-1 AL data at scale from the ready-made AI corpus.
+"""Generate an AL batch at scale from the ready-made AI corpus.
 
 Round 1 of the AI+AL loop: the AI side is abundant (``core_train.jsonl``,
 already leak-checked when it was built), the AL side is what needs preparing.
+A later batch takes a *fresh slice* of the corpus with ``--skip`` (round 1
+used rows 0-4000; re-sampling the same rows with a new seed would only
+resample the state values — same questions, wasted training).
 This script attaches an AL state transition to each AI pair and writes a file
 in the *pilot* shape, so ``prepare_ai_al_training_data.py --src`` can split,
 leak-check and emit the trainable jsonl without a second code path.
@@ -148,13 +151,14 @@ def _sample_state(rng: random.Random) -> Dict[str, float]:
     return {f: round(rng.uniform(*_RANGE[f]), 4) for f in _FIELDS}
 
 
-def _load_ai_rows(limit: int) -> List[dict]:
+def _load_ai_rows(limit: int, skip: int = 0) -> List[dict]:
     if not AI_SRC.exists():
         raise SystemExit(f"missing {AI_SRC} — run scripts/prepare_core_training_data.py first")
     rows: List[dict] = []
     seen: set[str] = set()
     bench = _benchmark_norms()
     leaked = 0
+    skipped = 0
     with AI_SRC.open(encoding="utf-8") as fh:
         for line in fh:
             if limit and len(rows) >= limit:
@@ -171,14 +175,17 @@ def _load_ai_rows(limit: int) -> List[dict]:
             if key in seen:  # gate 2: no duplicates
                 continue
             seen.add(key)
+            if skipped < skip:  # gate 3: a later batch starts after earlier slices
+                skipped += 1
+                continue
             rows.append({"input": text, "output": answer})
     _load_ai_rows.leaked = leaked  # reported by build()
     return rows
 
 
-def build(rows: int, seed: int) -> Dict[str, object]:
+def build(rows: int, seed: int, skip: int = 0, id_prefix: str = "r1_") -> Dict[str, object]:
     baseline, targets, pilot_rows = _pilot_tables()
-    source = _load_ai_rows(rows)
+    source = _load_ai_rows(rows, skip=skip)
     rng = random.Random(seed)
     examples: List[dict] = []
     for i, row in enumerate(source, start=1):
@@ -193,7 +200,7 @@ def build(rows: int, seed: int) -> Dict[str, object]:
         state_out = transition(state_in, target, dt)
         examples.append(
             {
-                "sample_id": f"r1_{i:06d}",
+                "sample_id": f"{id_prefix}{i:06d}",
                 "input_text": row["input"],
                 "expected_response": row["output"],
                 "al_state_in": state_in,
@@ -205,8 +212,14 @@ def build(rows: int, seed: int) -> Dict[str, object]:
     return {
         "version": "1.1.0",
         "description": (
-            "Round-1 AI+AL dataset: AI corpus pairs with an AL state transition "
-            "computed by the contract §5 operator (targets fitted to the 10 pilot rows)."
+            (
+                "Round-1 AI+AL dataset: AI corpus pairs with an AL state transition "
+                "computed by the contract §5 operator (targets fitted to the 10 pilot rows)."
+                if id_prefix == "r1_" and not skip
+                else f"AI+AL batch {id_prefix.rstrip('_')} (AI corpus rows after the first "
+                f"{skip} accepted) with an AL state transition computed by the contract "
+                "§5 operator (targets fitted to the 10 pilot rows)."
+            )
         ),
         "seed": seed,
         "total_samples": len(examples),
@@ -227,6 +240,10 @@ def build(rows: int, seed: int) -> Dict[str, object]:
             "dt_ladder": list(_DT_LADDER),
             "mode_rule": "routing_mode_out = routing_mode_in (10/10 pilot rows)",
             "target_rule": "pilot al_state_out for the intent, else pilot mean in-state",
+            # Recorded only when non-default: a default-args rebuild must stay
+            # byte-identical, or `--check` would fail on the round-1 file.
+            **({"skip": skip} if skip else {}),
+            **({"id_prefix": id_prefix} if id_prefix != "r1_" else {}),
         },
         "examples": examples,
     }
@@ -236,6 +253,19 @@ def main(argv: List[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--rows", type=int, default=4000, help="AI pairs to convert (default 4000)")
     ap.add_argument("--seed", type=int, default=7, help="sampling seed (default 7)")
+    ap.add_argument(
+        "--skip",
+        type=int,
+        default=0,
+        help="drop the first N accepted AI rows so a later batch takes a fresh "
+        "slice (round 1 used 0-4000; a new seed alone repeats the same questions)",
+    )
+    ap.add_argument(
+        "--id-prefix",
+        default="r1_",
+        help="sample_id prefix (default r1_; use r2_ for the next batch — it also "
+        "feeds the deterministic split in prepare_ai_al_training_data.py)",
+    )
     ap.add_argument("--out", default=str(OUT))
     ap.add_argument(
         "--check",
@@ -244,7 +274,7 @@ def main(argv: List[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
-    built = build(args.rows, args.seed)
+    built = build(args.rows, args.seed, skip=args.skip, id_prefix=args.id_prefix)
     body = json.dumps(built, indent=2, ensure_ascii=False) + "\n"
     out = Path(args.out)
 
@@ -263,7 +293,8 @@ def main(argv: List[str] | None = None) -> int:
     p = built["provenance"]
     print(
         f"examples={built['total_samples']} leaked={p['benchmark_leaked']} "
-        f"pilot_rows={p['pilot_rows']} seed={args.seed}\nwrote {out}"
+        f"pilot_rows={p['pilot_rows']} seed={args.seed} "
+        f"skip={args.skip} prefix={args.id_prefix}\nwrote {out}"
     )
     return 0
 

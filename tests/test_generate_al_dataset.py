@@ -103,6 +103,26 @@ def test_generated_rows_pass_the_gates(gen):
         assert ex["expected_response"].strip(), "a row with no answer is not trainable"
 
 
+def test_skip_takes_a_fresh_slice_and_prefixes_ids(gen):
+    """A later batch must repeat no question of the first one: same seed on the
+    same rows would only resample the state values (wasted training)."""
+    base = gen.build(rows=20, seed=7)
+    shifted = gen.build(rows=10, seed=7, skip=10, id_prefix="r2_")
+    assert [e["input_text"] for e in shifted["examples"]] == [
+        e["input_text"] for e in base["examples"][10:]
+    ]
+    assert {e["input_text"] for e in shifted["examples"]}.isdisjoint(
+        e["input_text"] for e in base["examples"][:10]
+    )
+    assert all(e["sample_id"].startswith("r2_") for e in shifted["examples"])
+    assert base["examples"][0]["sample_id"].startswith("r1_")
+    # non-defaults are recorded for audit; a default build stays byte-identical
+    assert "skip" in shifted["provenance"]
+    assert "id_prefix" in shifted["provenance"]
+    assert "skip" not in base["provenance"]
+    assert "id_prefix" not in base["provenance"]
+
+
 def test_intent_rules_are_the_documented_placeholder(gen):
     assert gen._intent_of("Tell me a joke about penguins") == "humor"
     assert gen._intent_of("Hello there") == "greeting"

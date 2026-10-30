@@ -52,6 +52,11 @@
       "referenced": true,
       "purpose": "ANGELA-MATRIX: [L1] [β] [B] [L0]"
     },
+    "ai_al_round_loop.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Run one AI+AL training round, then auto-produce the next batch (round-2 second half)."
+    },
     "analyze_roadmap_from_logs.py": {
       "category": "analysis",
       "referenced": true,
@@ -565,7 +570,7 @@
     "generate_al_dataset.py": {
       "category": "generation",
       "referenced": true,
-      "purpose": "Generate round-1 AL data at scale from the ready-made AI corpus."
+      "purpose": "Generate an AL batch at scale from the ready-made AI corpus."
     },
     "generate_association_100k.py": {
       "category": "generation",

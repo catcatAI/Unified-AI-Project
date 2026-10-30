@@ -494,12 +494,38 @@ class TokenSNN:
                 weights[i, cut:] = tail_weight
         return ids_t, mask, starts, weights
 
-    def loss(self, ids: Any, mask: Any, weights: Any = None) -> Any:
+    def _ss_inputs(self, ids: Any, mask: Any, p: float) -> Any:
+        """Scheduled-sampling inputs (one-step variant, Ghosh et al. 2016).
+
+        Positions in the answer region carry the model's own teacher-forced
+        prediction instead of the gold token, with probability ``p``; the loss
+        is still scored against the untouched gold sequence (``targets`` in
+        :meth:`loss`). Prompt positions are never replaced, so every sample
+        still starts from the real question.
+
+        Why: round 2 measured response_tf 23% teacher-forced but exact 0
+        free-running — the model never trains on its own outputs, so a single
+        wrong token derails the rest of the answer. One extra no-grad forward
+        per batch buys training conditions that match greedy decoding.
+        """
+        torch = self.torch
+        if p <= 0.0:
+            return ids
+        with torch.no_grad():
+            # pred[t] is the model's guess for ids[t + 1]
+            pred = self.net(ids)[:, :-1, :].argmax(dim=-1)
+        guess = torch.full_like(ids, self.vocab.pad_id)
+        guess[:, 1:] = pred  # input position t carries the model's guess for ids[t]
+        choose = mask & (torch.rand(mask.shape, device=mask.device) < p)
+        return torch.where(choose, guess, ids)
+
+    def loss(self, ids: Any, mask: Any, weights: Any = None, targets: Any = None) -> Any:
         torch = self.torch
         logits = self.net(ids)
         # Predict token t+1 from prefix <= t, only where the target is answer/eos.
         logits = logits[:, :-1, :]
-        targets = ids[:, 1:]
+        gold = ids if targets is None else targets
+        targets = gold[:, 1:]
         target_mask = mask[:, 1:]
         flat_logits = logits.reshape(-1, logits.shape[-1])
         flat_targets = targets.reshape(-1)
@@ -613,7 +639,16 @@ class TokenSNN:
         log: Any = None,
         on_epoch: Any = None,
         tail_weight: float = 1.0,
+        ss_final: float = 0.0,
     ) -> List[Dict[str, float]]:
+        """Train on ``pairs``.
+
+        ``ss_final`` is the scheduled-sampling ceiling (0.0 = off, the
+        teacher-forced behaviour): the mixing probability ramps linearly from
+        ~0 to ``ss_final`` across the epochs, so early epochs learn the
+        mapping from gold context and late epochs practise on the model's own
+        predictions — the regime greedy decoding will actually run in.
+        """
         torch = self.torch
         torch.manual_seed(seed)
         opt = torch.optim.Adam(self.net.parameters(), lr=lr)
@@ -625,17 +660,23 @@ class TokenSNN:
             import random
 
             random.Random(seed + epoch).shuffle(shuffled)
+            p_ss = ss_final * (epoch + 1) / max(1, epochs) if ss_final > 0.0 else 0.0
             total = 0.0
             steps = 0
             for start in range(0, len(shuffled), batch_size):
                 chunk = [pairs[i] for i in shuffled[start : start + batch_size]]
                 opt.zero_grad()
-                if tail_weight == 1.0:
+                if tail_weight == 1.0 and p_ss == 0.0:
                     ids, mask, _ = self.make_batch(chunk)
                     loss = self.loss(ids, mask)
                 else:
                     ids, mask, _, weights = self.make_batch_weighted(chunk, tail_weight)
-                    loss = self.loss(ids, mask, weights)
+                    if p_ss > 0.0:
+                        loss = self.loss(
+                            self._ss_inputs(ids, mask, p_ss), mask, weights, targets=ids
+                        )
+                    else:
+                        loss = self.loss(ids, mask, weights)
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.net.parameters(), 1.0)
                 opt.step()

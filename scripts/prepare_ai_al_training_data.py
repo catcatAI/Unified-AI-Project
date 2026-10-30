@@ -84,6 +84,15 @@ def _norm(text: str) -> str:
     return " ".join(_PUNCT.sub(" ", str(text or "")).lower().split())
 
 
+def _rel(path: Path) -> str:
+    """Repo-relative when possible; absolute otherwise (e.g. a --src outside
+    the repo — the manifest records provenance, it must not crash on it)."""
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def _state_line(state: Dict[str, object], intent: str, side: str) -> str:
     """One compact, token-friendly line describing an AL state."""
     return (
@@ -150,7 +159,7 @@ def build(val_ratio: float, src: Path = SRC) -> Dict[str, object]:
         "train": train,
         "val": val,
         "manifest": {
-            "source": str(src.relative_to(REPO_ROOT)),
+            "source": _rel(src),
             "source_sha256": hashlib.sha256(src.read_bytes()).hexdigest(),
             "records": len(pairs),
             "leaked": leaked,
@@ -202,8 +211,20 @@ def main(argv: List[str] | None = None) -> int:
         help="AL source in the pilot shape (default: the 10 hand-written rows); "
         "point it at scripts/generate_al_dataset.py's output for round 1+",
     )
+    ap.add_argument(
+        "--train-out",
+        default=str(TRAIN_OUT),
+        help="train split destination (default ai_al_train.jsonl). A loop "
+        "producing the *next* batch passes its own path so it never overwrites "
+        "the files the current round trained on.",
+    )
+    ap.add_argument("--val-out", default=str(VAL_OUT), help="val split destination")
+    ap.add_argument("--manifest-out", default=str(MANIFEST_OUT), help="manifest destination")
     args = ap.parse_args(argv)
 
+    train_out = Path(args.train_out).expanduser()
+    val_out = Path(args.val_out).expanduser()
+    manifest_out = Path(args.manifest_out).expanduser()
     src = Path(args.src).expanduser().resolve()
     if not src.is_file():
         print(f"check failed: missing source {src}")
@@ -220,7 +241,7 @@ def main(argv: List[str] | None = None) -> int:
 
     if args.check:
         problems = []
-        for path, expected in ((TRAIN_OUT, train_body), (VAL_OUT, val_body)):
+        for path, expected in ((train_out, train_body), (val_out, val_body)):
             if not path.exists():
                 problems.append(f"missing {path.name}")
             elif path.read_text(encoding="utf-8") != expected:
@@ -231,17 +252,19 @@ def main(argv: List[str] | None = None) -> int:
         print(f"check ok: {built['manifest']['train']} train / {built['manifest']['val']} val")
         return 0
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    TRAIN_OUT.write_text(train_body, encoding="utf-8")
-    VAL_OUT.write_text(val_body, encoding="utf-8")
-    MANIFEST_OUT.write_text(
+    train_out.parent.mkdir(parents=True, exist_ok=True)
+    val_out.parent.mkdir(parents=True, exist_ok=True)
+    train_out.write_text(train_body, encoding="utf-8")
+    val_out.write_text(val_body, encoding="utf-8")
+    manifest_out.parent.mkdir(parents=True, exist_ok=True)
+    manifest_out.write_text(
         json.dumps(built["manifest"], indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     m = built["manifest"]
     print(
         f"records={m['records']} leaked={m['leaked']} "
         f"train={m['train']} val={m['val']}\n"
-        f"wrote {TRAIN_OUT.name}, {VAL_OUT.name}, {MANIFEST_OUT.name}"
+        f"wrote {train_out.name}, {val_out.name}, {manifest_out.name}"
     )
     return 0
 

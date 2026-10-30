@@ -296,3 +296,64 @@ def test_train_on_accepts_a_tail_weight(vocab):
     history = model.train_on([("abc", answer)], epochs=2, batch_size=1, tail_weight=0.25)
     assert len(history) == 2
     assert all(row["loss"] == row["loss"] for row in history)  # finite
+
+
+# -- scheduled sampling (round-3 objective knob) ---------------------------
+
+
+def test_ss_off_returns_the_gold_inputs(vocab):
+    """p=0 must be the identity — the default path cannot drift."""
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=32))
+    ids, mask, _ = model.make_batch([("abc", "def")])
+    assert model._ss_inputs(ids, mask, 0.0) is ids
+
+
+def test_ss_touches_only_the_answer_region(vocab):
+    """Corruption may never reach the prompt: every sample starts from the
+    real question, so only mask-True (answer) positions may differ."""
+    import torch
+
+    torch.manual_seed(0)
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=32))
+    ids, mask, _ = model.make_batch([("abc", "defgh")])
+    ss = model._ss_inputs(ids, mask, 1.0)
+    changed = ss != ids
+    assert torch.equal(ss[~mask], ids[~mask]), "prompt positions were corrupted"
+    assert not bool((changed & ~mask).any()), "a change landed outside the answer region"
+    assert bool(changed.any()), "p=1.0 must replace something in the answer region"
+    assert int(ss.max()) < len(vocab) and int(ss.min()) >= 0, "replacement must be a vocab id"
+
+
+def test_loss_scores_gold_targets_against_corrupted_inputs(vocab):
+    """Scheduled sampling trains on self-generated context but is still graded
+    on the gold sequence — targets=ids must keep the loss finite and usable."""
+    import torch
+
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=32))
+    ids, mask, _ = model.make_batch([("abc", "defgh")])
+    ss = model._ss_inputs(ids, mask, 1.0)
+    loss = model.loss(ss, mask, targets=ids)
+    assert float(loss) == float(loss)  # finite, not NaN
+    loss.backward()
+    assert all(p.grad is None or torch.isfinite(p.grad).all() for p in model.net.parameters())
+
+
+def test_train_on_runs_with_scheduled_sampling(vocab):
+    """The round-3 objective knob must train end-to-end; ss_final=0 must give
+    exactly the plain teacher-forced history (regression pin for the default)."""
+    pairs = [("abc", "def"), ("bcd", "efg")] * 3
+    import torch
+
+    torch.manual_seed(7)  # identical initial weights across the three models
+    plain = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=32))
+    torch.manual_seed(7)
+    off = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=32))
+    torch.manual_seed(7)
+    ramped = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=32))
+    base = plain.train_on(pairs, epochs=3, batch_size=2, seed=0)
+    explicit_off = off.train_on(pairs, epochs=3, batch_size=2, seed=0, ss_final=0.0)
+    assert base == explicit_off, "ss_final=0 must not change the training path"
+
+    history = ramped.train_on(pairs, epochs=3, batch_size=2, seed=0, ss_final=1.0)
+    assert len(history) == 3
+    assert all(row["loss"] == row["loss"] for row in history)  # finite

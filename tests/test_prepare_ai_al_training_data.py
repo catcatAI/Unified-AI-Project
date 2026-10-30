@@ -91,3 +91,17 @@ def test_write_then_check_roundtrip(prep, tmp_path, monkeypatch):
     path = tmp_path / "ai_al_train.jsonl"
     path.write_text(path.read_text(encoding="utf-8") + "{}\n", encoding="utf-8")
     assert prep.main(["--check"]) == 1
+
+
+def test_out_paths_are_configurable(prep, tmp_path):
+    """The loop's *next* batch must be able to write elsewhere — overwriting
+    the files the current round trained on would poison the audit trail."""
+    train = tmp_path / "round9_train.jsonl"
+    val = tmp_path / "round9_val.jsonl"
+    man = tmp_path / "round9_manifest.json"
+    argv = ["--train-out", str(train), "--val-out", str(val), "--manifest-out", str(man)]
+    assert prep.main(argv) == 0
+    assert train.exists() and val.exists() and man.exists()
+    assert prep.main([*argv, "--check"]) == 0
+    train.write_text(train.read_text(encoding="utf-8") + "{}\n", encoding="utf-8")
+    assert prep.main([*argv, "--check"]) == 1
