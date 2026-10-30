@@ -17,7 +17,6 @@ from core.bio.endocrine_system import HormoneType
 from core.system.config.magic_numbers import heartbeat_value as _hb
 from core.system.config.magic_numbers import loop_sleep
 from core.system.state_store.global_store import state_store
-from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,6 @@ class MetabolicHeartbeat:
         # 模組屬性動態解析：免疫「patch 視窗內首次 import 本模組」的
         # from-import 綁定汙染（見 digital_life_integrator 同款註解）
         self.bio_integrator = _bio_integrator_mod.BiologicalIntegrator()
-        self.os_bridge = OSBridgeAdapter()
 
         # 2030 Standard: Cerebellum & Sensory Integration
         from core.bio.cerebellum_engine import CerebellumEngine

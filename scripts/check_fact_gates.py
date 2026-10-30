@@ -16,6 +16,11 @@ scripts/gen_definitions_audit.py 併入）。
 覆蓋各域（與測試共享黃金值，見 tests/*/test_*contract*.py 與
 tests/core/test_fact_interpreter.py）：
   edge        硬體/edge_card 包絡三 verdict（重算，不信任轉錄數字）
+  al          AL 割邊（契約 I8）：core/life 執行期禁出站 import
+              ai./services./api./integrations.（TYPE_CHECKING 型別塊豁免）；
+              AI 側接觸 core.life.al_state 只准公共 API（白名單
+              from-import）、模組形式只准 api/lifespan.py、私有 al_state._
+              接觸即擋門
   audit       卡架構審計：歷史宣稱 corrections 記 INFO（審計抓稻草人是它的
               本職）；修訂後設計（L1 提到駐留需求）的 blocking 門才是 gate
   chat        對話回應 × 前端讀鍵交集（P1 首條活鏈）
@@ -545,6 +550,152 @@ def _placement_facts():
             detail or "0 violations",
             measured_at=MEASURED_AT,
         )
+    ]
+
+
+def _al_scan_outbound(path: Path) -> List[str]:
+    """掃一個 AL 模組（``core/life/*.py``）的出站執行期 import。
+
+    違規＝import 根為 ``ai``/``services``/``api``/``integrations``；
+    ``if TYPE_CHECKING:`` 塊內豁免 —— ``from __future__ import
+    annotations`` 下型別標註執行期不求值，那不是伸手。
+    """
+    banned = ("ai", "services", "api", "integrations")
+    violations: List[str] = []
+
+    def _under_typechecking(test: ast.expr) -> bool:
+        return (isinstance(test, ast.Name) and test.id == "TYPE_CHECKING") or (
+            isinstance(test, ast.Attribute) and test.attr == "TYPE_CHECKING"
+        )
+
+    def _walk(node: ast.AST, in_tc: bool) -> None:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            if in_tc:
+                return
+            if isinstance(node, ast.Import):
+                modules = [alias.name for alias in node.names]
+            else:
+                modules = [node.module] if node.module else []
+            for mod in modules:
+                if mod.split(".", 1)[0] in banned:
+                    violations.append(f"{path.name}:{node.lineno} {mod}")
+            return
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.If) and _under_typechecking(child.test):
+                for stmt in child.body:
+                    _walk(stmt, True)
+                for stmt in child.orelse:
+                    _walk(stmt, in_tc)
+                continue
+            _walk(child, in_tc)
+
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError) as exc:
+        return [f"{path.name}: cannot scan: {exc}"]
+    _walk(tree, False)
+    return violations
+
+
+def _al_scan_ai_side(path: Path, rel: Optional[str] = None) -> List[str]:
+    """掃一個 AI 側模組接觸 ``core.life.al_state`` 的方式（計畫 §Phase 3
+    #4「AI 側禁直摸 AL 內部狀態、只能 get_al_state()」）。
+
+    三條規則：
+    1. ``from core.life.al_state import X`` → X 必須在公共白名單；
+    2. 模組形式（``from core.life import al_state``／``import
+       core.life.al_state``）只准 ``api/lifespan.py``（backbone 註冊的
+       模組交接）；
+    3. 任何 ``al_state._私有`` 文字接觸＝違規。
+    """
+    allowed = frozenset(
+        {"get_al_state", "submit_event", "recent_events", "EventType", "register_al_source"}
+    )
+    if rel is None:
+        rel = str(path.relative_to(SRC))
+    lifespan_path = SRC / "api" / "lifespan.py"
+    violations: List[str] = []
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        return [f"{rel}: cannot scan: {exc}"]
+    if "al_state" not in text:
+        return []
+    try:
+        tree = ast.parse(text)
+    except SyntaxError as exc:
+        return [f"{rel}: parse error: {exc}"]
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "core.life.al_state":
+            for alias in node.names:
+                if alias.name != "*" and alias.name not in allowed:
+                    violations.append(f"{rel}:{node.lineno} imports al_state.{alias.name}")
+        elif isinstance(node, ast.ImportFrom) and node.module == "core.life":
+            if path != lifespan_path:
+                for alias in node.names:
+                    if alias.name == "al_state":
+                        violations.append(f"{rel}:{node.lineno} module-imports core.life.al_state")
+        elif isinstance(node, ast.Import) and path != lifespan_path:
+            for alias in node.names:
+                if alias.name == "core.life.al_state":
+                    violations.append(f"{rel}:{node.lineno} imports {alias.name}")
+    for match in re.finditer(r"\bal_state\._", text):
+        lineno = text.count("\n", 0, match.start()) + 1
+        violations.append(f"{rel}:{lineno} touches al_state._private")
+    return violations
+
+
+def _al_facts():
+    """AL 割邊（Phase 3 item 4；契約 I8、計畫 §Phase 3 #4）。
+
+    AL 與 AI 分兩層，邊界靠注入維持：實例與工廠由 lifespan 組裝層注入，
+    AL 不反向伸手、AI 不直摸內部。兩個事實釘住這條邊（0 violations 才過）：
+
+    - ``al.boundary_outbound``：``core/life/*.py`` 執行期出站 import
+      ＝0（``ai.``/``services.``/``api.``/``integrations.``；型別塊豁免）；
+    - ``al.snapshot_api_only``：AI 側接觸 ``core.life.al_state`` 只准
+      公共 API、模組形式只准 ``api/lifespan.py``、私有接觸＝0。
+    """
+    from core.facts import Fact
+
+    outbound: List[str] = []
+    for path in sorted((SRC / "core" / "life").glob("*.py")):
+        outbound.extend(_al_scan_outbound(path))
+
+    ai_side: List[str] = []
+    for path in sorted(SRC.rglob("*.py")):
+        if path.relative_to(SRC).parts[:2] == ("core", "life"):
+            continue
+        ai_side.extend(_al_scan_ai_side(path))
+
+    def _evidence(violations: List[str]) -> str:
+        if not violations:
+            return "0 violations"
+        shown = "; ".join(violations[:5])
+        more = f" (+{len(violations) - 5} more)" if len(violations) > 5 else ""
+        return f"{len(violations)}: {shown}{more}"
+
+    return [
+        Fact(
+            "al.boundary_outbound",
+            float(len(outbound)),
+            0.0,
+            "le",
+            "violations",
+            "AL import boundary (I8)",
+            _evidence(outbound),
+            measured_at="2026-10-30",
+        ),
+        Fact(
+            "al.snapshot_api_only",
+            float(len(ai_side)),
+            0.0,
+            "le",
+            "violations",
+            "AL snapshot public API",
+            _evidence(ai_side),
+            measured_at="2026-10-30",
+        ),
     ]
 
 
@@ -2013,6 +2164,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         + _paraphrase_facts()
         + _layers_facts()
         + _placement_facts()
+        + _al_facts()
     )
     merged = merge_reports(
         adjudicate(edge_facts),

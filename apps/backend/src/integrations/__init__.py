@@ -4,10 +4,10 @@ Unified AI Project - 集成模块
 
 All imports are lazy: integrations/__init__ must never pull optional
 third-party stacks (googleapiclient etc.) — importing ANY submodule
-(e.g. integrations.os_bridge_adapter for Heartbeat/vision) runs this
-package init first, and an eager google import here used to take down
-Heartbeat init, vision listener registration, and the whole v1 endpoint
-router bundle when the `google` extra was not installed.
+(e.g. integrations.os_bridge_adapter for vision) runs this package init
+first, and an eager google import here used to take down Heartbeat init,
+vision listener registration, and the whole v1 endpoint router bundle
+when the `google` extra was not installed.
 """
 
 import importlib

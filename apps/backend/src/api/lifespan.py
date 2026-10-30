@@ -115,6 +115,35 @@ def get_abc_key_manager():
     return _abc_key_manager_instance
 
 
+def _make_user_monitor(user_id: str):
+    """AI 側 UserMonitor 的注入工廠（契約 I8：core/life 不得出站 import ai.*）。"""
+    from ai.lifecycle.user_monitor import UserMonitor
+
+    return UserMonitor(user_id)
+
+
+async def _make_llm_decision_loop(dli):
+    """AI 側 LLM 決策迴圈的注入工廠（I8：HAM／LLM 服務在 AI 側組裝）。
+
+    對應 DLI 原本內建的組裝（llm_service + HAMMemoryManager +
+    LLMDecisionLoop）—— 依賴反轉後這裡是唯一組裝點，回傳**未啟動**的
+    迴圈（``start()`` 仍由 DLI 的 ``_init_cognition`` 呼叫）。
+    """
+    from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
+    from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+    from services.angela_llm_service import get_llm_service
+
+    llm_service = await get_llm_service()
+    memory_manager = HAMMemoryManager(core_storage_filename="angela_conversations.json")
+    return LLMDecisionLoop(
+        llm_service=llm_service,
+        state_manager=dli.state_matrix,
+        memory_manager=memory_manager,
+        user_monitor=dli.user_monitor,
+        broadcast_callback=dli.broadcast_callback,
+    )
+
+
 def get_digital_life():
     """Get or create the digital life integrator singleton."""
     global _digital_life_instance
@@ -122,7 +151,15 @@ def get_digital_life():
         try:
             from core.life.digital_life_integrator import DigitalLifeIntegrator
 
-            _digital_life_instance = DigitalLifeIntegrator()
+            # 三個 AI 側依賴全部注入（I8：core/life 執行期禁 import
+            # ai./services./api./integrations.，門禁 al.boundary_outbound）。
+            # lifecycle_provider 以函式傳遞 —— 呼叫時才解析，DLI 初始化時
+            # 拿到的一定是共享單例（split-brain 修法不變）。
+            _digital_life_instance = DigitalLifeIntegrator(
+                user_monitor_factory=_make_user_monitor,
+                llm_decision_loop_factory=_make_llm_decision_loop,
+                lifecycle_provider=get_lifecycle,
+            )
         except Exception as e:
             logger.warning(f"DigitalLifeIntegrator not available: {e}", exc_info=True)
             raise

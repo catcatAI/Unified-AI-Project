@@ -27,10 +27,8 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, Optional
 
-from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
-from ai.lifecycle.user_monitor import UserMonitor
 from core.bio import biological_integrator as _bio_integrator_mod
 from core.bio import memory_neuroplasticity_bridge as _memory_bridge_mod
 from core.bio.biological_integrator import BiologicalIntegrator  # noqa: F401  (type 匯出)
@@ -49,6 +47,15 @@ from .autonomous_life_cycle import AutonomousLifeCycle
 from .dynamic_parameters import DynamicThresholdManager
 from .intent_model import IntentManager
 from .self_introspector import SelfIntrospector
+
+if TYPE_CHECKING:  # noqa: S404 — 型別塊執行期不求值（I8 門禁 al.boundary_outbound 豁免）
+    # 契約 I8：AL 不出站伸手 —— core/life 執行期禁 import ai.*／services.*／
+    # api.*／integrations.*。這兩個名字只活在型別標註（`from __future__
+    # import annotations` 讓標註不求值）；執行期實例由 api/lifespan 組裝層
+    # 經 factory 注入（見 __init__ 的 user_monitor_factory /
+    # llm_decision_loop_factory）。
+    from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
+    from ai.lifecycle.user_monitor import UserMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -300,7 +307,25 @@ class DigitalLifeIntegrator:
         >>> print(f"State: {summary['current_state']}")
     """
 
-    def __init__(self, config: Optional[dict[str, Any]] = None):
+    def __init__(
+        self,
+        config: Optional[dict[str, Any]] = None,
+        *,
+        user_monitor_factory: Optional[Callable[[str], Any]] = None,
+        llm_decision_loop_factory: Optional[
+            Callable[["DigitalLifeIntegrator"], Awaitable[Any]]
+        ] = None,
+        lifecycle_provider: Optional[Callable[[], Any]] = None,
+    ):
+        """AI 側的三件事全部經注入（契約 I8：core/life 執行期不出站伸手）。
+
+        ``user_monitor_factory(user_id)`` → UserMonitor 實例；
+        ``llm_decision_loop_factory(dli)``（async）→ 未啟動的 LLM 決策迴圈
+        （HAM／LLM 服務在 AI 側建）；``lifecycle_provider()`` → 共享的
+        ``AutonomousLifeCycle`` 單例。lifespan 建本物件時注入；沒有
+        factory 的獨立/測試環境 → monitor 為 ``None``、cognition 保持關閉
+        （誠實 log），不偷偷 import。門禁：``al.boundary_outbound``。
+        """
         self.config = config or {}
 
         # Life cycle
@@ -325,10 +350,14 @@ class DigitalLifeIntegrator:
         self.action_executor: ActionExecutor = _action_executor_mod.ActionExecutor()
         self.memory_bridge: Optional[MemoryNeuroplasticityBridge] = None
 
-        # P0-4: AI Lifecycle loops
+        # P0-4: AI Lifecycle loops —— 兩個延後解析的注入點（I8，見 __init__
+        # docstring）；user_monitor 就地建好（注入即用）。
+        self._llm_decision_loop_factory = llm_decision_loop_factory
+        self._lifecycle_provider = lifecycle_provider
         self.llm_decision_loop: Optional[LLMDecisionLoop] = None
-        self.user_monitor: UserMonitor = UserMonitor(
-            config.get("user_id", "default_user") if config else "default_user"
+        _user_id = self.config.get("user_id", "default_user")
+        self.user_monitor: Optional[UserMonitor] = (
+            user_monitor_factory(_user_id) if user_monitor_factory is not None else None
         )
         self.broadcast_callback: Optional[Callable] = None
 
@@ -436,25 +465,20 @@ class DigitalLifeIntegrator:
             )
 
     async def _init_cognition(self) -> None:
-        """3. High-Level Cognition (Optional/Graceful)."""
+        """3. High-Level Cognition (Optional/Graceful).
+
+        HAM 記憶與 LLM 服務屬 AI 側 —— 本模組（core/life）執行期不得
+        import ``ai.*``／``services.*``（I8）。迴圈改由 lifespan 注入的
+        async factory 建構；沒有注入（獨立環境／測試）→ cognition 保持
+        關閉並誠實 log，而不是偷偷出站伸手。
+        """
         try:
             if os.environ.get("ANGELA_REPL_MODE") == "1":
                 logger.info("  [Cognition] LLM Decision Loop disabled in REPL mode.")
+            elif self._llm_decision_loop_factory is None:
+                logger.info("  [Cognition] LLM Decision Loop off: no factory wired (I8).")
             else:
-                from ai.memory.ham_memory.ham_manager import HAMMemoryManager
-                from services.angela_llm_service import get_llm_service
-
-                llm_service = await get_llm_service()
-                memory_manager = HAMMemoryManager(core_storage_filename="angela_conversations.json")
-
-                # Decide loop
-                self.llm_decision_loop = LLMDecisionLoop(
-                    llm_service=llm_service,
-                    state_manager=self.state_matrix,
-                    memory_manager=memory_manager,
-                    user_monitor=self.user_monitor,
-                    broadcast_callback=self.broadcast_callback,
-                )
+                self.llm_decision_loop = await self._llm_decision_loop_factory(self)
                 await self.llm_decision_loop.start()
                 logger.info("  [Cognition] LLM Decision Loop active.")
         except Exception as e:
@@ -469,14 +493,14 @@ class DigitalLifeIntegrator:
         if not self._formula_integration_enabled:
             return
         try:
-            # Reuse the shared singleton (api.lifespan.get_lifecycle) so
-            # chat-facing consumers read the RUNNING instance, not a
-            # second dormant copy (split-brain bug).
-            try:
-                from api.lifespan import get_lifecycle
-
-                self.autonomous_lifecycle = get_lifecycle()
-            except Exception:  # standalone mode fallback
+            # Reuse the shared singleton so chat-facing consumers read the
+            # RUNNING instance, not a second dormant copy (split-brain bug).
+            # The shared instance is reached through the injected provider —
+            # core/life must not import api.* at runtime (I8); lifespan
+            # injects get_lifecycle when it builds the integrator.
+            if self._lifecycle_provider is not None:
+                self.autonomous_lifecycle = self._lifecycle_provider()
+            else:  # standalone mode (no api layer): own instance
                 self.autonomous_lifecycle = AutonomousLifeCycle(config=self.config)
             await self.autonomous_lifecycle.initialize()
             # _on_formula_decision(decision) 契約是「單參 LifeDecision」，
@@ -616,10 +640,11 @@ class DigitalLifeIntegrator:
                 await self.llm_decision_loop.stop()
             except Exception as e:
                 logger.error(f"Error stopping LLMDecisionLoop: {e}", exc_info=True)
-        try:
-            await self.user_monitor.stop()
-        except Exception as e:
-            logger.error(f"Error stopping UserMonitor: {e}", exc_info=True)
+        if self.user_monitor is not None:  # 未注入 factory → None（I8）
+            try:
+                await self.user_monitor.stop()
+            except Exception as e:
+                logger.error(f"Error stopping UserMonitor: {e}", exc_info=True)
 
     async def _persist_lifecycle_state(self) -> None:
         """Persist lifecycle state BEFORE shutdown (save_state had no caller,
@@ -871,12 +896,13 @@ class DigitalLifeIntegrator:
     async def _behavior_awakening(self) -> None:
         """AWAKENING: 覺醒階段 — 緩慢探索、建立基礎域感知"""
         self.state_matrix.update_beta(learning=0.5, curiosity=0.4)
-        try:
-            await self.user_monitor.start()
-        except Exception as e:
-            logger.warning(
-                f"[DigitalLife] AWAKENING: User monitor start skipped: {e}", exc_info=True
-            )
+        if self.user_monitor is not None:  # 未注入 factory → None（I8）
+            try:
+                await self.user_monitor.start()
+            except Exception as e:
+                logger.warning(
+                    f"[DigitalLife] AWAKENING: User monitor start skipped: {e}", exc_info=True
+                )
         await self.biological_integrator.process_relaxation_event(intensity=0.3)
         logger.info("🔆 [DigitalLife] AWAKENING: Systems awakening — exploration beginning.")
 
