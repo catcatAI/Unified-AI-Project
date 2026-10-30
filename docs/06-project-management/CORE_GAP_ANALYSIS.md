@@ -306,7 +306,8 @@ PYTHONPATH=apps/backend/src OMP_NUM_THREADS=6 ./.venv/bin/python \
   --val "" --eval-data apps/backend/data/raw_datasets/arithmetic_test_dataset.csv \
   --epochs 12 --batch 64 --lr 5e-3 --max-len 32 --eval-every 6 --eval-sample 200 \
   --beta 0.9 --readout membrane --layers 1 --timesteps 1 \
-  --out /tmp/tok_winner.pt --report /tmp/tok_winner.json
+  --out data/checkpoints/tok_winner.pt \
+  --report data/intelligence_reports/tok_winner.json
 ```
 
 ## 八、輸入長度瓶頸 → token 詞表 → 蒸餾資料：第一次拿到非零分（2026-10-26／27）
