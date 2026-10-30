@@ -692,8 +692,9 @@ passed；flake8 0、black 過。
 
 ### Phase 3 — 割邊：把 AL 從 AI 層拔出來（3–5 天，**主戰場**）
 
-> **狀態（2026-10-29）**：item 3 ✅（`5fea2c42b`——state
-> voter 改讀單一快照，見下方完成記錄）；item 1／2／4 未動。
+> **狀態（2026-10-30）**：item 3 ✅（`5fea2c42b`——state
+> voter 改讀單一快照）；item 1 ✅（`6efd8adf4`——prompt 的 AL 數值只走
+> `get_al_state()` 快照，見下方完成記錄）；item 2／4 未動。
 
 - **做**：
   1. `prompt_builder` 不再自建
@@ -736,6 +737,30 @@ passed；flake8 0、black 過。
 - **驗證**：全量 `pytest tests/ apps/backend/tests/` **8,942 passed / 107
   skipped / 0 failed**；flake8/black/isort 乾淨、mypy 0 issue；
   `check_fact_gates.py` → ALL PASS。
+
+**完成記錄（2026-10-30，item 1 — `6efd8adf4`）**：
+
+- **prompt 的 AL 數值只剩一條路**：`prompt_builder` 新增
+  `_al_snapshot()`（`get_al_state()` 的唯一取用點，快照不可用 → `None`
+  → 該項不渲染，D11）。life-intensity 行改讀 `snap.intensity`（`_read_intensity`
+  仍是 peek，讀不寫不變）； `_get_life_intensity`
+  shim 隨之零呼叫**刪除**（四 shim 剩 hsm/active_cognition/cdm/non_paradox）。
+- **ζ/η 漂移行改由快照供應**：`drift{zeta,eta}` 兩鍵在 prompt 渲染（ζ 是新行
+  `angela.zeta.drift`，locale en/zh parity 已過
+  `und_prompt_keys`/`dead_prompt_keys`/`prompt_locale_parity`
+  三道 i18n 門）；`_build_core_prompt` 不再從 `state_for_llm.eta` 讀
+  `structural_drift`。
+- **AI 層摘除自己的副本**：`chat_routes._ctx_state_matrix` 把 `structural_drift`
+  從 `state_for_llm.eta`
+  pop 掉——快照是唯一路由後這份副本零讀者。`module_count`/`execution_count`/`success_rate`
+  是 AI 層自己的執行統計、非快照欄位，保留原位。
+- **順帶修掉兩個空斷言**：舊測試斷言 "Structural
+  drift" 文本，但權威 locale 模板是
+  `"Drift: {value} (stable)"`／`"漂移: {value} (穩定)"`
+  ——斷言從未匹配過真實輸出。改用 `(stable)`/`(穩定)` 唯一標記；測試加
+  `_AL_SOURCES` monkeypatch 全量替換，防同進程前一檔註冊的 provider 汙染。
+- **驗證**：相鄰 94+30+49 passed；flake8/black/isort/mypy 乾淨；
+  `check_fact_gates.py` → ALL PASS；prettier 過 locale JSON。
 
 ### Phase 4 — 拆庫評估（0.5 天，Phase 3 之後才做）
 
