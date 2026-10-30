@@ -18,6 +18,7 @@ This file holds two properties:
 """
 
 import sys
+from datetime import datetime
 from pathlib import Path
 
 BACKEND_SRC = Path(__file__).resolve().parents[2] / "apps" / "backend" / "src"
@@ -56,7 +57,7 @@ class TestOneInstancePerFormula:
         assert _get_active_cognition() is get_active_cognition_formula()
         assert _get_non_paradox() is get_non_paradox()
 
-    def test_life_intensity_line_reads_the_shared_instance_via_the_snapshot(self):
+    def test_life_intensity_line_reads_the_shared_instance_via_the_snapshot(self, monkeypatch):
         """Phase 3 item 1: one life's state, now delivered by the snapshot.
 
         ``_formula_life_intensity_line`` fetches ``get_al_state().intensity``,
@@ -66,8 +67,28 @@ class TestOneInstancePerFormula:
         and the read books nothing (contract §9 / D11: no observation -> no
         line, never a dressed-up default).
         """
+        import core.life_intensity_formula as life_formula_module
         from core.life.al_state import get_al_state
         from services.llm.prompt_builder import _formula_life_intensity_line
+
+        # ``peek_life_intensity()`` *previews* the pending gap-seconds
+        # (``gap * Δt/3600``), so two reads taken at two instants differ by
+        # ``gap * Δt`` once ``c_inf > c_limit``. That measured 1.00e-9 across
+        # one line render — exactly this assertion's tolerance — so whether it
+        # fired depended only on wall-clock time spent inside the test: it
+        # passed alone (gap ≈ 0) and failed in the full suite (1.0014e-9 and
+        # 1.0206e-9 in two runs). Pinning the module's clock removes that
+        # noise while leaving the assertions fully sensitive to what they
+        # actually guard: a private copy, a snapshot bypass, or a read that
+        # books state.
+        frozen_now = datetime.now()
+
+        class _FrozenDateTime(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return frozen_now if tz is None else frozen_now.astimezone(tz)
+
+        monkeypatch.setattr(life_formula_module, "datetime", _FrozenDateTime)
 
         shared = get_life_intensity_formula()
         before = (
