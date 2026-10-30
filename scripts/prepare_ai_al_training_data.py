@@ -25,6 +25,30 @@ The manifest records counts, the source file hash and the leak count so a
 later run can be compared and audited. ``--check`` re-derives everything and
 fails if the files on disk drift from the source records.
 
+Field gaps — read before training (registered 2026-10-30, ISSUES §五):
+
+The state line this script serialises is **not** the production snapshot
+(``core.life.al_state``, v2 nine fields). The mapping, so no consumer
+mistakes one for the other:
+
+* ``v``/``a``/``d`` = the snapshot's ``emotion`` PAD trio — same quantity.
+* ``health`` = the snapshot's ``health`` (same D11 rule: unobserved, not 0.5).
+* ``fatigue``/``stress`` = **no production source.** They exist only in the
+  10 hand-written pilot rows; the snapshot has no such fields.
+* ``mode``/``intent`` = AI-layer quantities (routing mode; intent labels are
+  keyword-rule placeholders — the production side should read
+  ``query_classifier``).
+* The snapshot's ``intensity``, ``tendency``, ``life_phase``,
+  ``life_cycle_state``, ``drift``, ``ticks`` are **not in this data**: the
+  model never trains on them, so an inference path must not assume it can
+  feed them.
+* ``<al_in>``/``<al_out>`` is produced by no production code path yet — the
+  trainer format and the live prompt are not wired together (training line,
+  next round).
+
+The transition targets themselves were fitted from those 10 pilot rows
+(contract §5 operator placeholder, not measured AL dynamics).
+
 Usage:
     python scripts/prepare_ai_al_training_data.py
     python scripts/prepare_ai_al_training_data.py --val-ratio 0.3
@@ -141,6 +165,25 @@ def build(val_ratio: float, src: Path = SRC) -> Dict[str, object]:
                 "The response comes first because that is what a reader sees; the "
                 "state line after it is the transition the AL engine applies."
             ),
+            "field_gaps": {
+                "note": (
+                    "This state line is NOT the production snapshot "
+                    "(core.life.al_state v2). See the script docstring "
+                    "'Field gaps' section for the full mapping."
+                ),
+                "same_as_snapshot": ["v/a/d = emotion PAD", "health = health"],
+                "no_production_source": ["fatigue", "stress"],
+                "ai_layer_not_al": ["mode", "intent (keyword-rule placeholder)"],
+                "in_snapshot_not_in_data": [
+                    "intensity",
+                    "tendency",
+                    "life_phase",
+                    "life_cycle_state",
+                    "drift",
+                    "ticks",
+                ],
+                "unwired_format": "<al_in>/<al_out> is produced by no production path yet",
+            },
         },
     }
 
