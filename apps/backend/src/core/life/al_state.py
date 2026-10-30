@@ -19,18 +19,19 @@
    經 provider 登記簿注入 —— AL 出站不 import ``ai.*`` / ``api.*``（I8），
    所以永遠不會自己伸手去拿。
 4. **事件寫入口**（``submit_event()``，§8/§9）—— 對 AL 的寫只走這裡
-   （I7）。v1 只有 ``MEMORY_RESULT``（記憶層執行 §10 retention policy
-   的結果回報，item ④ 種子）；事件先落地、可回放，視窗聚合與轉移函數
-   是後續項（§14 明列 v1 不做事件視窗聚合）。
+   （I7）。``MEMORY_RESULT``（記憶層執行 §10 retention policy 的結果回報，
+   僅落地）與 ``AFFECT_OBSERVED``（情緒觀測，落地並驅動 ``emotion.arousal``
+   的轉移）；事件視窗聚合是後續項（§14 明列 v1 不做）。
 
 四條紀律：
 
 - **未觀測一律 ``None``，絕不寫 ``0.0`` / ``1.0``**（D11）。
 - **``derived`` 欄位不落盤**（I3）：由 ``_persist()`` 機械拒絕，不靠記得。
-- **``emotion`` v1 恆 ``None``**：情緒實例在 ``ai/alignment``，AL 出站
-  import ``ai.*`` 即 I8 違規；§8 ``submit_event`` 通道已開（item ④ 的
-  ``MEMORY_RESULT`` 種子），但「事件 → 觀測」的聚合尚未接線，因此
-  ``PROVIDABLE_SOURCES`` 仍不含它 —— 登記也登不進來。
+- **``emotion`` 只經 §8 事件通道有值**：情緒實例在 ``ai/alignment``，AL 出站
+  import ``ai.*`` 即 I8 違規，所以它不是 provider 來源（``PROVIDABLE_SOURCES``
+  仍不含它 —— 登記也登不進來）；``AFFECT_OBSERVED`` 事件經
+  ``core.life.al_arousal`` 設 target、隨時間逼近，快照上現只有 ``arousal``
+  一個分量（P、D 未觀測 → 鍵缺席）。從未收過事件 → 整欄 ``None``。
 - **事件緩衝有界、不落盤**：滿 ``_EVENT_LIMIT`` 淘汰最舊、重啟即空 ——
   事件是觀測記錄不是記憶，沒觀測到就不裝作有。
 """
@@ -49,6 +50,7 @@ from pathlib import Path
 from typing import Any, Callable, Deque, Dict, List, Mapping, Optional, Tuple, Union
 
 from core.data_config import get_data_root
+from core.life.al_arousal import arousal_level, get_affect_tracker
 from core.life.life_essence import get_life_essence
 from core.life_intensity_formula import get_life_intensity_formula
 from core.system.config.magic_numbers import threshold_value
@@ -302,12 +304,17 @@ def _call_source(name: str) -> Any:
 # §8 寫路徑（item ④ 種子）：對 AL 的寫只經 submit_event（I7）
 # =========================================================================
 class EventType(str, Enum):
-    """§8 事件類型。v1 只有「記憶層執行 retention policy 的結果回報」——
+    """§8 事件類型。型別隨生產呼叫者一起新增：沒有 producer 的型別不進枚舉
+    （零死碼）。
 
-    型別隨生產呼叫者一起新增：沒有 producer 的型別不進枚舉（零死碼）。
+    - ``MEMORY_RESULT``：記憶層執行 retention policy 的結果回報（僅落地）。
+    - ``AFFECT_OBSERVED``：情緒觀測（``emotion`` 類別＋``intensity``＋``source``），
+      落地之外**真的會改變狀態**：映射成喚醒度後只設 ``target``，
+      ``emotion.arousal`` 隨時間逼近（``core.life.al_arousal``，契約 §5）。
     """
 
     MEMORY_RESULT = "memory_result"
+    AFFECT_OBSERVED = "affect_observed"
 
 
 # 緩衝有界；v1 不持久化、不做視窗聚合（§14 明列 v1 出界）。重啟後為空
@@ -335,6 +342,24 @@ def submit_event(event_type: Union[EventType, str], payload: Mapping[str, Any]) 
     record: Dict[str, Any] = {"type": resolved.value, "at": time.time(), "payload": dict(payload)}
     _EVENTS.append(record)
     logger.debug("[ALEvent] %s payload=%s", resolved.value, record["payload"])
+    if resolved is EventType.AFFECT_OBSERVED:
+        _apply_affect_event(record["payload"])
+
+
+def _apply_affect_event(payload: Mapping[str, Any]) -> None:
+    """AFFECT_OBSERVED → 喚醒度觀測 → 只設 target（§5）。
+
+    類別未知或強度壞掉 → 事件已落地但**不觀測**（D11，不猜）。轉移本身的
+    任何故障都不得拖垮聊天路徑，但要留下聲音。
+    """
+    level = arousal_level(payload.get("emotion"), payload.get("intensity"))
+    if level is None:
+        logger.debug("[ALEvent] affect event not observable (unknown category or bad intensity)")
+        return
+    try:
+        get_affect_tracker().observe_level(level)
+    except Exception as exc:
+        logger.warning("[ALEvent] affect transition failed: %s", exc, exc_info=True)
 
 
 def recent_events(limit: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -359,6 +384,17 @@ def _read_intensity() -> Optional[float]:
     except Exception as exc:
         logger.debug("[ALState] intensity unavailable: %s", exc)
         return None
+
+
+def _read_emotion() -> Optional[Dict[str, float]]:
+    """``emotion`` 現只有 ``arousal`` 一個分量（PAD 的 A）；P、D 未觀測 → 鍵缺席，
+    不寫 0.0（D11）。從未收過情緒事件 → 整欄 ``None``。"""
+    try:
+        arousal = get_affect_tracker().arousal()
+    except Exception as exc:
+        logger.debug("[ALState] emotion unavailable: %s", exc)
+        return None
+    return {"arousal": float(arousal)} if arousal is not None else None
 
 
 def _read_tendency() -> Optional[Dict[str, float]]:
@@ -409,6 +445,7 @@ def get_al_state() -> ALSnapshot:
     drift_raw = _call_source("drift")
     intensity = _read_intensity()
     tendency = _read_tendency()
+    emotion = _read_emotion()
 
     source: Dict[str, Optional[str]] = {
         "born_at": "al_state.clock" if born_at is not None else None,
@@ -419,8 +456,9 @@ def get_al_state() -> ALSnapshot:
         "intensity": (
             "core.life_intensity_formula.peek_life_intensity" if intensity is not None else None
         ),
-        # I8：情緒實例在 ai/alignment，AL 不得出站 import ai.*；等 §8 事件通道
-        "emotion": None,
+        # emotion 由 §8 事件通道驅動（AFFECT_OBSERVED → core.life.al_arousal），
+        # 不經 provider、不出站 import ai.*（I8）；未收過事件 → None
+        "emotion": "core.life.al_arousal" if emotion is not None else None,
         "tendency": (
             "core.life.life_essence.get_all_blended_tendencies" if tendency is not None else None
         ),
@@ -441,7 +479,7 @@ def get_al_state() -> ALSnapshot:
         life_cycle_state=_phase_str(life_cycle_raw),
         health=_as_float(health_raw),
         intensity=intensity,
-        emotion=None,
+        emotion=emotion,
         tendency=tendency,
         drift=drift_raw if isinstance(drift_raw, dict) else None,
     )

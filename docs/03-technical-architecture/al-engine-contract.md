@@ -93,13 +93,42 @@ AL 永遠只持有摘要與傾向。
 | `life_phase`        | `invariant`（受控遷移）   | 沿用 `LifePhase` 五態                                                                                                             |
 | `health`            | `fast`                    | 來源 `MetabolicHeartbeat`                                                                                                         |
 | `intensity`         | `slow`                    | 來源 `LifeIntensityFormula`（3 實例歸一）                                                                                         |
-| `emotion`           | `fast`                    | PAD 三分量；補上今日缺失的持久化                                                                                                  |
+| `emotion`           | `fast`                    | PAD 三分量；**現只有 `arousal`（A）一個分量有值**（2026-10-30 垂直切片，見 §3.3）；P、D 未觀測＝鍵缺席                            |
 | `tendency`          | `slow`                    | 人格 μ/σ，來源 `LifeEssence`（1.7MB 檔收斂）                                                                                      |
 | `drift`             | `derived`（值）/ 計算屬性 | `ζ` 連續性 + `η` 結構漂移 + `identity`（離錨**且仍在動**，2026-10-28），三鍵皆未觀測則整欄 `None`；`find_drift()` 仍無生產呼叫    |
 | `maturity`          | ❌ 不進 schema            | 2026-10-25 裁決：後端 L0–L11 為死碼已刪（孤兒證據表），前端另有一套 `maturity-tracker.js` 與任何後端指標無關——AL 不擁有成熟度階梯 |
 
 > 為什麼 `drift` 是 `derived`
 > 而不是被寫入的值：漂移是**相對於錨的計算結果**，寫入會造成「指標與錨不同步」——今日 η 恆 0 卻被 5 處讀取，就是這個病的成品。
+
+### 3.3 垂直切片落地記錄：`emotion.arousal`（2026-10-30）
+
+目的：證明「**時間作用在狀態上**」在 AL 內部成立，不靠文字。實作在
+`core/life/al_arousal.py`（純函式＋落盤追蹤器），經 §8 事件通道
+`AFFECT_OBSERVED` 驅動，記憶策略（§10）是唯一消費者。
+
+- **轉移（§5）**：事件只設 `target`；`arousal` 以 `τ_rise`（預設 20 s）逼近
+  `target`，`target` 以 `τ_fall`（預設 300
+  s）回落到靜息基線 0.3。兩級串接有**閉式解**，所以結果與取樣頻率無關（半群性，測試釘住），並以獨立的小步長數值積分交叉驗證。
+  `τ` 走配置鍵 `al_arousal_tau_rise_s` / `al_arousal_tau_fall_s`。
+- **跨重啟（§4.4）**：狀態（`arousal`、`target`、時鐘讀數）落盤於
+  `al_affect.json`
+  （原子寫入）；重啟後讀回並**按實際經過的時間繼續衰減**——離線三天回到靜息，不是歸零、也不是凍結。檔損壞或版本不符＝未觀測（D11）。
+- **未觀測（D11）**：沒收過事件前 `arousal` 是
+  `None`；未知情緒類別或壞強度的事件會落地但**不產生觀測**，不猜。
+- **消費者（§10）**：`retention_policy.weight ×= 1 + 0.4·(arousal − 0.3)` ∈
+  [0.88, 1.28]。判準測試：同一刻、同一條記憶，**歷史不同 → 權重不同**
+  （近期憤怒 > 無歷史 =
+  1.0 > 近期平靜），一小時後憤怒的影響衰減回中性。未觀測時權重與切片前完全一致。
+- **與 §4 的偏離（待決）**：§4.1 要 `dt` 由 tick 推進計算，但 `advance_tick()`
+  **沒有任何生產呼叫者**（`ticks`
+  永遠是 0），無 tick 可換算。本切片以**注入的時鐘** 供應 `dt`（生產預設
+  `time.time`；測試用假時鐘）。tick 來源接上後只換這一個參數。
+- **尚未接線（刻意不假裝完成）**：`AFFECT_OBSERVED`
+  目前**沒有生產者**——對話路徑上的使用者情緒分析（`chat_routes._analyze_user_emotion`）應在回傳後
+  `submit_event`
+  一筆（`emotion`／`intensity`／`source="keyword_inference"`）。觀測源是**關鍵字推斷**，不是量測，payload 必須標明。接上之前，生產環境的
+  `emotion` 欄位恆為 `None`。
 
 ---
 

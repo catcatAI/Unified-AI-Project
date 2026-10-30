@@ -19,7 +19,8 @@ clock) — is asserted at the bottom.
 4. **I8 boundary**: this module's own imports stay inside stdlib +
    `core.*` — it never reaches out to `ai.*`/`api.*`/`services.*`.
    Sources held by the api layer are injected via the provider registry;
-   `emotion` is unobservable in v1 by design (§8 event channel later).
+   `emotion` is never a provider source: it only takes a value through the
+   §8 event channel (`AFFECT_OBSERVED`, see test_al_arousal.py).
 5. **§8 event write path** (item ④): `submit_event()` is the only write
    into AL — unknown types raise `ALValidationError`, non-mapping
    payloads are rejected, the payload is copied (callers can't mutate
@@ -227,12 +228,20 @@ class TestAggregationReadPath:
         assert snap.source["health"] is None
         assert snap.source["drift"] is None
 
-    def test_emotion_is_always_unobserved(self):
-        # I8：情緒在 ai/alignment，AL 出站 import 即違規；v1 恆 None
-        snap = get_al_state()
-        assert snap.emotion is None
-        assert snap.source["emotion"] is None
-        assert "emotion" not in al_state.PROVIDABLE_SOURCES
+    def test_emotion_is_unobserved_until_an_affect_event_arrives(self, tmp_path):
+        # I8：情緒在 ai/alignment，AL 出站 import 即違規 → 不走 provider；
+        # 只有 §8 事件通道能讓它有值，沒收過事件就是 None（D11）。
+        # 隔離：不吃開發機 data/ 下可能存在的真狀態檔。
+        from core.life.al_arousal import AffectTracker, set_affect_tracker
+
+        set_affect_tracker(AffectTracker(path=tmp_path / "al_affect.json"))
+        try:
+            snap = get_al_state()
+            assert snap.emotion is None
+            assert snap.source["emotion"] is None
+            assert "emotion" not in al_state.PROVIDABLE_SOURCES
+        finally:
+            set_affect_tracker(None)
 
     def test_registered_source_flows_into_snapshot(self):
         register_al_source("health", lambda: 0.42)

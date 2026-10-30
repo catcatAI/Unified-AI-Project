@@ -16,8 +16,10 @@
   對稱差）與 ``identity``（身份離開錨**且仍在動**的量，2026-10-28 起）——
   ``identity`` 只在確認漂移時才 > 0，所以它進最大值時語義仍是「正在變動」，
   不會把「穩定地長離了初始」誤當成動盪。
-- **多重 ``weight`` ← ``intensity``**：生命強度越高，編碼越該加權
-  —— ``weight = 0.5 + intensity ∈ [0.5, 1.5]``（中強度 0.5 → 1.0 中性）。
+- **多重 ``weight`` ← ``intensity`` ×``emotion.arousal``**：生命強度越高，
+  編碼越該加權 —— ``0.5 + intensity ∈ [0.5, 1.5]``（中強度 0.5 → 1.0 中性）；
+  再乘喚醒度因子 ``1 + 0.4·(a − 0.3) ∈ [0.88, 1.28]``（以靜息基線為中性，
+  2026-10-30；只有 ``emotion.arousal`` 被觀測到才乘，未觀測不動現行規則）。
 - **該固化嗎 ``consolidate`` ← ``life_phase == "CONSOLIDATION"``，且
   ``drift["identity"] == 0``**：鞏固階段才定型；**身份正在離開錨且仍在動時
   不固化**（2026-10-28 的固化閘，觀測源 ``core/life/identity_drift.py``）——
@@ -37,6 +39,7 @@ import math
 from dataclasses import dataclass
 from typing import Any, Dict
 
+from core.life.al_arousal import AROUSAL_BASELINE
 from core.life.al_state import ALSnapshot
 
 # 基準保留期 30 天 —— 與 HAM `_RETENTION_DAYS_LOW` 同尺度（該層自己的註解：
@@ -47,6 +50,11 @@ RETENTION_FLOOR_RATIO = 0.1
 # weight = WEIGHT_BASE + WEIGHT_GAIN * intensity → [0.5, 1.5]，中性點 1.0。
 WEIGHT_BASE = 0.5
 WEIGHT_GAIN = 1.0
+# 喚醒度對編碼加權的調節（2026-10-30，AL 垂直切片）：``factor = 1 + GAIN·(a − baseline)``，
+# 以靜息基線為中性點（平靜時不動現行規則），a ∈ [0,1] → factor ∈ [0.88, 1.28]。
+# 語義：喚醒度高時發生的事該記得更牢；觀測源是 ``emotion.arousal``（時間上
+# 逼近 target 的 fast 狀態），所以同一句話在不同「歷史」下會得到不同權重。
+AROUSAL_GAIN = 0.4
 # 固化只認這個階段名（``LifePhase.name`` 經 ``_phase_str`` 序列化）。
 CONSOLIDATION_PHASE = "CONSOLIDATION"
 
@@ -95,7 +103,7 @@ def _finite_float(value: Any) -> float | None:
 def retention_policy(snapshot: ALSnapshot) -> RetentionPolicy:
     """純函式：唯讀快照 → 保留策略（無 I/O、可重放，§5 同款紀律）。
 
-    只讀 ``drift`` / ``intensity`` / ``life_phase`` 三個觀測欄；其餘欄位
+    只讀 ``drift`` / ``intensity`` / ``life_phase`` / ``emotion.arousal`` 四個觀測欄；其餘欄位
     不看（策略不由健康分、年齡等欄位驅動 —— 每加一個觀測源要先在契約
     記語義，不默認接）。
     """
@@ -117,13 +125,22 @@ def retention_policy(snapshot: ALSnapshot) -> RetentionPolicy:
         )
         retention_source = _SOURCE_STATE
 
-    # --- 多重 ← intensity ---------------------------------------------------
+    # --- 多重 ← intensity ×（喚醒度調節）-----------------------------------
     weight = 1.0
     weight_source = _SOURCE_DEFAULT
     intensity = _finite_float(snapshot.intensity)
     if intensity is not None:
         intensity = min(max(intensity, 0.0), 1.0)
         weight = WEIGHT_BASE + WEIGHT_GAIN * intensity
+        weight_source = _SOURCE_STATE
+    arousal = (
+        _finite_float(snapshot.emotion.get("arousal"))
+        if isinstance(snapshot.emotion, dict)
+        else None
+    )
+    if arousal is not None:
+        arousal = min(max(arousal, 0.0), 1.0)
+        weight *= 1.0 + AROUSAL_GAIN * (arousal - AROUSAL_BASELINE)
         weight_source = _SOURCE_STATE
 
     # --- 該固化嗎 ← life_phase + 身份漂移閘 -------------------------------
