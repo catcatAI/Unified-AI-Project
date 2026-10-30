@@ -694,7 +694,8 @@ passed；flake8 0、black 過。
 
 > **狀態（2026-10-30）**：item 3 ✅（`5fea2c42b`——state
 > voter 改讀單一快照）；item 1 ✅（`6efd8adf4`——prompt 的 AL 數值只走
-> `get_al_state()` 快照，見下方完成記錄）；item 2／4 未動。
+> `get_al_state()` 快照，見下方完成記錄）；item 4 ✅（`99374725c`—— `al`
+> 門禁域上線、出站違規依 I8 反轉清零，見下方完成記錄）；item 2 未動。
 
 - **做**：
   1. `prompt_builder` 不再自建
@@ -761,6 +762,32 @@ passed；flake8 0、black 過。
   `_AL_SOURCES` monkeypatch 全量替換，防同進程前一檔註冊的 provider 汙染。
 - **驗證**：相鄰 94+30+49 passed；flake8/black/isort/mypy 乾淨；
   `check_fact_gates.py` → ALL PASS；prettier 過 locale JSON。
+
+**完成記錄（2026-10-30，item 4 — `99374725c`）**：
+
+- **出站違規依反轉清零**（契約 I8；當年計「9 處」，修時實測 6 處）：DLI 模組級
+  `ai.lifecycle` ×2 → `if TYPE_CHECKING:`
+  （僅型別，執行期不求值）；`_init_cognition` 的 HAM／`get_llm_service` lazy
+  import → lifespan async factory 注入（組裝層歸位）；
+  `_init_autonomous_lifecycle` 的 `api.lifespan` 直連 → `lifecycle_provider`
+  注入（split-brain 修法語義不變：呼叫時才解析，拿到的一定是共享單例）；heartbeat
+  `os_bridge` 死字段兩行刪除（賦值後零讀者）。獨立/測試環境無 factory → monitor
+  `None`＋cognition 誠實關閉（start/stop 皆有 guard），不偷偷出站。
+- **門禁 `al` 域兩事實併入 hygiene**：`al.boundary_outbound`（core/life
+  AST 掃執行期出站、`TYPE_CHECKING` 塊豁免）＋`al.snapshot_api_only`
+  （AI 側白名單五公共名、模組形式只准 `api/lifespan.py`、`al_state._`
+  私有文字即違規）。`AGENTS.md` 單查入口清單補 `al`。
+- **13 條門禁測試雙向釘**：真庫 0
+  violations ＋合成壞樣本（四個 banned 根、函式內 lazy
+  import、私有名 from-import、模組形式越界、私有屬性觸碰）全被抓——掃描器刪成
+  `return []` 也過不了。
+- **驗證**：相鄰 228 passed；全量 **9,027 passed / 107 skipped / 0
+  failed**（最終輪，與提交碼一致）；black/isort/flake8 乾淨、mypy 0
+  issue；`check_fact_gates.py` ALL PASS；`gen_project_map --budget 10000`
+  OK（5,125/10,000）。
+- **契約 §9 四條禁止對賬**：「出站」已修＋門禁；「AI 賦值 AL 欄位」「AI 判 drift」掃描無生產路徑（尚未機器化，登記於 ISSUES
+  §六）； `LifeIntensityFormula` 的 AI 層實例 item
+  1 已清（現僅 core 側 singleton 與 `__main__` 演示，合規）。
 
 ### Phase 4 — 拆庫評估（0.5 天，Phase 3 之後才做）
 
