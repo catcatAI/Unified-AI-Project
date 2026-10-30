@@ -262,3 +262,40 @@ class TestDetailedEndpointDump:
         source = inspect.getsource(system_status_detailed)
         assert 'result["al_events"]' in source
         assert "_detailed_al_events()" in source
+
+
+class TestPhaseReadConvergesOnTheSnapshot:
+    """Phase 3 對齊：狀態面的 phase 只有一條讀路、一種形狀。
+
+    以前 ``/status/detailed`` 的同一個 payload 裡，top-level
+    ``life_phase``（``_detailed_emotion_and_phase`` 直摸 lifecycle、回
+    enum 的 ``(cn, en)`` tuple）與 ``al_state.life_phase``（快照、回
+    enum name）是兩種形狀；pet 端點是第三條讀路（``_phase_label``）。
+    三者現在都走 ``get_al_state()``，序列化只有快照的 ``_phase_str`` 一份。
+    """
+
+    def test_detailed_phase_agrees_with_the_snapshot_dump(self, monkeypatch):
+        import asyncio
+
+        from api.routes.system_routes import _detailed_al_state, _detailed_emotion_and_phase
+
+        monkeypatch.setattr(lifespan, "get_emotion_system", lambda: None)
+        lifespan._register_al_sources()
+        data = asyncio.run(_detailed_emotion_and_phase())
+        dump = _detailed_al_state()
+
+        # 同一 payload、同一欄、同一形狀（str）——不再是 tuple vs name 兩版。
+        assert isinstance(data["life_phase"], str)
+        assert data["life_phase"] == dump["life_phase"]
+        # 第二條生命軸（DLI 週期）也進詳細面，與 al_state 段一致。
+        assert data["life_cycle_state"] == dump["life_cycle_state"]
+
+    def test_the_pet_endpoint_reads_the_snapshot_too(self, monkeypatch):
+        import asyncio
+
+        from api.routes.system_routes import system_pet_state
+
+        monkeypatch.setattr(lifespan, "get_emotion_system", lambda: None)
+        lifespan._register_al_sources()
+        result = asyncio.run(system_pet_state())
+        assert result["life_phase"] == get_al_state().life_phase

@@ -135,15 +135,25 @@ async def _detailed_state_matrix() -> Dict[str, Any]:
 
 
 async def _detailed_emotion_and_phase() -> Dict[str, Any]:
-    """The emotion summary and the current life phase."""
-    from api.lifespan import get_emotion_system, get_lifecycle
+    """The emotion summary and the life-phase fields, through the AL snapshot.
+
+    This helper used to reach past the snapshot for ``lifecycle.current_phase``
+    and serialized the enum's ``(cn, en)`` tuple, while ``al_state.life_phase``
+    in the same payload reported the enum name from ``get_al_state()`` — one
+    endpoint, two shapes for one field (three-core plan Phase 3 alignment:
+    one read path, one serialization). Both phase fields now come from the
+    snapshot (contract §9 exchange), which also adds the second axis
+    (``life_cycle_state``) this helper never had.
+    """
+    from api.lifespan import get_emotion_system
+    from core.life.al_state import get_al_state
 
     emotion = get_emotion_system()
-    lifecycle = get_lifecycle()
-    phase = getattr(lifecycle, "current_phase", None)
+    snap = get_al_state()
     return {
         "emotion": emotion.get_emotion_summary() if emotion is not None else None,
-        "life_phase": getattr(phase, "value", phase),
+        "life_phase": snap.life_phase,
+        "life_cycle_state": snap.life_cycle_state,
     }
 
 
@@ -314,13 +324,17 @@ async def system_pet_state() -> Dict[str, Any]:
         result["error"] = safe_error(exc)
 
     try:
-        from api.lifespan import get_emotion_system, get_lifecycle
+        from api.lifespan import get_emotion_system
+        from core.life.al_state import get_al_state
 
         emotion = get_emotion_system()
         if emotion is not None:
             result["emotion"] = emotion.get_emotion_summary().get("dominant_emotion")
-        lifecycle = get_lifecycle()
-        result["life_phase"] = _phase_label(getattr(lifecycle, "current_phase", None))
+        # Phase 3 alignment: the phase comes through the AL snapshot like
+        # everywhere else (contract §9), not by reaching for the lifecycle
+        # instance directly — same source, same serialization as
+        # ``al_state.life_phase``.
+        result["life_phase"] = get_al_state().life_phase
     except Exception as exc:
         result["error"] = safe_error(exc)
 
@@ -390,19 +404,6 @@ def _apply_pet_effects(matrix: Any, effects: Dict[str, float]) -> None:
 
 def _clamp01(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
-
-
-def _phase_label(phase: Any) -> Optional[str]:
-    """A readable label for a life phase (its value is a (cn, en) tuple)."""
-    if phase is None:
-        return None
-    name = getattr(phase, "name", None)
-    if name:
-        return str(name)
-    value = getattr(phase, "value", phase)
-    if isinstance(value, (tuple, list)) and value:
-        return str(value[0])
-    return str(value)
 
 
 @router.get("/discovery")
