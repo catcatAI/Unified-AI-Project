@@ -9,6 +9,7 @@ import pytest
 pytest.importorskip("torch")
 
 from ai.ed3n.token_snn import (  # noqa: E402
+    AL_OUT_MARK,
     BOS,
     EOS,
     UNK,
@@ -231,3 +232,67 @@ def test_tf_accuracy_is_a_sane_diagnostic(vocab):
     assert stat["tokens"] > 0
     # untrained model: roughly chance; must not be reported as skill
     assert stat["tokens"] == sum(len(a) + 1 for _, a in [("abc", "def"), ("bcd", "efg")])
+
+
+def _al_vocab():
+    return CharVocab.build([f"abc def {AL_OUT_MARK} v=0.1"], min_count=1)
+
+
+def test_response_end_splits_response_from_state_block():
+    """_encode must locate the <al_out> marker, and be a no-op without it."""
+    answer = f"def {AL_OUT_MARK} v=0.1"
+    model = TokenSNN(_al_vocab(), TokenConfig(d_emb=8, d_hidden=8, max_len=64))
+    ids, start, cut = model._encode("abc", answer)
+    assert start < cut < len(ids)
+    assert model.vocab.decode(ids[cut:]).startswith(AL_OUT_MARK)
+
+    ids2, start2, cut2 = model._encode("abc", "def")
+    # no marker: the whole answer is response, so the split falls on the eos
+    assert cut2 == len(ids2) - 1
+    assert start2 < cut2
+
+
+def test_tail_weight_only_downweights_the_state_block(vocab):
+    answer = f"def {AL_OUT_MARK} v=0.1"
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=64))
+    _, start, cut = model._encode("abc", answer)
+    _, _, _, weights = model.make_batch_weighted([("abc", answer)], tail_weight=0.25)
+    assert float(weights[0, start]) == 1.0
+    assert float(weights[0, cut - 1]) == 1.0
+    assert float(weights[0, cut]) == 0.25
+
+    # marker-free answer: nothing gets down-weighted (the eos ends the response)
+    _, _, _, plain = model.make_batch_weighted([("abc", "def")], tail_weight=0.25)
+    assert float(plain.min()) == 1.0
+
+
+def test_weighted_loss_keeps_the_unweighted_scale(vocab):
+    """A tail weight must not silently rescale the learning rate."""
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=64))
+    answer = f"def {AL_OUT_MARK} v=0.1"
+    ids, mask, _ = model.make_batch([("abc", answer)])
+    _, _, _, weights = model.make_batch_weighted([("abc", answer)], tail_weight=1.0)
+    plain = model.loss(ids, mask)
+    weighted = model.loss(ids, mask, weights)
+    assert float(plain) == pytest.approx(float(weighted), rel=1e-5)
+
+
+def test_split_tf_separates_response_from_state_block():
+    model = TokenSNN(_al_vocab(), TokenConfig(d_emb=8, d_hidden=8, max_len=64))
+    split = model.split_tf_accuracy([("abc", f"def {AL_OUT_MARK} v=0.1")])
+    assert split["response_tokens"] > 0 and split["tail_tokens"] > 0
+    assert 0.0 <= split["response_tf"] <= 1.0
+    assert 0.0 <= split["tail_tf"] <= 1.0
+
+    plain = model.split_tf_accuracy([("abc", "def")])
+    assert plain["tail_tokens"] == 0
+    # without a state block the split must equal the aggregate diagnostic
+    assert plain["response_tf"] == model.tf_accuracy([("abc", "def")])["tf_acc"]
+
+
+def test_train_on_accepts_a_tail_weight(vocab):
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=64))
+    answer = f"def {AL_OUT_MARK} v=0.1"
+    history = model.train_on([("abc", answer)], epochs=2, batch_size=1, tail_weight=0.25)
+    assert len(history) == 2
+    assert all(row["loss"] == row["loss"] for row in history)  # finite

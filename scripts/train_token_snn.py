@@ -113,6 +113,17 @@ def main() -> int:
     ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--max-len", type=int, default=192)
+    ap.add_argument(
+        "--tail-weight",
+        type=float,
+        default=1.0,
+        help="loss weight for the <al_out> state block (1.0 = off). Round-1 "
+        "measurement: that block is 34% of answer tokens, trains to 77-80% "
+        "teacher-forced while the response sits at 14-26%, so it carries the "
+        "loss without teaching generation. Lower it to spend the gradient on "
+        "the response. The loss is a weighted *mean*, so the LR scale does "
+        "not change.",
+    )
     ap.add_argument("--d-hidden", type=int, default=192)
     ap.add_argument("--d-emb", type=int, default=96)
     ap.add_argument("--beta", type=float, default=0.9, help="membrane leak (used as-is)")
@@ -256,6 +267,7 @@ def main() -> int:
         lr=args.lr,
         log=log_row,
         on_epoch=on_epoch,
+        tail_weight=args.tail_weight,
     )
     train_elapsed = time.time() - started
 
@@ -277,6 +289,11 @@ def main() -> int:
     if held_out:
         eval_match = exact_match(model, held_out, args.eval_sample, seed=3)
         eval_tf = model.tf_accuracy(held_out)
+    # Response vs state-block accuracy: the aggregate number alone is not
+    # comparable across runs with a different answer mix (round 1's 61.76%
+    # was inflated by the formulaic <al_out> block).
+    split_set = held_out or val_fit
+    eval_tf_split = model.split_tf_accuracy(split_set) if split_set else {}
     elapsed = time.time() - started  # total incl. evaluation
     report = {
         "train": str(train_path),
@@ -287,6 +304,7 @@ def main() -> int:
         "epochs": args.epochs,
         "batch": args.batch,
         "lr": args.lr,
+        "tail_weight": args.tail_weight,
         "device": device,
         "seconds": round(elapsed, 1),
         "train_seconds": round(train_elapsed, 1),
@@ -295,6 +313,7 @@ def main() -> int:
         "val_exact_200": val_match,
         "eval": {"path": args.eval_data, "sample": args.eval_sample, **eval_match},
         "eval_tf_accuracy": eval_tf,
+        "eval_tf_split": eval_tf_split,
         "learning_curve": curve,
         "note": (
             "train_exact_200 is memorisation (same rows); only val/frozen splits "
@@ -310,6 +329,8 @@ def main() -> int:
         f"saved {args.out}\n  train_exact={train_match['exact']:.3f} "
         f"val_exact={val_match['exact']:.3f} eval_exact={eval_match['exact']:.3f} "
         f"eval_tf_acc={eval_tf['tf_acc']:.3f} "
+        f"resp_tf={eval_tf_split.get('response_tf', 0):.3f} "
+        f"tail_tf={eval_tf_split.get('tail_tf', 0):.3f} "
         f"in {elapsed:.0f}s"
     )
     return 0

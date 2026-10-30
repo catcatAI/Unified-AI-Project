@@ -42,6 +42,11 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 PAD, BOS, EOS, UNK = "<pad>", "<bos>", "<eos>", "<unk>"
 SPECIALS = (PAD, BOS, EOS, UNK)
+# Marker between the free-text response and the AL state block in the AI+AL
+# data format (``prepare_ai_al_training_data.py``). Answers without it — the
+# whole core corpus — are treated as one response, so nothing here changes
+# for them.
+AL_OUT_MARK = "<al_out>"
 
 
 @dataclass
@@ -394,15 +399,32 @@ class TokenSNN:
     # -- batching -----------------------------------------------------------
     def encode_pair(self, prompt: str, answer: str) -> Tuple[List[int], int]:
         """Return ids and the index where the answer starts."""
+        ids, start, _ = self._encode(prompt, answer)
+        return ids, start
+
+    def _encode(self, prompt: str, answer: str) -> Tuple[List[int], int, int]:
+        """(ids, answer_start, response_end).
+
+        ``response_end`` is where ``<al_out>`` begins, so a weighted loss and
+        the split accuracy can tell the free-text response apart from the
+        formulaic state block. Round-1 measurement (2026-10-30): the state
+        block is 34% of answer tokens and reached 77-80% teacher-forced while
+        the response sat at 14-26% — the easy part was carrying the loss. An
+        answer without the marker ends where the answer ends, i.e. it is all
+        response.
+        """
         prompt = prompt.strip()
         answer = answer.strip()
         budget = self.config.max_len
+        body = answer.split(AL_OUT_MARK, 1)[0] if AL_OUT_MARK in answer else answer
+        body_ids = self.vocab.encode(body)
         ids = [self.vocab.bos_id] + self.vocab.encode(prompt)
         prompt_len = len(ids)
         ids.append(self.vocab.stoi["\n"])
         prompt_len += 1  # first answer character
         ids.extend(self.vocab.encode(answer))
         ids.append(self.vocab.eos_id)
+        response_end = prompt_len + len(body_ids)
         if len(ids) > budget:
             # Keep the beginning of the prompt and as much of the answer as fits.
             keep_tail = budget - prompt_len
@@ -416,7 +438,9 @@ class TokenSNN:
                 prompt_len = prompt_keep + 1
             else:
                 ids = ids[:budget]
-        return ids, prompt_len
+            # truncation may have eaten the state block: never point past the row
+            response_end = min(prompt_len + len(body_ids), len(ids))
+        return ids, prompt_len, response_end
 
     def make_batch(self, pairs: Sequence[Tuple[str, str]]) -> Tuple[Any, Any, Any]:
         torch = self.torch
@@ -436,7 +460,41 @@ class TokenSNN:
             mask[i, start : len(row)] = True
         return ids_t, mask, starts
 
-    def loss(self, ids: Any, mask: Any) -> Any:
+    def make_batch_weighted(
+        self, pairs: Sequence[Tuple[str, str]], tail_weight: float = 1.0
+    ) -> Tuple[Any, Any, List[int], Any]:
+        """The make_batch contents plus a per-position loss weight.
+
+        Positions from ``<al_out>`` onward (the AL state block) get
+        ``tail_weight``; everything before keeps 1.0. Weights outside the
+        answer region are irrelevant — ``loss`` multiplies them by the mask.
+        """
+        torch = self.torch
+        rows: List[List[int]] = []
+        starts: List[int] = []
+        cuts: List[int] = []
+        for prompt, answer in pairs:
+            ids, start, cut = self._encode(prompt, answer)
+            rows.append(ids)
+            starts.append(start)
+            cuts.append(cut)
+        width = max(len(r) for r in rows)
+        ids_t = torch.full(
+            (len(rows), width), self.vocab.pad_id, dtype=torch.long, device=self.device
+        )
+        mask = torch.zeros((len(rows), width), dtype=torch.bool, device=self.device)
+        weights = torch.ones((len(rows), width), dtype=torch.float, device=self.device)
+        for i, (row, start, cut) in enumerate(zip(rows, starts, cuts)):
+            ids_t[i, : len(row)] = torch.tensor(row, dtype=torch.long, device=self.device)
+            mask[i, start : len(row)] = True
+            # `cut` lands on the eos of a marker-free answer; that eos ends the
+            # response, so it must not be down-weighted. The state block only
+            # exists when the marker sits *before* the eos.
+            if cut < len(row) - 1:
+                weights[i, cut:] = tail_weight
+        return ids_t, mask, starts, weights
+
+    def loss(self, ids: Any, mask: Any, weights: Any = None) -> Any:
         torch = self.torch
         logits = self.net(ids)
         # Predict token t+1 from prefix <= t, only where the target is answer/eos.
@@ -448,7 +506,15 @@ class TokenSNN:
         flat_mask = target_mask.reshape(-1)
         if int(flat_mask.sum()) == 0:
             return logits.sum() * 0.0
-        return torch.nn.functional.cross_entropy(flat_logits[flat_mask], flat_targets[flat_mask])
+        per_tok = torch.nn.functional.cross_entropy(
+            flat_logits[flat_mask], flat_targets[flat_mask], reduction="none"
+        )
+        if weights is None:
+            return per_tok.mean()
+        w = weights[:, 1:].reshape(-1)[flat_mask]
+        # Weighted *mean*, not sum: the scale stays comparable to an unweighted
+        # run, so a tail weight never silently rescales the learning rate.
+        return (per_tok * w).sum() / w.sum().clamp(min=1e-6)
 
     # -- diagnostics ---------------------------------------------------------
     def tf_accuracy(self, pairs: Sequence[Tuple[str, str]]) -> Dict[str, float]:
@@ -475,6 +541,67 @@ class TokenSNN:
             self.net.train()
         return {"tokens": total, "tf_acc": round(hits / max(1, total), 4)}
 
+    def split_tf_accuracy(self, pairs: Sequence[Tuple[str, str]]) -> Dict[str, Any]:
+        """Teacher-forced accuracy split into response vs ``<al_out>`` state block.
+
+        Why this exists: the aggregate ``tf_accuracy`` is *not* comparable
+        across runs whose answer mix differs — round 1's headline 61.76% was
+        inflated by the formulaic state block (77-80% there vs 14-26% on the
+        response itself). Answer without the marker: the tail bucket is empty
+        and the response number equals the aggregate one.
+        """
+        torch = self.torch
+        was_training = self.net.training
+        self.net.eval()
+        resp_hit = resp_tot = tail_hit = tail_tot = 0
+        with torch.no_grad():
+            for start in range(0, len(pairs), 32):
+                chunk = list(pairs[start : start + 32])
+                rows, starts, cuts = [], [], []
+                for prompt, answer in chunk:
+                    ids, a_start, cut = self._encode(prompt, answer)
+                    rows.append(ids)
+                    starts.append(a_start)
+                    cuts.append(cut)
+                width = max(len(r) for r in rows)
+                ids_t = torch.full(
+                    (len(rows), width),
+                    self.vocab.pad_id,
+                    dtype=torch.long,
+                    device=self.device,
+                )
+                mask = torch.zeros((len(rows), width), dtype=torch.bool, device=self.device)
+                for i, (row, a_start) in enumerate(zip(rows, starts)):
+                    ids_t[i, : len(row)] = torch.tensor(row, dtype=torch.long, device=self.device)
+                    mask[i, a_start : len(row)] = True
+                pred = self.net(ids_t)[:, :-1, :].argmax(dim=-1)
+                target = ids_t[:, 1:]
+                keep = mask[:, 1:]
+                for i, cut in enumerate(cuts):
+                    # token index = pos + 1; the row's last token is its eos.
+                    # A marker-free answer has cut == eos, so its range is empty.
+                    tail_from, tail_to = (
+                        (cut, len(rows[i]) - 1) if cut < len(rows[i]) - 1 else (1, 0)
+                    )
+                    for pos in range(width - 1):
+                        if not bool(keep[i, pos]):
+                            continue
+                        ok = bool(pred[i, pos] == target[i, pos])
+                        if tail_from <= pos + 1 <= tail_to:
+                            tail_hit += int(ok)
+                            tail_tot += 1
+                        else:
+                            resp_hit += int(ok)
+                            resp_tot += 1
+        if was_training:
+            self.net.train()
+        return {
+            "response_tf": round(resp_hit / max(1, resp_tot), 4),
+            "tail_tf": round(tail_hit / max(1, tail_tot), 4),
+            "response_tokens": resp_tot,
+            "tail_tokens": tail_tot,
+        }
+
     # -- training -----------------------------------------------------------
     def train_on(
         self,
@@ -485,6 +612,7 @@ class TokenSNN:
         seed: int = 0,
         log: Any = None,
         on_epoch: Any = None,
+        tail_weight: float = 1.0,
     ) -> List[Dict[str, float]]:
         torch = self.torch
         torch.manual_seed(seed)
@@ -501,9 +629,13 @@ class TokenSNN:
             steps = 0
             for start in range(0, len(shuffled), batch_size):
                 chunk = [pairs[i] for i in shuffled[start : start + batch_size]]
-                ids, mask, _ = self.make_batch(chunk)
                 opt.zero_grad()
-                loss = self.loss(ids, mask)
+                if tail_weight == 1.0:
+                    ids, mask, _ = self.make_batch(chunk)
+                    loss = self.loss(ids, mask)
+                else:
+                    ids, mask, _, weights = self.make_batch_weighted(chunk, tail_weight)
+                    loss = self.loss(ids, mask, weights)
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.net.parameters(), 1.0)
                 opt.step()

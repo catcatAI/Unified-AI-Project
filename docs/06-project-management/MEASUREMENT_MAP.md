@@ -90,13 +90,22 @@ TOK-SNN **0% →
 TOK-SNN **1/40 → 0/40**，knowledge／code／routing 仍 0。該模型練的是
 `(狀態, 文字) → (回應, 狀態′)`（3,180 對、XPU 30
 epochs），不是核心問答，**不能拿來說核心分上升**；它的成績單在
-[`CORE_GAP_ANALYSIS.md`](CORE_GAP_ANALYSIS.md) 第六節（holdout teacher-forced
+[`CORE_GAP_ANALYSIS.md`](CORE_GAP_ANALYSIS.md) 第九節（holdout teacher-forced
 61.76%、free-running exact
 0/100）。同一次實測的對照欄：knowledge 表現層 53%／LLM
 73%（15 題小樣本，較 10-23 的 47%／67% 差一題）、code LLM
 90%（與「chat 模板修復後 0/10 →
 9/10」一致）。**GPU 線已解除阻塞**（同日，根因＝wrapper 的 CSR 覆寫，見
 `CORE_GAP_ANALYSIS.md` §4）。
+
+**2026-10-30 換 checkpoint＝AI+AL 第二輪**（同題同評分，只換 tok 欄）：TOK-SNN
+**0/75**（math 0/40、knowledge 0/15、code 0/10、routing
+0/10），與第一輪同為 0。第二輪修掉了第一輪的四個變因（`max_len`
+192→384 讓進得去的列 48% → 94%、分離指標、`--tail-weight 0.25`、100
+epochs），同列重測答案段 teacher-forced **19.51% →
+22.71%**、狀態塊持平 78%——**改進是真的但量級遠不夠**（exact 要每一發都對）。生成樣本顯示**格式學會了、綁定沒學會**：`<al_out>`
+狀態塊欄位順序全對，答案句是字詞湯。詳見
+[`CORE_GAP_ANALYSIS.md`](CORE_GAP_ANALYSIS.md) §十；**官方核心分維持 0.00/10**。
 
 根因、實測與規模需求見
 [`CORE_GAP_ANALYSIS.md`](CORE_GAP_ANALYSIS.md)；不要用模板／路由補這個缺口。
