@@ -692,10 +692,12 @@ passed；flake8 0、black 過。
 
 ### Phase 3 — 割邊：把 AL 從 AI 層拔出來（3–5 天，**主戰場**）
 
-> **狀態（2026-10-30）**：item 3 ✅（`5fea2c42b`——state
+> **狀態（2026-10-31）**：item 3 ✅（`5fea2c42b`——state
 > voter 改讀單一快照）；item 1 ✅（`6efd8adf4`——prompt 的 AL 數值只走
 > `get_al_state()` 快照，見下方完成記錄）；item 4 ✅（`99374725c`—— `al`
-> 門禁域上線、出站違規依 I8 反轉清零，見下方完成記錄）；item 2 未動。
+> 門禁域上線、出站違規依 I8 反轉清零，見下方完成記錄）；item 2
+> ✅（`core/life/al_temporal.py` ＋ `chat_routes._ctx_al_state()`
+> 收斂，見下方完成記錄）。
 
 - **做**：
   1. `prompt_builder` 不再自建
@@ -788,6 +790,29 @@ passed；flake8 0、black 過。
 - **契約 §9 四條禁止對賬**：「出站」已修＋門禁；「AI 賦值 AL 欄位」「AI 判 drift」掃描無生產路徑（尚未機器化，登記於 ISSUES
   §六）； `LifeIntensityFormula` 的 AI 層實例 item
   1 已清（現僅 core 側 singleton 與 `__main__` 演示，合規）。
+
+**完成記錄（2026-10-31，item 2 — 本批）**：
+
+- **時間序列緩衝移入 AL 側**：新增 `core/life/al_temporal.py`，把原本住在
+  `api/routes/chat_routes.py` 的 `TemporalState`
+  全域變數收成 AL 側 singleton（`max_size=200`、double-checked
+  lock）。對外只留兩個公共名： `get_temporal()`（唯讀查詢）與
+  `record_interaction()`（受控寫，只收
+  `msg_length`／`resp_length`／`engagement_ratio`
+  統計摘要——契約 §8：原始對話內容不進 AL）。core/life 出站仍只到
+  `core.state`，I8 不變。
+- **AI 側讀取收斂成一個**：`_ctx_life_essence`（context 階段）與
+  `_apply_lifecycle_behavior`／`_apply_intent_routing`／`_apply_modality_state`／
+  `_apply_awareness_injection`（behavioral 階段）五個散落 helper 合併為
+  `_ctx_al_state(context, stage=...)`；每段獨立 try/except，一個 AL 來源壞掉不擋其餘與回覆。`_causal_record_temporal()`
+  改走 `record_interaction()`，寫入形狀只剩一處。
+- **門禁擴充**：`_al_scan_ai_side` 從只掃 `al_state` 擴成同時掃
+  `al_temporal`；白名單各兩／五個公共名、模組形式一律禁（`al_state` 僅
+  `api/lifespan.py` 例外）、`<mod>._私有` 文字接觸即違規。
+- **驗證**：`al.snapshot_api_only` 0
+  violations；門禁測試 +4（公共名放行、私有名、模組形式、私有屬性）＋`record_interaction`
+  形狀 +1；受影響 91 條測試全過；全量 **9,059 passed / 107 skipped / 0
+  failed**（8m35s）；black/flake8 乾淨；`check_fact_gates.py` ALL PASS。
 
 ### Phase 4 — 拆庫評估（0.5 天，Phase 3 之後才做）
 

@@ -73,7 +73,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
@@ -598,19 +598,25 @@ def _al_scan_outbound(path: Path) -> List[str]:
 
 
 def _al_scan_ai_side(path: Path, rel: Optional[str] = None) -> List[str]:
-    """掃一個 AI 側模組接觸 ``core.life.al_state`` 的方式（計畫 §Phase 3
-    #4「AI 側禁直摸 AL 內部狀態、只能 get_al_state()」）。
+    """掃一個 AI 側模組接觸 AL 公共面的方式（計畫 §Phase 3 #4「AI 側禁
+    直摸 AL 內部狀態、只能公共 API」）。
 
-    三條規則：
-    1. ``from core.life.al_state import X`` → X 必須在公共白名單；
-    2. 模組形式（``from core.life import al_state``／``import
+    覆蓋兩個 AL 模組，各有公共白名單：
+
+    1. ``core.life.al_state``：``from ... import X`` → X 必須在快照五公共名；
+       模組形式（``from core.life import al_state``／``import
        core.life.al_state``）只准 ``api/lifespan.py``（backbone 註冊的
        模組交接）；
-    3. 任何 ``al_state._私有`` 文字接觸＝違規。
+    2. ``core.life.al_temporal``（Phase 3 item 2 的時間序列緩衝）：只准
+       兩公共名 ``get_temporal``/``record_interaction``，模組形式一律禁；
+    3. 任一模組的 ``<name>._私有`` 文字接觸＝違規。
     """
-    allowed = frozenset(
-        {"get_al_state", "submit_event", "recent_events", "EventType", "register_al_source"}
-    )
+    allowed: Dict[str, FrozenSet[str]] = {
+        "core.life.al_state": frozenset(
+            {"get_al_state", "submit_event", "recent_events", "EventType", "register_al_source"}
+        ),
+        "core.life.al_temporal": frozenset({"get_temporal", "record_interaction"}),
+    }
     if rel is None:
         rel = str(path.relative_to(SRC))
     lifespan_path = SRC / "api" / "lifespan.py"
@@ -619,29 +625,36 @@ def _al_scan_ai_side(path: Path, rel: Optional[str] = None) -> List[str]:
         text = path.read_text(encoding="utf-8")
     except OSError as exc:
         return [f"{rel}: cannot scan: {exc}"]
-    if "al_state" not in text:
+    if "al_state" not in text and "al_temporal" not in text:
         return []
     try:
         tree = ast.parse(text)
     except SyntaxError as exc:
         return [f"{rel}: parse error: {exc}"]
     for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom) and node.module == "core.life.al_state":
+        if isinstance(node, ast.ImportFrom) and node.module in allowed:
+            short = node.module.rsplit(".", 1)[-1]
             for alias in node.names:
-                if alias.name != "*" and alias.name not in allowed:
-                    violations.append(f"{rel}:{node.lineno} imports al_state.{alias.name}")
+                if alias.name != "*" and alias.name not in allowed[node.module]:
+                    violations.append(f"{rel}:{node.lineno} imports {short}.{alias.name}")
         elif isinstance(node, ast.ImportFrom) and node.module == "core.life":
-            if path != lifespan_path:
-                for alias in node.names:
-                    if alias.name == "al_state":
-                        violations.append(f"{rel}:{node.lineno} module-imports core.life.al_state")
-        elif isinstance(node, ast.Import) and path != lifespan_path:
             for alias in node.names:
-                if alias.name == "core.life.al_state":
-                    violations.append(f"{rel}:{node.lineno} imports {alias.name}")
-    for match in re.finditer(r"\bal_state\._", text):
-        lineno = text.count("\n", 0, match.start()) + 1
-        violations.append(f"{rel}:{lineno} touches al_state._private")
+                if alias.name not in ("al_state", "al_temporal"):
+                    continue
+                if alias.name == "al_state" and path == lifespan_path:
+                    continue
+                violations.append(f"{rel}:{node.lineno} module-imports core.life.{alias.name}")
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name not in ("core.life.al_state", "core.life.al_temporal"):
+                    continue
+                if alias.name == "core.life.al_state" and path == lifespan_path:
+                    continue
+                violations.append(f"{rel}:{node.lineno} imports {alias.name}")
+    for short in ("al_state", "al_temporal"):
+        for match in re.finditer(rf"\b{short}\._", text):
+            lineno = text.count("\n", 0, match.start()) + 1
+            violations.append(f"{rel}:{lineno} touches {short}._private")
     return violations
 
 
@@ -653,8 +666,9 @@ def _al_facts():
 
     - ``al.boundary_outbound``：``core/life/*.py`` 執行期出站 import
       ＝0（``ai.``/``services.``/``api.``/``integrations.``；型別塊豁免）；
-    - ``al.snapshot_api_only``：AI 側接觸 ``core.life.al_state`` 只准
-      公共 API、模組形式只准 ``api/lifespan.py``、私有接觸＝0。
+    - ``al.snapshot_api_only``：AI 側接觸 AL 模組（``al_state`` 快照、
+      ``al_temporal`` 時間序列緩衝）只准公共 API、模組形式只准
+      ``api/lifespan.py``（僅 ``al_state``）、私有接觸＝0。
     """
     from core.facts import Fact
 
@@ -692,7 +706,7 @@ def _al_facts():
             0.0,
             "le",
             "violations",
-            "AL snapshot public API",
+            "AL public API (snapshot + temporal)",
             _evidence(ai_side),
             measured_at="2026-10-30",
         ),

@@ -825,25 +825,6 @@ def _ctx_memories(context: Dict[str, Any]) -> None:
         logger.warning(f"Memory context unavailable: {e}", exc_info=True)
 
 
-def _ctx_life_essence(context: Dict[str, Any]) -> None:
-    """LifeEssence tendency injection: accumulated personality from historical traces."""
-    try:
-        from core.life.life_essence import get_life_essence
-
-        le = get_life_essence()
-        if le:
-            summary = le.get_essence_summary()
-            context["life_essence"] = {
-                "tendencies": le.get_all_blended_tendencies(),
-                "generation": le.generation,
-                "total_traces": summary.get("total_traces", 0),
-                "ancestral_cores": summary.get("ancestral_cores", 0),
-            }
-            logger.debug("LifeEssence tendencies injected into chat context")
-    except Exception as e:
-        logger.warning(f"LifeEssence injection unavailable: {e}", exc_info=True)
-
-
 async def _build_chat_context(
     context: Dict[str, Any],
     user_message: str,
@@ -865,7 +846,7 @@ async def _build_chat_context(
     if history:
         context["history"] = history
 
-    _ctx_life_essence(context)
+    _ctx_al_state(context, stage="context")
 
 
 def _gate_detail_text(action_result: Any) -> str:
@@ -1548,18 +1529,6 @@ _CAUSAL_BUFFER_MAX_SESSIONS = 200  # Evict oldest when exceeded
 _CAUSAL_BUFFER_MAX_SAMPLES = 1000
 _CAUSAL_BUFFERS_LOCK = threading.Lock()
 
-# TemporalState bridge for causal ingest_temporal_state() (C³ 4.0)
-_CAUSAL_TEMPORAL_STATE = None
-
-
-def _get_causal_temporal_state():
-    global _CAUSAL_TEMPORAL_STATE
-    if _CAUSAL_TEMPORAL_STATE is None:
-        from core.state.temporal import TemporalState
-
-        _CAUSAL_TEMPORAL_STATE = TemporalState(max_size=200)
-    return _CAUSAL_TEMPORAL_STATE
-
 
 def _get_causal_buffer(session_id: str) -> Dict[str, List[float]]:
     """Get or create a temporal buffer for the given session (true LRU)."""
@@ -1663,19 +1632,16 @@ def _causal_build_data(
 def _causal_record_temporal(
     causal: Any, msg_len: float, resp_len: float, resp_msg_ratio: float
 ) -> None:
-    """C³ 4.0: Record snapshot into TemporalState bridge and periodically
-    call ingest_temporal_state() for Granger causality over chat data."""
-    ts = _get_causal_temporal_state()
-    ts.record(
-        {
-            "interaction": {
-                "msg_length": msg_len,
-                "resp_length": resp_len,
-                # 歷史鍵名；值為 resp_msg_ratio（見上方定義）
-                "engagement_ratio": resp_msg_ratio,
-            },
-        }
-    )
+    """C³ 4.0: Record snapshot into the AL-side temporal bridge and
+    periodically call ingest_temporal_state() for Granger causality.
+
+    The bridge lives in ``core.life.al_temporal`` (Phase 3 item 2): writes go
+    through its controlled entry ``record_interaction()``, reads (deciding
+    when to feed the causal engine) stay here in the assembly layer.
+    """
+    from core.life.al_temporal import record_interaction
+
+    ts = record_interaction(msg_len, resp_len, resp_msg_ratio)
     if ts.size() >= 5 and ts.size() % 5 == 0:
         causal.ingest_temporal_state(ts, window=20)
 
@@ -2371,48 +2337,89 @@ async def _gate_math(
     return None
 
 
-def _apply_lifecycle_behavior(context: Dict[str, Any]) -> None:
-    """Step 5c: inject autonomous lifecycle behavioral adjustment."""
-    lc = _get_lifecycle()
-    if lc:
-        lc_adj = lc.get_behavioral_adjustment()
-        context["lifecycle_behavior"] = lc_adj
-        logger.debug(
-            f"Lifecycle behavioral adjustment: {lc_adj.get('routing_mode')} / {lc_adj.get('response_style')} "
-            f"(phase={lc_adj.get('phase')}, decision={lc_adj.get('decision_type')})"
-        )
+def _ctx_al_state(context: Dict[str, Any], *, stage: str = "context") -> None:
+    """Sole AI-side reader of AL state (Phase 3 item 2: converged).
 
+    The chat pipeline reads AL assets at two moments, so this one reader
+    takes a ``stage`` instead of living as five scattered
+    ``_ctx_*``/``_apply_*`` helpers:
 
-def _apply_intent_routing(context: Dict[str, Any]) -> None:
-    """Step 5d: inject intent routing adjustment (C³ 4.0→5.0)."""
-    im = _get_intent_manager()
-    if im:
-        intent_adj = im.get_intent_routing_adjustment()
-        if intent_adj.get("routing_mode"):
-            context["intent_routing"] = intent_adj
+    - ``stage="context"``: LifeEssence tendencies, read while the LLM
+      context is built (early, stable for the whole turn).
+    - ``stage="behavioral"``: lifecycle/intent/modality/awareness (was
+      Steps 5c-5f), read after emotion so the values reflect this turn.
+
+    Not to be confused with the schema snapshot: ``get_al_state()`` (the
+    contract §9 exchange quantity) is injected once per turn by the
+    router's ``_inject_al_state`` and never read here. This reader
+    reaches the AL-side *sources* (ALC/DLI/LifeEssence) for their advice
+    dicts, and those reads are why AL readers converge into this one
+    function — audit this, not the whole route module.
+
+    Every segment stays best-effort-isolated: one broken AL source must
+    never block the others or the reply.
+    """
+    if stage == "context":
+        try:
+            from core.life.life_essence import get_life_essence
+
+            le = get_life_essence()
+            if le:
+                summary = le.get_essence_summary()
+                context["life_essence"] = {
+                    "tendencies": le.get_all_blended_tendencies(),
+                    "generation": le.generation,
+                    "total_traces": summary.get("total_traces", 0),
+                    "ancestral_cores": summary.get("ancestral_cores", 0),
+                }
+                logger.debug("LifeEssence tendencies injected into chat context")
+        except Exception as e:
+            logger.warning(f"LifeEssence injection unavailable: {e}", exc_info=True)
+        return
+    if stage != "behavioral":
+        raise ValueError(f"unknown _ctx_al_state stage: {stage!r}")
+
+    try:
+        lc = _get_lifecycle()
+        if lc:
+            lc_adj = lc.get_behavioral_adjustment()
+            context["lifecycle_behavior"] = lc_adj
             logger.debug(
-                f"Intent routing adjustment: mode={intent_adj['routing_mode']}, "
-                f"style={intent_adj['response_style']}, "
-                f"strength={intent_adj['intent_strength']}"
+                f"Lifecycle behavioral adj: {lc_adj.get('routing_mode')} / "
+                f"{lc_adj.get('response_style')} "
+                f"(phase={lc_adj.get('phase')}, decision={lc_adj.get('decision_type')})"
             )
-
-
-def _apply_modality_state(context: Dict[str, Any]) -> None:
-    """Step 5e: inject modality gateway state (C³ 3.0 — was never consumed)."""
-    mg = _get_modality_gateway()
-    if mg:
-        context["modality_state"] = mg.get_modality_summary()
-        logger.debug(
-            f"Modality state: {len(context['modality_state'].get('active', []))} active / "
-            f"{len(context['modality_state'].get('inactive', []))} inactive"
-        )
-
-
-def _apply_awareness_injection(context: Dict[str, Any]) -> None:
-    """Step 5f: inject DLI awareness injection into context (C³ 6.0)."""
-    dli = get_digital_life()
-    if dli:
-        context["awareness_injection"] = dli.get_awareness_injection()
+    except Exception as e:
+        logger.warning(f"lifecycle_behavior unavailable: {e}", exc_info=True)
+    try:
+        im = _get_intent_manager()
+        if im:
+            intent_adj = im.get_intent_routing_adjustment()
+            if intent_adj.get("routing_mode"):
+                context["intent_routing"] = intent_adj
+                logger.debug(
+                    f"Intent routing adjustment: mode={intent_adj['routing_mode']}, "
+                    f"style={intent_adj['response_style']}, "
+                    f"strength={intent_adj['intent_strength']}"
+                )
+    except Exception as e:
+        logger.warning(f"intent_routing unavailable: {e}", exc_info=True)
+    try:
+        mg = _get_modality_gateway()
+        if mg:
+            context["modality_state"] = mg.get_modality_summary()
+            logger.debug(
+                f"Modality state: {len(context['modality_state'].get('active', []))} active / "
+                f"{len(context['modality_state'].get('inactive', []))} inactive"
+            )
+    except Exception as e:
+        logger.warning(f"modality_state unavailable: {e}", exc_info=True)
+    try:
+        dli = get_digital_life()
+        if dli:
+            context["awareness_injection"] = dli.get_awareness_injection()
+    except Exception as e:
+        logger.warning(f"awareness_injection unavailable: {e}", exc_info=True)
 
 
 async def _inject_behavioral_context(
@@ -2420,20 +2427,13 @@ async def _inject_behavioral_context(
 ) -> None:
     """Steps 5b-5f: inject behavioral/routing context (all best-effort).
 
-    5b emotional behavioral context, then 5c-5f lifecycle/intent/modality/awareness
-    injections — each isolated so one failure never blocks the others.
+    5b emotional behavioral context, then the converged AL reader
+    (``_ctx_al_state(stage="behavioral")``) for what used to be the
+    lifecycle/intent/modality/awareness helpers — each segment isolated
+    inside the reader so one failure never blocks the others.
     """
     await _inject_emotion_behavioral_context(emotion_result, context, bio)
-    for fn in (
-        _apply_lifecycle_behavior,
-        _apply_intent_routing,
-        _apply_modality_state,
-        _apply_awareness_injection,
-    ):
-        try:
-            fn(context)
-        except Exception as e:
-            logger.warning(f"{fn.__name__} unavailable: {e}", exc_info=True)
+    _ctx_al_state(context, stage="behavioral")
 
 
 def _wire_desktop_interaction(context: Dict[str, Any]) -> None:

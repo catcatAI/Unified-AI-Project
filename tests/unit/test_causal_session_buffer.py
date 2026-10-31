@@ -152,36 +152,46 @@ def test_dynamic_strength_scales_with_engagement(mock_get_causal):
     assert high_strength > low_strength
 
 
-# ── TemporalState bridge tests (C³ 4.0: ingest_temporal_state) ──────────
+# ── AL-side temporal bridge tests (Phase 3 item 2) ──────────────────────
 
 
 def _reset_all():
     """Clear module-level buffers AND reset temporal state."""
     _CAUSAL_BUFFERS.clear()
-    from api.routes.chat_routes import _get_causal_temporal_state
+    from core.life.al_temporal import get_temporal
 
-    ts = _get_causal_temporal_state()
+    ts = get_temporal()
     ts.clear()
 
 
-def test_get_causal_temporal_state_creates_ts():
+def test_get_temporal_creates_ts():
     _reset_all()
-    from api.routes.chat_routes import _get_causal_temporal_state
+    from core.life.al_temporal import get_temporal
 
-    ts = _get_causal_temporal_state()
+    ts = get_temporal()
     from core.state.temporal import TemporalState
 
     assert isinstance(ts, TemporalState)
     assert ts.max_size == 200
 
 
-def test_get_causal_temporal_state_is_singleton():
+def test_get_temporal_is_singleton():
     _reset_all()
-    from api.routes.chat_routes import _get_causal_temporal_state
+    from core.life.al_temporal import get_temporal
 
-    ts1 = _get_causal_temporal_state()
-    ts2 = _get_causal_temporal_state()
+    ts1 = get_temporal()
+    ts2 = get_temporal()
     assert ts1 is ts2
+
+
+def test_record_interaction_shape():
+    """The controlled write entry takes stats only and lands one sample."""
+    _reset_all()
+    from core.life.al_temporal import get_temporal, record_interaction
+
+    ts = record_interaction(msg_length=12.0, resp_length=34.0, engagement_ratio=2.8)
+    assert ts is get_temporal()
+    assert ts.size() == 1
 
 
 @patch("api.routes.chat_routes.get_causal_reasoning")
@@ -190,9 +200,10 @@ def test_fire_causal_learning_records_temporal_snapshot(mock_get_causal):
     mock_causal = MagicMock()
     mock_get_causal.return_value = mock_causal
 
-    from api.routes.chat_routes import _fire_causal_learning, _get_causal_temporal_state
+    from api.routes.chat_routes import _fire_causal_learning
+    from core.life.al_temporal import get_temporal
 
-    ts = _get_causal_temporal_state()
+    ts = get_temporal()
     assert ts.size() == 0
 
     _fire_causal_learning("Hello back!", "Hi", "session_ts_1")

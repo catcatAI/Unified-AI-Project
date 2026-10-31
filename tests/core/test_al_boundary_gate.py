@@ -1,8 +1,9 @@
 """AL 割邊門禁（Phase 3 item 4；契約 I8、計畫 §Phase 3 #4）。
 
 兩條邊：core/life 執行期不得出站 import ``ai./services./api./integrations.``
-（``if TYPE_CHECKING:`` 型別塊豁免）；AI 側接觸 ``core.life.al_state`` 只准
-公共 API、模組形式只准 ``api/lifespan.py``、私有 ``al_state._`` 即違規。
+（``if TYPE_CHECKING:`` 型別塊豁免）；AI 側接觸 ``core.life.al_state`` 與
+``core.life.al_temporal``（item 2 的時間序列緩衝）只准公共 API、模組形式
+只准 ``api/lifespan.py``（僅 al_state）、私有 ``<mod>._`` 即違規。
 
 真實庫狀態與「壞樣本會被抓」兩邊都釘 —— 只測真庫（永 0）的話，把掃描器
 刪成 `return []` 也能過。
@@ -123,6 +124,45 @@ class TestAiSideSnapshotApiOnly:
         path = tmp_path / "mod.py"
         path.write_text("VALUE = 1\n", encoding="utf-8")
         assert gates._al_scan_ai_side(path, "mod.py") == []
+
+
+class TestTemporalPublicApiOnly:
+    """al_temporal（item 2 的時間序列緩衝）與快照同款：只准兩公共名。"""
+
+    def test_the_two_public_names_are_allowed(self, tmp_path):
+        path = tmp_path / "mod.py"
+        path.write_text(
+            "def f():\n"
+            "    from core.life.al_temporal import get_temporal, record_interaction\n"
+            "    return get_temporal, record_interaction\n",
+            encoding="utf-8",
+        )
+        assert gates._al_scan_ai_side(path, "mod.py") == []
+
+    def test_a_private_name_is_flagged(self, tmp_path):
+        path = tmp_path / "mod.py"
+        path.write_text(
+            "def f():\n    from core.life.al_temporal import _bridge\n    return _bridge\n",
+            encoding="utf-8",
+        )
+        hits = gates._al_scan_ai_side(path, "mod.py")
+        assert len(hits) == 1 and "_bridge" in hits[0]
+
+    def test_the_module_form_is_flagged_everywhere_including_lifespan(self, tmp_path):
+        # al_temporal 沒有「backbone 組裝交接」這回事 —— 模組形式一律禁。
+        path = tmp_path / "mod.py"
+        path.write_text(
+            "def f():\n    from core.life import al_temporal\n    return al_temporal\n",
+            encoding="utf-8",
+        )
+        hits = gates._al_scan_ai_side(path, "mod.py")
+        assert len(hits) == 1 and "module-imports" in hits[0]
+
+    def test_a_private_attribute_touch_is_flagged(self, tmp_path):
+        path = tmp_path / "mod.py"
+        path.write_text("value = al_temporal._bridge\n", encoding="utf-8")
+        hits = gates._al_scan_ai_side(path, "mod.py")
+        assert len(hits) == 1 and "_private" in hits[0]
 
 
 def test_the_facts_are_wired_into_the_hygiene_chain():
