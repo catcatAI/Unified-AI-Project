@@ -39,6 +39,7 @@ Usage:
     python scripts/generate_al_dataset.py
     python scripts/generate_al_dataset.py --rows 4000 --seed 7
     python scripts/generate_al_dataset.py --check
+    python scripts/generate_al_dataset.py --holdout-cells unknown:conservative,knowledge_query:neutral
 """
 
 from __future__ import annotations
@@ -51,7 +52,7 @@ import random
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 AI_SRC = REPO_ROOT / "apps" / "backend" / "data" / "processed" / "core_train.jsonl"
@@ -75,6 +76,34 @@ _DT_LADDER = (0.25, 0.5, 1.0, 2.0)
 # sampling weights for the *in* state only; the *out* mode is carried over.
 _MODES = ("exploratory", "neutral", "conservative")
 _MODE_WEIGHTS = (4, 4, 2)
+
+# MVE-1 compositional-holdout cells (probe_emergence_boundary.py): one
+# (intent, mode) cell per intent. Carved with --holdout-cells — each intent
+# keeps two modes in training and every mode keeps the other intents, so a
+# model that passes rows from these cells is composing the intent-target
+# branch with the mode-carry branch instead of retrieving a seen pairing.
+# farewell is absent on purpose: only 16 rows corpus-wide cannot fill a cell.
+MVE1_HOLDOUT_CELLS: Dict[str, str] = {
+    "unknown": "conservative",
+    "knowledge_query": "neutral",
+    "math_query": "exploratory",
+    "humor": "conservative",
+    "greeting": "neutral",
+}
+
+
+def _parse_holdout_cells(spec: str) -> Dict[str, str]:
+    """``"intent:mode,intent:mode"`` -> dict; an empty spec -> ``{}``."""
+    cells: Dict[str, str] = {}
+    for part in (p.strip() for p in spec.split(",")):
+        if not part:
+            continue
+        intent, sep, mode = part.partition(":")
+        if not sep or not intent or mode not in _MODES:
+            raise SystemExit(f"bad --holdout-cells entry {part!r} (want intent:mode)")
+        cells[intent] = mode
+    return cells
+
 
 # Keyword rules — a placeholder for the production query_classifier.
 _INTENT_KEYWORDS = (
@@ -183,20 +212,33 @@ def _load_ai_rows(limit: int, skip: int = 0) -> List[dict]:
     return rows
 
 
-def build(rows: int, seed: int, skip: int = 0, id_prefix: str = "r1_") -> Dict[str, object]:
+def build(
+    rows: int,
+    seed: int,
+    skip: int = 0,
+    id_prefix: str = "r1_",
+    holdout_cells: Optional[Dict[str, str]] = None,
+) -> Dict[str, object]:
     baseline, targets, pilot_rows = _pilot_tables()
     source = _load_ai_rows(rows, skip=skip)
     rng = random.Random(seed)
     examples: List[dict] = []
+    carved = 0
     for i, row in enumerate(source, start=1):
         intent = _intent_of(row["input"])
         state_in = _sample_state(rng)
         # mode is sampled for the *in* state only; the *out* mode is carried
         # over, because all 10 pilot rows keep their mode across the interaction
         mode = rng.choices(_MODES, _MODE_WEIGHTS)[0]
+        # dt is drawn *before* the carve check so the rng stream — and every
+        # row after a dropped one — is identical with or without the carve.
+        dt = _DT_LADDER[rng.randrange(len(_DT_LADDER))]
+        if holdout_cells and holdout_cells.get(intent) == mode:
+            # MVE-1 carve: drop the held-out (intent, mode) cell.
+            carved += 1
+            continue
         state_in["routing_mode"] = mode
         target = targets.get(intent, baseline)
-        dt = _DT_LADDER[rng.randrange(len(_DT_LADDER))]
         state_out = transition(state_in, target, dt)
         examples.append(
             {
@@ -244,6 +286,13 @@ def build(rows: int, seed: int, skip: int = 0, id_prefix: str = "r1_") -> Dict[s
             # byte-identical, or `--check` would fail on the round-1 file.
             **({"skip": skip} if skip else {}),
             **({"id_prefix": id_prefix} if id_prefix != "r1_" else {}),
+            # Recorded only when carving: a default build must stay
+            # byte-identical or `--check` would fail on the round files.
+            **(
+                {"holdout_cells": dict(holdout_cells), "holdout_carved": carved}
+                if holdout_cells
+                else {}
+            ),
         },
         "examples": examples,
     }
@@ -266,6 +315,13 @@ def main(argv: List[str] | None = None) -> int:
         help="sample_id prefix (default r1_; use r2_ for the next batch — it also "
         "feeds the deterministic split in prepare_ai_al_training_data.py)",
     )
+    ap.add_argument(
+        "--holdout-cells",
+        default="",
+        help="comma-separated intent:mode cells to EXCLUDE from this batch "
+        "(MVE-1 compositional holdout; cells declared in MVE1_HOLDOUT_CELLS). "
+        "Default off: a default build must stay byte-identical for --check",
+    )
     ap.add_argument("--out", default=str(OUT))
     ap.add_argument(
         "--check",
@@ -273,8 +329,15 @@ def main(argv: List[str] | None = None) -> int:
         help="rebuild in memory and fail if the file on disk differs (no writes)",
     )
     args = ap.parse_args(argv)
+    holdout = _parse_holdout_cells(args.holdout_cells)
 
-    built = build(args.rows, args.seed, skip=args.skip, id_prefix=args.id_prefix)
+    built = build(
+        args.rows,
+        args.seed,
+        skip=args.skip,
+        id_prefix=args.id_prefix,
+        holdout_cells=holdout or None,
+    )
     body = json.dumps(built, indent=2, ensure_ascii=False) + "\n"
     out = Path(args.out)
 
@@ -291,10 +354,11 @@ def main(argv: List[str] | None = None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(body, encoding="utf-8")
     p = built["provenance"]
+    carve = f" carved={p['holdout_carved']} of {len(p['holdout_cells'])} cells" if holdout else ""
     print(
         f"examples={built['total_samples']} leaked={p['benchmark_leaked']} "
         f"pilot_rows={p['pilot_rows']} seed={args.seed} "
-        f"skip={args.skip} prefix={args.id_prefix}\nwrote {out}"
+        f"skip={args.skip} prefix={args.id_prefix}{carve}\nwrote {out}"
     )
     return 0
 

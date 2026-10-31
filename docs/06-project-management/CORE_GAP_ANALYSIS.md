@@ -807,8 +807,9 @@ tok: The 1verage 5]
 
 ### 4. MVE 判讀（湧現界線的門檻：compositional holdout exact ≥5/200、亂配對照 ≤1/200）
 
-- **儀器尚未建置**：compositional
-  holdout 題組與亂配對照組還不存在——那是下一步「湧現界線（可測得的最低限度湧現）」要先建的東西，本輪無法做完整判讀。
+- **儀器已建（§十二）**：compositional
+  holdout 題組與亂配對照組原不存在——本輪（第三輪）無法做完整判讀；儀器與首讀數見 §十二，門檻已註冊進
+  `MEASUREMENT_MAP.md` §六。
 - **現有最接近的代理指標全部不達標**：val free-running exact **0/200 <
   5/200**（與 R1/R2 持平）；凍結對照表 **0/75**（同上）。
 - **結論照實寫**：容量＋目標這一格**只動了 teacher-forced 分佈**（§十.2 的三個列集合全部印證），free-running 與對照表一個數字都沒動。曝光偏差被 ramp 緩解了 2.4pp，但當前主要矛盾不是它——**答案段 teacher-forced 本身只有 26%**，每發四中一，先跨過這個才輪得到 exact。
@@ -833,7 +834,79 @@ roundtrip 通過。**第四輪批次就緒但不自動啟動**——下輪換什
    B）、資料格式（§十94% 列）、本輪資料原封不動——三種走法同一個 0。
 3. **下一個要動的不是訓練輪**：resp_tf
    26% 意味著就算零曝光偏差也抽不出 exact；在動第四輪的變因之前，要先建**能測的湧現界線儀器**（compositional
-   holdout＋亂配對照），否則下一個 0 與這三個無法區分。
+   holdout＋亂配對照），否則下一個 0 與這三個無法區分。**（已建：§十二。）**
 4. **循環閉環可用**：訓練→自動產下一批資料→校驗→manifest 一條龍通過，數據始終取自專案語料（`core_train.jsonl`
    新切片），不脫離專案所需。
 5. **及格線、評測題、規則照舊沒動**，洩漏門未觸碰，**官方核心分維持0.00/10**。
+
+## 十二、湧現界線儀器（MVE-1）：設計裁決與首讀（2026-10-31）
+
+§十一.6.3 說「在動第四輪的變因之前，先建能測的湧現界線儀器」——本節就是它。門檻與讀法註冊在
+`MEASUREMENT_MAP.md` §六；此處記**為什麼這樣設計**
+與首讀數。儀器：`scripts/probe_emergence_boundary.py`（13 契約測試
+`tests/test_probe_emergence_boundary.py`），題組
+`apps/backend/data/processed/mve1_emergence_boundary.json`（`--check`
+逐位重建），報告 `data/intelligence_reports/mve1_emergence_boundary.json`。
+
+### 1. 現有 exact 在結構上就測不到湧現
+
+- **`dt` 不在輸入行**：`ai_al_train.jsonl`、`ai_al_round4_train.jsonl` 對 `dt=`
+  均為 **0 命中**，輸入行只有
+  `v a d fatigue stress health mode intent`。而合約 §5 是
+  `S(t+1) = F(S(t), events, dt)`——dt 有 4 種可能（0.25/0.5/1.0/2.0），**同一輸入有 4 個合法輸出**，單一 gold 的 exact 永遠是 0，與模型好壞無關。
+- **exact 還要求逐字重現語料回應**（resp_tf
+  25.86%）——即使 dt 看得見，這個 0 也會把狀態側的任何進步蓋掉。
+
+所以三輪的 0/200 分不出「沒有湧現」與「儀器不可能響」。MVE-1 兩處解開：
+
+### 2. 四個設計裁決
+
+| 裁決                                        | 出處與理由                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **family-exact**：gold ＝ 4 個 dt rung 任一 | dt 不在輸入（見上）；rung 分佈另計為診斷；單一 gold 的升級路徑＝dt 進輸入，那是**資料 schema 變因**，留給下一輪決定                                                                                                                                                                                                       |
+| **回應給進 prompt**，只生成 `<al_out>` 塊   | 合約 §5 的 F 不消費回應文本；`token_snn._encode` 顯示訓練時狀態塊本來就以 gold 回應為條件（teacher-forcing），所以「prompt 到 response 為止」是訓練分布的同一個續寫任務，不是新格式；逐字回應重現是另一個 0（resp 26%），不綁進核心門檻                                                                                   |
+| **組合軸＝(intent × mode)，裁切在生成端**   | dt 看不見 → (intent×dt) holdout 在舊格式上不可良好定義（模型無法知道自己「不該」見過哪些格）；(intent×mode) 每個 primitive 都還在訓練裡（每 intent 留 2 個 mode、每 mode 留其他 intent），過關＝把 intent-target 分支與 mode-carry 分支**組合到未見配對**；裁切用 `--holdout-cells`（預設關閉，`--check` 逐位一致已驗證） |
+| **對照＝同集合內輪轉（derangement）**       | 隨機亂配可能有 fixed point（期望 ~1 個真命中）吃掉 ≤1/200 的門檻；輪轉保證零 fixed point，且同一份生成物重評分，不重跑模型                                                                                                                                                                                                |
+
+題組細節：5 個 cell 各 40 列（`unknown:conservative`、`knowledge_query:neutral`、
+`math_query:exploratory`、`humor:conservative`、`greeting:neutral`；**farewell刻意不在**——全語料 16 列填不滿 cell）；reference
+120 列取三個語料充足 intent 的非 holdout mode；每列狀態新抽、與訓練列零重疊；192
+token 視窗判準用 `tokenize == vocab.encode`
+的原子計數在建置期精確檢查（不需 checkpoint）。
+
+### 3. 首讀（round-3 checkpoint，baseline）
+
+`--set all`（200 holdout ＋ 120 reference）、XPU、563.4s、2026-10-31：
+
+| 量                                | 值                                                                           |
+| --------------------------------- | ---------------------------------------------------------------------------- |
+| **gate：holdout family-exact**    | **0/200**（≥5 才過）                                                         |
+| **gate：rotation 對照**           | **0/200**（≤1 才過）→ 對照乾淨                                               |
+| reference（seen cell）            | 0/120                                                                        |
+| format_ok（6 欄位＋mode＋intent） | 106/320（33%）                                                               |
+| `<al_out>` 出現                   | 248/320（77.5%）                                                             |
+| 欄位值命中（任一 rung，/320）     | v 10、a 4、d 14、fatigue 17、stress 17、health 8                             |
+| rung 分佈                         | 全 none（320/320）                                                           |
+| carved / text_overlap             | **False**（rounds 1-3 訓練含全部 cell）／**0**（與 4 份 train/val 檔零重疊） |
+
+照實寫三點：
+
+1. **門檻現在是可測的，首讀 0 是真 0 的一部分**：對照 0 → 不是格式假象；format
+   33% → 結構在動（與 tail
+   76% 一致）；但逐字 2dp 狀態列一個都沒寫出來（欄位命中 ~3-5% 是數字層亂槍）。樣本可見模型大多已輸出完整
+   `<al_out>`
+   骨架，值不對、且部分列會先多補一句回應再進狀態塊（暴露偏差的殘跡）。
+2. **carved=False**：rounds 1-3 訓練含全部 cell，所以 0/200 是 **seen-cell
+   baseline**，不是組合泛化成績。組合意義在某輪用
+   `generate_al_dataset.py --holdout-cells` 裁切後才啟用。
+3. **與 §十一 的 0 不矛盾，且更細**：同一個 0 現在分層成「格式 33%／marker
+   77.5%／欄位 ~5%／全串 0」＋乾淨對照——下一個 0 或第一個 ≥5 都能被讀成確定的東西，這正是 §十一.4 要的「可區分」。
+
+### 4. 留給人的決定（儀器不自動做）
+
+1. **dt 進輸入嗎**（資料 schema 變因）：做了，單一 gold
+   exact 才可能，(intent×dt) 組合軸才可良好定義；不做，family 是唯一可判讀的門檻。
+2. **第四輪裁切 cell 嗎**（資料變因）：做了，holdout
+   0/200 才變成分組明確的組合泛化讀數；不做，門檻測的只是 seen-cell 重現（首讀即此狀態）。
+3. **儀器區段 [10000, 50000) 已標記**：後續輪次 `--skip` 若走進該區，probe會在
+   `instrument_text_overlap` 報出（首讀 0）；要加硬門可在循環裡加反向洩漏檢查。

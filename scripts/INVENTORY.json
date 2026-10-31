@@ -747,6 +747,11 @@
       "referenced": true,
       "purpose": "對話記憶量測 — 教過的事實，之後問得出來嗎？（**記憶層，不是學習**）"
     },
+    "probe_emergence_boundary.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "MVE-1 emergence-boundary instrument: holdout set, shuffled control, gate."
+    },
     "probe_intelligence_sources.py": {
       "category": "probe",
       "referenced": true,
