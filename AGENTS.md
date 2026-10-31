@@ -53,6 +53,11 @@ Refer to `@ANGELA_MATRIX_ANNOTATION_GUIDE.md` for detailed rules.
 
 ### Python (Backend)
 
+> Run pytest through the project venv: `./.venv/bin/python -m pytest ...`. A
+> bare `pytest` can resolve to the system interpreter, which lacks
+> `pytest-asyncio`; `tests/conftest.py` now fails loudly there instead of
+> printing "collected N items / no tests ran".
+
 ```bash
 # Run all tests (multiple test directories)
 pytest tests/ apps/backend/tests/

@@ -91,6 +91,19 @@ def pytest_collection_modifyitems(config, items):
 
 
 def pytest_configure(config):
+    # A bare `pytest` on PATH can resolve to an interpreter without the test
+    # extras (system python3 in this repo has pytest but not pytest-asyncio).
+    # --strict-config then aborts on the asyncio_* keys, yet the tail of the
+    # output still reads "collected N items / no tests ran", which is easy to
+    # read as a green run with nothing to do. Spell out the fix instead of
+    # letting the reason scroll away (measured 2026-10-31: exit 4, message
+    # above the session banner).
+    if not config.pluginmanager.hasplugin("asyncio"):
+        raise pytest.UsageError(
+            "pytest-asyncio is missing in this interpreter "
+            f"({sys.executable}) — async tests would not run at all. "
+            "Use the project venv: ./.venv/bin/python -m pytest ..."
+        )
     config.addinivalue_line("markers", "benchmark: mark tests for benchmarking")
     config.addinivalue_line("markers", "performance: mark tests for performance benchmarking")
     config.addinivalue_line(
