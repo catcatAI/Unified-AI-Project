@@ -11,15 +11,17 @@ told apart from an unmeasurable task. This script *is* that instrument.
 
 Design decisions, each forced by evidence from rounds 1-3:
 
-1. **Family-exact grading (4 dt rungs).** ``dt`` never enters the input line
-   (``<al_in> v=... mode=... intent=... | text`` has no dt), while the
-   contract operator is ``S(t+1) = F(S(t), events, dt)`` (§5). The target is
-   therefore under-determined by construction: exactly one gold per ladder
-   rung in ``generate_al_dataset._DT_LADDER``. Grading accepts any of the
-   four, so a 0 cannot be manufactured by an invisible input — and the rung
-   distribution is reported as a diagnostic. Exposing dt (schema change) is
-   the registered upgrade path to single-target exact; it is a *training
-   variable* and stays a human decision.
+1. **Single gold, the rung named in the prompt (round-4 schema).** Rounds
+   1-3 hid ``dt`` while the contract operator is
+   ``S(t+1) = F(S(t), events, dt)`` (§5), so the target was
+   under-determined by construction and grading accepted any of the four
+   ladder rungs (family-exact — the archived round-3 baseline read under
+   that criterion). Since round 4, ``generate_al_dataset.py --expose-dt``
+   puts dt in the input line (``... intent=x dt=1.00 | text``), gold is the
+   matching rung only and exact means *exact*: a 0 can no longer hide behind
+   either an invisible input or a lucky family match. The four-rung family
+   is still scored per row as the ``wrong_rung`` diagnostic — hits there
+   mean the model was handed dt and ignored it.
 
 2. **The response is given in the prompt.** Training rows read
    ``prompt + "\\n" + response + "\\n" + <al_out> block``; under teacher
@@ -40,11 +42,14 @@ Design decisions, each forced by evidence from rounds 1-3:
    identical rebuilds). Until a training round carves the cells, readings are
    labelled *baseline* (rounds 1-3 trained on all cells).
 
-4. **Rotation control.** Row i is graded against row i+1's gold family (a
+4. **Rotation control.** Row i is graded against row i+1's gold (a
    derangement — no row ever keeps its own gold, so unlike a random shuffle
    there is no expected false hit). Same generations, wrong pairing: any hit
-   means format/probability artefacts, not mapping. Gate: family exact
-   ≥5/200 **and** rotation ≤1/200.
+   means format/probability artefacts, not mapping. Gate: exact ≥5/200
+   **and** rotation ≤1/200 — the registered numbers; with dt exposed the
+   criterion is strictly harder than the family baseline rounds 1-3 read
+   against, and the gate keys keep their names so the report schema stays
+   comparable.
 
 Rows come from a corpus slice no training round has used (default accepted
 rows [10000, 50000) — the band that still carries every intent),
@@ -259,12 +264,18 @@ def build(
             state_in: Dict[str, object] = gen._sample_state(rng)
             state_in["routing_mode"] = mode
             text, response = row["input"], row["output"]
-            prompt_in = prep._state_line(state_in, intent, "in") + " | " + text
-            prompt = (prompt_in + "\n" + response).strip()
-            golds = family_golds(state_in, intent, baseline, targets)
-            if not pair_fits(prompt, max(golds, key=_atoms), max_len):
-                continue
+            # the rung is fixed by position (cycles 0..3), so adding dt cannot
+            # touch the rng stream and every cell gets a balanced rung spread
+            # (cell quotas are multiples of 4, cells are appended in order)
             slot = len(holdout) if take_holdout else len(reference)
+            rung = slot % len(gen._DT_LADDER)
+            dt = gen._DT_LADDER[rung]
+            prompt_in = prep._state_line(state_in, intent, "in", dt=dt) + " | " + text
+            prompt = (prompt_in + "\n" + response).strip()
+            family = family_golds(state_in, intent, baseline, targets)
+            gold = family[rung]
+            if not pair_fits(prompt, gold, max_len):
+                continue
             entry = {
                 "sample_id": f"mve1{'h' if take_holdout else 'r'}_{slot:04d}",
                 "cell": f"{intent}:{mode}",
@@ -274,7 +285,10 @@ def build(
                 "text": text,
                 "response": response,
                 "state_in": state_in,
-                "family": golds,
+                "family": family,
+                "dt": dt,
+                "rung": rung,
+                "gold": gold,
             }
             if take_holdout:
                 holdout.append(entry)
@@ -306,12 +320,13 @@ def build(
         raise SystemExit(f"{overlaps} instrument rows already appear in ai_al train/val files")
 
     return {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "description": (
             "MVE-1 emergence-boundary instrument: (intent x mode) compositional-holdout "
-            "rows with the four-dt-rung gold family, plus seen-composition reference rows. "
-            "Grade free-running <al_out> blocks family-exact; gate >=5/200 with the "
-            "rotation control <=1/200 (MEASUREMENT_MAP MVE-1)."
+            "rows with dt in the prompt and a single-rung gold, plus seen-composition "
+            "reference rows. Grade free-running <al_out> blocks exact (the four-rung "
+            "family is the wrong-rung diagnostic); gate >=5/200 with the rotation "
+            "control <=1/200 (MEASUREMENT_MAP MVE-1)."
         ),
         "seed": seed,
         "total": len(holdout),
@@ -324,6 +339,8 @@ def build(
             "max_len": max_len,
             "pilot_rows": pilot_rows,
             "dt_ladder": list(gen._DT_LADDER),
+            "dt_in_prompt": True,
+            "gold_rule": "single rung: dt rides the input line, gold = family[rung]",
             "cells": chosen,
             "reference_intents": [i for i in sorted(chosen) if i in ref_intents],
             "reference_rule": "reference cell mode = first mode in _MODES != holdout mode",
@@ -394,7 +411,7 @@ def probe(
     bad = [
         e["sample_id"]
         for e in rows
-        if not pair_fits(e["prompt"], max(e["family"], key=_atoms), max_len)
+        if not pair_fits(e["prompt"], e["gold"], max_len)
         or len(model.vocab.encode(e["prompt"])) > max_len - 1
     ]
     if bad:
@@ -409,20 +426,33 @@ def probe(
     format_ok = 0
     marker_ok = 0
     field_hits = {f: 0 for f in _FIELD_KEYS}
-    rung_dist: Dict[str, int] = {"0.25": 0, "0.5": 0, "1.0": 0, "2.0": 0, "none": 0}
+    rows_by_rung = {str(d): 0 for d in gen._DT_LADDER}
+    hits_by_rung = {str(d): 0 for d in gen._DT_LADDER}
+    dt_conditioning = {"exact_rung": 0, "wrong_rung": 0, "no_match": 0}
     per_cell: Dict[str, Dict[str, int]] = {}
     parsed_all = [[_parse_block(g) for g in e["family"]] for e in rows]
     first_gots: List[str] = []
 
     for i, entry in enumerate(rows):
-        worst = max(entry["family"], key=lambda g: len(model.vocab.encode(g)))
-        budget = min(max_len, len(model.vocab.encode(worst)) + 8)
+        budget = min(max_len, len(model.vocab.encode(entry["gold"])) + 8)
         got = model.generate(entry["prompt"], max_new=budget)
-        hit, rung = grade(got, entry["family"])
-        rot_hit, _ = grade(got, rows[rot_of[i]]["family"])
+        hit, _ = grade(got, [entry["gold"]])
+        fam_hit, _ = grade(got, entry["family"])
+        rot_hit, _ = grade(got, [rows[rot_of[i]]["gold"]])
         hits.append(hit)
         rot_hits.append(rot_hit)
-        rung_dist["none" if rung is None else str(gen._DT_LADDER[rung])] += 1
+        rung_key = str(gen._DT_LADDER[entry["rung"]])
+        rows_by_rung[rung_key] += 1
+        if hit:
+            hits_by_rung[rung_key] += 1
+        # exact = the matching rung; wrong_rung = a different legal rung (the
+        # model had dt and ignored it); no_match = no legal block at all
+        if hit:
+            dt_conditioning["exact_rung"] += 1
+        elif fam_hit:
+            dt_conditioning["wrong_rung"] += 1
+        else:
+            dt_conditioning["no_match"] += 1
 
         fields = _parse_block(got)
         keys = set(fields)
@@ -442,7 +472,7 @@ def probe(
         bucket["hits"] += int(hit)
         if (i + 1) % 20 == 0:
             print(
-                f"[{i + 1}/{n}] family={sum(hits)} rotation={sum(rot_hits)}",
+                f"[{i + 1}/{n}] exact={sum(hits)} rotation={sum(rot_hits)}",
                 flush=True,
             )
 
@@ -451,9 +481,10 @@ def probe(
         {
             "sample_id": e["sample_id"],
             "cell": e["cell"],
+            "dt": e["dt"],
             "prompt_tail": e["prompt"][-90:],
             "generated": got,
-            "gold": e["family"][0],
+            "gold": e["gold"],
         }
         for e, got in zip(rows[:3], first_gots)
     ]
@@ -492,7 +523,9 @@ def probe(
         "format_ok": format_ok,
         "marker_ok": marker_ok,
         "field_hits": field_hits,
-        "rung_dist": rung_dist,
+        "rows_by_rung": rows_by_rung,
+        "hits_by_rung": hits_by_rung,
+        "dt_conditioning": dt_conditioning,
         "per_cell": per_cell,
         "training_cell_rows": cell_rows,
         "cells_carved_from_training": not cell_rows,
@@ -514,6 +547,7 @@ def probe(
         f"rotation={holdout_stats['rotation_hits']}/{holdout_stats['n']} "
         f"reference={reference_stats['family_hits']}/{reference_stats['n']} "
         f"format_ok={format_ok} carved={result['cells_carved_from_training']}\n"
+        f"dt_conditioning={dt_conditioning} rows_by_rung={rows_by_rung}\n"
         f"{gate_line}\nwrote {report}"
     )
     return 0

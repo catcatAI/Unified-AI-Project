@@ -123,6 +123,22 @@ def test_skip_takes_a_fresh_slice_and_prefixes_ids(gen):
     assert "id_prefix" not in base["provenance"]
 
 
+def test_expose_dt_is_off_by_default_and_changes_nothing_else(gen):
+    """Round 4's schema variable: the timestep enters the example only when
+    asked (MVE-1's registered upgrade path), and asking does not touch the
+    rng stream — same rows, same values, one extra key."""
+    plain = gen.build(rows=30, seed=7)
+    assert "expose_dt" not in plain["provenance"]
+    assert all("dt" not in ex for ex in plain["examples"])
+
+    exposed = gen.build(rows=30, seed=7, expose_dt=True)
+    assert exposed["provenance"]["expose_dt"] is True
+    assert all(ex["dt"] in gen._DT_LADDER for ex in exposed["examples"])
+    assert exposed["total_samples"] == plain["total_samples"]
+    for a, b in zip(plain["examples"], exposed["examples"]):
+        assert {k: v for k, v in b.items() if k != "dt"} == a
+
+
 def test_intent_rules_are_the_documented_placeholder(gen):
     assert gen._intent_of("Tell me a joke about penguins") == "humor"
     assert gen._intent_of("Hello there") == "greeting"

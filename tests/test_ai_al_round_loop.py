@@ -64,6 +64,58 @@ def test_failed_training_produces_no_batch(loop, tmp_path, monkeypatch):
     assert "failed" in man["next_step"]
 
 
+def test_next_batch_schema_flags_pass_through(loop, tmp_path, monkeypatch):
+    """MVE-1 round 4: the staged batch must carry the schema it was decided
+    under — dt exposed and the carved cells — into generation and provenance."""
+    _redirect_to(loop, tmp_path, monkeypatch)
+    rc = loop.main(
+        [
+            "--round",
+            "9",
+            "--generate-only",
+            "--next-rows",
+            "40",
+            "--next-skip",
+            "0",
+            "--next-holdout-cells",
+            "unknown:conservative,knowledge_query:neutral",
+            "--next-expose-dt",
+        ]
+    )
+    assert rc == 0
+    man = json.loads((tmp_path / "ai_al_round9_loop.json").read_text(encoding="utf-8"))
+    assert man["next_batch"]["holdout_cells"] == "unknown:conservative,knowledge_query:neutral"
+    assert man["next_batch"]["expose_dt"] is True
+    data = json.loads((tmp_path / "ai_al_round10_dataset.json").read_text(encoding="utf-8"))
+    assert data["provenance"]["expose_dt"] is True
+    assert data["provenance"]["holdout_cells"] == {
+        "unknown": "conservative",
+        "knowledge_query": "neutral",
+    }
+    assert all("dt" in ex for ex in data["examples"])
+    # prepare serialised dt into the trainer's input line
+    train_row = json.loads(
+        (tmp_path / "ai_al_round10_train.jsonl").read_text(encoding="utf-8").splitlines()[0]
+    )
+    assert " dt=" in train_row["input"]
+    # without the flags the staged batch keeps the round-1-3 schema keys out
+    plain = loop.main(["--round", "8", "--generate-only", "--next-rows", "5", "--next-skip", "0"])
+    assert plain == 0
+    data8 = json.loads((tmp_path / "ai_al_round9_dataset.json").read_text(encoding="utf-8"))
+    assert "expose_dt" not in data8["provenance"]
+    assert "holdout_cells" not in data8["provenance"]
+
+
+def test_bad_cell_spec_fails_before_training(loop, tmp_path, monkeypatch):
+    """A typo in the cell list must abort immediately — otherwise it would only
+    surface after the hours-long training run has already finished."""
+    _redirect_to(loop, tmp_path, monkeypatch)
+    with pytest.raises(SystemExit):
+        loop.main(["--round", "9", "--generate-only", "--next-holdout-cells", "unknown:sideways"])
+    assert not (tmp_path / "ai_al_round9_loop.json").exists()  # nothing ran
+    assert not (tmp_path / "ai_al_round10_dataset.json").exists()
+
+
 def test_train_command_flags_are_extracted(loop, tmp_path, monkeypatch):
     _redirect_to(loop, tmp_path, monkeypatch)
     rc = loop.main(

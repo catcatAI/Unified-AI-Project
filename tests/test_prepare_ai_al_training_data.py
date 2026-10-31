@@ -93,6 +93,37 @@ def test_write_then_check_roundtrip(prep, tmp_path, monkeypatch):
     assert prep.main(["--check"]) == 1
 
 
+def test_dt_rides_the_input_line_only_when_the_source_exposes_it(prep, tmp_path):
+    """Round-4 schema: dt is serialised into ``<al_in> ... intent=x dt=1.00``
+    from the source's ``dt`` field; the output side and a round-1-3 source
+    stay exactly as they were."""
+    spec = importlib.util.spec_from_file_location(
+        "generate_al_dataset_prepare_test", REPO_ROOT / "scripts" / "generate_al_dataset.py"
+    )
+    assert spec and spec.loader
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+
+    src = tmp_path / "with_dt.json"
+    src.write_text(json.dumps(gen.build(rows=12, seed=3, expose_dt=True)), encoding="utf-8")
+    rows = prep.load_records(src)
+    assert rows
+    for row in rows:
+        state_in, _user_text = row["input"].split(" | ", 1)
+        assert " dt=" in state_in
+        # the response is a state, never a timestep
+        # the response may span lines; the state block is always the last line
+        state_out = row["output"].rsplit("\n", 1)[1]
+        assert state_out.startswith("<al_out> ") and " dt=" not in state_out
+    manifest = prep.build(0.2, src)["manifest"]
+    assert " dt |" in manifest["format"]["input"]
+
+    # the pilot source (rounds 1-3 schema) keeps the old input line
+    assert all(" dt=" not in r["input"] for r in prep.load_records())
+    plain_manifest = prep.build(0.2)["manifest"]
+    assert " dt |" not in plain_manifest["format"]["input"]
+
+
 def test_out_paths_are_configurable(prep, tmp_path):
     """The loop's *next* batch must be able to write elsewhere — overwriting
     the files the current round trained on would poison the audit trail."""

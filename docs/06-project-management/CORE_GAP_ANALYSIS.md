@@ -843,7 +843,7 @@ roundtrip 通過。**第四輪批次就緒但不自動啟動**——下輪換什
 
 §十一.6.3 說「在動第四輪的變因之前，先建能測的湧現界線儀器」——本節就是它。門檻與讀法註冊在
 `MEASUREMENT_MAP.md` §六；此處記**為什麼這樣設計**
-與首讀數。儀器：`scripts/probe_emergence_boundary.py`（13 契約測試
+與首讀數。儀器：`scripts/probe_emergence_boundary.py`（14 契約測試
 `tests/test_probe_emergence_boundary.py`），題組
 `apps/backend/data/processed/mve1_emergence_boundary.json`（`--check`
 逐位重建），報告 `data/intelligence_reports/mve1_emergence_boundary.json`。
@@ -863,7 +863,7 @@ roundtrip 通過。**第四輪批次就緒但不自動啟動**——下輪換什
 
 | 裁決                                        | 出處與理由                                                                                                                                                                                                                                                                                                                |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **family-exact**：gold ＝ 4 個 dt rung 任一 | dt 不在輸入（見上）；rung 分佈另計為診斷；單一 gold 的升級路徑＝dt 進輸入，那是**資料 schema 變因**，留給下一輪決定                                                                                                                                                                                                       |
+| **family-exact**：gold ＝ 4 個 dt rung 任一 | dt 不在輸入（見上）；rung 分佈另計為診斷；單一 gold 的升級路徑＝dt 進輸入，那是**資料 schema 變因**，留給下一輪決定。**2026-10-31 續**：round-4 schema 已把 dt 放進輸入（`--expose-dt`，預設關），gold 改單一 rung、family 降為 `wrong_rung` 診斷，見 §十二.5                                                             |
 | **回應給進 prompt**，只生成 `<al_out>` 塊   | 合約 §5 的 F 不消費回應文本；`token_snn._encode` 顯示訓練時狀態塊本來就以 gold 回應為條件（teacher-forcing），所以「prompt 到 response 為止」是訓練分布的同一個續寫任務，不是新格式；逐字回應重現是另一個 0（resp 26%），不綁進核心門檻                                                                                   |
 | **組合軸＝(intent × mode)，裁切在生成端**   | dt 看不見 → (intent×dt) holdout 在舊格式上不可良好定義（模型無法知道自己「不該」見過哪些格）；(intent×mode) 每個 primitive 都還在訓練裡（每 intent 留 2 個 mode、每 mode 留其他 intent），過關＝把 intent-target 分支與 mode-carry 分支**組合到未見配對**；裁切用 `--holdout-cells`（預設關閉，`--check` 逐位一致已驗證） |
 | **對照＝同集合內輪轉（derangement）**       | 隨機亂配可能有 fixed point（期望 ~1 個真命中）吃掉 ≤1/200 的門檻；輪轉保證零 fixed point，且同一份生成物重評分，不重跑模型                                                                                                                                                                                                |
@@ -878,16 +878,16 @@ token 視窗判準用 `tokenize == vocab.encode`
 
 `--set all`（200 holdout ＋ 120 reference）、XPU、563.4s、2026-10-31：
 
-| 量                                | 值                                                                           |
-| --------------------------------- | ---------------------------------------------------------------------------- |
-| **gate：holdout family-exact**    | **0/200**（≥5 才過）                                                         |
-| **gate：rotation 對照**           | **0/200**（≤1 才過）→ 對照乾淨                                               |
-| reference（seen cell）            | 0/120                                                                        |
-| format_ok（6 欄位＋mode＋intent） | 106/320（33%）                                                               |
-| `<al_out>` 出現                   | 248/320（77.5%）                                                             |
-| 欄位值命中（任一 rung，/320）     | v 10、a 4、d 14、fatigue 17、stress 17、health 8                             |
-| rung 分佈                         | 全 none（320/320）                                                           |
-| carved / text_overlap             | **False**（rounds 1-3 訓練含全部 cell）／**0**（與 4 份 train/val 檔零重疊） |
+| 量                                            | 值                                                                           |
+| --------------------------------------------- | ---------------------------------------------------------------------------- |
+| **gate：holdout family-exact**（v1.0.0 判準） | **0/200**（≥5 才過；v1.1.0 起改 single-gold，見 §十二.5）                    |
+| **gate：rotation 對照**                       | **0/200**（≤1 才過）→ 對照乾淨                                               |
+| reference（seen cell）                        | 0/120                                                                        |
+| format_ok（6 欄位＋mode＋intent）             | 106/320（33%）                                                               |
+| `<al_out>` 出現                               | 248/320（77.5%）                                                             |
+| 欄位值命中（任一 rung，/320）                 | v 10、a 4、d 14、fatigue 17、stress 17、health 8                             |
+| rung 分佈                                     | 全 none（320/320）                                                           |
+| carved / text_overlap                         | **False**（rounds 1-3 訓練含全部 cell）／**0**（與 4 份 train/val 檔零重疊） |
 
 照實寫三點：
 
@@ -904,9 +904,27 @@ token 視窗判準用 `tokenize == vocab.encode`
 
 ### 4. 留給人的決定（儀器不自動做）
 
-1. **dt 進輸入嗎**（資料 schema 變因）：做了，單一 gold
-   exact 才可能，(intent×dt) 組合軸才可良好定義；不做，family 是唯一可判讀的門檻。
+1. **dt 進輸入嗎**（資料 schema 變因）：**已進儀器**（`generate_al_dataset.py --expose-dt`，預設關；`ai_al_round_loop.py --next-expose-dt`
+   讓下一批沿用同一 schema）。做了，單一 gold
+   exact 才可能，(intent×dt) 組合軸才可良好定義；不做，family 是唯一可判讀的門檻。**第四輪是否採用仍是人的決定**——儀器提供能力，不替人選變因。
 2. **第四輪裁切 cell 嗎**（資料變因）：做了，holdout
    0/200 才變成分組明確的組合泛化讀數；不做，門檻測的只是 seen-cell 重現（首讀即此狀態）。
 3. **儀器區段 [10000, 50000) 已標記**：後續輪次 `--skip` 若走進該區，probe會在
    `instrument_text_overlap` 報出（首讀 0）；要加硬門可在循環裡加反向洩漏檢查。
+
+### 5. 2026-10-31 續：round-4 schema 進儀器（v1.1.0）
+
+`--expose-dt`
+把 dt 放進輸入行（`<al_in> ... intent=x dt=1.00 | text`），gold 從「4 個 rung 任一」收成「對應 rung 一個」，family 逐列保留為
+`wrong_rung` 診斷。三個設計限制照實記：
+
+- **預設關**：不帶 `--expose-dt` 的 build 仍逐位等於 rounds
+  1-3 的 schema（`--check` 已驗），既有資料／報告不會被悄悄換掉。
+- **rung 由位置決定**（`slot % 4`），不是新抽一顆 rng：加 dt 不動隨機流，每個 cell 的 rung 分佈仍平衡。
+- **gate 鍵名不變**（`exact` 仍叫
+  `exact`，報告 schema 可比），但判準嚴格了一層：舊 family 命中在新判準下是
+  `wrong_rung`，不算過。
+
+題組已用新 schema 重建並 `--check` 通過（200 holdout ＋ 120 reference）。
+**新 baseline 尚未跑**：舊的 0/200 是 v1.0.0
+family 判準下的讀數，不能拿來宣稱「single-gold 也是 0」；下一個 0 或第一個 ≥5 要用新題組重跑才算數。

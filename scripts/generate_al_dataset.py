@@ -35,11 +35,18 @@ Limits, stated so they are not mistaken for capability:
 * these rows teach the *mapping* (state, text) -> (response, state'), they are
   not evidence that the AL state model is right.
 
+Round 4's data schema adds ``--expose-dt``: the timestep enters the input
+line (``... intent=x dt=1.00 | text``), so the target becomes a single
+deterministic gold instead of one of four — the registered upgrade path
+(MEASUREMENT_MAP MVE-1) that makes single-gold exact measurable. Default off
+for the same byte-identity reason as the carve.
+
 Usage:
     python scripts/generate_al_dataset.py
     python scripts/generate_al_dataset.py --rows 4000 --seed 7
     python scripts/generate_al_dataset.py --check
     python scripts/generate_al_dataset.py --holdout-cells unknown:conservative,knowledge_query:neutral
+    python scripts/generate_al_dataset.py --expose-dt --holdout-cells <cells> --rows 5200
 """
 
 from __future__ import annotations
@@ -218,6 +225,7 @@ def build(
     skip: int = 0,
     id_prefix: str = "r1_",
     holdout_cells: Optional[Dict[str, str]] = None,
+    expose_dt: bool = False,
 ) -> Dict[str, object]:
     baseline, targets, pilot_rows = _pilot_tables()
     source = _load_ai_rows(rows, skip=skip)
@@ -248,6 +256,8 @@ def build(
                 "al_state_in": state_in,
                 "al_state_out": {**state_out, "routing_mode": mode},
                 "intent": intent,
+                # only when --expose-dt: a default build must stay byte-identical
+                **({"dt": dt} if expose_dt else {}),
                 "confidence": 0.9,
             }
         )
@@ -271,6 +281,11 @@ def build(
             "al_state_in": "sampled PAD + fatigue/stress/health + routing_mode",
             "al_state_out": "contract §5 operator toward the intent target",
             "intent": "keyword rules (placeholder for query_classifier)",
+            **(
+                {"dt": "float from _DT_LADDER — surfaced in the input line when exposed"}
+                if expose_dt
+                else {}
+            ),
         },
         "provenance": {
             "ai_source": str(AI_SRC.relative_to(REPO_ROOT)),
@@ -293,6 +308,7 @@ def build(
                 if holdout_cells
                 else {}
             ),
+            **({"expose_dt": True} if expose_dt else {}),
         },
         "examples": examples,
     }
@@ -322,6 +338,13 @@ def main(argv: List[str] | None = None) -> int:
         "(MVE-1 compositional holdout; cells declared in MVE1_HOLDOUT_CELLS). "
         "Default off: a default build must stay byte-identical for --check",
     )
+    ap.add_argument(
+        "--expose-dt",
+        action="store_true",
+        help="put the timestep in the input line (… intent=x dt=1.00 | text) so the "
+        "transition target is a single deterministic gold — MVE-1's registered "
+        "upgrade path, round 4's schema variable. Default off: byte-identical builds",
+    )
     ap.add_argument("--out", default=str(OUT))
     ap.add_argument(
         "--check",
@@ -337,6 +360,7 @@ def main(argv: List[str] | None = None) -> int:
         skip=args.skip,
         id_prefix=args.id_prefix,
         holdout_cells=holdout or None,
+        expose_dt=args.expose_dt,
     )
     body = json.dumps(built, indent=2, ensure_ascii=False) + "\n"
     out = Path(args.out)
@@ -355,10 +379,11 @@ def main(argv: List[str] | None = None) -> int:
     out.write_text(body, encoding="utf-8")
     p = built["provenance"]
     carve = f" carved={p['holdout_carved']} of {len(p['holdout_cells'])} cells" if holdout else ""
+    dt_note = " dt=exposed" if args.expose_dt else ""
     print(
         f"examples={built['total_samples']} leaked={p['benchmark_leaked']} "
         f"pilot_rows={p['pilot_rows']} seed={args.seed} "
-        f"skip={args.skip} prefix={args.id_prefix}{carve}\nwrote {out}"
+        f"skip={args.skip} prefix={args.id_prefix}{carve}{dt_note}\nwrote {out}"
     )
     return 0
 

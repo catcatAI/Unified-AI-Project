@@ -83,12 +83,34 @@ def main(argv: List[str] | None = None) -> int:
     ap.add_argument("--next-rows", type=int, default=4000, help="rows in the next batch")
     ap.add_argument("--next-seed", type=int, default=7, help="state-sampling seed")
     ap.add_argument(
+        "--next-holdout-cells",
+        default="",
+        help="MVE-1 carve for the next batch: comma-separated intent:mode cells "
+        "to exclude (default off — pass the same spec the round trained under)",
+    )
+    ap.add_argument(
+        "--next-expose-dt",
+        action="store_true",
+        help="put dt in the next batch's input line (default off; MVE-1 round-4+ "
+        "schema — the staged batch must match the schema the round adopted)",
+    )
+    ap.add_argument(
         "--generate-only",
         action="store_true",
         help="produce the next batch without running training (recovery/manual mode)",
     )
     ap.add_argument("train_cmd", nargs=argparse.REMAINDER, help="training command after --")
     args = ap.parse_args(argv)
+
+    # fail before training, not after it: a bad cell spec would otherwise be
+    # discovered only once the hours-long run has already finished
+    modes = ("exploratory", "neutral", "conservative")  # generate_al_dataset._MODES
+    for part in (p.strip() for p in args.next_holdout_cells.split(",")):
+        if not part:
+            continue
+        intent, sep, mode = part.partition(":")
+        if not sep or not intent or mode not in modes:
+            ap.error(f"bad --next-holdout-cells entry {part!r} (want intent:mode)")
 
     rnd = args.round
     nxt = rnd + 1
@@ -123,6 +145,8 @@ def main(argv: List[str] | None = None) -> int:
             "rows": args.next_rows,
             "seed": args.next_seed,
             "id_prefix": id_prefix,
+            **({"holdout_cells": args.next_holdout_cells} if args.next_holdout_cells else {}),
+            **({"expose_dt": True} if args.next_expose_dt else {}),
             "note": (
                 "fresh disjoint slice of core_train.jsonl; AL states come from the "
                 "same contract §5 operator (registered placeholder — the state-line "
@@ -150,6 +174,11 @@ def main(argv: List[str] | None = None) -> int:
             return train_rc
 
     # Training succeeded (or --generate-only): produce the next batch.
+    gen_extra: List[str] = []
+    if args.next_holdout_cells:
+        gen_extra += ["--holdout-cells", args.next_holdout_cells]
+    if args.next_expose_dt:
+        gen_extra += ["--expose-dt"]
     steps = [
         (
             "generate",
@@ -166,6 +195,7 @@ def main(argv: List[str] | None = None) -> int:
                 id_prefix,
                 "--out",
                 str(dataset),
+                *gen_extra,
             ],
         ),
         (
@@ -225,8 +255,8 @@ def main(argv: List[str] | None = None) -> int:
     record["finished_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     record["seconds"] = round(time.time() - started, 1)
     record["next_step"] = (
-        f"round {nxt} data ready ({train_out.name}) — launching it stays a human "
-        "decision (next variable: capacity+objective, CORE_GAP §10.4)"
+        f"round {nxt} data ready ({train_out.name}) — launching it stays a "
+        "human decision (CORE_GAP §10.4)"
     )
     loop_manifest.write_text(
         json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

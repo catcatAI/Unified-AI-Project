@@ -64,7 +64,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "apps" / "backend" / "src") not in sys.path:
@@ -93,14 +93,23 @@ def _rel(path: Path) -> str:
         return str(path)
 
 
-def _state_line(state: Dict[str, object], intent: str, side: str) -> str:
-    """One compact, token-friendly line describing an AL state."""
-    return (
+def _state_line(
+    state: Dict[str, object], intent: str, side: str, dt: Optional[float] = None
+) -> str:
+    """One compact, token-friendly line describing an AL state.
+
+    ``dt`` (the §5 operator's timestep) rides on the *input* line only, and
+    only when the source dataset exposed it (``generate_al_dataset.py
+    --expose-dt``): the output state is a state, not a timestep. A source
+    without the field serialises byte-identically to before.
+    """
+    line = (
         f"<al_{side}> v={float(state['valence']):.2f} a={float(state['arousal']):.2f} "
         f"d={float(state['dominance']):.2f} fatigue={float(state['fatigue']):.2f} "
         f"stress={float(state['stress']):.2f} health={float(state['health']):.2f} "
         f"mode={state['routing_mode']} intent={intent}"
     )
+    return line + (f" dt={float(dt):.2f}" if dt is not None else "")
 
 
 def load_records(path: Path = SRC) -> List[dict]:
@@ -109,7 +118,12 @@ def load_records(path: Path = SRC) -> List[dict]:
     pairs: List[dict] = []
     for item in data.get("examples", []):
         intent = str(item.get("intent") or "unknown")
-        inp = _state_line(item["al_state_in"], intent, "in") + " | " + str(item["input_text"])
+        dt = item.get("dt")
+        inp = (
+            _state_line(item["al_state_in"], intent, "in", dt=dt)  # type: ignore[arg-type]
+            + " | "
+            + str(item["input_text"])
+        )
         out = (
             str(item["expected_response"]) + "\n" + _state_line(item["al_state_out"], intent, "out")
         )
@@ -155,6 +169,7 @@ def build(val_ratio: float, src: Path = SRC) -> Dict[str, object]:
     kept = [p for p in pairs if _norm(p["input"].split("|", 1)[-1]) not in bench]
     leaked = len(pairs) - len(kept)
     train, val = _split(kept, val_ratio)
+    has_dt = any(" dt=" in p["input"] for p in pairs)
     return {
         "train": train,
         "val": val,
@@ -167,7 +182,11 @@ def build(val_ratio: float, src: Path = SRC) -> Dict[str, object]:
             "val": len(val),
             "val_ratio": val_ratio,
             "format": {
-                "input": "<al_in> v a d fatigue stress health mode intent | <input_text>",
+                "input": (
+                    "<al_in> v a d fatigue stress health mode intent dt | <input_text>"
+                    if has_dt
+                    else "<al_in> v a d fatigue stress health mode intent | <input_text>"
+                ),
                 "output": "<expected_response>\\n<al_out> v a d fatigue stress health mode intent",
             },
             "note": (

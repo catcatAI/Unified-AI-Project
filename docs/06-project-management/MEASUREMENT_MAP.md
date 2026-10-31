@@ -150,31 +150,36 @@ lookup + 10 classifier 是層的成績）。這不是智能分數，是層的成
 第三輪收官時（`CORE_GAP_ANALYSIS`
 §十一.4）**只定了門檻、沒儀器**——「下一個 0」與「儀器不可能響」不可區分。現在門檻與儀器同時註冊：
 
-| 項目     | 值                                                                                                                                                                                                |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 儀器     | `scripts/probe_emergence_boundary.py`；題組 `apps/backend/data/processed/mve1_emergence_boundary.json`（`--check` 逐位重建）                                                                      |
-| 題組     | 200 列 compositional holdout（5 個 `(intent × mode)` cell，宣告在 `generate_al_dataset.MVE1_HOLDOUT_CELLS`，每列新抽狀態）＋ 120 列 seen-composition reference                                    |
-| 區段     | `core_train` accepted rows [10000, 50000)（`<50000` 才有稀有 intent，`≥80000` 全是 unknown）；與現有 4 份 `ai_al_*train*/val*` 檔重疊 0 列，每次 probe 重查並回報 `instrument_text_overlap`       |
-| 任務     | prompt 給到 gold response 為止，free-running 產生 `<al_out>` 狀態塊（合約 §5 的 F 不消費回應文本；設計裁決見 `CORE_GAP_ANALYSIS` §十二）                                                          |
-| 評分     | **family-exact**：輸出須逐字等於 4 個 dt rung（0.25/0.5/1.0/2.0）之一的 gold——`dt` 不在輸入行（訓練資料 0 命中），單一 gold 結構上不可得；升級路徑＝dt 進輸入（資料 schema 變因，留給下一輪決定） |
-| 對照     | **rotation**：同集合內 i→i+1 輪轉錯配（derangement，零 fixed point，同一份生成物重評分）                                                                                                          |
-| **門檻** | **holdout family-exact ≥5/200 且 rotation ≤1/200**（兩條件同時；只有 holdout 列入 gate，reference 不入）                                                                                          |
-| 報告     | `data/intelligence_reports/mve1_emergence_boundary.json`：gate、holdout/reference 分組、per_cell、format_ok/marker_ok、field_hits、rung_dist、carved、text_overlap                                |
-| 層       | 學習 learning（參數改變後在未見組合上的泛化）；**不改變核心分**（官方核心分維持 0.00/10）                                                                                                         |
+| 項目     | 值                                                                                                                                                                                                                                                                                                 |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 儀器     | `scripts/probe_emergence_boundary.py`（v1.1.0，round-4 schema）；題組 `apps/backend/data/processed/mve1_emergence_boundary.json`（`--check` 逐位重建）                                                                                                                                             |
+| 題組     | 200 列 compositional holdout（5 個 `(intent × mode)` cell，宣告在 `generate_al_dataset.MVE1_HOLDOUT_CELLS`，每列新抽狀態）＋ 120 列 seen-composition reference                                                                                                                                     |
+| 區段     | `core_train` accepted rows [10000, 50000)（`<50000` 才有稀有 intent，`≥80000` 全是 unknown）；與現有 4 份 `ai_al_*train*/val*` 檔重疊 0 列，每次 probe 重查並回報 `instrument_text_overlap`                                                                                                        |
+| 任務     | prompt 給到 gold response 為止，free-running 產生 `<al_out>` 狀態塊（合約 §5 的 F 不消費回應文本；設計裁決見 `CORE_GAP_ANALYSIS` §十二）                                                                                                                                                           |
+| 評分     | **exact（single gold）**：`dt` 進輸入行（round-4 schema，`generate_al_dataset.py --expose-dt`），gold 只有對應 rung 一個；4 個 rung 的 family 仍逐列計為 `wrong_rung` 診斷（命中＝模型拿到 dt 卻忽略）。v1.0.0 的 family-exact 已歸檔——rounds 1-3 的 baseline 是在該判準下讀的，與新判準不可直接比 |
+| 對照     | **rotation**：同集合內 i→i+1 輪轉錯配（derangement，零 fixed point，同一份生成物重評分）                                                                                                                                                                                                           |
+| **門檻** | **holdout exact ≥5/200 且 rotation ≤1/200**（兩條件同時；gate 鍵名沿用 family-exact 時代以保持報告 schema 可比；只有 holdout 列入 gate，reference 不入）                                                                                                                                           |
+| 報告     | `data/intelligence_reports/mve1_emergence_boundary.json`：gate、holdout/reference 分組、per_cell、format_ok/marker_ok、field_hits、rung_dist、wrong_rung、carved、text_overlap                                                                                                                     |
+| 層       | 學習 learning（參數改變後在未見組合上的泛化）；**不改變核心分**（官方核心分維持 0.00/10）                                                                                                                                                                                                          |
 
 讀法（先看對照，再看四格）：
 
-| family | rotation | reference            | 讀法                                                                                                      |
+| exact  | rotation | reference            | 讀法                                                                                                      |
 | ------ | -------- | -------------------- | --------------------------------------------------------------------------------------------------------- |
 | ≥5/200 | ≤1/200   | 任意                 | 過門檻：`carved=True` 時是組合泛化第一個可測證據；`carved=False` 時只是 seen-cell baseline（未裁切 cell） |
 | <5/200 | ≤1/200   | 高（reference 能過） | **組合缺口**：單一組合會、未見組合不會——真正的 compositional 測量對象，也是 `--holdout-cells` 的驗收依據  |
 | <5/200 | ≤1/200   | 低                   | **任務/格式缺口**：連 seen 組合都不會，先跨格式與逐 token，門檻不在此格討論                               |
 | 任意   | >1/200   | —                    | **讀數無效**：錯配仍能命中 → 格式或機率假象，不算任何結論                                                 |
 
-**首讀（2026-10-31，`ai_al_round3.pt`，XPU 563.4s，`--set all`）**：holdout
-**0/200**、rotation **0/200**、reference **0/120** → gate
-FAIL（預期 baseline）。format_ok 106/320、`<al_out>`
-出現 248/320、欄位值命中（任一 rung）v 10／a 4／d 14／fatigue 17／stress
-17／health 8（共 320）、rung 分佈全 none；`carved=False`（rounds
+> **判準版本說明**：下面的首讀是儀器 **v1.0.0 family-exact** 下讀的（round-3
+> checkpoint，`dt` 尚未進輸入）；v1.1.0 起改 single-gold（`dt` 進輸入），
+> **舊數字不可與新判準直接比**，需用新題組重跑才有可比 baseline。
+
+**首讀（2026-10-31，`ai_al_round3.pt`，XPU
+563.4s，`--set all`，v1.0.0 判準）**：holdout **0/200**、rotation
+**0/200**、reference **0/120** → gate FAIL（預期 baseline）。format_ok
+106/320、`<al_out>` 出現 248/320、欄位值命中（任一 rung）v 10／a 4／d
+14／fatigue 17／stress 17／health
+8（共 320）、rung 分佈全 none；`carved=False`（rounds
 1-3 訓練含全部 cell）、`text_overlap=0`。解讀：對照乾淨（0）＋格式在動（33% 全欄位，與 tail
 76% 一致）＋**逐字 2dp 狀態列一個都沒寫出來**——同一個 0 從此分層可讀。

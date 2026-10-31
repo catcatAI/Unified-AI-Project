@@ -4,7 +4,8 @@ Claims pinned here (no teaching to the test):
 
 1. the gold family is exactly the four ``dt`` rungs of the contract §5
    operator, monotone toward the target, mode carried;
-2. grading is family-exact, and the rotation control is a derangement — no
+2. grading is single-gold exact (dt rides the input line since round 4,
+   ``gold == family[rung]``) and the rotation control is a derangement — no
    row can ever be graded against its own gold;
 3. the gate numbers are the registered threshold (≥5/200 and ≤1/200);
 4. the set is deterministic, leak-free, in-window (192 tokens), and its
@@ -147,7 +148,7 @@ def small_set(probe):
     )
 
 
-def test_small_set_is_complete_and_in_window(probe, small_set):
+def test_small_set_is_complete_and_in_window(probe, small_set, gen):
     assert small_set["total"] == 10
     assert small_set["reference_total"] == 10
     cells = small_set["provenance"]["cells"]
@@ -161,18 +162,43 @@ def test_small_set_is_complete_and_in_window(probe, small_set):
             )
             assert entry["mode"] == expect_mode
             assert entry["cell"] == f"{entry['intent']}:{entry['mode']}"
-            worst = max(entry["family"], key=probe._atoms)
-            assert probe.pair_fits(entry["prompt"], worst, 192), entry["sample_id"]
+            # single-gold: the graded target is exactly the rung the prompt names
+            assert entry["gold"] == entry["family"][entry["rung"]]
+            assert entry["dt"] == gen._DT_LADDER[entry["rung"]]
+            assert probe.pair_fits(entry["prompt"], entry["gold"], 192), entry["sample_id"]
 
 
 def test_prompt_is_the_training_pair_prefix(probe, small_set, gen):
-    """Byte-identical to prepare_ai_al_training_data's pair, response given."""
+    """Byte-identical to prepare_ai_al_training_data's pair, response given.
+
+    The input line carries dt (round-4 schema), serialised through the very
+    same _state_line the trainer's pairs go through — one code path, so the
+    probe cannot drift from the training format.
+    """
     for entry in small_set["holdout"]:
         expected_in = (
-            probe.prep._state_line(entry["state_in"], entry["intent"], "in") + " | " + entry["text"]
+            probe.prep._state_line(entry["state_in"], entry["intent"], "in", dt=entry["dt"])
+            + " | "
+            + entry["text"]
         )
         expected = (expected_in + "\n" + entry["response"]).strip()
         assert entry["prompt"] == expected
+        assert f"dt={entry['dt']:.2f}" in entry["prompt"]
+
+
+def test_rung_slots_cycle_so_every_cell_is_balanced(probe, small_set, gen):
+    """The rung comes from the append position, not a fresh draw — adding dt
+    cannot touch the rng stream, and cycles give each cell an even rung mix."""
+    ladder = gen._DT_LADDER
+    for kind in ("holdout", "reference"):
+        rows = small_set[kind]
+        assert [e["rung"] for e in rows] == [i % len(ladder) for i in range(len(rows))]
+        for entry in rows:
+            state_line = entry["prompt"].split(" | ", 1)[0]
+            assert state_line.startswith("<al_in> ")
+            assert f"dt={entry['dt']:.2f}" in state_line
+            # the output side is a state, never a timestep
+            assert " dt=" not in entry["gold"]
 
 
 def test_set_is_deterministic_and_leak_free(probe, gen, small_set):
@@ -221,6 +247,9 @@ def test_carve_off_leaves_defaults_byte_identical(gen):
     plain = gen.build(rows=60, seed=7)
     assert "holdout_cells" not in plain["provenance"]
     assert "holdout_carved" not in plain["provenance"]
+    # --expose-dt is off by default for the same byte-identity reason
+    assert "expose_dt" not in plain["provenance"]
+    assert all("dt" not in ex for ex in plain["examples"])
     # and the flag parses to a plain dict (empty spec -> off)
     assert gen._parse_holdout_cells("") == {}
     assert gen._parse_holdout_cells("unknown:conservative, knowledge_query:neutral") == {
