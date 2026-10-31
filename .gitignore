@@ -217,6 +217,8 @@ apps/crystal-cards/scripts/fix-*.js
 apps/crystal-cards/game-data/extracted-content.js
 # Codebuff / freebuff local artifacts
 .freebuff/
+# Imported chat exports (opencode attachments) — local data, never commit.
+.cloud-attachments/
 # Test output artifacts (regenerated, should not be tracked)
 tests/test_output_data/
 # Pixel-angela runtime model (49KB DNA vector — small, intentional tracking)
