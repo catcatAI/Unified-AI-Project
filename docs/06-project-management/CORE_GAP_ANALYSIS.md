@@ -710,3 +710,130 @@ tok: The number π is 37.
 4. **分離指標必須留在正式輸出**：聚合 tf 跨輪不可比（被狀態塊墊高），以後一律看
    `response_tf`。
 5. **及格線、評測題、規則沒動**，洩漏門未被觸碰，**官方核心分維持 0.00/10**。
+
+## 十一、AI+AL 第三輪：容量＋目標單變因——teacher-forced 答案段再升、free-running 與凍結對照表仍是 0（2026-10-31）
+
+§十 第 4 點把三個候選（資料量、資料格式、GPU）排除後，只剩**容量＋目標**。第三輪就是這一格的單變因實驗：只動下表兩項，其餘含資料全不變：
+
+| 變因     | 第二輪            | **第三輪**                                           |
+| -------- | ----------------- | ---------------------------------------------------- |
+| 容量     | `d_hidden 512`    | **1024**                                             |
+| 訓練目標 | 純 teacher-forced | **`--ss-final 0.5`**（scheduled sampling 線性 ramp） |
+
+不變項：`ai_al_train/val.jsonl` 同一批 3,180 對、epochs 100、lr 3e-3、batch
+32、d-emb 96、max_len 384、tail-weight 0.25、評測題、及格線。Ramp 直接打 §十 的
+`response_tf` 23% 對 free-running exact
+0 的**曝光偏差**：早期 epoch 從 gold 語境學映射，後期在模型自己的語境上練（p 從 0 線性升到 0.5）。
+
+### 1. 訓練（含一次驅動層故障與加固重啟）
+
+```bash
+scripts/xpu_run.sh env PYTHONPATH=apps/backend/src OMP_NUM_THREADS=4 \
+  ./.venv/bin/python scripts/ai_al_round_loop.py --round 3 -- \
+  ./.venv/bin/python scripts/train_token_snn.py --vocab token \
+  --train apps/backend/data/processed/ai_al_train.jsonl \
+  --val apps/backend/data/processed/ai_al_val.jsonl \
+  --epochs 100 --batch 32 --lr 3e-3 --d-emb 96 --d-hidden 1024 \
+  --max-len 384 --tail-weight 0.25 --ss-final 0.5 --device xpu \
+  --eval-on-cpu --out data/checkpoints/ai_al_round3.pt \
+  --report data/intelligence_reports/ai_al_round3.json
+```
+
+兩次嘗試，照實寫：
+
+- **attempt1（02:09 開跑）死在驅動層**：epoch 19（loss 1.6480）後停滯， `dmesg`
+  對上時間戳的是
+  `xe ... Engine reset: engine_class=bcs`（02:34，全 boot 單次事件）——非 OOM、非 pipe 塞死。證據保留
+  `data/intelligence_reports/ai_al_round3_loop.attempt1-killed.log`。評估過
+  `--resume` 但**不用**：它只還原權重，Adam 狀態重建、ramp 從頭數 100（總 119
+  epochs＋ramp 重啟），會污染單變因——寧可損失 20 分鐘重跑。
+- **attempt2（02:57 重啟）**：改用 `setsid` 讓訓練成為獨立 session（驗證
+  `SID=PID`、`PPID=1`）——runner 再重啟也帶不走它；全程**零新增 Engine
+  reset**，`rc=0` 收官（07:09）。
+
+| 指標            | 第二輪                               | **第三輪**                                                   |
+| --------------- | ------------------------------------ | ------------------------------------------------------------ |
+| loss            | 5.1933 → 0.9108（ep60 觸底）→ 1.0093 | 5.6157 → **1.5832（ep25 谷）** → 3.1115（ep99）              |
+| 訓練／全 run    | 4,839s／7,642s                       | 7,264s／**15,124s**                                          |
+| GPU 穩定性      | `rc=0`、CAT delta 0                  | **`rc=0`、attempt1 一次 bcs reset（見上）、attempt2 零事件** |
+| train exact 200 | 0/200                                | **0/200**                                                    |
+| val exact 200   | 0/200                                | **0/200**                                                    |
+
+Loss 曲線後段回升**跨輪不可比**：R3 的 loss 定義在 SS 混合語境上（p 越大任務越難），ep50 後的爬升是 ramp 讓模型在自產語境上重練的直接效應，不是「練壞了」。
+
+### 2. 分離指標：答案段繼續升、記憶腰斬、狀態段首次鬆動
+
+同支程式（`split_tf_accuracy`）、同列集合重測；重測先在 R1/R2 上逐位重現了 §十.2 的已發布值（19.51／22.71／90.16…）才讀 R3，跨輪比較有效：
+
+| 列集合（同碼同列）            | R1 `resp_tf` | R2 `resp_tf` | **R3 `resp_tf`** | R1→R3 tail（R3）        |
+| ----------------------------- | ------------ | ------------ | ---------------- | ----------------------- |
+| val 進得去 ≤192（400 列）     | 19.51%       | 22.71%       | **24.52%**       | 78.35 → 76.42（76.42%） |
+| val 進得去 ≤384（767 列）     | 14.73%       | 23.47%       | **25.86%**       | 78.23 → 76.31（76.31%） |
+| train 前 600 列（≤192，記憶） | 90.16%       | 72.33%       | **48.61%**       | 81.52 → 76.39（76.39%） |
+
+三件事照實寫：
+
+1. **答案段（AI 側）在同列上再動 1.8～2.4 個百分點**（23.47 →
+   25.86），兩個 val 列集合方向一致——SS 更換訓練目標在 teacher-forced 答案段**確實持續起作用**（R1→R3 累計 +5～+11pp）。但 25.86% 離 exact 仍是同一個量級的差：**exact 要每發全中，26% 的逐 token 命中率抽不出整串全對**——即使 free-running 與 teacher 分佈完全對齊也做不到。
+2. **記憶端大幅讓位**（train600 90.16 → 72.33 →
+   **48.61%**）：SS 把近半訓練訊號移到自產語境，gold-context 的訓練列擬合直線下降；val 升 train 降，泛化/記憶缺口收窄，但代價是記憶腰斬。
+3. **狀態段 78% 首次鬆動**（四種條件七個測點全在 78±0.4
+   → 全部跌到 76.3-76.4）：d1024+SS 讓狀態塊終於開始**區分模型**，不再完全飽和。但它與答案段仍差 2.9 倍（76%
+   vs 26%），聚合數字照樣主要在量它。
+
+### 3. 對照表重測（`probe_core_control.py`，2026-10-31，同題同評分）
+
+只換 `--token-checkpoint data/checkpoints/ai_al_round3.pt`，其餘四欄不變：
+
+| suite     | n   | 表現層 | GARDEN | ED3N | **TOK-SNN（ai_al_round3）** | LLM（Qwen2.5-1.5B） |
+| --------- | --- | ------ | ------ | ---- | --------------------------- | ------------------- |
+| math      | 40  | 80%    | 0%     | 0%   | **0%**                      | 68%                 |
+| knowledge | 15  | 53%    | 0%     | 0%   | **0%**                      | 73%                 |
+| code      | 10  | 0%     | 0%     | 0%   | **0%**                      | 90%                 |
+| routing   | 10  | 100%   | 0%     | 0%   | 0%                          | 0%                  |
+
+**照實寫：0/75——R1 0/40、R2 0/75、R3 0/75，三輪同一個 0。** 生成樣本（`math-001`
+`What is 3 + 5 * 2?`）與第二輪同構：
+
+```
+Q: What is 3 + 5 * 2?
+tok: The 1verage 5]
+     <al_out> v=0.21 a=0.4 d=0.37 fatigue=0.33 stress=0.37 health=0.86
+```
+
+`<al_out>` 狀態塊仍是欄位、順序、數值範圍全對（tail
+76% 的實體），答案句仍是字詞湯（response
+26% 的實體）——**格式與綁定的 2.9 倍差距跨三輪未變**。
+
+### 4. MVE 判讀（湧現界線的門檻：compositional holdout exact ≥5/200、亂配對照 ≤1/200）
+
+- **儀器尚未建置**：compositional
+  holdout 題組與亂配對照組還不存在——那是下一步「湧現界線（可測得的最低限度湧現）」要先建的東西，本輪無法做完整判讀。
+- **現有最接近的代理指標全部不達標**：val free-running exact **0/200 <
+  5/200**（與 R1/R2 持平）；凍結對照表 **0/75**（同上）。
+- **結論照實寫**：容量＋目標這一格**只動了 teacher-forced 分佈**（§十.2 的三個列集合全部印證），free-running 與對照表一個數字都沒動。曝光偏差被 ramp 緩解了 2.4pp，但當前主要矛盾不是它——**答案段 teacher-forced 本身只有 26%**，每發四中一，先跨過這個才輪得到 exact。
+
+### 5. 循環（第二半）第一次完整實跑
+
+`scripts/ai_al_round_loop.py` 第三輪全程
+`train_rc=0 → generate_rc=0 → prepare_rc=0 → check_rc=0`：`--skip 4000`
+取 core_train **沒用過的新切片** （不是重複同一批問題），寫進獨立的
+`ai_al_round4_{dataset,train,val,manifest}` 四個檔案（sha256 記錄在
+`data/intelligence_reports/ai_al_round3_loop.json`），`--check`
+roundtrip 通過。**第四輪批次就緒但不自動啟動**——下輪換什麼變因仍是人的決定（且狀態行 schema≠生產快照 v2 的開放項排在第四輪，見 ISSUES
+§十.6）。
+
+### 6. 這一輪回答了什麼
+
+1. **「容量＋目標是瓶頸」只對了一半**：它在 teacher-forced 答案段持續有效（23.47
+   →
+   25.86，兩個 val 列集合一致），但**沒有兌現成任何一個 free-running 數字**（exact
+   0/200、對照表 0/75 三輪持平）。
+2. **資料側三重確認不再是變因**：資料量 27×（Run
+   B）、資料格式（§十94% 列）、本輪資料原封不動——三種走法同一個 0。
+3. **下一個要動的不是訓練輪**：resp_tf
+   26% 意味著就算零曝光偏差也抽不出 exact；在動第四輪的變因之前，要先建**能測的湧現界線儀器**（compositional
+   holdout＋亂配對照），否則下一個 0 與這三個無法區分。
+4. **循環閉環可用**：訓練→自動產下一批資料→校驗→manifest 一條龍通過，數據始終取自專案語料（`core_train.jsonl`
+   新切片），不脫離專案所需。
+5. **及格線、評測題、規則照舊沒動**，洩漏門未觸碰，**官方核心分維持0.00/10**。
