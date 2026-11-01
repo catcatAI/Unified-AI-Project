@@ -925,6 +925,100 @@ token 視窗判準用 `tokenize == vocab.encode`
   `exact`，報告 schema 可比），但判準嚴格了一層：舊 family 命中在新判準下是
   `wrong_rung`，不算過。
 
-題組已用新 schema 重建並 `--check` 通過（200 holdout ＋ 120 reference）。
-**新 baseline 尚未跑**：舊的 0/200 是 v1.0.0
-family 判準下的讀數，不能拿來宣稱「single-gold 也是 0」；下一個 0 或第一個 ≥5 要用新題組重跑才算數。
+題組已用新 schema 重建並 `--check` 通過（200 holdout ＋ 120
+reference）。**新 baseline 已於 2026-11-01 用 round-4 checkpoint 重跑**（v1.1.0
+single-gold 首讀：holdout 0/200、rotation
+0/200，見 §十三.3）——舊的 0/200 是 v1.0.0 family 判準的讀數，兩者不可直接比。
+
+## 十三、AI+AL 第四輪：MVE schema 單變因——single-gold 首讀 0/200，瓶頸定位到格式層（2026-11-01）
+
+§十二.4 留給人的兩個決定（dt 進輸入、裁切 cell）**都做了**——第四輪的單一變因就是這個
+**MVE schema 包**，本輪是它的驗收輪：
+
+| 變因        | 第三輪                                             | **第四輪**                                                                                                                                                                                                              |
+| ----------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 輸入 schema | `v a d fatigue stress health mode intent`（無 dt） | **＋`dt=`**（`generate_al_dataset.py --expose-dt`）                                                                                                                                                                     |
+| 組合軸裁切  | 無（seen-cell baseline）                           | **裁 5 個 `(intent × mode)` cell**（`--holdout-cells`：`unknown:conservative`、`knowledge_query:neutral`、`math_query:exploratory`、`humor:conservative`、`greeting:neutral`；farewell 仍刻意不在——全語料 16 列填不滿） |
+
+不變項：同起點重生成（`--skip 4000`、seed 7、`id_prefix r4_`）、epochs 100、lr
+3e-3、batch 32、d-emb 96、d-hidden 1024、max_len 384、tail-weight
+0.25、`--ss-final 0.5`、XPU＋`--eval-on-cpu`、評測題、及格線。
+
+### 1. 資料（雙 `--check` 全過）
+
+`ai_al_round4_{dataset,train,val,manifest}` 重生成：**3,952 列**（train
+3,095／val 857），dt 在輸入行 **3,952/3,952**、輸出側 **0 洩漏**、5 個 carved
+cell 在 dataset 與 train/val 全 **0 列**（本輪復驗同數）；儀器題組 v1.1.0 重建
+`--check`
+逐位一致（`apps/backend/data/processed/mve1_emergence_boundary.json`）。dataset
+provenance 記錄
+`skip=4000`、`holdout_cells`、`holdout_carved`、`expose_dt=true`。
+
+### 2. 訓練（一次 XPU 故障、一次重開機中斷，attempt2 收官）
+
+兩次中斷照實寫：
+
+- **attempt1 死於遊戲佔卡**：使用者遊戲（Arc B570）佔用期間 XPU
+  `UR_RESULT_ERROR_DEVICE_LOST`——不動遊戲、不擅自切 CPU；證據歸檔
+  `data/intelligence_reports/ai_al_round4_loop.attempt1-xpu-lost.log`。另機器 15:37 重開機把自動重啟 watcher 一併殺掉（log 只剩啟動行），改手動重啟。
+- **attempt2（16:57:50 起，`setsid`
+  獨立 session）**：全程零事件，21:53:42 收官，`train_rc=0`。
+
+| 指標            | 第三輪                                     | **第四輪**                                                                 |
+| --------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
+| loss            | 5.6157 → 1.5832（ep25 谷）→ 3.1115（ep99） | 5.6830 → **1.5970（ep26 谷）** → 3.1249（ep99）                            |
+| 訓練／全 run    | 7,264s／15,124s                            | **5,935s／17,748s**（eval ~2.5h 在 CPU；pre-eval save 防 B570 評估期掛掉） |
+| GPU 穩定性      | `rc=0`、attempt1 一次 bcs Engine reset     | `rc=0`、attempt1 XPU DEVICE_LOST（遊戲佔卡，見上）                         |
+| train exact 200 | 0/200                                      | **0/200**                                                                  |
+| val exact 200   | 0/200                                      | **0/200**                                                                  |
+
+Loss 曲線形狀與主輪幾乎重疊（同超參、同 SS
+ramp）——跨輪差異不在訓練動力學。teacher-forced 分離指標：`response_tf`
+23.72%、`tail_tf` 76.02%——**列集合已變**（新切片＋carve，val_fit 790 vs
+R3 的 767），R3 §十一.2 的「同列重測」面板不可延用，此處只作方向參考。
+
+### 3. 讀數：MVE-1 single-gold 首讀（v1.1.0 判準）
+
+`--probe --checkpoint data/checkpoints/ai_al_round4.pt`、`--set all`（200
+holdout ＋ 120 reference）、XPU、558.5s、2026-11-01：
+
+| 量                                     | 值                                                                                                                          |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **gate：holdout exact（single gold）** | **0/200**（≥5 才過）                                                                                                        |
+| **gate：rotation 對照**                | **0/200**（≤1 才過）→ 對照乾淨                                                                                              |
+| reference（seen cell）                 | 0/120                                                                                                                       |
+| **dt 條件化**                          | `exact_rung 0`／`wrong_rung 0`／**`no_match 320`**                                                                          |
+| format_ok（6 欄位＋mode＋intent）      | 31/320（R3 v1.0.0 為 106/320）                                                                                              |
+| `<al_out>` 出現                        | 192/320（R3 為 248/320）                                                                                                    |
+| 欄位值命中（single-gold，/320）        | a 13、d 3、fatigue 6（v／stress／health 0）                                                                                 |
+| rung 分佈                              | 每 rung 80 列平衡；hits 全 0                                                                                                |
+| carved / text_overlap                  | `training_cell_rows` 只剩 round-1 遺留檔（751／233 列）——**round-4/5 檔 0 列＝carve 生效**；重疊 **0**（6 份 train/val 檔） |
+
+判準版本與題組 prompt 都已換（v1.0.0 family → v1.1.0
+single-gold、輸入加 dt），數字只作方向參考，不與 §十二.3 直接比。照實寫兩點：
+
+1. **0 是真 0，但分層位置變了**：`no_match 320`＝模型連一個合法狀態塊都沒寫出來——還沒走到「拿到 dt 卻忽略」（`wrong_rung`）那格可判讀的位置；按 §十二 讀法表，現在在**任務/格式缺口**格，不在組合缺口格。dt 進輸入把門檻變得可測了，但格式層先擋在前面。
+2. **格式層比 R3 還退**：format_ok 106→31、marker
+   248→192（跨版本僅方向性）——carve＋新切片改了訓練分佈，格式穩定性沒跟上；這是本輪單變因的**副作用**，下輪動變因前要先解釋它。
+
+### 4. 循環：四個 rc 全 0，round-5 批次就緒未啟動
+
+`ai_al_round_loop.py` round
+4：`generate_rc=0 → prepare_rc=0 → check_rc=0 → train_rc=0`（loop record
+`data/intelligence_reports/ai_al_round4_loop.json`，總 17,751.9s）。下一批**同 schema**（carve＋`--expose-dt`）已產出**未啟動**：`ai_al_round5_dataset.json`、`--skip 50000`（core_train
+`<50000` 才有稀有 intent 的已知取捨）、rows 5,200、seed
+7、四個 sha256 記錄在 loop
+record——launch 仍是人的決定。狀態行 schema≠生產快照 v2（ISSUES
+§五.6）**未動**：本輪單變因是 MVE
+schema，快照接線照舊排後、與 AL 側工作對齊後一起切。
+
+### 5. 這一輪回答了什麼
+
+1. **dt 進輸入＋裁 cell 沒有立刻打開湧現門**：single-gold
+   0/200、對照 0/200、reference
+   0/120——門檻現在可測且對照乾淨，這是一個確定的 0。
+2. **瓶頸明確移到格式層**：`no_match 320`＋format
+   31/320——先讓模型穩定寫出合法狀態塊，才輪得到「dt 有沒有被用」的判讀；組合泛化讀數要等格式層跨過去才有效。
+3. **凍結對照表（`probe_core_control`）本輪未重測**：判讀儀器換成 MVE-1
+   single-gold（§十二.5）；及格線、評測題、規則照舊沒動，**官方核心分維持 0.00/10**。
+4. **循環繼續一條龍**：訓練→自動產下一批（同 schema、新切片、sha 記錄）→校驗通過，數據始終取自專案語料（`core_train.jsonl`），不脫離專案所需。

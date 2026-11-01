@@ -120,7 +120,7 @@ epochs），同列重測答案段 teacher-forced **19.51% →
 | 知識               | knowledge 15 題（strict）                      | **8 對、5 錯、2 棄權**；正確的 8 題**全部是 lookup**；ablation：全開 8 / 只精選庫 5 / 知識層關掉 0 → 知識層加持 **+3**（wiki 評分修復 2026-10-24，見 `CORE_GAP_ANALYSIS` 同日記錄） |
 | 思考               | math 40／routing 10                            | math 32 對（全 computed）、routing 10 對（全分類器標籤）                                                                                                                            |
 | 學習               | `probe_neural_learning`                        | 教後 0%、刪來源後 0% → **FAIL**                                                                                                                                                     |
-| 學習（改述中間層） | `probe_paraphrase`（`heldout_final` 才是分數） | 盲測 75%（4 個沒教過、機制凍結後才寫的說法；42/56，過 70% 及格線）；教過的詞＋新句子 100% 只算回想；開發診斷 87.5% |
+| 學習（改述中間層） | `probe_paraphrase`（`heldout_final` 才是分數） | 盲測 75%（4 個沒教過、機制凍結後才寫的說法；42/56，過 70% 及格線）；教過的詞＋新句子 100% 只算回想；開發診斷 87.5%                                                                  |
 | 表層               | `trace_reply` 7 句                             | 5 句模板或回聲、1 句查表＋外殼、1 句計算；**0 句產生**                                                                                                                              |
 | 防洩漏             | `census_reply_provenance --check`              | 答對裡**預存命中 0**（serve-time 包了 template／rule-store／memory／dictionary 四類生產者＋按題靜態掃描）→ **VERDICT: 分數不是答案洩漏**                                            |
 
@@ -158,8 +158,7 @@ lookup + 10 classifier 是層的成績）。這不是智能分數，是層的成
 | 任務     | prompt 給到 gold response 為止，free-running 產生 `<al_out>` 狀態塊（合約 §5 的 F 不消費回應文本；設計裁決見 `CORE_GAP_ANALYSIS` §十二）                                                                                                                                                           |
 | 評分     | **exact（single gold）**：`dt` 進輸入行（round-4 schema，`generate_al_dataset.py --expose-dt`），gold 只有對應 rung 一個；4 個 rung 的 family 仍逐列計為 `wrong_rung` 診斷（命中＝模型拿到 dt 卻忽略）。v1.0.0 的 family-exact 已歸檔——rounds 1-3 的 baseline 是在該判準下讀的，與新判準不可直接比 |
 | 對照     | **rotation**：同集合內 i→i+1 輪轉錯配（derangement，零 fixed point，同一份生成物重評分）                                                                                                                                                                                                           |
-| **門檻** | **holdout exact ≥5/200 且 rotation ≤1/200**（兩條件同時；gate 鍵名沿用 family-exact 時代以保持報告 schema 可比；只有 holdout 列入 gate，reference 不入）                                                                                                                                           |
-| 報告     | `data/intelligence_reports/mve1_emergence_boundary.json`：gate、holdout/reference 分組、per_cell、format_ok/marker_ok、field_hits、rung_dist、wrong_rung、carved、text_overlap                                                                                                                     |
+| **門檻** | **holdout exact ≥5/200 且 rotation ≤1/200**（兩條件同時；gate 鍵名沿用 family-exact 時代以保持報告 schema 可比；只有 holdout 列入 gate，reference 不入）                                                                                                                                           |     | 報告 | `data/intelligence_reports/mve1_emergence_boundary.json`：gate、holdout/reference 分組、per_cell、format_ok/marker_ok、field_hits、rows_by_rung/hits_by_rung、dt_conditioning（exact_rung/wrong_rung/no_match）、carved、text_overlap（v1.1.0 鍵名；v1.0.0 時代為 rung_dist） |
 | 層       | 學習 learning（參數改變後在未見組合上的泛化）；**不改變核心分**（官方核心分維持 0.00/10）                                                                                                                                                                                                          |
 
 讀法（先看對照，再看四格）：
@@ -173,7 +172,7 @@ lookup + 10 classifier 是層的成績）。這不是智能分數，是層的成
 
 > **判準版本說明**：下面的首讀是儀器 **v1.0.0 family-exact** 下讀的（round-3
 > checkpoint，`dt` 尚未進輸入）；v1.1.0 起改 single-gold（`dt` 進輸入），
-> **舊數字不可與新判準直接比**，需用新題組重跑才有可比 baseline。
+> **舊數字不可與新判準直接比**。新判準首讀已補（2026-11-01，round-4，見下）。
 
 **首讀（2026-10-31，`ai_al_round3.pt`，XPU
 563.4s，`--set all`，v1.0.0 判準）**：holdout **0/200**、rotation
@@ -183,3 +182,12 @@ lookup + 10 classifier 是層的成績）。這不是智能分數，是層的成
 8（共 320）、rung 分佈全 none；`carved=False`（rounds
 1-3 訓練含全部 cell）、`text_overlap=0`。解讀：對照乾淨（0）＋格式在動（33% 全欄位，與 tail
 76% 一致）＋**逐字 2dp 狀態列一個都沒寫出來**——同一個 0 從此分層可讀。
+
+**single-gold 首讀（2026-11-01，`ai_al_round4.pt`，XPU
+558.5s，`--set all`，v1.1.0 判準）**：holdout **0/200**、rotation
+**0/200**、reference **0/120** → gate
+FAIL。`dt_conditioning`：`exact_rung 0`／`wrong_rung 0`／**`no_match 320`**——模型連一個合法狀態塊都沒寫出來，還沒走到「拿到 dt 卻忽略」（wrong_rung）那格可判讀的位置，按上表讀法在**任務/格式缺口**格。format_ok
+31/320、`<al_out>` 192/320、欄位值命中（single-gold）a 13／d 3／fatigue
+6（v、stress、health 0）、每 rung 80 列平衡且 hits 全 0；`training_cell_rows`
+只剩 round-1 遺留檔（751／233 列），**round-4/5 檔 0 列＝carve 生效**、`text_overlap=0`（6 份 train/val 檔）。與 v1.0.0 首讀不可直接比（判準與 prompt 均已換）；讀數與解讀全文見
+`CORE_GAP_ANALYSIS` §十三。
