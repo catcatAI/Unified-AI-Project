@@ -56,12 +56,15 @@
 | L3-2 工具呼叫       | `pytest tests/services/test_handlers.py`                                               | 100%                                          | **60 passed**                                                                                                                                       | ✅                                                                    |
 | 整體回歸            | `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/`                               | 0 failed                                      | **8,688 passed / 112 skipped / 0 failed**                                                                                                           | ✅                                                                    |
 
-> **統一總分（2026-10-23 實測）**：`python scripts/report_intelligence.py` →
-> **≈5.5/10（平均，落在 L2 帶）**（每次重跑會因對話探針的隨機性小幅變動，以
+> **統一總分（2026-10-31 實測）**：`python scripts/report_intelligence.py` →
+> **6.25/10（系統分；每次重跑會因對話探針的隨機性小幅變動，以
 > `intelligence_report.json`
-> 為準），但**達成的階梯是 L0**（L1 的關鍵度量改述泛化 35.7%）。六個維度對**外部推導的及格線**是 4 過 2 不過：paraphrase
-> 36% < 70%（PAWS 規則）、tools 0% < 54%（BFCL 規則）；facts
-> 46.7%（MMLU 規則，離線百科索引）、math／dialogue／boundary 過。及格線不是我訂的，是從公開基準算的（`INTELLIGENCE_PASS_CRITERIA.md`）。這是本文件 L0–L3 之外唯一該引用的「智能總分」——下面這張表的每一列是
+> 為準）**，**系統階梯達到 L2**（L1／L2 的關鍵維度逐項過門檻：改述泛化 75.0%、對話
+> 78.0%、邊界 88.9%）。六個維度對**外部推導的及格線**是 5 過 1 不過：tools 0% <
+> 54%（BFCL 規則，原生後端沒有代碼生成）；facts 53.3%（MMLU
+> 規則，離線百科索引）、math／paraphrase／dialogue／boundary 過。**核心分仍是
+> 0.00/10、核心階梯仍是 L0**——6.25 的正確答案全部由查表／計算／分類器／模板產生，沒有一個是
+> SNN/LLM 生成。及格線不是我訂的，是從公開基準算的（`INTELLIGENCE_PASS_CRITERIA.md`）。這是本文件 L0–L3 之外唯一該引用的「智能總分」——下面這張表的每一列是
 > **各閘的實測**，不是總分的成分（統一定義的六個維度見
 > `INTELLIGENCE_ASSESSMENT.md §0`）。
 

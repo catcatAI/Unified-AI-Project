@@ -120,7 +120,7 @@ epochs），同列重測答案段 teacher-forced **19.51% →
 | 知識               | knowledge 15 題（strict）                      | **8 對、5 錯、2 棄權**；正確的 8 題**全部是 lookup**；ablation：全開 8 / 只精選庫 5 / 知識層關掉 0 → 知識層加持 **+3**（wiki 評分修復 2026-10-24，見 `CORE_GAP_ANALYSIS` 同日記錄） |
 | 思考               | math 40／routing 10                            | math 32 對（全 computed）、routing 10 對（全分類器標籤）                                                                                                                            |
 | 學習               | `probe_neural_learning`                        | 教後 0%、刪來源後 0% → **FAIL**                                                                                                                                                     |
-| 學習（改述中間層） | `probe_paraphrase`（`heldout_final` 才是分數） | 盲測 50%（4 個沒教過、機制凍結後才寫的說法）；教過的詞＋新句子 100% 只算回想                                                                                                        |
+| 學習（改述中間層） | `probe_paraphrase`（`heldout_final` 才是分數） | 盲測 75%（4 個沒教過、機制凍結後才寫的說法；42/56，過 70% 及格線）；教過的詞＋新句子 100% 只算回想；開發診斷 87.5% |
 | 表層               | `trace_reply` 7 句                             | 5 句模板或回聲、1 句查表＋外殼、1 句計算；**0 句產生**                                                                                                                              |
 | 防洩漏             | `census_reply_provenance --check`              | 答對裡**預存命中 0**（serve-time 包了 template／rule-store／memory／dictionary 四類生產者＋按題靜態掃描）→ **VERDICT: 分數不是答案洩漏**                                            |
 

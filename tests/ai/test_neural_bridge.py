@@ -153,6 +153,49 @@ def test_the_bridge_generalises_beyond_the_teacher(
     assert expected.lower() in answer.lower()
 
 
+@pytest.mark.parametrize(
+    "question,expected",
+    [
+        # "outshone"/"outdone" already score *lesser* in the encoder, while
+        # "beaten" scores greater: inverting the encoder's guess made the same
+        # construction right or wrong by luck.
+        (
+            "Quinn is outshone by the pearl, the pearl is outshone by the feather, "
+            "who is the greatest?",
+            "feather",
+        ),
+        ("X is outdone by Y, Y is outdone by Z, who is the greatest?", "Z"),
+        ("X is beaten by Y, Y is beaten by Z, who is the greatest?", "Z"),
+        # A phrase the curriculum aligned keeps its taught direction.
+        ("X is outclassed by Y, Y is outclassed by Z, who is the greatest?", "Z"),
+        ("X is exceeded by Y, Y is exceeded by Z, who is the greatest?", "Z"),
+    ],
+)
+def test_a_passive_sets_the_direction_by_grammar(
+    bridge: NeuralBridge, question: str, expected: str
+) -> None:
+    """In "A is <verb> by B" the subject is the one being surpassed.
+
+    The direction is the construction's, not the encoder's: the same shape
+    must not be right or wrong depending on which sense the encoder happens
+    to read for the participle. A curriculum-aligned passive keeps the
+    direction it was taught.
+    """
+    answer = bridge.answer(question)
+    assert answer is not None
+    assert expected.lower() in answer.lower()
+
+
+def test_an_unseen_passive_is_lesser_whatever_the_participle(bridge: NeuralBridge) -> None:
+    """Pin the mechanism, not only the answer: every passive edge is lesser."""
+    for participle in ("outshone", "outdone", "beaten", "dwarfed"):
+        relations = bridge.find_relations(
+            f"A is {participle} by B, B is {participle} by C, who is the greatest?"
+        )
+        assert relations, participle
+        assert [concept[1] for _, concept, _ in relations] == [LESSER, LESSER], participle
+
+
 def test_the_bridge_refuses_a_question_of_another_dimension(bridge: NeuralBridge) -> None:
     """A size chain cannot answer "who is the coldest"."""
     assert (

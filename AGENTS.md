@@ -1212,6 +1212,30 @@ collected — 0 errors**).
 > JS 語法 ✓、electron 語法 ✓。全部實測重跑（bench＋census＋report
 > --from-cache），pytest 全量過。
 
+> ✅ **NOTE (Updated 2026-11-01, 改述泛化過線)**: **§X #278**: 改述（L1
+> 唯一缺口）由 **50% → 75%**（42/56，過 70% 外部及格線），**系統階梯 L0 → L2**。方法是修一個**實作
+> bug**，不是調門檻、不是在 held-out 上調參。失敗的 28 題
+> **100%** 集中在兩個說法（`outranks`／`is outshone by`），極性錯誤完全一致 → 系統性方向判斷錯。根因：既有的被動反轉反的是
+> **編碼器的猜測**，而編碼器對 `outshone` 本來就讀成
+> lesser（反轉後變 greater＝雙重否定）、對 `beaten` 讀成 greater（反轉才剛好對）——同一個構句的對錯取決於編碼器猜哪一邊。修法：**被動語態由文法決定方向**（`A is <verb> by B` → A <
+> B），編碼器不投票；課程對齊過的被動片語（`is exceeded by`／`is
+> outclassed by`）仍保留教過的方向。移除 `len(bare_phrase.split()) <= 1`
+> 限制（原意是保護片語式被動，但片語式被動本來就有獨立處理）。實測：`heldout_final`
+> 50%→**75%**、`unseen_surfaces` 81%→**88%**、`heldout_dimensions`
+> 89%→**100%**、`test` 維持 100%（無迴歸）。**殘留照實記**：14 題
+> `outranks`（主動語態的未知動詞，編碼器把 lesser 0.657／greater
+> 0.655 讀成幾乎並列，沒有文法線索）仍失敗；`tools`
+> 仍 0（原生後端無代碼生成，`run_benchmarks.py` 對 code 直接回
+> `""`，是設計上的誠實失敗）→ 系統階梯卡在 L2，未到
+> L3。**核心分仍 0.00/10、核心階梯仍 L0**（改述是編碼器＋確定性組合，不計核心）。系統分
+> **5.86 → 6.25**（同時因重跑把先前落後的 wiki 評分修正一併帶入：knowledge
+> 7→8/15、knowledge_mc 40/40、facts 4.7→5.3）。測試：`tests/ai/test_neural_bridge.py`
+> +6（5 個 parametrize＋1 個「每個被動邊都是 lesser」的機制測試），該檔
+> 38 passed；`tests/ai/`＋`tests/core/`＋`tests/test_run_benchmarks.py` 共
+> 5,363 passed；全量 `pytest tests/ apps/backend/tests/` = **9,065 passed / 107
+> skipped / 0 failed**；`check_fact_gates.py` **ALL PASS**（含
+> `benchmarks.paraphrase_benchmark_wellformed`）；black／isort／flake8 乾淨。文件同步：`INTELLIGENCE_ASSESSMENT.md`、`INTELLIGENCE_PASS_CRITERIA.md`、`MEASUREMENT_MAP.md`、`AI_CAPABILITY_LADDER.md`、`NATIVE_BASE_MODEL_MAP.md`、`intelligence_report.json`。
+
 ### JavaScript/TypeScript
 
 ```bash

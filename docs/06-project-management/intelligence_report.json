@@ -3,8 +3,8 @@
     "facts": 0.5333,
     "math": 0.8,
     "tools": 0.0,
-    "paraphrase": 0.5,
-    "dialogue": 0.7939333333333334,
+    "paraphrase": 0.75,
+    "dialogue": 0.7800333333333334,
     "boundary": 0.8889
   },
   "thresholds": {
@@ -39,7 +39,7 @@
         "url": "https://aclanthology.org/N19-1131/",
         "protocol": "analogous"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     "dialogue": {
       "pass_line": 0.4395,
@@ -77,16 +77,16 @@
   },
   "diagnostics": {
     "改述（教過詞、新句子）": 1.0,
-    "改述（沒教過的詞，開發診斷）": 0.8125
+    "改述（沒教過的詞，開發診斷）": 0.875
   },
   "sources": {
     "deterministic": 421,
-    "neural": 252,
+    "neural": 246,
     "other": 10,
-    "retrieval": 32,
-    "template": 381
+    "retrieval": 27,
+    "template": 392
   },
-  "source_verdict": "非模板來源佔比 23% ≥ 20%：有一部分回答不是模板（但見下方核心佔比）",
+  "source_verdict": "非模板來源佔比 22% ≥ 20%：有一部分回答不是模板（但見下方核心佔比）",
   "gaps": {
     "知識缺口（標準集 state 類）": 0.0
   },
@@ -139,7 +139,7 @@
     "knowledge": {
       "n": 15,
       "surface_task": false,
-      "performance": 0.4666666666666667,
+      "performance": 0.5333333333333333,
       "coverage": {
         "performance": 0.8666666666666667,
         "snn": 0.0,
@@ -148,7 +148,7 @@
         "llm": 1.0
       },
       "accuracy_answered": {
-        "performance": 0.5384615384615384,
+        "performance": 0.6153846153846154,
         "snn": null,
         "ed3n": 0.0,
         "tok": 0.0,
@@ -234,7 +234,7 @@
         "performance": 1.0,
         "snn": 0.0,
         "ed3n": 1.0,
-        "tok": 0.8,
+        "tok": 1.0,
         "llm": 1.0
       },
       "accuracy_answered": {
@@ -248,14 +248,14 @@
         "performance": 10,
         "snn": 0,
         "ed3n": 10,
-        "tok": 8,
+        "tok": 10,
         "llm": 10
       },
       "distinct": {
         "performance": 6,
         "snn": 0,
         "ed3n": 10,
-        "tok": 8,
+        "tok": 10,
         "llm": 10
       },
       "snn": 0.0,
@@ -362,7 +362,7 @@
       "knowledge": {
         "n": 15,
         "surface_task": false,
-        "performance": 0.4666666666666667,
+        "performance": 0.5333333333333333,
         "coverage": {
           "performance": 0.8666666666666667,
           "snn": 0.0,
@@ -371,7 +371,7 @@
           "llm": 1.0
         },
         "accuracy_answered": {
-          "performance": 0.5384615384615384,
+          "performance": 0.6153846153846154,
           "snn": null,
           "ed3n": 0.0,
           "tok": 0.0,
@@ -457,7 +457,7 @@
           "performance": 1.0,
           "snn": 0.0,
           "ed3n": 1.0,
-          "tok": 0.8,
+          "tok": 1.0,
           "llm": 1.0
         },
         "accuracy_answered": {
@@ -471,14 +471,14 @@
           "performance": 10,
           "snn": 0,
           "ed3n": 10,
-          "tok": 8,
+          "tok": 10,
           "llm": 10
         },
         "distinct": {
           "performance": 6,
           "snn": 0,
           "ed3n": 10,
-          "tok": 8,
+          "tok": 10,
           "llm": 10
         },
         "snn": 0.0,
@@ -499,12 +499,12 @@
       "performance": "lookup/rules/templates (NativeBackend)",
       "snn": "GARDEN engine (ok)",
       "ed3n": "ed3n_core.json (ok)",
-      "tok": "token_snn.pt (ok)",
+      "tok": "ai_al_round3.pt (ok)",
       "llm": "qwen2.5-1.5b-instruct-q4_k_m.gguf (ok; mode=chat, gpu_layers=-1)"
     },
-    "generated_at": "2026-10-24T12:42:13"
+    "generated_at": "2026-10-31T13:34:38"
   },
-  "system_score": 5.86,
+  "system_score": 6.25,
   "core_score": 0.0,
   "integrity": {
     "sample_valid": true,
@@ -513,20 +513,42 @@
     "problems": []
   },
   "result": {
-    "score": 5.86,
+    "score": 6.25,
     "status": "measured",
-    "band": "L2 本地可用",
-    "band_summary": "多輪對話不跑題，記憶／推理／多模態能串起來當助手用",
-    "attained_level": "L0",
-    "level_missing": ["paraphrase 5.0/10 < 7.0/10"],
-    "failed_dimensions": ["paraphrase 5.0/10 < 7.0/10", "tools 0.0/10 < 5.4/10"],
+    "band": "L3 LLM 編排",
+    "band_summary": "自然對話、工具調用、多智能體協作",
+    "attained_level": "L2",
+    "level_missing": [
+      "tools 0.0/10 < 5.4/10"
+    ],
+    "failed_dimensions": [
+      "tools 0.0/10 < 5.4/10"
+    ],
     "counted": [
-      ["facts", 0.5333],
-      ["math", 0.8],
-      ["paraphrase", 0.5],
-      ["dialogue", 0.7939],
-      ["boundary", 0.8889],
-      ["tools", 0.0]
+      [
+        "facts",
+        0.5333
+      ],
+      [
+        "math",
+        0.8
+      ],
+      [
+        "paraphrase",
+        0.75
+      ],
+      [
+        "dialogue",
+        0.78
+      ],
+      [
+        "boundary",
+        0.8889
+      ],
+      [
+        "tools",
+        0.0
+      ]
     ],
     "skipped": [],
     "integrity": "量測有效（樣本有效性 ✅／少量-標準量一致性 ✅／非空轉 ✅）"

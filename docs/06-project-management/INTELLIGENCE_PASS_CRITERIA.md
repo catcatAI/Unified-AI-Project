@@ -23,33 +23,44 @@
 
 | 維度                               | 外部基準（引用）                                                                                           | 公布錨點                                                                 | 規則 → 及格線                                    | 本專案實測 | 判定    |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------ | ---------- | ------- |
-| **facts** 事實與知識               | MMLU（Hendrycks et al., 2020, [arXiv:2009.03300](https://arxiv.org/abs/2009.03300)）                       | 4 選項隨機 25%；非專家 34.5%；**專家 89.8%**                             | R1：25% + 20pp = **45%**（R2 = 44.9%，取大）     | 46.7%      | ✅ PASS |
+| **facts** 事實與知識               | MMLU（Hendrycks et al., 2020, [arXiv:2009.03300](https://arxiv.org/abs/2009.03300)）                       | 4 選項隨機 25%；非專家 34.5%；**專家 89.8%**                             | R1：25% + 20pp = **45%**（R2 = 44.9%，取大）     | 53.3%      | ✅ PASS |
 | **math** 数理與邏輯                | GSM8K（Cobbe et al., 2021, [arXiv:2110.14168](https://arxiv.org/abs/2110.14168)；GPT-4 TR 2023 Table 2）   | 已發表強基線 **87.3%**（Chinchilla+SFT+ORM-RL）；GPT-4 92.0% ※含污染註記 | R3：0.7 × 87.3% = **61.1%**                      | 80.0%      | ✅ PASS |
-| **paraphrase** 改述泛化（L1 關鍵） | PAWS（Zhang et al., 2019, [N19-1131](https://aclanthology.org/N19-1131/)）                                 | 二元隨機 50%；**人類一致度 92.0%**（QQP）／94.7%（Wiki）；訓練後模型 85% | R1：50% + 20pp = **70%**（R2 = 46%，取大）       | 35.7%      | ❌ FAIL |
-| **dialogue** 對話與記憶（L2 關鍵） | LoCoMo（Maharana et al., ACL 2024, [2024.acl-long.747](https://aclanthology.org/2024.acl-long.747/)）      | **人類 87.9**（長對話 QA F1）；最佳 LLM 51.6                             | R2：0.5 × 87.9% = **44.0%**（高於隨機地板 20%）  | 75.7%      | ✅ PASS |
+| **paraphrase** 改述泛化（L1 關鍵） | PAWS（Zhang et al., 2019, [N19-1131](https://aclanthology.org/N19-1131/)）                                 | 二元隨機 50%；**人類一致度 92.0%**（QQP）／94.7%（Wiki）；訓練後模型 85% | R1：50% + 20pp = **70%**（R2 = 46%，取大）       | 75.0%      | ✅ PASS |
+| **dialogue** 對話與記憶（L2 關鍵） | LoCoMo（Maharana et al., ACL 2024, [2024.acl-long.747](https://aclanthology.org/2024.acl-long.747/)）      | **人類 87.9**（長對話 QA F1）；最佳 LLM 51.6                             | R2：0.5 × 87.9% = **44.0%**（高於隨機地板 20%）  | 78.0%      | ✅ PASS |
 | **boundary** 推理與例外            | FOLIO（Han et al., EMNLP 2024, [2024.emnlp-main.1229](https://aclanthology.org/2024.emnlp-main.1229/)）    | 三值隨機 33.3%；非專家 61.8%；**專家 96.0%**；GPT-4 64.2%（CoT 68.9%）   | R1：33.3% + 20pp = **53.3%**（R2 = 48.0%，取大） | 88.9%      | ✅ PASS |
 | **tools** 工具與行動               | BFCL V4（Patil et al., ICML 2025, [leaderboard](https://gorilla.cs.berkeley.edu/leaderboard)，2026-10-22） | Overall **SOTA 77.5%**（Claude Opus 4.5）；中位數約 45%                  | R3：0.7 × 77.5% = **54.2%**                      | 0.0%       | ❌ FAIL |
 
 實測值來源：`scripts/report_intelligence.py`（快照
-`intelligence_report.json`）。**≈5.5/10 平均落在 L2 帶，但達成的階梯是 L0**
-——L1 的關鍵度量（改述泛化）是 35.7%，仍低於 70% 的及格線。
+`intelligence_report.json`）。**系統分 6.25/10，達成的階梯是 L2**（L1／L2
+的關鍵維度逐項過門檻：`paraphrase` 75.0% ≥ 70%、`dialogue` 78.0% ≥
+44%、`boundary` 88.9% ≥ 53.3%）；唯一未達是 `tools` 0.0% < 54.2%。**核心分仍是
+0.00/10、核心階梯仍是 L0**——上面每一列的正確答案都是查表／計算／分類器／模板產生，沒有一個是
+SNN/LLM 生成（見 `INTELLIGENCE_ASSESSMENT.md` 的 provenance 一節）。
 
-facts 的 46.7% 不是靠改門檻：`knowledge` 從 20% 升到 46.7%（7/15），方法是把
+facts 的 53.3% 不是靠改門檻：`knowledge` 從 20% 升到 53.3%（8/15），方法是把
 **公開語料**（Simple English Wikipedia dump，CC BY-SA）索引成離線 SQLite
 FTS5（`scripts/download_knowledge_corpus.py` →
 `scripts/build_knowledge_index.py`），再由 `ai/knowledge/wiki_facts.py`
 抽出回答句；課程與調參都沒有看過評測題。同時修掉一個**誠實度**缺陷：精選知識庫以前會把「只是提到某主體」的問句（`How many continents are there on Earth?`
 問到 earth）回成該主體的顏色（`blue`）——現在只有問句真的在問該屬性時才回答，其餘交給一般層或誠實棄權。兩點限制照實記：(1)
 `knowledge`
-套件的判定是「任一關鍵詞命中」，不是精確答案比對，46.7% 應讀作「7/15 題的答案句含正確關鍵詞」；(2)
+套件的判定是「任一關鍵詞命中」，不是精確答案比對，53.3% 應讀作「8/15 題的答案句含正確關鍵詞」；(2)
 `facts` 取 `min(knowledge, knowledge_mc)`，`knowledge_mc`
-為 95.0%，所以 facts 由 `knowledge` 決定。
+為 100%（40/40），所以 facts 由 `knowledge` 決定。
 
 改述那一格的數字是「**從未教過的關係詞**」上的系統正確率（`scripts/probe_paraphrase.py`
 的 `heldout_final`
 切分）。同一支探測另外量了兩格，刻意不當分數：**教過的詞、新句子 =
 100%**（這是詞彙回想＋組合，不是泛化）， **沒教過的詞、開發診斷 =
-50%**（用來決定要補哪些一般同義詞，偏樂觀）。三者一起看才誠實——只報 100% 就是拿回想冒充泛化。
+87.5%**（用來決定要補哪些一般同義詞，偏樂觀）。三者一起看才誠實——只報 100% 就是拿回想冒充泛化。
+
+**2026-10-31 的 50% → 75% 沒有動門檻、也沒有在 `heldout_final` 上調參**：失敗的 28 題
+100% 集中在兩個說法（`outranks`／`is outshone by`），根因是既有的被動反轉反的是
+「編碼器的猜測」——`outshone` 在編碼器裡本來就讀成 lesser，反轉後變 greater（雙重否定），
+`beaten` 讀成 greater，反轉才剛好對。同一個構句的對錯取決於編碼器猜哪一邊，是實作 bug。
+修法是被動語態由**文法**決定方向（`A is <verb> by B` → A <
+B），課程對齊過的被動片語仍保留教過的方向。剩下 14 題是 `outranks`（主動語態的未知動詞，沒有文法線索），
+照實記為失敗。
 
 ## 三、協定等價性（必須說清楚，否則就是另一種自欺）
 

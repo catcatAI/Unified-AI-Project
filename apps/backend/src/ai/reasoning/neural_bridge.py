@@ -1026,25 +1026,33 @@ class NeuralBridge:
                 continue
             concept_dimension, direction = match[0]
             bare_phrase = phrase[:-3].strip() if phrase.lower().endswith(" by") else phrase
-            if (
-                passive
-                and len(bare_phrase.split()) <= 1
-                and not (
-                    self.matcher.is_known_relation(bare_phrase)
-                    or self.matcher.is_aligned(phrase)
-                    or self.matcher.is_aligned(bare_phrase)
-                )
+            if passive and not (
+                self.matcher.is_known_relation(bare_phrase)
+                or self.matcher.is_aligned(phrase)
+                or self.matcher.is_aligned(bare_phrase)
             ):
-                # Passive voice inverts the comparison: "A is beaten by B"
-                # means A < B, although the participle ("beaten") sits in the
-                # encoder near its active sense. The inversion is grammar,
-                # not a second similarity guess. A phrase the teacher has
-                # aligned ("is exceeded by", "is outclassed by") is exempt:
-                # its passive meaning was taught directly. A phrasal passive
-                # ("is left behind by") is *not* inverted: its particle
-                # already carries the relation ("behind"), and the encoder
-                # reads the whole phrase.
-                direction = LESSER if direction == GREATER else GREATER
+                # The passive construction itself states the direction: in
+                # "A is <verb> by B" the subject A is the one being surpassed,
+                # so A < B whatever the verb was. Grammar decides; the encoder
+                # does not get a vote here.
+                #
+                # Inverting the *encoder's guess* instead made the answer
+                # depend on which sense the encoder happened to read: "beaten"
+                # scores greater (so the inversion fixed it) while
+                # "outshone"/"outdone" already score lesser (so the inversion
+                # flipped a correct reading into a wrong one). The same
+                # construction must not be right or wrong by luck.
+                #
+                # A phrase the teacher aligned ("is exceeded by",
+                # "is outclassed by") is exempt: its passive meaning was
+                # taught directly.
+                #
+                # Known limitation: a passive of a *lesser* verb ("A is
+                # trailed by B" = B trails A) would need the verb's active
+                # direction, which is exactly what is unavailable for an
+                # unseen verb. The layer reads it as lesser and says so here
+                # rather than pretending the encoder resolved it.
+                direction = LESSER
             if negated:
                 # "A is not as short as B" — the negation flips the relation.
                 direction = LESSER if direction == GREATER else GREATER
