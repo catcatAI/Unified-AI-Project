@@ -191,3 +191,12 @@ FAIL。`dt_conditioning`：`exact_rung 0`／`wrong_rung 0`／**`no_match 320`**�
 6（v、stress、health 0）、每 rung 80 列平衡且 hits 全 0；`training_cell_rows`
 只剩 round-1 遺留檔（751／233 列），**round-4/5 檔 0 列＝carve 生效**、`text_overlap=0`（6 份 train/val 檔）。與 v1.0.0 首讀不可直接比（判準與 prompt 均已換）；讀數與解讀全文見
 `CORE_GAP_ANALYSIS` §十三。
+
+**single-gold 第二發（2026-11-02，`ai_al_round5.pt`，XPU
+596.3s，`--set all`，v1.1.0 判準）**：與 R4 **同一份 frozen 320 列儀器**
+→ 可直接比：gate 三項同值 **0/200／0/200／0/120**（pass=False）、`no_match 320`
+續航（exact／wrong 皆 0）、format_ok **31→58**、marker 192→118、field_hits
+**22→31（六欄全出現）**、hits_by_rung 全 0、`text_overlap=0`、`training_cell_rows`
+仍只剩 round-1 遺留檔（carve 在效）。解讀：換新不相交切片後
+**0 複現**；格式行為變動但未過格式關，dt 判讀格仍不可用；全文見
+`CORE_GAP_ANALYSIS` §十四。

@@ -1001,14 +1001,14 @@ single-gold、輸入加 dt），數字只作方向參考，不與 §十二.3 直
 2. **格式層比 R3 還退**：format_ok 106→31、marker
    248→192（跨版本僅方向性）——carve＋新切片改了訓練分佈，格式穩定性沒跟上；這是本輪單變因的**副作用**，下輪動變因前要先解釋它。
 
-### 4. 循環：四個 rc 全 0，round-5 批次就緒未啟動
+### 4. 循環：四個 rc 全 0，round-5 批次就緒（已於 2026-11-01 23:34 啟動，見 §十四）
 
 `ai_al_round_loop.py` round
 4：`generate_rc=0 → prepare_rc=0 → check_rc=0 → train_rc=0`（loop record
 `data/intelligence_reports/ai_al_round4_loop.json`，總 17,751.9s）。下一批**同 schema**（carve＋`--expose-dt`）已產出**未啟動**：`ai_al_round5_dataset.json`、`--skip 50000`（core_train
 `<50000` 才有稀有 intent 的已知取捨）、rows 5,200、seed
-7、四個 sha256 記錄在 loop
-record——launch 仍是人的決定。狀態行 schema≠生產快照 v2（ISSUES
+7、四個 sha256 記錄在 loop record——launch 仍是人的決定（2026-11-01
+23:34 已啟動，見 §十四）。狀態行 schema≠生產快照 v2（ISSUES
 §五.6）**未動**：本輪單變因是 MVE
 schema，快照接線照舊排後、與 AL 側工作對齊後一起切。
 
@@ -1022,3 +1022,66 @@ schema，快照接線照舊排後、與 AL 側工作對齊後一起切。
 3. **凍結對照表（`probe_core_control`）本輪未重測**：判讀儀器換成 MVE-1
    single-gold（§十二.5）；及格線、評測題、規則照舊沒動，**官方核心分維持 0.00/10**。
 4. **循環繼續一條龍**：訓練→自動產下一批（同 schema、新切片、sha 記錄）→校驗通過，數據始終取自專案語料（`core_train.jsonl`），不脫離專案所需。
+
+## 十四、第五輪（2026-11-01 23:34 → 11-02 01:43；probe 11-02 10:44）：同 schema 換切片複驗——0 複現，格式指標微改善
+
+### 1. 變因不變，只換切片
+
+MVE schema 包原樣（carve 5
+cell＋`--expose-dt`、超參照抄第四輪），唯一變的是新切片：`--skip 50000`、rows
+5,200、seed 7、id_prefix `r5_`（provenance 實測）。四個 sha256 與
+`ai_al_round4_loop.json` 記錄逐一複核吻合（dataset `fe920a96…`／train
+`653fd3ea…`／val `d76089b8…`／manifest
+`92faa639…`）；generate/prepare/check 已在第四輪循環內 rc=0，本輪只跑 train（23:34:11 起，log
+`ai_al_round5_train.log`）。
+
+### 2. 訓練讀數（`data/intelligence_reports/ai_al_round5.json`）
+
+同一 train argv（epochs 100／batch 32／lr 3e-3／d-emb 96／d-hidden 1024／max-len
+384／tail-weight 0.25／ss-final 0.5／xpu／eval-on-cpu）。**seconds
+7,771.4**（train_seconds 4,365.7）、pairs train 3,310／fit 3,008／val_fit
+750、loss 4.359 → **min 0.914 @ep31** → 1.678
+@ep100（同第四輪先降後升的過擬合型）、`train_exact_200=0.0`／`val_exact_200=0.0`、eval_tf_split
+**response 0.2766**／**tail 0.7871**（12,742／39,630
+tok）——雙雙高於第四輪（0.2372／0.7602）。輪詢中斷一夜，進程 01:43:24 自行完成（report／log／checkpoint 三檔同一時間戳，無 crash 痕跡），11-02 晨確認收官。
+
+### 3. MVE-1 v1.1.0 讀數（probe 10:33–10:44，XPU 596.3s，`--set all`）
+
+R4 canonical 已歸檔
+`mve1_emergence_boundary_round4.json`；R5 寫入 canonical。**同一份 frozen
+320 列儀器、同判準 → 與 R4 可直接比**：
+
+| 指標（v1.1.0，320 列）               | R4                                 | R5                                                         |
+| ------------------------------------ | ---------------------------------- | ---------------------------------------------------------- |
+| gate holdout / rotation              | 0/200 / 0/200                      | **0/200 / 0/200**（pass=False，≥5/≤1）                     |
+| reference                            | 0/120                              | **0/120**                                                  |
+| `dt_conditioning`                    | exact 0／wrong 0／**no_match 320** | exact 0／wrong 0／**no_match 320**                         |
+| format_ok                            | 31/320                             | **58/320**                                                 |
+| marker_ok                            | 192/320                            | 118/320                                                    |
+| field_hits（總）                     | 22（a13／d3／fatigue6）            | **31，六欄全有**（v3／a4／d3／fatigue7／stress8／health6） |
+| hits_by_rung                         | 全 0                               | 全 0                                                       |
+| `text_overlap`／`training_cell_rows` | 0／round-1 遺留 751+233            | 0／round-1 遺留 751+233（carve 在效）                      |
+| elapsed                              | 558.5s                             | 596.3s                                                     |
+
+### 4. 循環：round-6 批次已補產（`--generate-only`）
+
+第五輪 train 未走 loop 腳本（手動直跑：train 讀數在
+`ai_al_round5_train.log`／`ai_al_round5.json`，故 `ai_al_round5_loop.json` 的
+`train_rc=null` 只涵蓋批次補產）。補產用
+`ai_al_round_loop.py --round 5 --generate-only`：skip
+**55200**（接續 round-5 的 [50000, 55200)，不重疊）、rows 5,200、seed
+7、`r6_`、同 carve＋`--next-expose-dt`，check ok **3,408 train／792
+val**，四 sha 錄 manifest（dataset `9e6490fc…`／train `90da6ee8…`／val
+`deb98afe…`／manifest
+`e4b0c51a…`）。launch 仍是人的決定；§五.6 狀態行 schema≠生產快照**仍未動**。
+
+### 5. 這一輪回答了什麼
+
+1. **0 是複現的，不是切片巧合**：全新不相交切片下 gate 三項全 0（0/200＋0/200＋0/120）、對照仍乾淨——第四輪的讀數在同 schema 下穩定重現。
+2. **瓶頸仍在格式層**：`no_match 320` 續航，`wrong_rung`
+   依然一格都讀不到；format_ok 31→58、field_hits 六欄全出現（22→31）但 marker
+   192→118、hits_by_rung 全 0——格式行為在變動、離 gate
+   ≥5 還遠，「先過格式關」的判斷不變。
+3. **訓練側同型改善**：response/tail
+   TF 雙升（0.2766／0.7871）而 exact 仍 0——teacher-forced 分佈改善照舊不轉化為 free-running 精確輸出（第三輪以來同型）。
+4. **單純換切片已不再提供新資訊**：兩輪 0 之後，下一發要動格式層本身（prompt／格式訓練占比／輸出後處理）或換變因；round-6 批次就緒，**launch 仍是人的決定**（§10.4）。
