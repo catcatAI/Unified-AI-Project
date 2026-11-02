@@ -245,6 +245,26 @@ def main(argv: List[str] | None = None) -> int:
 
     record["generated"] = True
     record["checked"] = True
+    # MVE-1 carve premise: the batch must still carry every holdout intent
+    # (in another mode) and every mode, or the gate it is staged for cannot be
+    # answered. Recording it here surfaces the problem before a training run,
+    # not after it (round 6's slice was 100% ``unknown`` and said nothing).
+    coverage: Dict[str, object] = {}
+    try:
+        payload = json.loads(dataset.read_text(encoding="utf-8"))
+        coverage = dict(payload.get("provenance", {}).get("carve_coverage") or {})
+    except (OSError, json.JSONDecodeError):
+        coverage = {}
+    if coverage:
+        record["next_batch"]["carve_coverage"] = coverage  # type: ignore[index]
+        if not coverage.get("ok", True):
+            print(
+                "WARNING: batch lost intended cells — "
+                f"missing intents {coverage.get('missing_intents')}, "
+                f"missing modes {coverage.get('missing_modes')} "
+                f"(carve coverage in {_rel(dataset)}) — the MVE-1 gate cannot be "
+                "answered from this slice; pick a slice that keeps them"
+            )
     for key, path in (
         ("dataset_sha256", dataset),
         ("train_sha256", train_out),
@@ -254,10 +274,19 @@ def main(argv: List[str] | None = None) -> int:
         record["next_batch"][key] = _sha256(path)  # type: ignore[index]
     record["finished_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     record["seconds"] = round(time.time() - started, 1)
-    record["next_step"] = (
-        f"round {nxt} data ready ({train_out.name}) — launching it stays a "
-        "human decision (CORE_GAP §10.4)"
-    )
+    if coverage and not coverage.get("ok", True):
+        record["next_step"] = (
+            f"round {nxt} data written ({train_out.name}) but the slice loses "
+            f"intents {coverage.get('missing_intents')} / modes "
+            f"{coverage.get('missing_modes')}: the MVE-1 compositional gate "
+            "cannot be answered from it — pick a slice that keeps them before "
+            "launching (CORE_GAP §10.4)"
+        )
+    else:
+        record["next_step"] = (
+            f"round {nxt} data ready ({train_out.name}) — launching it stays a "
+            "human decision (CORE_GAP §10.4)"
+        )
     loop_manifest.write_text(
         json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )

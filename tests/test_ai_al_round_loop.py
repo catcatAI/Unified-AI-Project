@@ -98,12 +98,47 @@ def test_next_batch_schema_flags_pass_through(loop, tmp_path, monkeypatch):
         (tmp_path / "ai_al_round10_train.jsonl").read_text(encoding="utf-8").splitlines()[0]
     )
     assert " dt=" in train_row["input"]
+    # the batch records which holdout cells it can still answer
+    cov = man["next_batch"]["carve_coverage"]
+    assert cov["cells"]
+    assert isinstance(cov["ok"], bool)
     # without the flags the staged batch keeps the round-1-3 schema keys out
     plain = loop.main(["--round", "8", "--generate-only", "--next-rows", "5", "--next-skip", "0"])
     assert plain == 0
     data8 = json.loads((tmp_path / "ai_al_round9_dataset.json").read_text(encoding="utf-8"))
     assert "expose_dt" not in data8["provenance"]
     assert "holdout_cells" not in data8["provenance"]
+
+
+def test_batch_that_cannot_answer_the_gate_says_so(loop, tmp_path, monkeypatch):
+    """A slice that lost a holdout intent is announced when it is written.
+
+    Round 6 trained on a slice whose every row was ``intent=unknown`` (bare
+    arithmetic not yet recognised as math): the staged batch carried 2 cells and
+    the report said nothing, so an hours-long run was spent on a reading the
+    instrument could not interpret. ``farewell`` has a single row corpus-wide,
+    so a 40-row slice from the head cannot carry it.
+    """
+    _redirect_to(loop, tmp_path, monkeypatch)
+    rc = loop.main(
+        [
+            "--round",
+            "9",
+            "--generate-only",
+            "--next-rows",
+            "40",
+            "--next-skip",
+            "0",
+            "--next-holdout-cells",
+            "farewell:neutral,unknown:conservative",
+        ]
+    )
+    assert rc == 0  # the data is still written; the launch decision stays human
+    man = json.loads((tmp_path / "ai_al_round9_loop.json").read_text(encoding="utf-8"))
+    cov = man["next_batch"]["carve_coverage"]
+    assert cov["ok"] is False
+    assert "farewell" in cov["missing_intents"]
+    assert "gate" in man["next_step"] and "farewell" in man["next_step"]
 
 
 def test_bad_cell_spec_fails_before_training(loop, tmp_path, monkeypatch):

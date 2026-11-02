@@ -1075,6 +1075,10 @@ val**，四 sha 錄 manifest（dataset `9e6490fc…`／train `90da6ee8…`／val
 `deb98afe…`／manifest
 `e4b0c51a…`）。launch 仍是人的決定；§五.6 狀態行 schema≠生產快照**仍未動**。
 
+> 此批次已於 2026-11-02
+> 11:51 開跑並收官（2,003.6s）。**那份切片 100% 是裸算式、標註全成了
+> `unknown`**，訓練與 probe 讀數都是退化的——見 §十五。
+
 ### 5. 這一輪回答了什麼
 
 1. **0 是複現的，不是切片巧合**：全新不相交切片下 gate 三項全 0（0/200＋0/200＋0/120）、對照仍乾淨——第四輪的讀數在同 schema 下穩定重現。
@@ -1082,6 +1086,162 @@ val**，四 sha 錄 manifest（dataset `9e6490fc…`／train `90da6ee8…`／val
    依然一格都讀不到；format_ok 31→58、field_hits 六欄全出現（22→31）但 marker
    192→118、hits_by_rung 全 0——格式行為在變動、離 gate
    ≥5 還遠，「先過格式關」的判斷不變。
+   > **R6 之後修正**：這條只對 R5 成立。R6 的 format_ok
+   > 316/320 是輸出塌成常數的產物，不是格式學習； `format_ok` 必須與
+   > `output_diversity` 一起讀（見 §十五.4）。
 3. **訓練側同型改善**：response/tail
    TF 雙升（0.2766／0.7871）而 exact 仍 0——teacher-forced 分佈改善照舊不轉化為 free-running 精確輸出（第三輪以來同型）。
 4. **單純換切片已不再提供新資訊**：兩輪 0 之後，下一發要動格式層本身（prompt／格式訓練占比／輸出後處理）或換變因；round-6 批次就緒，**launch 仍是人的決定**（§10.4）。
+
+## 十五、第六輪（2026-11-02 11:51 → 12:28；probe 12:31–12:40）：同一發第三次複驗——格式指標跳到 316/320，實際輸出卻塌成 23 種塊
+
+### 1. 變因不變，第三次複驗（訓練走手動直跑）
+
+train argv 逐字照抄第四／五輪 loop
+record（`--vocab token --epochs 100 --batch 32 --lr 3e-3 --d-emb 96 --d-hidden 1024 --max-len 384 --tail-weight 0.25 --ss-final 0.5 --device xpu --eval-on-cpu`），只換 checkpoint／report 路徑；切片為 round-6 批次
+`[55200, 60400)`（skip 55200、rows 5,200、seed
+7、`r6_`、同 carve＋`--expose-dt`）。
+
+### 2. 訓練讀數（`data/intelligence_reports/ai_al_round6.json`）
+
+**seconds 2,003.6**（train_seconds 1,806.1，是第五輪 7,771 的四分之一）、pairs
+train 3,408／fit 3,408／val 792、loss 2.264 → **min 0.747 @ep90** →
+0.772（無回彈）、`train/val_exact_200=0`、eval_tf_split **response
+0.4311**（4,419 tok）／**tail 0.7883**（41,812 tok）、**vocab_size 68**。
+
+有兩件事在訓練階段就已經很可疑，只是當時當成「切片剛好簡單」：
+
+- **vocab
+  68**（第四輪 12,005、第五輪 7,568）——語料字元集縮到只剩數字與運算符，這是切片退化的第一個免費警報；
+- **訓練時間砍到四分之一**——同時 loss 曲線漂亮得不像是同一個任務。
+
+### 3. MVE-1 v1.1.0 讀數（probe 12:31–12:40，XPU 545.1s，`--set all`）
+
+R5 canonical 先歸檔為
+`mve1_emergence_boundary_round5.json`，R6 寫入 canonical。同一份 frozen
+320 列儀器、同判準：
+
+| 指標（v1.1.0，320 列）               | R4            | R5            | R6                                                 |
+| ------------------------------------ | ------------- | ------------- | -------------------------------------------------- |
+| gate holdout / rotation              | 0/200 / 0/200 | 0/200 / 0/200 | **0/200 / 0/200**                                  |
+| reference                            | 0/120         | 0/120         | **0/120**                                          |
+| `dt_conditioning`                    | 0／0／320     | 0／0／320     | **exact 0／wrong 0／no_match 320**                 |
+| format_ok                            | 31            | 58            | **316**                                            |
+| marker_ok                            | 192           | 118           | **314**                                            |
+| field_hits（總）                     | 22            | 31            | **142**（v16 a18 d12 fatigue39 stress23 health34） |
+| hits_by_rung                         | 全 0          | 全 0          | 全 0                                               |
+| `text_overlap`／`training_cell_rows` | 0／751+233    | 0／751+233    | 0／8 檔／751+233                                   |
+| elapsed                              | 558.5s        | 596.3s        | 545.1s                                             |
+
+單看這張表，R6 像是**格式層的大躍進**：format_ok 31 → 58 →
+**316/320**、marker 到 314、field_hits
+142。這是我在 §十四.5 判「瓶頸在格式層」之後最想看到的形狀——所以更要看實際生成。
+
+### 4. 實測：format_ok 316 是「塌成極少數塊」的另一面，不是格式學會了
+
+逐列看生成物（`samples`
+與人工抽看 13 列，涵蓋不同 cell、不同 rung、不同輸入狀態）：
+
+```
+614
+<al_out> v=0.11 a=0.42 d=0.42 fatigue=0.34 stress=0.39 health=0.86 mode=exploratory intent=unknown
+```
+
+儀器新增 `output_diversity`
+後（同 checkpoint 重跑一次，數字與原 R6 逐項相同：gate 0/200＋0/200、format_ok
+316、marker 314、elapsed 521.7s）量到的是：
+
+| 層級                   | distinct | modal_share | modal                                                                                       |
+| ---------------------- | -------- | ----------- | ------------------------------------------------------------------------------------------- |
+| 整段生成               | 180      | 8.4%        | `61\n<al_out> v=0.12 a=0.42 …`                                                              |
+| **狀態塊本身（body）** | **23**   | **29.1%**   | `v=0.12 a=0.42 d=0.42 fatigue=0.34 stress=0.39 health=0.86 mode=exploratory intent=unknown` |
+
+也就是說：**320 列輸入只產生 23 種狀態塊**，其中一個佔 29%（93 列）。整段看起來「有 180 種」幾乎全是前面那串數字在變——`distinct`
+不拆 body 會高估多樣性一倍以上。
+
+- **值貼著 baseline 不動**：輸入狀態從 `v=-0.97` 到
+  `v=0.90`、dt 從 0.25 到 4.0、cell 從 greeting 到 humor，輸出都在
+  `v≈0.10–0.12`、`a 0.42–0.49`、`d=0.42`、`fatigue=0.34`、`stress=0.39`、`health=0.86`，`mode`／`intent`
+  恆為 `exploratory`／`unknown`。這組數字貼近 pilot 的 baseline 目標
+  `{0.14, 0.47, 0.46, 0.355, 0.30, 0.867}`，而 gold 的實際跨度是
+  `d 0.06–0.77`、`stress 0.08–0.54`、`health 0.56–0.86`。模型學到的是**邊際平均狀態**，不是「state＋dt
+  → target」的鬆弛。
+- **每條生成都多吐一個數字前綴**（`614\n`、`619\n`、`696\n`、`916\n`、`993\n`），然後才接
+  `<al_out>`。前綴來自這份切片 100% 是算式問答（gold 是 `162174`
+  這種裸數字），回覆段的分布整個被數字佔滿。
+- 因此 exact 結構上必 0：`grade()`
+  要求整段文字逐字等於某個 rung 的 gold，而生成物既多了前綴、值也不對應任何 rung。
+
+**壞鐘驗證**：142 個 `field_hits`
+不是「差一點就對」。若模型輸出一個固定塊，某欄位的命中數就等於「該列 4 個 rung
+gold 裡剛好出現這個常數」的列數——用 modal 塊的數值回算：
+
+| 欄位     | v    | a    | d    | fatigue | stress | health |
+| -------- | ---- | ---- | ---- | ------- | ------ | ------ |
+| 常數     | 0.12 | 0.42 | 0.42 | 0.34    | 0.39   | 0.86   |
+| 回算命中 | 11   | 19   | 12   | 39      | 21     | 34     |
+| 實測命中 | 16   | 18   | 12   | 39      | 23     | 34     |
+
+六欄回算 136／實測 142——**這些「命中」幾乎全部是壞鐘也會準兩次**，不含任何 conditioning 資訊（其餘 6 個來自另外 22 種塊的少數變體）。
+
+**自我修正**：§十四.5 第 2 點「格式行為在變動」只對 R5 成立。R6 的 316/320 不是格式學習的證據，而是
+**輸出塌縮到 23 種塊**。`format_ok` 高與 `body_distinct`
+低必須一起讀——這條讀法已寫進 `MEASUREMENT_MAP`
+§六，並補進儀器報告（`output_diversity.distinct／modal_share／modal／body_distinct／body_modal_share／body_modal`）。
+
+### 5. 資料層根因：這份切片 100% 是裸算式，`_intent_of` 不認得
+
+`round6_train` 的 `(intent, mode)`
+只有兩格：`('exploratory','unknown') 1,718`、`('neutral','unknown') 1,690`——**3,408 列全部 intent=unknown**。原因不是 carve，是標註：
+
+- 語料 `[55200, 60400)` 全是 `211 + 561` 這種裸算式；
+- `_intent_of()` 只認動詞關鍵詞（`calculate` 在 `_INTENT_KEYWORDS['math_query']`
+  裡，但裸算式沒有動詞）→ 一律 unknown；
+- carve 掉的正是 `unknown:conservative` → conservative mode 直接歸零；
+- `gen.transition()` 對 unknown 沒有 per-intent target，一律落 baseline
+  → 模型的最佳解就是輸出 baseline。
+
+語料 intent 帶地圖（`core_train` 149,489 列，實測）：
+
+| 區段              | intent 分佈                                                   | 用途                                                        |
+| ----------------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
+| `[0, 50000)`      | 多樣（每 5,000 列 greeting 15–26、humor 14–28、math 140–170） | r1 `[0,4000)`、r4 `[4000,7952)`、probe 儀器 `[10000,50000)` |
+| `[7952, 10000)`   | **未用**：unknown 1620／kq 356／math 55／humor 10／greeting 7 | 目前唯一還答得出 gate 的未用切片                            |
+| `[50000, 55000)`  | unknown 4,678／kq 261／math 55／humor 4／greeting 2           | r5                                                          |
+| `[55200, 60400)`  | **100% 裸算式**                                               | r6（本輪）                                                  |
+| `[60400, 65600)`  | unknown／math／knowledge 混合，**無 greeting/humor**          | r7（已產，見 §十五.6）                                      |
+| `[80000, 149489)` | 全 unknown                                                    | 不可用                                                      |
+
+### 6. 三個修正（本輪一起落地）
+
+1. **`_intent_of()` 認得裸算式**（`scripts/generate_al_dataset.py`）：新增
+   `_ARITH_EXPR` 正則，命中即 `math_query`（關鍵詞優先，故 `what is 2+2?` 仍是
+   `knowledge_query`）。這一條同時修正了 r5/r6/r7 三份批次把 math 當 unknown 的標註錯誤。
+2. **carve 覆蓋審計**（同檔
+   `_carve_coverage()`）：把「批次還剩哪些 cell、丟了哪些 intent／mode、是否 ok」寫進 dataset
+   provenance；`ai_al_round_loop.py` 生成後讀回、寫進
+   `next_batch.carve_coverage`，不 ok 時印 WARNING 並改寫
+   `next_step`（不再讓退化批次頂著「ready」字樣）。以修正後的生成器重跑 round-6 切片：`ok=False`，只剩
+   `math_query:conservative 1000`＋`math_query:neutral 2092`，缺 greeting／humor／knowledge_query／unknown 與 exploratory——**這就是當初訓練前看不到的那張圖**。
+3. **`output_diversity`**（`scripts/probe_emergence_boundary.py`）：報告新增 distinct／modal_share／modal，讓「塌成常數」在讀數層就看得見，不必等人工抽看。
+
+round-7 批次已用修正後的生成器重產（skip 60400、rows 5,200、seed
+7）：math_query 正確出現，但
+`ok=False`、缺 greeting／humor——**這塊語料帶本來就沒有這兩個 intent**，不是標註問題。
+
+### 7. 這一輪回答了什麼
+
+1. **R6 的 gate 0 不是新的資訊**：它是資料退化的必然結果（100% unknown →
+   baseline 目標），不能拿來當「第三次複現」的證據。2. **`format_ok`
+   是會被塌縮騙的指標**：31 → 58 →
+   316 的曲線看起來像格式學習，實際是 320 列只輸出 23 種塊、`field_hits`
+   142 個裡 136 個能用一個固定塊回算出來。之後讀 gate 必須同時看
+   `output_diversity`（`body_distinct`／`body_modal_share`，本次補進儀器）。
+2. **切片前進已走到語料邊界**：`[0,10000)` 用完、`[10000,50000)`
+   被儀器保留、`≥50000` 幾乎只剩unknown／math／knowledge。`[7952,10000)`
+   是唯一還能回答 gate 的未用切片（2,000 列 → carve 後 1,509，greeting 5／humor
+   8，很薄）。
+3. **下一步仍是人的決定**（§10.4）：要嘛用 `[7952,10000)`
+   這塊薄切片，要嘛擴充語料，要嘛改儀器（例如把 compositional 變因從
+   `intent×mode` 換成
+   `intent×dt`，只留 intent 多樣性）。在資料層修好之前，再跑幾輪都會讀到同一個 0。

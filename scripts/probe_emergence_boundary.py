@@ -429,6 +429,15 @@ def probe(
     rows_by_rung = {str(d): 0 for d in gen._DT_LADDER}
     hits_by_rung = {str(d): 0 for d in gen._DT_LADDER}
     dt_conditioning = {"exact_rung": 0, "wrong_rung": 0, "no_match": 0}
+    # How many *different* blocks the model produced at all. A model that emits
+    # the same near-constant block every time scores high on format/marker while
+    # having learned nothing about the transition — round 6 read format_ok 316
+    # that way and only per-sample inspection showed the collapse.
+    blocks: Dict[str, int] = {}
+    # the block *body* only (everything after ``<al_out>``): a model can vary a
+    # leading answer/digits a lot while its state block stays fixed, so the two
+    # must be counted separately before calling an output "constant".
+    bodies: Dict[str, int] = {}
     per_cell: Dict[str, Dict[str, int]] = {}
     parsed_all = [[_parse_block(g) for g in e["family"]] for e in rows]
     first_gots: List[str] = []
@@ -454,6 +463,9 @@ def probe(
         else:
             dt_conditioning["no_match"] += 1
 
+        blocks[got.strip()] = blocks.get(got.strip(), 0) + 1
+        body = got.strip().split(_MARKER, 1)[1].strip() if _MARKER in got else got.strip()
+        bodies[body] = bodies.get(body, 0) + 1
         fields = _parse_block(got)
         keys = set(fields)
         if set(_FIELD_KEYS) <= keys and "mode" in keys and "intent" in keys:
@@ -526,6 +538,14 @@ def probe(
         "rows_by_rung": rows_by_rung,
         "hits_by_rung": hits_by_rung,
         "dt_conditioning": dt_conditioning,
+        "output_diversity": {
+            "distinct": len(blocks),
+            "modal_share": round(max(blocks.values(), default=0) / max(1, n), 4),
+            "modal": (max(blocks.items(), key=lambda kv: kv[1])[0][:160] if blocks else ""),
+            "body_distinct": len(bodies),
+            "body_modal_share": round(max(bodies.values(), default=0) / max(1, n), 4),
+            "body_modal": (max(bodies.items(), key=lambda kv: kv[1])[0][:160] if bodies else ""),
+        },
         "per_cell": per_cell,
         "training_cell_rows": cell_rows,
         "cells_carved_from_training": not cell_rows,

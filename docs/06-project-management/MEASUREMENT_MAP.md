@@ -200,3 +200,25 @@ FAIL。`dt_conditioning`：`exact_rung 0`／`wrong_rung 0`／**`no_match 320`**�
 仍只剩 round-1 遺留檔（carve 在效）。解讀：換新不相交切片後
 **0 複現**；格式行為變動但未過格式關，dt 判讀格仍不可用；全文見
 `CORE_GAP_ANALYSIS` §十四。
+**single-gold 第三發（2026-11-02，`ai_al_round6.pt`，XPU
+545.1s，`--set all`，v1.1.0 判準）**：gate 三項
+**0/200／0/200／0/120**（pass=False）、`no_match 320`、hits_by_rung 全 0、`text_overlap=0`（8 檔）。表面指標看起來是跳躍：format_ok
+**58→316**、marker 118→314、field_hits
+31→**142**。**實際生成是塌縮**：320 列輸入只產生
+**23 種狀態塊**（最大一種佔 29%），值無論輸入狀態從 `v=-0.97` 到
+`v=0.90`、dt 從 0.25 到 4.0、cell 從 greeting 到 humor，都擠在
+`v≈0.10–0.12 a 0.42–0.49 d=0.42 fatigue=0.34 stress=0.39 health=0.86 mode=exploratory intent=unknown`（貼近 pilot
+baseline 目標，而 gold 的 `d`
+跨 0.06–0.77），且每條前面多吐一個數字前綴（`614\n`…）再接 `<al_out>`。整段
+`distinct` 180 幾乎全是前綴在變。根因在資料層：該切片 100% 是裸算式而
+`_intent_of()` 不認得裸算式 → 3,408 列全 `intent=unknown` → 沒有 per-intent
+target、只剩 baseline。全文見 `CORE_GAP_ANALYSIS` §十五。
+
+> **讀法補充（R6 之後）**：`format_ok`／`marker_ok`／`field_hits`
+> 三個格式指標**必須與 `output_diversity` 一起讀，而且要看 `body_*`
+> 那三個**。一個只會重複極少數塊的模型可以在這三欄拿高分，而 gate 仍是 0——R6 就是這個形狀（format_ok
+> 316/320、`body_distinct` 23/320、`body_modal_share`
+> 0.29；那 142 個 field_hits 有 136 個能用單一固定塊回算，是壞鐘而非「差一點」）。儀器已把
+> `output_diversity`（`distinct`／`modal_share`／`modal`／`body_distinct`／`body_modal_share`／`body_modal`）寫進報告；只讀
+> `distinct` 會高估多樣性（R6：180 vs
+> 23），因為答案段／數字前綴的抖動不算 conditioning。

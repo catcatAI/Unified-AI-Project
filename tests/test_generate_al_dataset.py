@@ -144,3 +144,43 @@ def test_intent_rules_are_the_documented_placeholder(gen):
     assert gen._intent_of("Hello there") == "greeting"
     assert gen._intent_of("What is the capital of France") == "knowledge_query"
     assert gen._intent_of("something else entirely") == "unknown"
+
+
+def test_bare_arithmetic_is_a_math_query(gen):
+    """The corpus has arithmetic bands written as bare expressions (``211 + 561``).
+
+    Without this rule the whole band was labelled ``unknown``, trained against
+    the mean in-state target instead of the math target, and — because the carve
+    drops ``unknown:conservative`` — lost the conservative mode entirely: the
+    round-6 batch held 2 cells and could answer none of the gate's holdouts.
+    """
+    assert gen._intent_of("211 + 561") == "math_query"
+    assert gen._intent_of("358 / 951") == "math_query"
+    assert gen._intent_of("218 - 270") == "math_query"
+    assert gen._intent_of("calculate 624 * 70") == "math_query"
+    assert gen._intent_of("what is 2+2?") == "knowledge_query"  # verb wins
+    assert gen._intent_of("Ivan is taller than Tweety.") == "unknown"
+
+
+def test_carve_coverage_records_what_the_batch_can_still_answer(gen):
+    """A carved batch states which holdout cells it still supports.
+
+    The compositional premise is that every holdout intent keeps another mode
+    and every mode keeps another intent. A slice that drops an intent cannot
+    answer the gate at all — that must be visible next to the batch, not found
+    out after an hours-long training run.
+    """
+    cells = {"greeting": "neutral", "humor": "conservative"}
+    built = gen.build(rows=60, seed=7, holdout_cells=cells)
+    cov = built["provenance"]["carve_coverage"]
+    assert set(cov) == {"cells", "missing_intents", "missing_modes", "ok"}
+    # rows 0-60 carry no greeting/humor at all, so both intents are missing
+    assert set(cov["missing_intents"]) <= set(cells)
+    assert isinstance(cov["ok"], bool)
+    # every counted cell keeps its mode, and the counts sum to the batch size
+    assert sum(cov["cells"].values()) == built["total_samples"]
+    assert all(":" in key for key in cov["cells"])
+
+    # an empty carve records nothing (a default build stays byte-identical)
+    plain = gen.build(rows=30, seed=7)
+    assert "carve_coverage" not in plain["provenance"]

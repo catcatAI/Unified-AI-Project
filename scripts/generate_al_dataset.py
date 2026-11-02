@@ -113,6 +113,12 @@ def _parse_holdout_cells(spec: str) -> Dict[str, str]:
 
 
 # Keyword rules — a placeholder for the production query_classifier.
+# A bare expression (``211 + 561``, ``358 / 951``) is a math query even when it
+# carries none of the verbs below. The corpus arithmetic band was being labelled
+# ``unknown`` and trained against the mean in-state target instead of the math
+# target — every row of round 6 (slice [55200, 60400)) was affected.
+_ARITH_EXPR = re.compile(r"^\s*[-+]?\d+(?:\.\d+)?\s*[+\-*/×÷]\s*[-+]?\d+(?:\.\d+)?\s*[?？]?\s*$")
+
 _INTENT_KEYWORDS = (
     ("humor", ("joke", "funny", "笑話")),
     ("math_query", ("calculate", "compute", "how much", "equals", "算出", "等於")),
@@ -131,10 +137,40 @@ def _norm(text: str) -> str:
 
 def _intent_of(text: str) -> str:
     low = str(text or "").lower()
+    if _ARITH_EXPR.match(low):
+        return "math_query"
     for intent, keys in _INTENT_KEYWORDS:
         if any(k in low for k in keys):
             return intent
     return "unknown"
+
+
+def _carve_coverage(examples: List[dict], holdout_cells: Dict[str, str]) -> Dict[str, object]:
+    """Which (intent, mode) cells the carved batch still carries.
+
+    A carved cell is only *compositional* if the intent keeps another mode and
+    the mode keeps another intent in training. A slice that drops an intent
+    entirely turns the gate into \"never seen\", not \"seen in a new pairing\" —
+    that is a corpus/labelling failure, not a training result, so it is recorded
+    next to the batch instead of being discovered after the hours-long run.
+    """
+    counts: Dict[tuple, int] = {}
+    for ex in examples:
+        key = (str(ex["intent"]), str(ex["al_state_in"]["routing_mode"]))
+        counts[key] = counts.get(key, 0) + 1
+    missing_intents = [
+        intent
+        for intent, mode in sorted(holdout_cells.items())
+        if not any(n > 0 and m != mode for (i, m), n in counts.items() if i == intent)
+    ]
+    seen_modes = {m for (_, m), n in counts.items() if n}
+    missing_modes = [m for m in _MODES if m not in seen_modes]
+    return {
+        "cells": {f"{i}:{m}": n for (i, m), n in sorted(counts.items())},
+        "missing_intents": missing_intents,
+        "missing_modes": missing_modes,
+        "ok": not missing_intents and not missing_modes,
+    }
 
 
 def _benchmark_norms() -> set[str]:
@@ -304,7 +340,14 @@ def build(
             # Recorded only when carving: a default build must stay
             # byte-identical or `--check` would fail on the round files.
             **(
-                {"holdout_cells": dict(holdout_cells), "holdout_carved": carved}
+                {
+                    "holdout_cells": dict(holdout_cells),
+                    "holdout_carved": carved,
+                    # the compositional premise, checked at generation time: a
+                    # batch missing a holdout intent (or a whole mode) cannot
+                    # answer the gate it was built for
+                    "carve_coverage": _carve_coverage(examples, holdout_cells),
+                }
                 if holdout_cells
                 else {}
             ),
