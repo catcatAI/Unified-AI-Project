@@ -222,3 +222,24 @@ target、只剩 baseline。全文見 `CORE_GAP_ANALYSIS` §十五。
 > `output_diversity`（`distinct`／`modal_share`／`modal`／`body_distinct`／`body_modal_share`／`body_modal`）寫進報告；只讀
 > `distinct` 會高估多樣性（R6：180 vs
 > 23），因為答案段／數字前綴的抖動不算 conditioning。
+
+**single-gold 第四發（2026-11-02，`ai_al_round7.pt`，XPU
+494.0s，`--set all`）**：這批是修好 `_intent_of()`
+之後重產的 round-7（3,286 列、math／kq／unknown 三 intent，6
+cells），argv 與 R6 逐字相同（仍 `--tail-weight 0.25`）。gate 三項仍
+**0/200／0/200／0/120**（pass=False，且這批 0
+greeting／humor，結構上不可能通過）。但表面數字全滿：format_ok
+**320/320**、marker **320/320**、field_hits
+**155**。儀器新增的三欄把它拆開了：`body_distinct` **23 → 128**（塌縮解除、
+`body_modal_share` 29.1% → 7.5%），可是 `input_output_correlation` **六欄 \|r\|
+≤ 0.083**、 `copy_accuracy` **mode 29.7%／intent 26.9%**——`mode`／`intent`
+依契約是照抄輸入，抄中率卻與亂猜（33%／20%）同級。擾動測試（只改 `v` 或 `dt`
+再生成）顯示 12/24、14/24 的輸出塊會變：模型有讀
+`<al_in>`，但依賴是 ragged 的。解讀：**格式學會了、映射沒學會**；訓練端疑點是
+`--tail-weight 0.25` 把狀態塊（正好是 MVE-1 要量的東西）壓到有效梯度 9.9%，R8 以
+`--tail-weight 1.0` 單一變因複驗。全文見 `CORE_GAP_ANALYSIS` §十六。
+
+> **讀法（R7 之後，三欄成組）**：`format_ok` 高 + `body_distinct`
+> 低 = 塌縮（R6）；`body_distinct` 高但 `input_output_correlation` ≈ 0 且
+> `copy_accuracy`
+> ≈ 隨機 = 格式對而映射沒學到（R7）。只看前兩欄會把 R7 誤讀成「終於學會了」——這也是 gate 仍為 0 的原因。

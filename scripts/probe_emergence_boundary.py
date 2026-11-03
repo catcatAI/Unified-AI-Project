@@ -74,7 +74,7 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 _SCRIPTS = REPO_ROOT / "scripts"
@@ -186,6 +186,79 @@ def _parse_block(text: str) -> Dict[str, str]:
             key, value = tok.split("=", 1)
             out.setdefault(key, value)
     return out
+
+
+def _pearson(xs: List[float], ys: List[float]) -> Optional[float]:
+    """Pearson r, or ``None`` when either series is constant.
+
+    ``None`` is the honest answer for a collapsed block: a model that emits one
+    fixed value has zero output variance, so there is no correlation to report
+    (0.0 would wrongly read as "uncorrelated but varying").
+    """
+    n = len(xs)
+    if n < 3:
+        return None
+    mx = sum(xs) / n
+    my = sum(ys) / n
+    sxx = sum((x - mx) ** 2 for x in xs)
+    syy = sum((y - my) ** 2 for y in ys)
+    if sxx <= 0 or syy <= 0:
+        return None
+    sxy = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
+    return round(sxy / (sxx**0.5 * syy**0.5), 3)
+
+
+def _body(text: str) -> str:
+    """The state block only — everything after ``<al_out>``."""
+    stripped = str(text).strip()
+    if _MARKER in stripped:
+        return stripped.split(_MARKER, 1)[1].strip()
+    return stripped
+
+
+def _mutate(prompt: str, field: str, value: str) -> str:
+    """Rewrite one ``<al_in>`` field, leaving the rest byte-identical.
+
+    Only the first line (the ``<al_in>`` header) is touched, so a perturbation
+    cannot accidentally rewrite the block the model is about to predict.
+    """
+    head, sep, rest = str(prompt).partition("\n")
+    pattern = rf"\b{re.escape(field)}=-?\d+\.?\d*"
+    return re.sub(pattern, f"{field}={value}", head, count=1) + sep + rest
+
+
+def _input_sensitivity(model: Any, rows: Sequence[Dict[str, Any]], max_len: int) -> Dict[str, Any]:
+    """Does the block change when only one input field changes?
+
+    Correlation can be 0 both for "ignores the input" and for "depends on it
+    non-monotonically", so this asks the causal question directly: regenerate
+    the same row with one ``<al_in>`` value replaced and see whether the block
+    moves. Round 7 measured 12/24 for ``v`` and 14/24 for ``dt`` — the model does
+    read the prefix, but the dependency is ragged.
+    """
+    v_changed = 0
+    dt_changed = 0
+    for entry in rows:
+        budget = min(max_len, len(model.vocab.encode(entry["gold"])) + 8)
+        base = _body(model.generate(entry["prompt"], max_new=budget))
+        for field, value in (("v", "-0.90"), ("dt", "2.00")):
+            mutated = _mutate(entry["prompt"], field, value)
+            if mutated == entry["prompt"]:
+                continue
+            got = _body(model.generate(mutated, max_new=budget))
+            if got != base:
+                if field == "v":
+                    v_changed += 1
+                else:
+                    dt_changed += 1
+    n = len(rows)
+    return {
+        "n": n,
+        "v_changed": v_changed,
+        "dt_changed": dt_changed,
+        "v_share": round(v_changed / max(1, n), 3),
+        "dt_share": round(dt_changed / max(1, n), 3),
+    }
 
 
 def _training_norms() -> Tuple[Dict[str, int], set]:
@@ -392,6 +465,7 @@ def probe(
     device: str = "auto",
     report: Path = REPORT_OUT,
     limit: int = 0,
+    sensitivity_rows: int = 0,
 ) -> int:
     from ai.ed3n.token_snn import TokenSNN
 
@@ -438,6 +512,16 @@ def probe(
     # leading answer/digits a lot while its state block stays fixed, so the two
     # must be counted separately before calling an output "constant".
     bodies: Dict[str, int] = {}
+    # input-state -> generated-state, per field. Diversity alone cannot tell
+    # "varies with the input" from "varies randomly"; a correlation near 0 in
+    # every field means the block is not conditioned on <al_in> at all.
+    io_pairs: Dict[str, Tuple[List[float], List[float]]] = {f: ([], []) for f in _FIELD_KEYS}
+    # ``mode`` and ``intent`` are pass-through by contract (target mode/intent ==
+    # the input's), so they are *copyable*: a model that ignores <al_in> still
+    # emits a legal one, and only this count tells the two apart. Round 7 read
+    # correlation 0 in all six fields while printing legal blocks — the question
+    # then is "cannot regress" vs "does not read the input at all".
+    copy_ok: Dict[str, int] = {"mode": 0, "intent": 0}
     per_cell: Dict[str, Dict[str, int]] = {}
     parsed_all = [[_parse_block(g) for g in e["family"]] for e in rows]
     first_gots: List[str] = []
@@ -464,8 +548,7 @@ def probe(
             dt_conditioning["no_match"] += 1
 
         blocks[got.strip()] = blocks.get(got.strip(), 0) + 1
-        body = got.strip().split(_MARKER, 1)[1].strip() if _MARKER in got else got.strip()
-        bodies[body] = bodies.get(body, 0) + 1
+        bodies[_body(got)] = bodies.get(_body(got), 0) + 1
         fields = _parse_block(got)
         keys = set(fields)
         if set(_FIELD_KEYS) <= keys and "mode" in keys and "intent" in keys:
@@ -478,6 +561,18 @@ def probe(
             gold_values = {p.get(f) for p in parsed_all[i]}
             if fields.get(f) in gold_values:
                 field_hits[f] += 1
+        in_fields = _parse_block(entry["prompt"])
+        for token_name in copy_ok:
+            if in_fields.get(token_name) == fields.get(token_name):
+                copy_ok[token_name] += 1
+        for f in _FIELD_KEYS:
+            try:
+                src = float(in_fields[f])
+                dst = float(fields[f])
+            except (KeyError, TypeError, ValueError):
+                continue
+            io_pairs[f][0].append(src)
+            io_pairs[f][1].append(dst)
         cell = entry["cell"]
         bucket = per_cell.setdefault(cell, {"hits": 0, "n": 0})
         bucket["n"] += 1
@@ -546,6 +641,13 @@ def probe(
             "body_modal_share": round(max(bodies.values(), default=0) / max(1, n), 4),
             "body_modal": (max(bodies.items(), key=lambda kv: kv[1])[0][:160] if bodies else ""),
         },
+        "input_output_correlation": {f: _pearson(xs, ys) for f, (xs, ys) in io_pairs.items()},
+        "copy_accuracy": {k: round(v / max(1, n), 4) for k, v in copy_ok.items()},
+        "input_sensitivity": (
+            _input_sensitivity(model, rows[:sensitivity_rows], max_len)
+            if sensitivity_rows
+            else None
+        ),
         "per_cell": per_cell,
         "training_cell_rows": cell_rows,
         "cells_carved_from_training": not cell_rows,
@@ -584,6 +686,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--checkpoint", default="", help="TokenSNN checkpoint for --probe")
     ap.add_argument("--set", dest="which", choices=("holdout", "reference", "all"), default="all")
     ap.add_argument("--limit", type=int, default=0, help="probe only the first N rows (debug)")
+    ap.add_argument(
+        "--sensitivity-rows",
+        type=int,
+        default=0,
+        help="perturb one <al_in> field on the first N rows and count block changes "
+        "(3 generations per row; off by default)",
+    )
     ap.add_argument("--device", default="auto", help="auto | xpu | cuda | cpu")
     ap.add_argument("--total", type=int, default=GATE_N, help="holdout rows (gate N)")
     ap.add_argument("--seed", type=int, default=11)
@@ -604,6 +713,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             device=args.device,
             report=Path(args.report),
             limit=args.limit,
+            sensitivity_rows=args.sensitivity_rows,
         )
 
     built = build(

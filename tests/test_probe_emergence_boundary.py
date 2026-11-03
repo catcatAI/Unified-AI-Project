@@ -274,3 +274,47 @@ def test_holdout_cells_declared_in_the_generator(gen):
         remaining = [m for m in gen._MODES if m != cells[intent]]
         assert len(remaining) == 2
     assert set(cells.values()) == set(gen._MODES)
+
+
+def test_correlation_is_none_when_the_block_collapsed(probe):
+    # 一個只吐固定塊的模型輸出方差為 0：報告 None（不可比）而不是 0.0（可比但無關）
+    assert probe._pearson([0.1] * 5, [1.0, 2.0, 3.0, 4.0, 5.0]) is None
+    assert probe._pearson([1.0, 2.0, 3.0, 4.0, 5.0], [0.1] * 5) is None
+    assert probe._pearson([1.0], [2.0]) is None
+
+
+def test_correlation_tracks_the_input_when_the_block_varies(probe):
+    assert probe._pearson([1.0, 2.0, 3.0], [2.0, 4.0, 6.0]) == 1.0
+    assert probe._pearson([1.0, 2.0, 3.0], [3.0, 2.0, 1.0]) == -1.0
+
+
+def test_block_body_ignores_the_answer_prefix(probe):
+    # 同一個狀態塊、不同的數字前綴 → body 相同（整段 distinct 會高估多樣性）
+    a = "614\n<al_out> v=0.11 a=0.42 d=0.42 fatigue=0.34 stress=0.39 health=0.86 mode=exploratory intent=unknown"
+    b = "993\n<al_out> v=0.11 a=0.42 d=0.42 fatigue=0.34 stress=0.39 health=0.86 mode=exploratory intent=unknown"
+    assert a.strip() != b.strip()
+    assert a.split(probe._MARKER, 1)[1] == b.split(probe._MARKER, 1)[1]
+
+
+def test_mutation_rewrites_one_input_field_and_nothing_else(probe):
+    prompt = (
+        "<al_in> v=0.26 a=0.17 d=-0.88 fatigue=0.59 stress=0.05 health=0.22 "
+        "mode=neutral intent=math_query dt=0.50 | 653 + 12\n665"
+    )
+    mutated = probe._mutate(prompt, "v", "-0.90")
+    assert "v=-0.90" in mutated
+    # 其餘欄位與第二行（gold response）必須逐字不變，否則擾動就不是單一變因
+    assert mutated.split("\n")[1] == prompt.split("\n")[1]
+    assert prompt.replace("v=0.26", "v=-0.90") == mutated
+
+
+def test_mutation_is_a_noop_when_the_value_already_matches(probe):
+    prompt = "<al_in> v=0.26 dt=0.50 | 1 + 1\n2"
+    # 呼叫端用「有沒有變」決定是否把該列計入分母
+    assert probe._mutate(prompt, "v", "0.26") == prompt
+    assert probe._mutate(prompt, "dt", "2.00") != prompt
+
+
+def test_body_keeps_only_the_state_block(probe):
+    assert probe._body("614\n<al_out> v=0.1 a=0.2") == "v=0.1 a=0.2"
+    assert probe._body("v=0.1 a=0.2") == "v=0.1 a=0.2"

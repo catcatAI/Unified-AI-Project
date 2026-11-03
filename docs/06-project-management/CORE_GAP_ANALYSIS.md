@@ -1245,3 +1245,78 @@ round-7 批次已用修正後的生成器重產（skip 60400、rows 5,200、seed
    這塊薄切片，要嘛擴充語料，要嘛改儀器（例如把 compositional 變因從
    `intent×mode` 換成
    `intent×dt`，只留 intent 多樣性）。在資料層修好之前，再跑幾輪都會讀到同一個 0。
+
+## 十六、第七輪（2026-11-02 17:0x → 17:2x）：修好標註後塌縮解除，但狀態塊仍不是輸入的函數
+
+### 1. 變因：只換資料標註，argv 不動
+
+批次為 §十五.5 修好 `_intent_of()` 之後重產的 round-7（skip 60400、rows
+5,200、seed 7、`r7_`、同 carve ＋
+`--expose-dt`）：3,286 列、**3 個 intent**（math 1,832／kq 615／unknown
+839）、6 個 cell。train argv 與第六輪逐字相同（含
+`--tail-weight 0.25`），只換檔案與 checkpoint 路徑，因此與 R6 可直接比。
+
+為什麼是這一批：`[60000,70000)` 修好標註後是 math 6,169 ＋ kq 1,889 ＋ unknown
+1,942，是「多 intent 且量夠」的唯一現成切片。代價是 0 greeting／humor →
+`carve_coverage.ok=false`（缺這兩個 intent），**gate 結構上不可能通過**；這一輪的用途是診斷，不是通關。
+
+### 2. 訓練讀數（`ai_al_round7.json`）
+
+seconds **1,573.8**（train 1,377.2）、pairs 2,633／2,633／653、vocab_size
+**80**（R6 是 68）、loss 2.685 → **0.633**，而且
+**min 落在最後一個 epoch（99）**、沒有回彈——還在下降，100
+epochs 對這批資料不夠。`train/val_exact_200=0`、eval_tf_split **response
+0.3915**（2,991 tok）／**tail 0.7872**（35,362
+tok）——尾段 teacher-forced 與 R6 的 0.7883 幾乎一樣。
+
+### 3. probe 讀數（XPU 494.0s，`--set all`）
+
+| 指標                            | R6            | R7                                 |
+| ------------------------------- | ------------- | ---------------------------------- |
+| gate holdout / rotation         | 0/200 / 0/200 | **0/200 / 0/200**（仍 pass=False） |
+| reference                       | 0/120         | 0/120                              |
+| format_ok / marker_ok           | 316 / 314     | **320 / 320**                      |
+| field_hits（總）                | 142           | 155                                |
+| `body_distinct`（320 列）       | **23**        | **128**                            |
+| `body_modal_share`              | 29.1%         | **7.5%**                           |
+| `input_output_correlation`      | 未量          | **六欄全部 \|r\| ≤ 0.083**         |
+| `copy_accuracy`（mode／intent） | 未量          | **29.7%／26.9%**                   |
+| `dt_conditioning`               | 0／0／320     | 0／0／320                          |
+
+### 4. 讀數的意思：塌縮解除，但依賴是 ragged 的
+
+- **128 種 body（原 23）**：標註修正確實解除了「一律回 baseline」的塌縮。
+- **格式 320/320**：每個欄位都吐得出來，連 marker 都對。
+- **但 correlation 全部 ≈ 0**：生成值與輸入狀態之間沒有單調關係。
+- **copy 指標更狠**：`mode`／`intent`
+  依契約本來就是照抄輸入（`mode_out = mode_in`、`intent_out = intent_in`），抄中率 29.7%／26.9%；mode 三選一隨機是 33%、intent 五選一 20%——**抄中率不比亂猜好多少**。R7 對 greeting 的列還會吐
+  `intent=math_query`。
+- **擾動測試（24 列，只改一個欄位再生成）**：改 `v` 有 12/24 列輸出塊改變、改
+  `dt` 有 14/24。所以模型**有**在讀
+  `<al_in>`，只是依賴不穩定、方向不對——準確說法是「ragged 依賴」，不是「完全無視」。
+
+### 5. 訓練端的疑點：被測量的東西被壓到 1/4 權重
+
+`train_token_snn.py --tail-weight` 的 help 自己寫著：`<al_out>`
+狀態塊的 loss 權重，「lower it to spend the gradient on the response」，而
+**R4–R7 全部用 0.25**。一份樣本裡狀態塊約 34%
+tokens、response 約 66%，0.25 權重下狀態塊只佔有效梯度約
+**9.9%**（`0.34×0.25 / (0.66 + 0.34×0.25)`）。
+
+MVE-1 量的正是狀態塊——也就是**唯一被降權的對象**；`resp_tf 0.39` 對
+`tail_tf 0.79`
+的落差正好對應這個權重差。這不是新 bug，是**既有實驗設定與目標不一致**：前四輪為了讓 response 學起來調的參數，正好壓低了要驗的那個轉移。
+
+### 6. 下一步（已啟動）
+
+R8：同一批資料、同一 argparse，唯一改動
+`--tail-weight 1.0`（狀態塊梯度佔比 34%）。若 correlation／copy 仍 ≈
+0，就不是權重問題，下一個變因才是容量與表徵（例如把數字回歸改成 copy-with-scale 解碼）。
+
+### 7. 本輪新增的三個儀器欄位
+
+`output_diversity.body_*`（只看 `<al_out>` 之後的塊）、
+`input_output_correlation`（輸入↔生成逐欄 Pearson，常數輸出記 `null`）、
+`copy_accuracy`（照抄欄位的抄中率）。三者要一起讀：`format_ok` 滿分 +
+`body_distinct` 低 = 塌縮；`body_distinct` 高但 correlation／copy ≈ 0
+= 格式對而映射沒學到（R7）。
