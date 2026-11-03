@@ -612,15 +612,27 @@ def _training_cell_rows(cells: Dict[str, str]) -> Dict[str, int]:
 
 
 def probe(
-    checkpoint: str,
+    checkpoint: str = "",
     set_file: Path = SET_OUT,
     which: str = "all",
     device: str = "auto",
     report: Path = REPORT_OUT,
     limit: int = 0,
     sensitivity_rows: int = 0,
+    model: Any = None,
 ) -> int:
-    from ai.ed3n.token_snn import TokenSNN
+    """Grade one model against the instrument set.
+
+    ``model`` exists so a *non-SNN* control (``compare_al_baselines.py``) is
+    graded by the exact same code path: anything with ``vocab``,
+    ``config.max_len``, ``device`` and ``generate(prompt, max_new)`` qualifies.
+    Without it a baseline would need a second copy of the scoring logic, and
+    two implementations of one measurement are two measurements.
+    """
+    if model is None:
+        from ai.ed3n.token_snn import TokenSNN
+
+        model = TokenSNN.load(checkpoint, device=device)
 
     payload = json.loads(Path(set_file).read_text(encoding="utf-8"))
     rows = _select(payload, which)
@@ -631,7 +643,6 @@ def probe(
         return 1
 
     started = time.time()
-    model = TokenSNN.load(checkpoint, device=device)
     max_len = model.config.max_len
 
     # exact window check against the real config (atom counts == encode length)

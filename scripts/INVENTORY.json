@@ -347,6 +347,11 @@
       "referenced": true,
       "purpose": "clear drive sync（無說明：原始碼未附 docstring）"
     },
+    "compare_al_baselines.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Grade a causal transformer on the same AI+AL pairs as the SNN."
+    },
     "compare_decoders.py": {
       "category": "tool",
       "referenced": false,
