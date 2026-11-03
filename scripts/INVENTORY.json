@@ -352,6 +352,11 @@
       "referenced": true,
       "purpose": "Grade a causal transformer on the same AI+AL pairs as the SNN."
     },
+    "compare_cellular_baseline.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Bounded cellular machine as a third baseline on the MVE-1 task."
+    },
     "compare_decoders.py": {
       "category": "tool",
       "referenced": false,
