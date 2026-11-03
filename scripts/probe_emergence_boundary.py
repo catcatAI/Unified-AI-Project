@@ -381,6 +381,15 @@ def _affine_ceiling(rows: Sequence[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
 
 
 _TAU_GRID = (0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0)
+# the contract table spells three fields out; the block uses the short names
+_FIELD_LONG = {
+    "v": "valence",
+    "a": "arousal",
+    "d": "dominance",
+    "fatigue": "fatigue",
+    "stress": "stress",
+    "health": "health",
+}
 DEFAULT_TRAIN = PROCESSED / "ai_al_round7_train.jsonl"
 
 
@@ -486,33 +495,122 @@ def _score_contract_rows(
     parsed_rows: Sequence[Dict[str, Any]],
     constants: Dict[Tuple[str, str], float],
     tau: float,
+    targets: Optional[Dict[str, Dict[str, float]]] = None,
 ) -> Dict[str, Any]:
-    seen_n = seen_exact = unseen_n = 0
+    """Apply the operator.
+
+    ``targets`` is the contract's intent table (§5: the state relaxes toward the
+    intent's target). Passing it is what lets an intent the *training file never
+    covered* be answered at all — the target is a runtime lookup in production,
+    not a learned weight, so leaving those rows out is a property of this probe,
+    not of the contract. Both readings are returned.
+    """
+    seen_n = seen_exact = unseen_n = unseen_exact = 0
+    seen_aware = unseen_aware = 0
     field_hits = {f: 0 for f in _FIELD_KEYS}
     for row in parsed_rows:
         intent = row["intent"]
-        if (intent, _FIELD_KEYS[0]) not in constants:
+        known = (intent, _FIELD_KEYS[0]) in constants
+        if not known and not (targets and intent in targets):
             unseen_n += 1
             continue
         k = pow(math.e, -row["dt"] / tau)
         ok = True
+        # the input line is printed at 2dp, so |Δin| ≤ 0.005 propagates as
+        # 0.005·k. Grading against the bare grid therefore counts printing error
+        # as model error; this second reading allows for it.
+        aware = True
         for f in _FIELD_KEYS:
-            c = constants[(intent, f)]
+            c = constants[(intent, f)] if known else float(targets[intent][_FIELD_LONG[f]])
             pred = c + (row["state"][f] - c) * k
-            hit = abs(pred - row["gold"][f]) <= _GRID
+            err = abs(pred - row["gold"][f])
+            hit = err <= _GRID
             field_hits[f] += int(hit)
             ok = ok and hit
-        seen_n += 1
-        seen_exact += int(ok)
+            aware = aware and err <= _GRID * (1.0 + k)
+        if known:
+            seen_n += 1
+            seen_exact += int(ok)
+            seen_aware += int(aware)
+        else:
+            unseen_n += 1
+            unseen_exact += int(ok)
+            unseen_aware += int(aware)
+    graded = seen_exact + unseen_exact
+    graded_aware = seen_aware + unseen_aware
     return {
         "rows": len(parsed_rows),
         "seen_intent_rows": seen_n,
         "unseen_intent_rows": unseen_n,
         "row_exact_seen": round(seen_exact / seen_n, 4) if seen_n else 0.0,
+        "row_exact_all_intents": round(graded / len(parsed_rows), 4),
+        "row_exact_all_intents_rounding_aware": round(graded_aware / len(parsed_rows), 4),
         "row_exact_of_all": round(seen_exact / len(parsed_rows), 4),
         "field_within": {
-            f: round(field_hits[f] / seen_n, 4) if seen_n else 0.0 for f in _FIELD_KEYS
+            f: round(field_hits[f] / max(1, seen_n + unseen_exact), 4) for f in _FIELD_KEYS
         },
+    }
+
+
+def _contract_table() -> Optional[Tuple[Dict[str, Dict[str, float]], Dict[str, float]]]:
+    """The pilot intent targets and the mean in-state baseline, if present."""
+    try:
+        import generate_al_dataset as gen
+
+        baseline, targets, _rows = gen._pilot_tables()
+    except (ImportError, SystemExit, FileNotFoundError, ValueError, KeyError):
+        return None
+    if not targets:
+        return None
+    return targets, baseline
+
+
+def _structural_ceiling(
+    parsed_rows: Sequence[Dict[str, Any]],
+    targets: Dict[str, Dict[str, float]],
+    baseline: Dict[str, float],
+    tau: float,
+) -> Dict[str, Any]:
+    """Exact rows achievable with the *true* targets and exact arithmetic.
+
+    The block is graded against a 2dp gold at ±0.005 while the input it must be
+    computed from is itself printed at 2dp, so the inherited error is
+    ``|Δin|·k ≤ 0.005·exp(-dt/tau)`` on top of gold's own rounding. For short dt
+    that exceeds the tolerance on its own: some rows are unmatchable regardless
+    of the model. This is the number any gate reading has to be divided by.
+    """
+    hits = 0
+    hits_aware = 0
+    by_dt: Dict[float, Dict[str, int]] = {}
+    errors: List[float] = []
+    for row in parsed_rows:
+        target = targets.get(row["intent"], baseline)
+        k = pow(math.e, -row["dt"] / tau)
+        worst = 0.0
+        for f in _FIELD_KEYS:
+            c = float(target[_FIELD_LONG[f]])
+            worst = max(worst, abs(c + (row["state"][f] - c) * k - row["gold"][f]))
+        errors.append(worst)
+        ok = worst <= _GRID
+        aware = worst <= _GRID * (1.0 + k)
+        hits += int(ok)
+        hits_aware += int(aware)
+        bucket = by_dt.setdefault(row["dt"], {"rows": 0, "exact": 0, "exact_rounding_aware": 0})
+        bucket["rows"] += 1
+        bucket["exact"] += int(ok)
+        bucket["exact_rounding_aware"] += int(aware)
+    n = len(parsed_rows)
+    return {
+        "rows": n,
+        "exact": hits,
+        "row_exact": round(hits / n, 4) if n else 0.0,
+        "exact_rounding_aware": hits_aware,
+        "row_exact_rounding_aware": round(hits_aware / n, 4) if n else 0.0,
+        "by_dt": {str(a): b for a, b in sorted(by_dt.items())},
+        "max_abs_error_median": round(sorted(errors)[n // 2], 4) if errors else 0.0,
+        "max_abs_error_p90": round(sorted(errors)[min(n - 1, int(0.9 * n))], 4) if errors else 0.0,
+        "reason": "input and gold are both printed at 2dp; error = |Δin|*exp(-dt/tau) "
+        "is up to 0.005*k on top of gold's rounding",
     }
 
 
@@ -1396,7 +1494,39 @@ def _operator_head_report(
     scored_all = _contract_rows(rows)
     hold = _score_contract_rows(holdout, fitted["constants"], fitted["tau"])
     ref = _score_contract_rows(reference, fitted["constants"], fitted["tau"])
+    # the contract's intent table is a runtime lookup (§5), not a learned weight,
+    # so score the unseen-intent rows twice: learned only, and with the table
+    table = _contract_table()
+    hold_table = (
+        _score_contract_rows(holdout, fitted["constants"], fitted["tau"], targets=table[0])
+        if table
+        else None
+    )
+    ref_table = (
+        _score_contract_rows(reference, fitted["constants"], fitted["tau"], targets=table[0])
+        if table
+        else None
+    )
+    ceiling = _structural_ceiling(holdout, table[0], table[1], fitted["tau"]) if table else None
+    ceiling_seen = (
+        _structural_ceiling(
+            [r for r in holdout if (r["intent"], _FIELD_KEYS[0]) in fitted["constants"]],
+            table[0],
+            table[1],
+            fitted["tau"],
+        )
+        if table
+        else None
+    )
     hits = round(hold["row_exact_of_all"] * hold["rows"])
+    hits_table = (
+        round(hold_table["row_exact_all_intents"] * hold_table["rows"]) if hold_table else 0
+    )
+    hits_aware = (
+        round(hold_table["row_exact_all_intents_rounding_aware"] * hold_table["rows"])
+        if hold_table
+        else 0
+    )
     return {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "interface": "value (six numbers per block), not text (40 atoms)",
@@ -1406,8 +1536,14 @@ def _operator_head_report(
         "train_rows": fitted["train_rows"],
         "constants": {f"{i}/{f}": round(v, 4) for (i, f), v in sorted(fitted["constants"].items())},
         "holdout": hold,
+        "holdout_with_contract_table": hold_table,
         "reference": ref,
+        "reference_with_contract_table": ref_table,
+        "structural_ceiling": ceiling,
+        "structural_ceiling_seen_intents": ceiling_seen,
         "gate": gate(hits, 0, hold["rows"]),
+        "gate_with_contract_table": gate(hits_table, 0, hold["rows"]),
+        "gate_with_contract_table_rounding_aware": gate(hits_aware, 0, hold["rows"]),
         "checkpoint": str(getattr(model, "path", "")),
         "elapsed_note": f"scored {len(scored_all)} rows",
     }

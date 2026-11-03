@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import math
+from typing import Dict
 from pathlib import Path
 
 import pytest
@@ -578,3 +580,170 @@ def test_position_index_separates_values_from_text(probe):
     assert probe._position_index(model, prompt, start=40, position="values_end", width=80) == 14
     assert probe._position_index(model, prompt, start=40, position="block_start", width=80) == 40
     assert probe._position_index(model, prompt, start=40, position="block_start", width=10) == 9
+
+
+class TestContractTableAndCeiling:
+    """§二十三: the unseen-intent rows, and the number they must be read against."""
+
+    @staticmethod
+    def _row(intent: str, state: Dict[str, float], gold: Dict[str, float], dt: float) -> dict:
+        return {
+            "intent": intent,
+            "state": {**state, "dt": dt},
+            "gold": dict(gold),
+            "dt": dt,
+        }
+
+    def _targets(self) -> Dict[str, Dict[str, float]]:
+        return {
+            "seen": {
+                "valence": 0.3,
+                "arousal": 0.4,
+                "dominance": 0.7,
+                "fatigue": 0.2,
+                "stress": 0.2,
+                "health": 0.9,
+            },
+            "fresh": {
+                "valence": 0.7,
+                "arousal": 0.6,
+                "dominance": 0.5,
+                "fatigue": 0.15,
+                "stress": 0.05,
+                "health": 0.95,
+            },
+        }
+
+    def _constants(self, probe, targets) -> Dict[tuple, float]:
+        return {
+            (name, f): targets[name][probe._FIELD_LONG[f]]
+            for name in ("seen",)
+            for f in probe._FIELD_KEYS
+        }
+
+    def test_unseen_intents_are_graded_when_the_table_is_given(self, probe):
+        """An intent the training file never saw is answerable from the contract table."""
+        targets = self._targets()
+        constants = self._constants(probe, targets)
+        state = {
+            "v": 0.5,
+            "a": 0.5,
+            "d": 0.5,
+            "fatigue": 0.5,
+            "stress": 0.5,
+            "health": 0.5,
+        }
+        k = math.exp(-2.0)
+        gold = {
+            f: round(
+                targets["fresh"][probe._FIELD_LONG[f]]
+                + (0.5 - targets["fresh"][probe._FIELD_LONG[f]]) * k,
+                2,
+            )
+            for f in probe._FIELD_KEYS
+        }
+        row = self._row("fresh", state, gold, dt=2.0)
+        without = probe._score_contract_rows([row], constants, 1.0)
+        with_table = probe._score_contract_rows([row], constants, 1.0, targets=targets)
+        assert without["unseen_intent_rows"] == 1 and without["row_exact_all_intents"] == 0.0
+        assert with_table["unseen_intent_rows"] == 1
+        assert with_table["row_exact_all_intents"] == 1.0
+        assert with_table["row_exact_of_all"] == 0.0  # learned-only reading is unchanged
+
+    def test_exact_counts_can_never_exceed_rows(self, probe):
+        """Regression: the first version summed seen *rows* with unseen hits."""
+        targets = self._targets()
+        constants = self._constants(probe, targets)
+        state = {
+            "v": 0.5,
+            "a": 0.5,
+            "d": 0.5,
+            "fatigue": 0.5,
+            "stress": 0.5,
+            "health": 0.5,
+        }
+        rows = [
+            self._row(
+                "seen",
+                state,
+                {f: targets["seen"][probe._FIELD_LONG[f]] for f in probe._FIELD_KEYS},
+                dt=2.0,
+            ),
+            self._row(
+                "fresh",
+                state,
+                {f: targets["fresh"][probe._FIELD_LONG[f]] for f in probe._FIELD_KEYS},
+                dt=2.0,
+            ),
+        ]
+        scored = probe._score_contract_rows(rows, constants, 1.0, targets=targets)
+        assert 0.0 <= scored["row_exact_all_intents"] <= 1.0
+        assert scored["row_exact_all_intents"] * scored["rows"] <= scored["rows"]
+
+    def test_structural_ceiling_is_harder_at_short_dt(self, probe):
+        """2dp input vs a 0.005 grid: error ~ 0.005*exp(-dt/tau) cares about dt."""
+        targets = self._targets()
+        base = targets["seen"]
+        state = {
+            "v": 0.505,
+            "a": 0.505,
+            "d": 0.505,
+            "fatigue": 0.505,
+            "stress": 0.505,
+            "health": 0.505,
+        }
+
+        # gold computed from the *unrounded* 4dp state, printed at 2dp
+        def gold(dt):
+            k = math.exp(-dt / 1.0)
+            return {
+                f: round(base[probe._FIELD_LONG[f]] + (0.5 - base[probe._FIELD_LONG[f]]) * k, 2)
+                for f in probe._FIELD_KEYS
+            }
+
+        rows = [
+            self._row("seen", state, gold(0.25), 0.25),
+            self._row("seen", state, gold(2.0), 2.0),
+        ]
+        ceiling = probe._structural_ceiling(rows, targets, base, 1.0)
+        assert ceiling["by_dt"]["0.25"]["exact"] <= ceiling["by_dt"]["2.0"]["exact"]
+        assert ceiling["exact"] <= ceiling["rows"]
+        assert 0.0 <= ceiling["row_exact"] <= 1.0
+        assert "2dp" in ceiling["reason"]
+
+    def test_ceiling_gives_up_only_on_rounding_not_on_targets(self, probe):
+        """With the exact state (no print error) every row must be exact."""
+        targets = self._targets()
+        base = targets["seen"]
+        state = {f: 0.17 for f in probe._FIELD_KEYS}
+        k = math.exp(-0.5)
+        gold = {
+            f: base[probe._FIELD_LONG[f]] + (0.17 - base[probe._FIELD_LONG[f]]) * k
+            for f in probe._FIELD_KEYS
+        }
+        row = self._row("seen", state, gold, 0.5)
+        # gold printed at full precision -> the operator reproduces it exactly
+        ceiling = probe._structural_ceiling([row], targets, base, 1.0)
+        assert ceiling["exact"] == 1
+        assert ceiling["max_abs_error_median"] < 1e-9
+
+    def test_rounding_aware_reading_separates_print_error_from_model_error(self, probe):
+        """0.0055 off at dt=2 is inside printing noise but outside the bare grid."""
+        targets = self._targets()
+        constants = self._constants(probe, targets)
+        state = {f: 0.5 for f in probe._FIELD_KEYS}
+        k = math.exp(-2.0)  # aware tolerance = 0.005 * (1 + k) ~ 0.00568
+        pred = {
+            f: constants[("seen", f)] + (0.5 - constants[("seen", f)]) * k
+            for f in probe._FIELD_KEYS
+        }
+        gold = {f: pred[f] - 0.0055 for f in probe._FIELD_KEYS}
+        row = self._row("seen", state, gold, dt=2.0)
+        scored = probe._score_contract_rows([row], constants, 1.0)
+        assert scored["row_exact_seen"] == 0.0
+        assert scored["row_exact_all_intents_rounding_aware"] == 1.0
+        # the allowed slack grows with k, so short dt is held to a tighter bound
+        tight = probe._score_contract_rows(
+            [self._row("seen", state, gold, dt=0.25)], constants, 1.0
+        )
+        assert tight["row_exact_all_intents_rounding_aware"] == 0.0
