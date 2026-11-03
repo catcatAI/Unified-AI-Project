@@ -31,8 +31,8 @@
 | **tools** 工具與行動               | BFCL V4（Patil et al., ICML 2025, [leaderboard](https://gorilla.cs.berkeley.edu/leaderboard)，2026-10-22） | Overall **SOTA 77.5%**（Claude Opus 4.5）；中位數約 45%                  | R3：0.7 × 77.5% = **54.2%**                      | 0.0%       | ❌ FAIL |
 
 實測值來源：`scripts/report_intelligence.py`（快照
-`intelligence_report.json`）。**系統分 6.25/10，達成的階梯是 L2**（L1／L2
-的關鍵維度逐項過門檻：`paraphrase` 75.0% ≥ 70%、`dialogue` 78.0% ≥
+`intelligence_report.json`）。**系統分 6.41/10，達成的階梯是 L2**（L1／L2
+的關鍵維度逐項過門檻：`paraphrase` 75.0% ≥ 70%、`dialogue` 87.6% ≥
 44%、`boundary` 88.9% ≥ 53.3%）；唯一未達是 `tools` 0.0% < 54.2%。**核心分仍是
 0.00/10、核心階梯仍是 L0**——上面每一列的正確答案都是查表／計算／分類器／模板產生，沒有一個是
 SNN/LLM 生成（見 `INTELLIGENCE_ASSESSMENT.md` 的 provenance 一節）。

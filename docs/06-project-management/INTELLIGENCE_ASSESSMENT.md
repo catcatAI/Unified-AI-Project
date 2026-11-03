@@ -70,10 +70,10 @@ historical score inflation.**
 | facts      | 5.3                     | **0.0**（8 個正解全是 lookup）                                                |
 | math       | 8.0                     | **0.0**（32 個正解全是確定性計算）                                            |
 | paraphrase | 7.5                     | **0.0**（neural encoder ＋ 規則組合，不是 SNN/LLM）                           |
-| dialogue   | 7.8                     | **0.0**（過關回合仍是模板／lookup，見下）                                     |
+| dialogue   | 8.8                     | **0.0**（過關回合仍是模板／lookup，見下）                                     |
 | boundary   | 8.9                     | **0.0**（59 個過關是 semantic-qa 的相似度檢索、37 個是 claim-reasoning 規則） |
 | tools      | 0.0                     | **0.0**                                                                       |
-| **總分**   | 6.25（2026-10-31 重測） | **0.00/10**                                                                   |
+| **總分**   | 6.41（2026-11-02 重測） | **0.00/10**                                                                   |
 
 **系統階梯 L0 → L2（2026-10-31）**：改述泛化 50.0% → **75.0%**（過 70% 外部及格線），L1 的唯一缺口補上；L2 的 `dialogue`／`boundary` 早已過關，所以 `result.attained_level` 由 **L0 升到 L2**，剩下唯一未達是 `tools 0.0/10 < 5.4/10`（原生後端沒有代碼生成，`run_benchmarks.py` 直接回 `""`，是設計上的誠實失敗）。**核心階梯仍是 L0**——這次升的是「系統用起來能到哪」，不是「模型會不會想」；核心分不因表層變好而動。
 
@@ -130,7 +130,7 @@ epochs：記憶變好（train/val exact 47%／45%），但**淨 holdout exact 11
 > 這些內部量測是「同題型、自己出題」（`protocol="analogous"`），**不是**在那六個基準上跑的——所以及格線是**可比性下限**，不是「在 MMLU 上拿 45%」。
 
 **智能總分 =
-0.00/10（核心）；6.25/10 是系統分，不是智能**：**1,168 個回合裡，沒有任何一個是 SNN/ED3N/GARDEN/LLM 產生的**（knowledge_pipeline
+0.00/10（核心）；6.41/10 是系統分，不是智能**：**1,168 個回合裡，沒有任何一個是 SNN/ED3N/GARDEN/LLM 產生的**（knowledge_pipeline
 351、local-fallback 342、semantic-qa 250、composed-template 64、claim-reasoning
 40、記憶 63、unified 6、其他 11）。probe 裡的 `source=neural` 標籤把
 `semantic-qa`／`unified`／`neural-bridge`
@@ -171,7 +171,7 @@ exchange」這種型別正確的填充句；型別安全保留在定義式實體
 | routing   | 10   | **0**                      | 10（分類器標籤）              |
 
 **50 個正確答案中，由模型產生的：0。**
-knowledge 的 8 分是知識層查到字串，routing 的 10 分是分類器回標籤，math 的 32 分是計算器算出來的——三者都是「層」在做事，不是生成。所以 6.25/10（每次重跑會因對話探針的隨機性小幅變動，以
+knowledge 的 8 分是知識層查到字串，routing 的 10 分是分類器回標籤，math 的 32 分是計算器算出來的——三者都是「層」在做事，不是生成。所以 6.41/10（每次重跑會因對話探針的隨機性小幅變動，以
 `intelligence_report.json`
 為準）是**分層聚合分**，不能讀成「模型有 5.86 分智能」；以「產生的答案」計，基準上的神經能力是
 **0/50**。

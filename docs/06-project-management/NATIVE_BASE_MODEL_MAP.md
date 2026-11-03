@@ -9,7 +9,7 @@
 > 這份清單只描述**元件與角色**。它「值幾分」由統一定義回答：
 > `INTELLIGENCE_ASSESSMENT.md §0`（`ai/meta/intelligence.py`）＋
 > `scripts/report_intelligence.py`（唯一總分，快照在
-> `intelligence_report.json`）。2026-10-31 實測：**系統分 6.25/10，系統階梯達到 L2**（L1
+> `intelligence_report.json`）。2026-11-02 實測：**系統分 6.41/10，系統階梯達到 L2**（L1
 > 的關鍵度量「改述泛化」由 50% 升到 **75%**，過 70% 及格線）；**核心分仍是 0.00/10、核心階梯仍是
 > L0**——這份清單裡的回答全部由確定性層／檢索／模板產生，SNN/LLM 沒有生產任何一個正解。
 

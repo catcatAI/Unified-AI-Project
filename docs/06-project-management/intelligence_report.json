@@ -4,7 +4,7 @@
     "math": 0.8,
     "tools": 0.0,
     "paraphrase": 0.75,
-    "dialogue": 0.7800333333333334,
+    "dialogue": 0.8757666666666667,
     "boundary": 0.8889
   },
   "thresholds": {
@@ -80,11 +80,11 @@
     "改述（沒教過的詞，開發診斷）": 0.875
   },
   "sources": {
-    "deterministic": 421,
+    "deterministic": 469,
     "neural": 246,
-    "other": 10,
-    "retrieval": 27,
-    "template": 392
+    "other": 6,
+    "retrieval": 23,
+    "template": 352
   },
   "source_verdict": "非模板來源佔比 22% ≥ 20%：有一部分回答不是模板（但見下方核心佔比）",
   "gaps": {
@@ -504,7 +504,7 @@
     },
     "generated_at": "2026-10-31T13:34:38"
   },
-  "system_score": 6.25,
+  "system_score": 6.41,
   "core_score": 0.0,
   "integrity": {
     "sample_valid": true,
@@ -513,7 +513,7 @@
     "problems": []
   },
   "result": {
-    "score": 6.25,
+    "score": 6.41,
     "status": "measured",
     "band": "L3 LLM 編排",
     "band_summary": "自然對話、工具調用、多智能體協作",
@@ -539,7 +539,7 @@
       ],
       [
         "dialogue",
-        0.78
+        0.8758
       ],
       [
         "boundary",

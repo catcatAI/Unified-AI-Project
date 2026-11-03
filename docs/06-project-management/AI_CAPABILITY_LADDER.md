@@ -51,25 +51,25 @@
 | L2-1 對話一致性     | `python scripts/benchmark_dialogue_coherence.py`                                       | 人設 ≥80% / 指代 ≥70%                         | 5/5 = **100%**                                                                                                                                      | ✅                                                                    |
 | L2-2 記憶命中       | `python scripts/benchmark_memory_hit.py`                                               | top-5 ≥60%                                    | 60/100 = **60%**（框架模擬；真實向量召回待 HAM 460K 接入）                                                                                          | ⚠️ 剛好達標                                                           |
 | L2-3 純神經推理     | `python scripts/probe_reasoning_unseen.py`                                             | ≥50%                                          | 確定性 100/100、純神經 **0%**、純神經＋中間層 87/100                                                                                                | ❌ 未達（純神經仍 0%；中間層不等於純神經）                            |
-| L2-7 純本地對話品質 | `python scripts/native_dialogue_budget_gate.py`                                        | 人味 ≥0.64 且學習效應 ≥0.30 且標準集 ≥1000 題 | **標準集 1096 回合：人話標準通過 62.6%**（問答 95%／斷言題 89%／對話 75%／多重事實 65%／**斷言庫外的邊界題 0%**）、學習效應 **+0.373**、QA 機器 18% | ❌ **尚不能算「會說人話」**（臨時門禁，見 `scripts/open_gates.json`） |
+| L2-7 純本地對話品質 | `python scripts/native_dialogue_budget_gate.py`                                        | 人味 ≥0.64 且學習效應 ≥0.30 且標準集 ≥1000 題 | **標準集 1096 回合：人話標準通過 64.9%**（711/1096；問答 95% 468/492／斷言題 89% 96/108／對話 94% 94/100／多重事實 74% 53/72／**斷言庫外的邊界題 0% 0/324**）、學習效應 **+0.4818**、QA 機器 18%、神經層 22.45%（2026-11-02 實測） | ❌ **尚不能算「會說人話」**（臨時門禁，見 `scripts/open_gates.json`；state 0/324 → pass_rate 上限 772/1096 ≈ 0.704，門禁不可能拆） |
 | L3-1 無 RAG 知識    | `python scripts/run_benchmarks.py --backend native --suite knowledge_mc --gate-native` | ≥90%                                          | **97.5%**                                                                                                                                           | ✅                                                                    |
 | L3-2 工具呼叫       | `pytest tests/services/test_handlers.py`                                               | 100%                                          | **60 passed**                                                                                                                                       | ✅                                                                    |
 | 整體回歸            | `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/`                               | 0 failed                                      | **8,688 passed / 112 skipped / 0 failed**                                                                                                           | ✅                                                                    |
 
-> **統一總分（2026-10-31 實測）**：`python scripts/report_intelligence.py` →
-> **6.25/10（系統分；每次重跑會因對話探針的隨機性小幅變動，以
+> **統一總分（2026-11-02 實測）**：`python scripts/report_intelligence.py` →
+> **6.41/10（系統分；每次重跑會因對話探針的隨機性小幅變動，以
 > `intelligence_report.json`
 > 為準）**，**系統階梯達到 L2**（L1／L2 的關鍵維度逐項過門檻：改述泛化 75.0%、對話
-> 78.0%、邊界 88.9%）。六個維度對**外部推導的及格線**是 5 過 1 不過：tools 0% <
+> 87.6%、邊界 88.9%）。六個維度對**外部推導的及格線**是 5 過 1 不過：tools 0% <
 > 54%（BFCL 規則，原生後端沒有代碼生成）；facts 53.3%（MMLU
 > 規則，離線百科索引）、math／paraphrase／dialogue／boundary 過。**核心分仍是
-> 0.00/10、核心階梯仍是 L0**——6.25 的正確答案全部由查表／計算／分類器／模板產生，沒有一個是
+> 0.00/10、核心階梯仍是 L0**——6.41 的正確答案全部由查表／計算／分類器／模板產生，沒有一個是
 > SNN/LLM 生成。及格線不是我訂的，是從公開基準算的（`INTELLIGENCE_PASS_CRITERIA.md`）。這是本文件 L0–L3 之外唯一該引用的「智能總分」——下面這張表的每一列是
 > **各閘的實測**，不是總分的成分（統一定義的六個維度見
 > `INTELLIGENCE_ASSESSMENT.md §0`）。
 
 > **尺度警告（2026-10-22）**：`benchmark_ed3n_garden.py` 的 **20/20 是冒煙測試**
-> ——四類各 5 題、全部由確定性引擎作答。它證明「管線沒斷」，**不能拿來跟 1096 題標準集的人話通過率（62.1%）比較**，也不是能力分。統一定義見
+> ——四類各 5 題、全部由確定性引擎作答。它證明「管線沒斷」，**不能拿來跟 1096 題標準集的人話通過率（64.9%）比較**，也不是能力分。統一定義見
 > `INTELLIGENCE_ASSESSMENT.md §0`；本文件的 L0–L3 是唯一的智能階梯，其餘階梯（美術 Q0–Q4、經驗 X0–X11、回應來源 R1–R3、工程成熟度）各有命名空間。
 
 > **誠實說明**：L2-3（純神經推理）仍是 0%——確定性引擎答對題目不等於神經會做題（`INTELLIGENCE_ASSESSMENT §4.1`）。這一格沒有投影，量測就是 0。中間層（`ai/reasoning/neural_bridge.py`）是**第三條路**，不是純神經路徑的替代品：它用多語編碼器把未見改述「接觸」到老師的概念原型，再用老師回饋對齊原型，最後合成關係圖。

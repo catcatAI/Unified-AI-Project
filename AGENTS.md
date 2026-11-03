@@ -1236,6 +1236,46 @@ collected — 0 errors**).
 > skipped / 0 failed**；`check_fact_gates.py` **ALL PASS**（含
 > `benchmarks.paraphrase_benchmark_wellformed`）；black／isort／flake8 乾淨。文件同步：`INTELLIGENCE_ASSESSMENT.md`、`INTELLIGENCE_PASS_CRITERIA.md`、`MEASUREMENT_MAP.md`、`AI_CAPABILITY_LADDER.md`、`NATIVE_BASE_MODEL_MAP.md`、`intelligence_report.json`。
 
+> ✅ **NOTE (Updated 2026-11-02, 純本地對話：不再覆述、記憶題不被模板接手)**:
+> **§X #279**: 同一輪純本地量測（1096 題凍結標準集、不註冊任何外部 LLM）暴露的
+> 是同一個形狀——**把使用者的句子原樣端回去，或拿不相關的罐頭句假裝聽懂了**。
+> 四處修正：① `taught_facts.lookup` 只回答**問句**（陳述句是使用者正在告訴我們的
+> 事，不是要我們回答的問題；舊版回「你教過我：我的生日是 九月十號。」＝鸚鵡）；
+> ② `QueryClassifier` 的 TASK 關鍵詞（工作／待辦／行程）全是名詞——名詞出現在
+> 陳述句只表示使用者在說自己的事（「我在圖書館工作」「這週工作好忙」），要有
+> 請求／動作詞（建立、提醒、列表、幫我…）或整句只有任務名詞才判 TASK，否則閘門
+> 會建立一個任務、再把整句覆述回去，而句子真的被寫進任務檔；③ 記憶題（「我剛才
+> 說我在哪裡工作？」）跳過所有模板層：記憶層沒有答案就誠實棄權，不是用「工作」
+> 匹配罐頭回「工作辛苦了！你真的很棒！」；④ 第三人稱事實（「Zorblax 的首都是
+> Quuxville。」）先前被記憶層存好、卻由天氣模板回答——現在由記憶層確認
+> （「記住囉，Quuxville！」），且**只有這一回合真的學到東西**才確認
+> （`TaughtFacts.learned_from`），沒學到的不背書（假裝記住了是另一種說謊）。
+> `audit_placement` 把 `memory-teaching` 宣告為記憶層（值來自使用者的句子），
+> 7/7 回覆的宣告與生產者一致。
+> 量測（nd5 → nd9，同一份標準集、同一條評分）：人話標準通過率 **0.6131 →
+> 0.6487**（711/1096）、對話 **49/100 → 94/100**（鸚鵡不再出現）、多重事實
+> **59/72 → 53/72**（teach turn 要求回覆含該值；有 8 條事實的值藏在動詞後
+> 「我喜歡喝拿鐵」，取不到就只確認、不覆述——照實記為限制）、問答 468/492、
+> 斷言 96/108、**邊界題 0/324**（知識缺口）、學習效應 0.4818、神經層 22.45%、
+> **核心 0.00/10**（不變；`neural_share` 不是核心）。官方系統分 **6.25 →
+> 6.41**（`report_intelligence.py --from-cache`，dialogue 維度 7.8 → 8.8；核心分
+> 仍是 0.00，系統階梯仍 L2、核心階梯仍 L0）。
+> **門禁現況（照實寫）**：拆除條件是 `pass_rate ≥ 0.90`、`state ≥ 0.50`、
+> `multi ≥ 0.80`、`progress ≥ +0.60`；`state` 仍 0/324（刻意不把標準集主題種進
+> 斷言庫＝不自己教自己），所以 pass_rate 的**上限**＝772/1096 ≈ **0.704**——
+> 在邊界題真的會答之前，這道門禁不可能拆，也不該拆。
+> 量測衛生（同一輪一起修，因為它讓上一輪的數字不能用）：探針的任務寫入改到
+> 沙盒——先前幾次探針在使用者真實的 `~/.angela/tasks/tasks.json` 留下 **371
+> 筆**標準集句子（已備份 `tasks.json.probe-artifacts-backup-20261102` 後清除）；
+> 探針加**單一實例鎖**（沙盒只有一份，同時跑兩個會把彼此的向量庫清掉——nd8
+> 因此作廢、整份丟棄，不採用壞掉的量測）。
+> 測試：`tests/ai/test_taught_facts.py`（16）、
+> `tests/services/test_conversation_recall.py`（47）、
+> `tests/unit/test_query_classifier.py`（59）、
+> `tests/services/test_offline_speak.py`（10）；全量 `pytest tests/
+> apps/backend/tests/` = **9,121 passed / 107 skipped / 0 failed**；
+> `check_fact_gates.py` **ALL PASS**。
+
 ### JavaScript/TypeScript
 
 ```bash
