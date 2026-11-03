@@ -175,21 +175,24 @@ _ATOM = re.compile(
     re.S,
 )
 
+# CORE_GAP §十八: the contract's own value grid. State-block values always carry
+# one digit before the dot and two after, inside [-1.00, 1.00], so the graded
+# alphabet is 201 atoms — closed, bounded, and independent of the data.
+# ``dt`` is the one contract input that leaves the state range: its four rungs
+# are 0.25 / 0.50 / 1.00 / 2.00, and 3 of them already sit in the value grid.
+# Adding 2.00 keeps the *tested* feature (dt conditioning) in the same
+# representation as everything else instead of splitting only that rung into
+# digits, which would confuse the comparison rather than measure it.
+_CONTRACT_EXTRA_ATOMS: Tuple[str, ...] = ("2.00",)
+_VALUE_ATOMS: Tuple[str, ...] = (
+    tuple(f"{i / 100:.2f}" for i in range(-100, 101)) + _CONTRACT_EXTRA_ATOMS
+)
+STATE_VALUE_ATOMS = frozenset(_VALUE_ATOMS)
+_VALUE_CAND = re.compile(r"(-?\d\.\d\d)(?![0-9])")
 
-def tokenize(text: str) -> List[str]:
-    """Split text into self-delimiting atoms (decode is a plain join).
 
-    * a word absorbs the whitespace *before* it — ``tokenize("the cat") ==
-      ["the", " c", "at"]`` (leading-space atoms, GPT-2 style) — so joining
-      needs no rules and roundtrips exactly; leading whitespace with nothing
-      behind it stays alone;
-    * numbers split into single digits, so an answer value never seen in
-      training (``"214.0"``) can still be composed instead of becoming
-      ``<unk>``;
-    * a bare ``"\n"`` never comes out of tokenize (it is always absorbed or
-      followed); the vocabulary still reserves it as the prompt/answer
-      separator (``encode_pair`` inserts the id directly).
-    """
+def _tokenize_plain(text: str) -> List[str]:
+    """The historical atomisation: words, and digits split one by one."""
     out: List[str] = []
     for atom in _ATOM.findall(str(text or "")):
         if atom.isspace():
@@ -204,6 +207,45 @@ def tokenize(text: str) -> List[str]:
     return out
 
 
+def tokenize(text: str, numeric_atoms: bool = False) -> List[str]:
+    """Split text into self-delimiting atoms (decode is a plain join).
+
+    * a word absorbs the whitespace *before* it — ``tokenize("the cat") ==
+      ["the", " c", "at"]`` (leading-space atoms, GPT-2 style) — so joining
+      needs no rules and roundtrips exactly; leading whitespace with nothing
+      behind it stays alone;
+    * numbers split into single digits, so an answer value never seen in
+      training (``"214.0"``) can still be composed instead of becoming
+      ``<unk>``;
+    * a bare ``"\n"`` never comes out of tokenize (it is always absorbed or
+      followed); the vocabulary still reserves it as the prompt/answer
+      separator (``encode_pair`` inserts the id directly).
+
+    ``numeric_atoms=True`` changes one rule: a *contract value* — one digit, a
+    dot, two decimals, inside ``[-1.00, 1.00]`` — becomes a single atom instead
+    of three or four ids. That is the interface fix of CORE_GAP §十八: the
+    graded block is six such values, and with digits split apart the model must
+    do carrying arithmetic token by token, which neither the SNN nor a matched
+    transformer ever learned (0/200 each). As an atom the same mapping is a
+    201-way choice per field, i.e. the ``copy-with-scale`` operation the
+    contract actually asks for. Everything else — response numbers, words,
+    punctuation — keeps the historical atomisation, so unseen response values
+    can still be composed and ``"".join(tokenize(x)) == x`` still holds.
+    """
+    raw = str(text or "")
+    if not numeric_atoms:
+        return _tokenize_plain(raw)
+    out: List[str] = []
+    for part in _VALUE_CAND.split(raw):
+        if not part:
+            continue
+        if part in STATE_VALUE_ATOMS:
+            out.append(part)
+        else:
+            out.extend(_tokenize_plain(part))
+    return out
+
+
 class TokenVocab:
     """Word-atom vocabulary: same contract as :class:`CharVocab`, longer horizon.
 
@@ -213,9 +255,10 @@ class TokenVocab:
 
     kind = "token"
 
-    def __init__(self, tokens: Sequence[str]) -> None:
+    def __init__(self, tokens: Sequence[str], numeric_atoms: bool = False) -> None:
         self.itos: List[str] = list(tokens)
         self.stoi: Dict[str, int] = {t: i for i, t in enumerate(self.itos)}
+        self.numeric_atoms = bool(numeric_atoms)
         for special in (*SPECIALS, "\n"):
             if special not in self.stoi:
                 self.stoi[special] = len(self.itos)
@@ -243,18 +286,28 @@ class TokenVocab:
         texts: Iterable[str],
         min_count: int = 1,
         max_vocab: int = 12000,
+        numeric_atoms: bool = False,
     ) -> "TokenVocab":
         counts: Dict[str, int] = {}
         for text in texts:
-            for atom in tokenize(text):
+            for atom in tokenize(text, numeric_atoms):
                 counts[atom] = counts.get(atom, 0) + 1
         ordered = [a for a, n in counts.items() if n >= min_count and a not in SPECIALS]
         ordered.sort(key=lambda a: (-counts[a], a))
-        return cls(ordered[:max_vocab])
+        if numeric_atoms:
+            # The alphabet is closed *by contract*: seed every value atom ahead
+            # of the data-driven list so (a) a gold value unseen in training is
+            # still emittable and (b) max_vocab cannot truncate it — a budget
+            # smaller than the alphabet keeps the alphabet and drops words,
+            # because a missing value atom is unlearnable while a missing word
+            # only degrades to <unk>.
+            extra = [a for a in ordered if a not in STATE_VALUE_ATOMS]
+            return cls(list(_VALUE_ATOMS) + extra[: max(0, max_vocab - len(_VALUE_ATOMS))], True)
+        return cls(ordered[:max_vocab], numeric_atoms=numeric_atoms)
 
     def encode(self, text: str, add_eos: bool = False) -> List[int]:
         unk = self.stoi[UNK]
-        ids = [self.stoi.get(atom, unk) for atom in tokenize(text)]
+        ids = [self.stoi.get(atom, unk) for atom in tokenize(text, self.numeric_atoms)]
         if add_eos:
             ids.append(self.eos_id)
         return ids
@@ -273,11 +326,11 @@ class TokenVocab:
         return "".join(out)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"kind": self.kind, "itos": self.itos}
+        return {"kind": self.kind, "itos": self.itos, "numeric_atoms": self.numeric_atoms}
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TokenVocab":
-        return cls(data["itos"])
+        return cls(data["itos"], numeric_atoms=bool(data.get("numeric_atoms", False)))
 
     def __len__(self) -> int:
         return len(self.itos)

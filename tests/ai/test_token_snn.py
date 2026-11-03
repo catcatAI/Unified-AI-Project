@@ -204,6 +204,51 @@ def test_token_vocab_save_load_dispatches(tmp_path):
     assert restored.generate("alpha", 4) == model.generate("alpha", 4)
 
 
+def test_numeric_atoms_make_a_contract_value_one_id():
+    """CORE_GAP §十八: the graded block's numbers must be single atoms.
+
+    Counts, not vibes: `v=0.26` is 5 ids with the historical atomisation
+    (v, =, 0, ., 2, 6 -> with the leading-space word: 4) and must be 3 here
+    (v, =, 0.26). That is the difference between digit-carrying arithmetic and
+    a 201-way choice over the contract's own grid.
+    """
+    plain = tokenize("v=0.26")
+    atoms = tokenize("v=0.26", numeric_atoms=True)
+    assert atoms[-1] == "0.26"
+    assert len(atoms) < len(plain)
+    assert "".join(atoms) == "v=0.26"
+
+
+def test_numeric_atoms_keep_the_alphabet_closed_and_roundtripping():
+    """The value alphabet is seeded, bounded, and cannot be truncated."""
+    # a gold value that never appeared in the training text is still emittable
+    vocab = TokenVocab.build(["v=0.26 a=0.17"], min_count=1, max_vocab=4096, numeric_atoms=True)
+    for value in ("-1.00", "0.00", "0.99", "1.00", "2.00"):
+        assert value in vocab.stoi, value
+    assert "0.26" in vocab.stoi
+    assert vocab.decode(vocab.encode("v=0.26")) == "v=0.26"
+    # a budget smaller than the alphabet drops *words*, never value atoms
+    tiny = TokenVocab.build(["v=0.26"], min_count=1, max_vocab=4, numeric_atoms=True)
+    assert len(tiny) >= 202
+    assert "0.26" in tiny.stoi and "0.00" in tiny.stoi
+    # the closed alphabet does not leak into other numbers
+    assert tokenize("0.268", numeric_atoms=True) == list("0.268")
+    assert tokenize("12.50", numeric_atoms=True) == list("12.50")
+    assert tokenize("7.1944", numeric_atoms=True) == list("7.1944")
+
+
+def test_numeric_atom_mode_survives_save_load(tmp_path):
+    """A checkpoint must remember the representation it was trained under."""
+    vocab = TokenVocab.build(["v=0.26 a=0.17"], min_count=1, numeric_atoms=True)
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=24))
+    path = tmp_path / "na.pt"
+    model.save(path)
+    restored = TokenSNN.load(path)
+    assert restored.vocab.numeric_atoms is True
+    assert restored.vocab.encode("v=0.26") == vocab.encode("v=0.26")
+    assert TokenVocab.build(["x"], min_count=1).numeric_atoms is False
+
+
 def test_membrane_readout_is_normalized():
     """LayerNorm on the membrane path: logits must not saturate with length.
 

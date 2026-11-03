@@ -192,6 +192,15 @@ def main() -> int:
         "(words carry their trailing spaces, numbers split to digits) — "
         "shorter sequences for long questions (CORE_GAP_ANALYSIS fix path)",
     )
+    ap.add_argument(
+        "--numeric-atoms",
+        action="store_true",
+        help="token vocab only: represent a contract value (one digit, dot, two "
+        "decimals, |v| <= 1) as a single atom from a closed 201-symbol "
+        "alphabet instead of 3-4 digit ids. The graded state block is six such "
+        "values, so this turns its emission into copy-with-scale over a bounded "
+        "alphabet rather than digit-carrying arithmetic (CORE_GAP §十八).",
+    )
     args = ap.parse_args()
 
     train_path = Path(args.train)
@@ -215,7 +224,12 @@ def main() -> int:
     if args.vocab == "token":
         # min_count 1: rare words must stay composable (knowledge answers
         # are often hapax); unseen *probe* words become <unk> either way.
-        vocab = TokenVocab.build(texts, min_count=1, max_vocab=cfg.max_vocab)
+        vocab = TokenVocab.build(
+            texts,
+            min_count=1,
+            max_vocab=cfg.max_vocab,
+            numeric_atoms=bool(args.numeric_atoms),
+        )
     else:
         vocab = CharVocab.build(texts, min_count=cfg.min_count, max_vocab=cfg.max_vocab)
     train_fit = fits(train, vocab, cfg.max_len)
@@ -309,6 +323,7 @@ def main() -> int:
     report = {
         "train": str(train_path),
         "vocab_kind": args.vocab,
+        "numeric_atoms": bool(args.numeric_atoms),
         "pairs": {"train": len(train), "train_fit": len(train_fit), "val_fit": len(val_fit)},
         "vocab_size": len(vocab),
         "config": cfg.to_dict(),

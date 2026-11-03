@@ -70,6 +70,7 @@ from ai.ed3n.token_snn import (  # noqa: E402
 DEFAULT_TRAIN = ROOT / "apps" / "backend" / "data" / "processed" / "ai_al_round7_train.jsonl"
 DEFAULT_VAL = ROOT / "apps" / "backend" / "data" / "processed" / "ai_al_round7_val.jsonl"
 REPORTS = ROOT / "data" / "intelligence_reports"
+REPORT_CANONICAL = REPORTS / "mve1_emergence_boundary.json"
 
 
 def read_pairs(path: Path) -> List[Tuple[str, str]]:
@@ -361,6 +362,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--report", default=str(REPORTS / "mve1_emergence_boundary_transformer.json"))
     ap.add_argument("--summary", default=str(REPORTS / "mve1_architecture_comparison.json"))
     ap.add_argument("--skip-snn", action="store_true", help="do not re-read the SNN checkpoint")
+    ap.add_argument(
+        "--snn-report",
+        default="",
+        help="report to read the SNN side from (default: the canonical "
+        "mve1_emergence_boundary.json); point it at a round's own report when "
+        "the canonical one was produced under a different representation",
+    )
     args = ap.parse_args(argv)
 
     import torch
@@ -471,7 +479,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if not args.skip_snn:
         snn = TokenSNN.load(ckpt, map_location="cpu", device=args.device)
-        snn_report = REPORTS / "mve1_emergence_boundary.json"
+        snn_report = Path(args.snn_report) if args.snn_report else REPORT_CANONICAL
         if snn_report.is_file():
             old = json.loads(snn_report.read_text(encoding="utf-8"))
             train_report = REPORTS / "ai_al_round8.json"
