@@ -69,6 +69,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import random
 import re
 import sys
@@ -327,8 +328,7 @@ def _affine_ceiling(rows: Sequence[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         return {
             "row_exact": round(float(np.mean(np.all(err <= _GRID, axis=1))), 4),
             "field_within": {
-                f: round(float(np.mean(err[:, i] <= _GRID)), 4)
-                for i, f in enumerate(_FIELD_KEYS)
+                f: round(float(np.mean(err[:, i] <= _GRID)), 4) for i, f in enumerate(_FIELD_KEYS)
             },
             "r2": r2,
         }
@@ -377,6 +377,142 @@ def _affine_ceiling(rows: Sequence[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         "grid": _GRID,
         "dt_conditioned": _score(pred_conditioned),
         "dt_blind": _score(pred_blind),
+    }
+
+
+_TAU_GRID = (0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0)
+DEFAULT_TRAIN = PROCESSED / "ai_al_round7_train.jsonl"
+
+
+def _parse_input_line(prompt: str) -> Dict[str, str]:
+    """``<al_in>`` header only — the 2dp values the model actually sees."""
+    return _parse_block(str(prompt).split("\n", 1)[0])
+
+
+def _learn_contract_constants(
+    train_path: Path, tau: float
+) -> Tuple[Dict[Tuple[str, str], float], int]:
+    """Median implied ``c[intent][field]`` from training pairs, plus row count.
+
+    Inverting ``out = c + (in - c)·k`` gives ``c = (out - in·k) / (1 - k)`` for a
+    known ``k = exp(-dt/tau)``; the median over training rows is robust to the
+    2dp printing noise, which the 1/(1-k) factor amplifies at short dt.
+    """
+    implied: Dict[Tuple[str, str], List[float]] = {}
+    used = 0
+    if not Path(train_path).is_file():
+        return {}, 0
+    with Path(train_path).open(encoding="utf-8") as fh:
+        for line in fh:
+            try:
+                row = json.loads(line)
+                state = _parse_input_line(row["input"])
+                gold = _parse_block(_body(row["output"]))
+                dt = float(state["dt"])
+                intent = state["intent"]
+                k = pow(math.e, -dt / tau)
+            except (KeyError, TypeError, ValueError):
+                continue
+            if abs(1.0 - k) < 1e-6:
+                continue
+            for f in _FIELD_KEYS:
+                if f not in state or f not in gold:
+                    continue
+                implied.setdefault((intent, f), []).append(
+                    (float(gold[f]) - float(state[f]) * k) / (1.0 - k)
+                )
+            used += 1
+    constants = {}
+    for key, values in implied.items():
+        ordered = sorted(values)
+        constants[key] = ordered[len(ordered) // 2]
+    return constants, used
+
+
+def _contract_form_ceiling(
+    rows: Sequence[Dict[str, Any]], train_path: Path = DEFAULT_TRAIN
+) -> Optional[Dict[str, Any]]:
+    """The ceiling that matters: apply the contract's own operator.
+
+    ``generate_al_dataset.build`` computes
+
+        out[f] = c[intent][f] + (state[f] - c[intent][f]) · exp(-dt / tau)
+
+    with ``tau = 1.0`` and ``c`` fitted to the 10 pilot rows. So the gold block
+    is a 6-number lookup per intent plus one exponential — fully determined by
+    tokens that are *in the prompt* except ``c``, which exists only in the data.
+    This learns ``c`` from training pairs alone (median of the implied constant),
+    picks ``tau`` on a grid using those pairs only, and then applies the operator
+    to the graded rows. That is what ``0/200`` should be read against: the affine
+    ceiling reports 0.50 because it fits one linear map per rung across intents,
+    which cannot express ``c[intent]·(1 - k)``.
+
+    Rows whose intent has no training pairs are counted separately: nothing in
+    the prompt identifies that intent's constants, so they are not "hard", they
+    are unpredicted by construction. The gate denominator still includes them.
+    """
+    train_path = Path(train_path)
+    parsed_rows: List[Dict[str, Any]] = []
+    for entry in rows:
+        state = _parse_input_line(entry.get("prompt", ""))
+        gold = _parse_block(entry.get("gold", ""))
+        try:
+            parsed_rows.append(
+                {
+                    "state": {f: float(state[f]) for f in _FIELD_KEYS},
+                    "gold": {f: float(gold[f]) for f in _FIELD_KEYS},
+                    "dt": float(state["dt"]),
+                    "intent": str(state.get("intent") or ""),
+                }
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    if not parsed_rows:
+        return None
+
+    best: Optional[Dict[str, Any]] = None
+    for tau in _TAU_GRID:
+        constants, train_used = _learn_contract_constants(train_path, tau)
+        if not constants or not train_used:
+            return None
+        scored = _score_contract_rows(parsed_rows, constants, tau)
+        score = scored.pop("row_exact_seen")
+        if best is None or score > best["row_exact_seen"]:
+            best = {**scored, "row_exact_seen": score, "tau": tau, "train_rows": train_used}
+    return best
+
+
+def _score_contract_rows(
+    parsed_rows: Sequence[Dict[str, Any]],
+    constants: Dict[Tuple[str, str], float],
+    tau: float,
+) -> Dict[str, Any]:
+    seen_n = seen_exact = unseen_n = 0
+    field_hits = {f: 0 for f in _FIELD_KEYS}
+    for row in parsed_rows:
+        intent = row["intent"]
+        if (intent, _FIELD_KEYS[0]) not in constants:
+            unseen_n += 1
+            continue
+        k = pow(math.e, -row["dt"] / tau)
+        ok = True
+        for f in _FIELD_KEYS:
+            c = constants[(intent, f)]
+            pred = c + (row["state"][f] - c) * k
+            hit = abs(pred - row["gold"][f]) <= _GRID
+            field_hits[f] += int(hit)
+            ok = ok and hit
+        seen_n += 1
+        seen_exact += int(ok)
+    return {
+        "rows": len(parsed_rows),
+        "seen_intent_rows": seen_n,
+        "unseen_intent_rows": unseen_n,
+        "row_exact_seen": round(seen_exact / seen_n, 4) if seen_n else 0.0,
+        "row_exact_of_all": round(seen_exact / len(parsed_rows), 4),
+        "field_within": {
+            f: round(field_hits[f] / seen_n, 4) if seen_n else 0.0 for f in _FIELD_KEYS
+        },
     }
 
 
@@ -808,6 +944,7 @@ def probe(
         "input_output_correlation": {f: _pearson(xs, ys) for f, (xs, ys) in io_pairs.items()},
         "gold_input_correlation": _gold_correlation(rows),
         "learnability": _affine_ceiling(rows),
+        "contract_form_ceiling": _contract_form_ceiling(rows),
         "copy_accuracy": {k: round(v / max(1, n), 4) for k, v in copy_ok.items()},
         "input_sensitivity": (
             _input_sensitivity(model, rows[:sensitivity_rows], max_len)
@@ -867,7 +1004,29 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--max-len", type=int, default=192, help="training window (TokenConfig)")
     ap.add_argument("--out", default=str(SET_OUT))
     ap.add_argument("--report", default=str(REPORT_OUT))
+    ap.add_argument(
+        "--ceiling",
+        action="store_true",
+        help="no checkpoint: print the contract-form ceiling (constants learned "
+        "from the training pairs, operator applied to the set) and write it to "
+        "data/intelligence_reports/mve1_contract_form_ceiling.json. This is the "
+        "number 0/200 should be read against.",
+    )
+    ap.add_argument("--train", default=str(DEFAULT_TRAIN), help="pairs for --ceiling")
     args = ap.parse_args(argv)
+
+    if args.ceiling:
+        payload = json.loads(Path(args.out).read_text(encoding="utf-8"))
+        ceiling = _contract_form_ceiling(_select(payload, args.which), Path(args.train))
+        if ceiling is None:
+            print(f"ceiling unavailable (missing rows or {args.train})")
+            return 1
+        payload = {"set": str(args.out), "train": str(args.train), **ceiling}
+        out_path = REPORT_OUT.parent / "mve1_contract_form_ceiling.json"
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(payload, indent=2))
+        return 0
 
     if args.probe:
         if not args.checkpoint:
