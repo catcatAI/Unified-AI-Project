@@ -318,3 +318,84 @@ def test_mutation_is_a_noop_when_the_value_already_matches(probe):
 def test_body_keeps_only_the_state_block(probe):
     assert probe._body("614\n<al_out> v=0.1 a=0.2") == "v=0.1 a=0.2"
     assert probe._body("v=0.1 a=0.2") == "v=0.1 a=0.2"
+
+
+_FIELD_AXIS = (
+    ("v", "valence"),
+    ("a", "arousal"),
+    ("d", "dominance"),
+    ("fatigue", "fatigue"),
+    ("stress", "stress"),
+    ("health", "health"),
+)
+
+
+def _out_row(probe, gen, state, intent, mode, dt, seed):
+    """One boundary-set-shaped row: gold is the contract operator's output."""
+    target = gen._pilot_tables()[1][intent]
+    out = gen.transition(state, target, dt)
+    fields = " ".join(f"{key}={out[axis]:.2f}" for key, axis in _FIELD_AXIS)
+    gold = f"<al_out> {fields} mode={mode} intent={intent}"
+    return {
+        "sample_id": f"t{seed}",
+        "cell": f"{intent}:{mode}",
+        "intent": intent,
+        "mode": mode,
+        "dt": dt,
+        "state_in": dict(state, routing_mode=mode),
+        "gold": gold,
+        "prompt": "<al_in> placeholder",
+    }
+
+
+def _synthetic_rows(probe, gen, n=160):
+    import random
+
+    rng = random.Random(7)
+    intents = [i for i in probe._INTENTS_ORDER if i in gen._pilot_tables()[1]]
+    rows = []
+    for i in range(n):
+        state = {f: round(rng.uniform(lo, hi), 4) for f, (lo, hi) in gen._RANGE.items()}
+        rows.append(
+            _out_row(
+                probe,
+                gen,
+                state,
+                intents[i % len(intents)],
+                gen._MODES[i % len(gen._MODES)],
+                gen._DT_LADDER[i % len(gen._DT_LADDER)],
+                i,
+            )
+        )
+    return rows
+
+
+def test_gold_correlation_reports_a_ceiling_above_zero(probe, gen):
+    # 契約的 out = t + (s - t)·k 是線性的：gold 對輸入的相關必須接近 1，
+    # 否則模型上的「相關 ≈ 0」會被誤讀成「改成隨機輸出也一樣」。
+    rows = _synthetic_rows(probe, gen)
+    corr = probe._gold_correlation(rows)
+    assert set(corr) == {"v", "a", "d", "fatigue", "stress", "health"}
+    assert all(v is not None and v > 0.5 for v in corr.values()), corr
+
+
+def test_affine_ceiling_says_the_transition_is_learnable(probe, gen):
+    ceiling = probe._affine_ceiling(_synthetic_rows(probe, gen))
+    assert ceiling is not None
+    assert ceiling["folds"] == 5
+    assert ceiling["rungs_fitted"] == len(gen._DT_LADDER)
+    # 給定 dt 的線性擬合可以幾乎逐位重現演算法，所以 0/200 是模型的讀數，
+    # 不是 instrument 構造上不可能達成的門檻（門檻 5/200 = 2.5%）
+    assert ceiling["dt_conditioned"]["row_exact"] > 10 * probe.GATE_EXACT_MIN / probe.GATE_N
+    assert min(ceiling["dt_conditioned"]["r2"].values()) > 0.99
+
+
+def test_affine_ceiling_records_that_dt_is_the_whole_task(probe, gen):
+    ceiling = probe._affine_ceiling(_synthetic_rows(probe, gen))
+    # dt 當作一般特徵（無交互項）時只在低 dt 附近碰巧正確，逐位幾乎全減
+    assert ceiling["dt_blind"]["row_exact"] < ceiling["dt_conditioned"]["row_exact"]
+    assert ceiling["dt_blind"]["row_exact"] < 0.1
+
+
+def test_affine_ceiling_returns_none_without_enough_rows(probe, gen):
+    assert probe._affine_ceiling(_synthetic_rows(probe, gen, n=6)) is None

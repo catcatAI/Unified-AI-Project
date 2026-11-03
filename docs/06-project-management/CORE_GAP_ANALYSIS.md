@@ -1320,3 +1320,94 @@ R8：同一批資料、同一 argparse，唯一改動
 `copy_accuracy`（照抄欄位的抄中率）。三者要一起讀：`format_ok` 滿分 +
 `body_distinct` 低 = 塌縮；`body_distinct` 高但 correlation／copy ≈ 0
 = 格式對而映射沒學到（R7）。
+
+## 十七、第八輪（2026-11-03 00:5x → 01:2x；probe 01:3x–01:5x）：tail-weight 不是主因，先把「這題能不能學」量出來
+
+§十六 留下的疑點是：R4–R7 全部用
+`--tail-weight 0.25`，而 MVE-1 量的正是被降權的狀態塊（有效梯度約 9.9%）。§十六.6 於是排定 R8 為**單一變因**：資料、切片、argparse 全部與 R7 逐字相同，只把
+`--tail-weight 0.25` 改成
+`1.0`。本節記三件事——權重換到了什麼、位置是不是瓶頸、以及「0/200 到底是不是儀器的問題」。
+
+### 1. 換掉權重買到多樣性、賣掉表面正確性，映射仍然沒動
+
+`data/intelligence_reports/ai_al_round8.json`（train 1,329s，`vocab 80`，pairs
+2,633/2,633/653）：
+
+| 讀數                                     | R7（tail 0.25）                           | R8（tail 1.0）                     |
+| ---------------------------------------- | ----------------------------------------- | ---------------------------------- |
+| train loss                               | 2.685 → 0.633（min 在 epoch 99）          | 2.262 → **0.571**（min 0.563 @95） |
+| `resp_tf` / `tail_tf`                    | 0.3915（2,991 tok）/ 0.7872（35,362 tok） | 0.3858 / 0.7943（同分割）          |
+| `body_distinct`                          | 128                                       | **241**                            |
+| `body_modal_share`                       | 7.5%                                      | **4.1%**                           |
+| `field_hits`（單一固定塊可解釋的欄位數） | 155                                       | **98**                             |
+| `input_output_correlation` 最大 \|r\|    | 0.083                                     | 0.137（`d`）                       |
+| `copy_accuracy` mode / intent            | 29.7% / 26.9%                             | 37.2% / 25.0%                      |
+| `format_ok` / `marker_ok`                | **320 / 320**                             | **223 / 203**                      |
+| `input_sensitivity` 改 `v` / 改 `dt`     | 12/24 · 14/24                             | 8/24 · 18/24                       |
+
+loss 更低、min 落到 epoch 95（100
+epochs 這次夠了）、塊更分散、單一固定塊能解釋的欄位從 155 掉到 98——權重確實把梯度花了在狀態塊上。但**surface 正確性被賣掉了**：97 列連一個合法塊都吐不出來，最常見的破法是吞掉
+`a=` 欄位或整個 `<al_out>`：
+
+```
+> v=-0.15 d=0.58 fatigue=0.41 stress=0.24 health=0.85 mode=neutral intent=math_query
+```
+
+而映射本身沒有變好：correlation 仍 ≤ 0.14，`copy_accuracy` mode
+37.2% 對照隨機水位 33%（三選一）、intent
+25.0% 對照 20%（五選一）——模型連**照抄**它眼前那行的 `mode`／`intent`
+都做不到。所以 §十六.5 的疑點結案：`--tail-weight` **不是**主因。
+
+### 2. 位置不是瓶頸（一次 OOD 對照）
+
+若資訊是在單層遞歸膜裡衰減掉的，把 `<al_in>`
+行搬到生成點旁邊就會改善。實測（24 列，`data/checkpoints/ai_al_round8.pt`）：把
+`<al_in>` 行移到 prompt 末端後 `copy_mode` 10/24 →
+**5/24**、correlation 沒有系統性上升（`d` 0.24 → 0.24、 `stress` 0.30 →
+−0.05）。搬近反而更差，且不是「讀不到」——把整行換成 `<al_in> v=0.00`
+會讓 24/24 列的輸出塊改變。模型在讀，只是讀到的資訊不足以回復那個映射。
+
+### 3. 先量「這題能不能學」：新增 `gold_input_correlation` 與 `learnability`
+
+`0/200`
+只有在兩種情況下有意義：門檻在構造上可達，而模型沒達到。R8 把這兩個前提做成儀器欄位（`scripts/probe_emergence_boundary.py`）：
+
+- `gold_input_correlation`——gold 對 `state_in` 的逐欄 Pearson，是
+  `input_output_correlation` 的**上界**。沒有它，`r ≈ 0`
+  分不出「模型沒學到」與 「契約本來就不怎麼依賴輸入」。實測（`--set all`，320 列）**0.743–0.839**（`v`
+  0.810、 `a` 0.839、`d` 0.826、`fatigue` 0.801、`stress` 0.743、`health`
+  0.755；只看 200 列 holdout 是 0.758–0.829）：正確模型應該重現 0.8 左右，模型讀到的是 0.0–0.14。
+- `learnability`——把契約自己的形式（`out = t + (s−t)·exp(−dt/τ)`，對 `(s,t)`
+  線性但係數依 `dt` 而變）用 5-fold out-of-fold 最小平方擬合，逐 `dt`
+  一組係數，跟「`dt`
+  只當一般特徵（無交互項）」對照。邊界集的讀數（`--set all`，320 列；括號為只取 200 列 holdout 時的值）：
+
+  | 擬合                              | row_exact（六欄全在 ±0.005） | 逐欄 R²       |
+  | --------------------------------- | ---------------------------- | ------------- |
+  | 逐 `dt` 一組係數（模型看得到 dt） | **0.503**（0.385）           | 0.9996–0.9999 |
+  | `dt` 當一般特徵（無交互項）       | **0.000**（0.000）           | 0.80–0.84     |
+
+gate 需要 5/200 = **2.5%**，上界是 **50.3%**（holdout
+38.5%）：門檻可達，而且離模型很遠。用 R7 自己的 2,633 列 train／653 列 val 對同一形式擬合，row_exact
+**0.524**、逐欄R² 0.9996–0.9999，與邊界集一致。`dt_blind`
+的 0.000 另外標出一件事：這道題的全部內容就是 `dt` 交互項——一個訓練時不把 `dt`
+乘進狀態的模型，逐位幾乎不可能對。
+
+### 4. 結論：0/200 是模型的讀數
+
+資料可學（上界 50.3%）、儀器可達（門檻 2.5%）、權重已排除、位置已排除、輸入確實被讀到。剩下的是容量與表徵：1
+layer、1 timestep、token-level、`vocab 80`、單層膜 readout 的模型在 loss
+0.56 附近停住，連 3 選 1 的 `mode`
+都只抄到 37%。下一個變因因此是**容量／表徵**（`--layers 2` 或
+`--timesteps > 1`；或把六欄數字改成 copy-with-scale 解碼），而不是再調 loss 權重。
+
+### 5. 儀器變更
+
+`probe` 報告新增 `gold_input_correlation` 與 `learnability`（`folds`／`rows`／
+`rungs_fitted`／`rungs_unfitted_rows`／`dt_conditioned`／`dt_blind`，各含
+`row_exact`、`field_within`、`r2`）；`_affine_ceiling()`
+對列數不足的 rung 不硬擬合，該 rung 的列改用 `dt_blind` 預測並計入
+`rungs_unfitted_rows`，避免出現捏造的負 R²。
+`tests/test_probe_emergence_boundary.py` 由 20 增至 **24
+passed**（新增：gold 相關必須是上界、可學性上界 > 10× 門檻、`dt_blind`
+逐位更低、列數不足回 `None`）。

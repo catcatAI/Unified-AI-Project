@@ -227,6 +227,159 @@ def _mutate(prompt: str, field: str, value: str) -> str:
     return re.sub(pattern, f"{field}={value}", head, count=1) + sep + rest
 
 
+_AXIS_OF = {
+    "v": "valence",
+    "a": "arousal",
+    "d": "dominance",
+    "fatigue": "fatigue",
+    "stress": "stress",
+    "health": "health",
+}
+_GRID = 0.005  # gold is printed to 2dp; a prediction is "exact" within half a unit
+# one-hot vocabulary for the affine ceiling; an intent outside this list is
+# simply all-zeros (the fit then treats it as the intercept), which is honest
+# for a row the ceiling has no column for.
+_MODES_ORDER = tuple(gen._MODES)
+_INTENTS_ORDER = ("greeting", "humor", "knowledge_query", "math_query", "unknown")
+
+
+def _gold_correlation(rows: Sequence[Dict[str, Any]]) -> Dict[str, Optional[float]]:
+    """Ceiling for ``input_output_correlation``: gold's own input→output slope.
+
+    Round 8 read ≤0.14 in every field and that number means nothing on its own:
+    a contract whose output barely moves with the input would be reported as a
+    model failure. Read against this, 0.76-0.83 is the value a correct model
+    would reproduce, so the gap — not the distance from zero — is the reading.
+    """
+    xs: Dict[str, List[float]] = {f: [] for f in _FIELD_KEYS}
+    ys: Dict[str, List[float]] = {f: [] for f in _FIELD_KEYS}
+    for entry in rows:
+        parsed = _parse_block(entry.get("gold", ""))
+        state = entry.get("state_in") or {}
+        for f in _FIELD_KEYS:
+            if f not in parsed or _AXIS_OF[f] not in state:
+                continue
+            try:
+                xs[f].append(float(state[_AXIS_OF[f]]))
+                ys[f].append(float(parsed[f]))
+            except (TypeError, ValueError):
+                continue
+    return {f: _pearson(xs[f], ys[f]) for f in _FIELD_KEYS}
+
+
+def _affine_ceiling(rows: Sequence[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Is the AL transition learnable at all? Fit the contract's own form, twice.
+
+    ``generate_al_dataset.transition`` is ``out = t + (s - t)·exp(-dt/tau)``:
+    linear in ``(s, t)`` *with a dt-dependent coefficient*. Rounding out 0/200
+    is only evidence about the model if that form can be recovered from the
+    rows at all, so this fits it directly — once per ``dt`` (the model is told
+    dt) and once with dt as a plain additive feature (no interaction). The two
+    numbers separate "the model cannot regress" from "the model never used dt",
+    which ``dt_conditioning`` cannot report while no block is legal.
+
+    Fit per rung over 5 folds and score out-of-fold predictions: 200 rows cannot
+    spare a fixed half for fitting (15 columns per rung), and fitting on all of
+    them would score the fit against itself. Exact means every field within
+    0.005 of gold — the same unit the grader uses.
+    """
+    try:
+        import numpy as np  # noqa: PLC0415  (optional: the probe works without it)
+    except ImportError:
+        return None
+    feats: List[List[float]] = []
+    targets: List[List[float]] = []
+    dts: List[float] = []
+    for entry in rows:
+        parsed = _parse_block(entry.get("gold", ""))
+        state = entry.get("state_in") or {}
+        if any(f not in parsed for f in _FIELD_KEYS):
+            continue
+        try:
+            state_values = [float(state[_AXIS_OF[f]]) for f in _FIELD_KEYS]
+            dt = float(entry["dt"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        mode = str(entry.get("mode") or "")
+        intent = str(entry.get("intent") or "")
+        feats.append(
+            state_values
+            + [float(mode == m) for m in _MODES_ORDER]
+            + [float(intent == i) for i in _INTENTS_ORDER]
+        )
+        targets.append([float(parsed[f]) for f in _FIELD_KEYS])
+        dts.append(dt)
+    if len(feats) < 8:
+        return None
+    x = np.array(feats, dtype=float)
+    y = np.array(targets, dtype=float)
+    dt_col = np.array(dts, dtype=float)
+    lo = np.array([-1.0, -1.0, -1.0, 0.0, 0.0, 0.0])
+    hi = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+
+    def _score(pred: Any) -> Dict[str, Any]:
+        err = np.abs(y - np.clip(pred, lo, hi))
+        r2 = {}
+        for i, f in enumerate(_FIELD_KEYS):
+            ss_res = float(((y[:, i] - np.clip(pred[:, i], lo[i], hi[i])) ** 2).sum())
+            ss_tot = float(((y[:, i] - y[:, i].mean()) ** 2).sum())
+            r2[f] = round(1.0 - ss_res / ss_tot, 4) if ss_tot > 0 else None
+        return {
+            "row_exact": round(float(np.mean(np.all(err <= _GRID, axis=1))), 4),
+            "field_within": {
+                f: round(float(np.mean(err[:, i] <= _GRID)), 4)
+                for i, f in enumerate(_FIELD_KEYS)
+            },
+            "r2": r2,
+        }
+
+    one = np.ones((len(feats), 1))
+    design_all = np.hstack([x, one])
+    folds = 5
+    fold_of = np.arange(len(feats)) % folds
+    # dt-blind first: a rung with too few rows to fit 15 columns per rung would
+    # otherwise leave its rows at zero and report a fabricated negative R², so
+    # those rows fall back to the blind prediction and are counted as unfitted.
+    design_blind = np.hstack([x, dt_col[:, None], one])
+    pred_blind = np.zeros_like(y)
+    for fold in range(folds):
+        fit_rows = np.flatnonzero(fold_of != fold)
+        eval_rows = np.flatnonzero(fold_of == fold)
+        coef_blind, *_ = np.linalg.lstsq(design_blind[fit_rows], y[fit_rows], rcond=None)
+        pred_blind[eval_rows] = design_blind[eval_rows] @ coef_blind
+
+    pred_conditioned = pred_blind.copy()
+    rungs_fitted = 0
+    unfitted_rows = 0
+    for rung in sorted(set(dts)):
+        rung_rows = np.flatnonzero(dt_col == rung)
+        # one coefficient set per rung needs more fit rows than columns,
+        # otherwise the fold interpolates and the score would be a fiction
+        if rung_rows.size - (rung_rows.size + folds - 1) // folds <= design_all.shape[1]:
+            unfitted_rows += int(rung_rows.size)
+            continue
+        fitted = False
+        for fold in range(folds):
+            fit_rows = rung_rows[fold_of[rung_rows] != fold]
+            eval_rows = rung_rows[fold_of[rung_rows] == fold]
+            if not eval_rows.size or fit_rows.size <= design_all.shape[1]:
+                continue
+            coef, *_ = np.linalg.lstsq(design_all[fit_rows], y[fit_rows], rcond=None)
+            pred_conditioned[eval_rows] = design_all[eval_rows] @ coef
+            fitted = True
+        rungs_fitted += int(fitted)
+
+    return {
+        "folds": folds,
+        "rows": len(feats),
+        "rungs_fitted": rungs_fitted,
+        "rungs_unfitted_rows": unfitted_rows,
+        "grid": _GRID,
+        "dt_conditioned": _score(pred_conditioned),
+        "dt_blind": _score(pred_blind),
+    }
+
+
 def _input_sensitivity(model: Any, rows: Sequence[Dict[str, Any]], max_len: int) -> Dict[str, Any]:
     """Does the block change when only one input field changes?
 
@@ -642,6 +795,8 @@ def probe(
             "body_modal": (max(bodies.items(), key=lambda kv: kv[1])[0][:160] if bodies else ""),
         },
         "input_output_correlation": {f: _pearson(xs, ys) for f, (xs, ys) in io_pairs.items()},
+        "gold_input_correlation": _gold_correlation(rows),
+        "learnability": _affine_ceiling(rows),
         "copy_accuracy": {k: round(v / max(1, n), 4) for k, v in copy_ok.items()},
         "input_sensitivity": (
             _input_sensitivity(model, rows[:sensitivity_rows], max_len)

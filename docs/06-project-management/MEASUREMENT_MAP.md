@@ -243,3 +243,31 @@ greeting／humor，結構上不可能通過）。但表面數字全滿：format_
 > 低 = 塌縮（R6）；`body_distinct` 高但 `input_output_correlation` ≈ 0 且
 > `copy_accuracy`
 > ≈ 隨機 = 格式對而映射沒學到（R7）。只看前兩欄會把 R7 誤讀成「終於學會了」——這也是 gate 仍為 0 的原因。
+
+**single-gold 第五發（2026-11-03，`ai_al_round8.pt`，XPU，`--set all`）**：R8 是 R7 的
+**單一變因**——資料、切片、argparse 逐字相同，只把 `--tail-weight 0.25` 改成
+`1.0`。gate 仍
+**0/200／0/200／0/120**，但這一發不是複驗 0，而是換掉了 0 的解讀：
+`body_distinct` **128 → 241**、`body_modal_share` 7.5% → 4.1%、`field_hits`
+**155 → 98**、train loss 0.633 → **0.571**（min @95，100 epochs 終於夠），代價是
+`format_ok` **320 → 223**、marker **320 → 203**（最常見破法是吞掉 `a=` 欄位）。
+`input_output_correlation` 仍 ≤ 0.14、`copy_accuracy` mode 37.2%／intent
+25.0%（隨機水位 33%／20%）——連照抄都做不到。結論：`--tail-weight` 不是主因。
+
+同時這一發補上兩個**判讀用的上界**，讓 0 不再只能與 0 相比：-
+`gold_input_correlation`（gold 對 `state_in`，**0.743–0.839**）：`r ≈ 0`
+的意思是「與上界的差距」，不是「與零的距離」。契約本身高度依賴輸入，所以 0.0–0.14 是模型的讀數。
+
+- `learnability`（把契約形式 `t + (s−t)·exp(−dt/τ)` 用 5-fold
+  out-of-fold 擬合）：逐 `dt` 一組係數 → row_exact **0.503**、R²
+  0.9996–0.9999；`dt` 當一般特徵（無交互項）→ row_exact
+  **0.000**。gate 只需 2.5%，所以**門檻可達**；而 `dt_blind`
+  的 0.000 標出這道題的全部內容就是 `dt` 交互項。
+
+> **讀法（R8 之後，五欄成組）**：`format_ok` + `body_distinct` 判塌縮，
+> `input_output_correlation`／`copy_accuracy` **要和 `gold_input_correlation`
+> 一起讀** （上界 ≈
+> 0.8、抄中上界 100%），`learnability.dt_conditioned.row_exact`
+> 則是**門檻的可達性證明**。三欄時代的 R7 讀數（映射沒學到）成立，但當時無法排除「資料不可學」；現在可以：上界 50.3%
+> ≫ 門檻 2.5%，權重與位置都已排除，剩下的是容量／表徵。全文見
+> `CORE_GAP_ANALYSIS` §十七。
