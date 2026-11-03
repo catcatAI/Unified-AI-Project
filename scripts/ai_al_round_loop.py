@@ -95,6 +95,14 @@ def main(argv: List[str] | None = None) -> int:
         "schema — the staged batch must match the schema the round adopted)",
     )
     ap.add_argument(
+        "--next-decimals",
+        type=int,
+        default=2,
+        help="decimal places in the next batch's state lines (default 2, the schema "
+        "rounds 1-7 trained on; 3 is the coarsest printing a 1e-3 grader can decide "
+        "— see CORE_GAP §二十四)",
+    )
+    ap.add_argument(
         "--generate-only",
         action="store_true",
         help="produce the next batch without running training (recovery/manual mode)",
@@ -147,6 +155,7 @@ def main(argv: List[str] | None = None) -> int:
             "id_prefix": id_prefix,
             **({"holdout_cells": args.next_holdout_cells} if args.next_holdout_cells else {}),
             **({"expose_dt": True} if args.next_expose_dt else {}),
+            **({"decimals": args.next_decimals} if args.next_decimals != 2 else {}),
             "note": (
                 "fresh disjoint slice of core_train.jsonl; AL states come from the "
                 "same contract §5 operator (registered placeholder — the state-line "
@@ -211,6 +220,8 @@ def main(argv: List[str] | None = None) -> int:
                 str(val_out),
                 "--manifest-out",
                 str(manifest_out),
+                "--decimals",
+                str(args.next_decimals),
             ],
         ),
         (
@@ -227,6 +238,8 @@ def main(argv: List[str] | None = None) -> int:
                 str(val_out),
                 "--manifest-out",
                 str(manifest_out),
+                "--decimals",
+                str(args.next_decimals),
             ],
         ),
     ]

@@ -829,3 +829,39 @@ class TestContractTableAndCeiling:
         constants = {("seen", f): targets[f] for f in probe._FIELD_KEYS}
         scored = probe._score_contract_rows([row], constants, 1.0)
         assert scored["row_exact_all_intents"] == 1.0
+
+    def test_both_constant_estimators_agree_on_clean_data(self, probe, tmp_path):
+        """median and the closed form are two spellings of the same thing here.
+
+        They diverge only through noise: the median weighs a short-dt row (whose
+        implied constant is amplified 1/(1-k)) like an informative one, the least
+        squares solve does not. With noise-free rows both must be exact.
+        """
+        truth = {"v": 0.3, "a": 0.4, "d": 0.7, "fatigue": 0.2, "stress": 0.25, "health": 0.9}
+        lines = []
+        for dt, x in ((0.25, 0.85), (0.5, 0.15), (1.0, 0.6), (2.0, 0.05)):
+            k = math.exp(-dt)
+            out = {f: truth[f] + (x - truth[f]) * k for f in probe._FIELD_KEYS}
+            lines.append(
+                json.dumps(
+                    {
+                        "input": "<al_in> "
+                        + " ".join(f"{f}={x:.3f}" for f in probe._FIELD_KEYS)
+                        + f" mode=neutral intent=seen dt={dt:.3f} | q",
+                        "output": "a\n<al_out> "
+                        + " ".join(f"{f}={out[f]:.3f}" for f in probe._FIELD_KEYS)
+                        + " mode=neutral intent=seen",
+                    }
+                )
+                + "\n"
+            )
+        train = tmp_path / "train.jsonl"
+        train.write_text("".join(lines), encoding="utf-8")
+        for estimator in ("median", "ls"):
+            constants, used = probe._learn_contract_constants(train, 1.0, estimator)
+            assert used == 4
+            for f in probe._FIELD_KEYS:
+                assert abs(constants[("seen", f)] - truth[f]) < 2e-3
+        exact, _ = probe._learn_contract_constants(train, 1.0, "ls")
+        for f in probe._FIELD_KEYS:
+            assert abs(exact[("seen", f)] - truth[f]) < 2e-3

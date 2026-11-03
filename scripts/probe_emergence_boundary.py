@@ -403,44 +403,60 @@ def _parse_input_line(prompt: str) -> Dict[str, str]:
     return _parse_block(str(prompt).split("\n", 1)[0])
 
 
-def _learn_contract_constants(
-    train_path: Path, tau: float
-) -> Tuple[Dict[Tuple[str, str], float], int]:
-    """Median implied ``c[intent][field]`` from training pairs, plus row count.
-
-    Inverting ``out = c + (in - c)·k`` gives ``c = (out - in·k) / (1 - k)`` for a
-    known ``k = exp(-dt/tau)``; the median over training rows is robust to the
-    2dp printing noise, which the 1/(1-k) factor amplifies at short dt.
-    """
-    implied: Dict[Tuple[str, str], List[float]] = {}
-    used = 0
+def _contract_train_rows(train_path: Path) -> List[Dict[str, Any]]:
+    """Training pairs in the shape both constant estimators read."""
+    rows: List[Dict[str, Any]] = []
     if not Path(train_path).is_file():
-        return {}, 0
+        return rows
     with Path(train_path).open(encoding="utf-8") as fh:
         for line in fh:
             try:
                 row = json.loads(line)
                 state = _parse_input_line(row["input"])
                 gold = _parse_block(_body(row["output"]))
-                dt = float(state["dt"])
-                intent = state["intent"]
-                k = pow(math.e, -dt / tau)
+                rows.append(
+                    {
+                        "state": {f: float(state[f]) for f in _FIELD_KEYS},
+                        "gold": {f: float(gold[f]) for f in _FIELD_KEYS},
+                        "dt": float(state["dt"]),
+                        "intent": str(state["intent"]),
+                    }
+                )
             except (KeyError, TypeError, ValueError):
                 continue
-            if abs(1.0 - k) < 1e-6:
-                continue
-            for f in _FIELD_KEYS:
-                if f not in state or f not in gold:
-                    continue
-                implied.setdefault((intent, f), []).append(
-                    (float(gold[f]) - float(state[f]) * k) / (1.0 - k)
-                )
-            used += 1
+    return rows
+
+
+def _learn_contract_constants(
+    train_path: Path, tau: float, estimator: str = "median"
+) -> Tuple[Dict[Tuple[str, str], float], int]:
+    """``c[intent][field]`` from training pairs, plus row count.
+
+    Two estimators, because they disagree in a measurable way. ``median`` inverts
+    ``out = c + (in - c)·k`` per row (``c = (out - in·k)/(1-k)``) and takes the
+    middle value: robust to a few bad rows, but it weighs a near-zero ``1-k`` row
+    — whose implied constant is amplified noise — the same as an informative one.
+    ``ls`` is the least-squares solve, which is the exact answer for this model.
+    """
+    rows = _contract_train_rows(train_path)
+    if not rows:
+        return {}, 0
+    if estimator == "ls":
+        return _solve_operator_constants(rows, tau), len(rows)
+    implied: Dict[Tuple[str, str], List[float]] = {}
+    for row in rows:
+        k = pow(math.e, -row["dt"] / tau)
+        if abs(1.0 - k) < 1e-6:
+            continue
+        for f in _FIELD_KEYS:
+            implied.setdefault((row["intent"], f), []).append(
+                (row["gold"][f] - row["state"][f] * k) / (1.0 - k)
+            )
     constants = {}
     for key, values in implied.items():
         ordered = sorted(values)
         constants[key] = ordered[len(ordered) // 2]
-    return constants, used
+    return constants, len(rows)
 
 
 def _contract_form_ceiling(
@@ -485,14 +501,30 @@ def _contract_form_ceiling(
         return None
 
     best: Optional[Dict[str, Any]] = None
-    for tau in _TAU_GRID:
-        constants, train_used = _learn_contract_constants(train_path, tau)
-        if not constants or not train_used:
-            return None
-        scored = _score_contract_rows(parsed_rows, constants, tau)
-        score = scored.pop("row_exact_seen")
-        if best is None or score > best["row_exact_seen"]:
-            best = {**scored, "row_exact_seen": score, "tau": tau, "train_rows": train_used}
+    comparison: Dict[str, Any] = {}
+    for estimator in ("median", "ls"):
+        for tau in _TAU_GRID:
+            constants, train_used = _learn_contract_constants(train_path, tau, estimator)
+            if not constants or not train_used:
+                continue
+            scored = _score_contract_rows(parsed_rows, constants, tau)
+            score = scored.pop("row_exact_seen")
+            if estimator not in comparison or score > comparison[estimator]["row_exact_seen"]:
+                comparison[estimator] = {
+                    "row_exact_seen": score,
+                    "row_exact_all_intents": scored["row_exact_all_intents"],
+                    "tau": tau,
+                }
+            if best is None or score > best["row_exact_seen"]:
+                best = {
+                    **scored,
+                    "row_exact_seen": score,
+                    "tau": tau,
+                    "train_rows": train_used,
+                    "estimator": estimator,
+                }
+    if best is not None:
+        best["estimator_comparison"] = comparison
     return best
 
 
