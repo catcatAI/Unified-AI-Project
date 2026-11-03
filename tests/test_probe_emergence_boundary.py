@@ -488,3 +488,93 @@ def test_contract_form_ceiling_counts_unseen_intents_separately(probe, tmp_path)
     # at best, never be answered
     assert ceiling["row_exact_of_all"] == round(ceiling["row_exact_seen"] / 2, 4)
     assert ceiling["row_exact_seen"] >= 0.0
+
+
+def _train_rows(tmp_path, intent, n=60, seed=3):
+    """A training file of contract rows (prompt/gold) for the head tests."""
+    import random
+
+    rng = random.Random(seed)
+    rows = []
+    for i in range(n):
+        state = {f: round(rng.uniform(0.0, 1.0), 2) for f in _FIELDS_2DP}
+        rows.append(_operator_row(intent, state, (0.25, 0.5, 1.0, 2.0)[i % 4]))
+    train = tmp_path / f"train_{intent}.jsonl"
+    train.write_text(
+        "\n".join(json.dumps({"input": r["prompt"], "output": r["gold"]}) for r in rows) + "\n",
+        encoding="utf-8",
+    )
+    return train, [(r["prompt"], r["gold"], intent) for r in rows]
+
+
+def test_operator_head_learns_nineteen_parameters(probe, tmp_path):
+    """19 parameters over exact arithmetic reproduce the block the LM cannot emit.
+
+    The head is fitted by gradient descent on training rows only, so recovering
+    the constants (and tau) is learning, not transcription: the operator's form
+    is fixed by the contract, its 18 constants are not in the prompt.
+    """
+    pytest.importorskip("torch")
+    _train, pairs = _train_rows(tmp_path, "math_query")
+    fitted = probe._fit_operator_head(pairs, epochs=400)
+    assert fitted is not None
+    assert fitted["intents"] == ["math_query"]
+    assert abs(fitted["tau"] - 1.0) <= 0.25
+    for field, (_, constant) in _FIELDS_2DP.items():
+        learned = fitted["constants"][("math_query", field)]
+        assert abs(learned - constant) <= 0.05, (field, learned, constant)
+
+    rows = probe._contract_rows([{"prompt": pr, "gold": g} for pr, g, _i in pairs[:20]])
+    scored = probe._score_contract_rows(rows, fitted["constants"], fitted["tau"])
+    assert scored["row_exact_seen"] >= 0.7
+    assert scored["unseen_intent_rows"] == 0
+
+
+def test_operator_head_leaves_unseen_intents_unanswered(probe, tmp_path):
+    """A new intent's constants are unobservable, so the head must not guess them.
+
+    This is the 80/200 of the real instrument: no arithmetic over unseen
+    constants can be exact, and the head reports those rows separately instead
+    of leaking them into the seen-intent rate.
+    """
+    pytest.importorskip("torch")
+    _train, pairs = _train_rows(tmp_path, "unknown")
+    fitted = probe._fit_operator_head(pairs, epochs=200)
+    assert fitted is not None
+    state = {f: 0.5 for f in _FIELDS_2DP}
+    rows = probe._contract_rows(
+        [_operator_row("unknown", state, 0.5), _operator_row("humor", state, 0.5)]
+    )
+    scored = probe._score_contract_rows(rows, fitted["constants"], fitted["tau"])
+    assert scored["seen_intent_rows"] == 1
+    assert scored["unseen_intent_rows"] == 1
+    assert scored["row_exact_of_all"] <= scored["row_exact_seen"] / 2 + 1e-9
+
+
+def test_value_targets_read_the_closed_grid(probe):
+    """The head's targets are grid positions, not vocabulary ids."""
+    vocab = type(
+        "V",
+        (),
+        {"stoi": {f"{i / 100:.2f}": 1000 + i for i in range(-100, 101)}},
+    )()
+    block = "<al_out> v=0.30 a=-0.20 d=1.00 fatigue=0.22 stress=0.18 health=0.90"
+    assert probe._value_targets(vocab, block) == [130, 80, 200, 122, 118, 190]
+    assert probe._value_targets(vocab, "<al_out> v=0.30 a=-0.20") is None
+    # a value off the 0.01 grid is not gradable (it is not a contract value)
+    assert probe._value_targets(vocab, block.replace("0.90", "0.905")) is None
+
+
+def test_position_index_separates_values_from_text(probe):
+    """``values_end`` must sit before the ' | ' source text, ``block_start`` after it."""
+
+    class _Vocab:
+        @staticmethod
+        def encode(text):
+            return list(text)
+
+    model = type("M", (), {"vocab": _Vocab})()
+    prompt = "<al_in> v=0.30 | 653 + 12"
+    assert probe._position_index(model, prompt, start=40, position="values_end", width=80) == 14
+    assert probe._position_index(model, prompt, start=40, position="block_start", width=80) == 40
+    assert probe._position_index(model, prompt, start=40, position="block_start", width=10) == 9

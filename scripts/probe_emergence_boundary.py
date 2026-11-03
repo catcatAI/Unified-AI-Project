@@ -981,6 +981,520 @@ def probe(
 # -- cli --------------------------------------------------------------------
 
 
+# -- value head -------------------------------------------------------------
+#
+# CORE_GAP §十九/§二十 separated three claims that a single 0/200 conflated:
+# (a) the inputs are invisible, (b) the representation cannot hold them, (c)
+# the *text decoder* cannot emit them. §二十 ruled out (a) — every input is in
+# the prompt and a learned operator reaches 0.508 — and the arithmetic ruled
+# out (c) as an exactness problem: the block is ~40 atoms, so per-token
+# accuracy p gives p**40 per row, and p would have to be 0.99. This mode tests
+# (b) directly: freeze the network, take its hidden state at the block start
+# (the position that predicts the first block atom) and fit a head over the
+# closed 201-atom value grid, one distribution per field. If a head on the
+# frozen state reaches the contract ceiling, the information is there and only
+# the text interface is wrong; if it reads 0, the recurrent state dropped the
+# inputs and no decoder can help.
+#
+# The head is trained on the *training file* rows and scored on the instrument
+# rows with the grader's own unit: state values are printed at 2 dp, so atom
+# equality and "within 0.005" are the same event (any other atom is >= 0.01
+# away). A linear head is fitted alongside as the affine floor — the head that
+# can only express ``c + w·h`` should reproduce the 0.503 ceiling measured in
+# §十九, which turns that number into a check on the instrument.
+
+_VALUE_GRID: Tuple[str, ...] = tuple(f"{i / 100:.2f}" for i in range(-100, 101))
+
+
+def _value_targets(vocab: Any, block: str) -> Optional[List[int]]:
+    """Six grid indices (``v a d fatigue stress health``) or ``None``."""
+    parsed = _parse_block(block)
+    out: List[int] = []
+    for field in _FIELD_KEYS:
+        raw = parsed.get(field)
+        idx = _VALUE_GRID.index(raw) if raw in _VALUE_GRID else -1
+        if idx < 0 or raw not in vocab.stoi:
+            return None
+        out.append(idx)
+    return out
+
+
+def _train_value_pairs(path: Path, limit: int = 24000) -> List[Tuple[str, str, str]]:
+    """``(prompt, gold block, intent)`` from the training jsonl.
+
+    The prompt is the training prefix up to the block — ``<al_in>`` line, the
+    source text and the *gold* response — because that is what the model was
+    trained to condition the block on (§probe docstring point 2).
+    """
+    pairs: List[Tuple[str, str, str]] = []
+    with Path(path).open(encoding="utf-8") as fh:
+        for line in fh:
+            if limit and len(pairs) >= limit:
+                break
+            row = json.loads(line)
+            output = str(row.get("output", ""))
+            if _MARKER not in output:
+                continue
+            body, block = output.split(_MARKER, 1)
+            intent = _parse_block(str(row.get("input", ""))).get("intent", "?")
+            prompt = str(row["input"]).strip() + "\n" + body.strip()
+            pairs.append((prompt, (_MARKER + block).strip(), intent))
+    return pairs
+
+
+_HEAD_POSITIONS = ("values_end", "input_line_end", "block_start")
+
+
+def _position_index(model: Any, prompt: str, start: int, position: str, width: int) -> int:
+    """Where in the sequence a head reads the state.
+
+    ``input_line_end`` is the last atom of the ``<al_in>`` line — the state that
+    has just read the six values. ``block_start`` is the first answer atom, i.e.
+    the state the language model actually decodes from, ~100 atoms of response
+    later. Reading both separates "the state never had it" from "the state lost
+    it": a head that works at the first and fails at the second is a retention
+    failure, not a decoder failure.
+    """
+    if position == "block_start":
+        idx = start
+    elif position == "values_end":
+        # the six values, dt and intent sit left of the " | " that starts the
+        # source text, so this is the state that has *just* read them
+        idx = len(model.vocab.encode(str(prompt).split(" | ", 1)[0]))
+    elif position == "input_line_end":
+        # ids are [bos] + atoms(prompt), so the state after the L-th first-line
+        # atom sits at index L (bos occupies 0)
+        idx = len(model.vocab.encode(str(prompt).split("\n", 1)[0]))
+    else:
+        raise SystemExit(f"unknown head position {position!r}")
+    return min(max(idx, 0), width - 1)
+
+
+def _block_features(
+    model: Any, pairs: Sequence[str], position: str = "block_start", batch: int = 32
+) -> Any:
+    """Pre-head hidden state at ``position`` for each prompt, as (N, d).
+
+    The head's own input is captured with a forward hook, so the network is used
+    exactly as trained (same forward, same readout, same normalisation) and
+    nothing in ``token_snn`` grows a diagnostic-only API.
+    """
+    torch = model.torch
+    # the head is called once per timestep, so the hook collects a list that has
+    # to be stacked along time into (batch, steps, hidden)
+    steps: List[Any] = []
+    handle = model.net.head.register_forward_hook(lambda _m, inputs, _out: steps.append(inputs[0]))
+    rows: List[Any] = []
+    try:
+        for i in range(0, len(pairs), batch):
+            chunk = list(pairs[i : i + batch])
+            encoded = [model._encode(p, _MARKER) for p in chunk]
+            width = max(len(ids) for ids, _, _ in encoded)
+            ids_t = torch.full(
+                (len(chunk), width), model.vocab.pad_id, dtype=torch.long, device=model.device
+            )
+            for r, (ids, _start, _end) in enumerate(encoded):
+                ids_t[r, : len(ids)] = torch.tensor(ids, dtype=torch.long, device=model.device)
+            steps.clear()
+            with torch.no_grad():
+                model.net(ids_t)
+            hidden = torch.stack(steps, dim=1)
+            for r, (_ids, start, _end) in enumerate(encoded):
+                idx = _position_index(model, chunk[r], start, position, hidden.shape[1])
+                rows.append(hidden[r, idx].detach().float())
+    finally:
+        handle.remove()
+    return torch.stack(rows)
+
+
+def _fit_value_head(
+    model: Any,
+    x_train: Any,
+    y_train: Any,
+    x_eval: Any,
+    hidden: int,
+    steps: int = 3000,
+    batch: int = 128,
+    lr: float = 2e-3,
+    seed: int = 7,
+) -> Tuple[Any, Any]:
+    """Fit one head over the frozen state; return (argmax, expectation).
+
+    Exact-atom accuracy is the grader's unit but a coarse one: with 201 classes
+    over [-1, 1] a head with 0.2 MAE still lands exactly about 2% of the time.
+    The softmax expectation gives a continuous reading (MAE / R2) so "the state
+    carries the value weakly" cannot be mistaken for "the state is empty".
+    """
+    torch = model.torch
+    nn = torch.nn
+    torch.manual_seed(seed)
+    d_in = int(x_train.shape[1])
+    n_cls = len(_VALUE_GRID)
+    layers: List[Any] = [nn.LayerNorm(d_in)]
+    if hidden:
+        layers += [nn.Linear(d_in, hidden), nn.GELU(), nn.Dropout(0.1)]
+    layers.append(nn.Linear(hidden or d_in, len(_FIELD_KEYS) * n_cls))
+    head = nn.Sequential(*layers).to(model.device)
+    opt = torch.optim.AdamW(head.parameters(), lr=lr, weight_decay=1e-4)
+    n_train = x_train.shape[0]
+    # Steps, not epochs: 40 epochs of 2611 rows at batch 512 is 240 updates,
+    # which cannot move a 1206-logit head at all. The target is gathered as
+    # y[idx].reshape(-1) — the earlier flat gather indexed rows by *row id*,
+    # so the head learned "which row am I", read 0.05 nats and scored 0.
+    for _step in range(steps):
+        idx = torch.randint(0, n_train, (min(batch, n_train),), device=model.device)
+        logits = head(x_train[idx]).reshape(-1, n_cls)
+        loss = torch.nn.functional.cross_entropy(logits, y_train[idx].reshape(-1))
+        opt.zero_grad(set_to_none=True)
+        loss.backward()
+        opt.step()
+    with torch.no_grad():
+        logits = head(x_eval).reshape(-1, len(_FIELD_KEYS), n_cls)
+        grid = torch.tensor(
+            [(i - 100) / 100.0 for i in range(n_cls)], device=logits.device, dtype=logits.dtype
+        )
+        expected = (logits.softmax(dim=-1) * grid).sum(dim=-1)
+        return logits.argmax(dim=-1), expected
+
+
+def _score_value_preds(
+    argmax: Any,
+    expected: Any,
+    targets: Any,
+    labels: Sequence[Dict[str, object]],
+) -> Dict[str, Any]:
+    """Per-field, per-row and per-group accuracy, in continuous and exact units."""
+    p = argmax.cpu().tolist()
+    e = expected.cpu().tolist()
+    t = targets.cpu().tolist()
+    n_fields = len(_FIELD_KEYS)
+    field_hits = [0] * n_fields
+    row_hits = 0
+    groups: Dict[str, List[int]] = {}
+    for i, (row, gold) in enumerate(zip(p, t)):
+        ok = [row[f] == gold[f] for f in range(n_fields)]
+        for f, hit in enumerate(ok):
+            field_hits[f] += int(hit)
+        hit = all(ok)
+        row_hits += int(hit)
+        key = f"{labels[i]['set']}/{labels[i]['intent']}"
+        groups.setdefault(key, [0, 0])
+        groups[key][0] += int(hit)
+        groups[key][1] += 1
+    n = max(1, len(p))
+    gold_vals = [[(row[f] - 100) / 100.0 for f in range(n_fields)] for row in t]
+    out: Dict[str, Any] = {
+        "n": len(p),
+        "field_top1": {f: round(h / n, 4) for f, h in zip(_FIELD_KEYS, field_hits)},
+        "row_exact": round(row_hits / n, 4),
+        "row_hits": row_hits,
+        "by_group": {k: {"hits": v[0], "n": v[1]} for k, v in sorted(groups.items())},
+    }
+    mae: Dict[str, float] = {}
+    r2: Dict[str, float] = {}
+    within_02: Dict[str, float] = {}
+    for f, field in enumerate(_FIELD_KEYS):
+        gold_f = [g[f] for g in gold_vals]
+        pred_f = [row[f] for row in e]
+        mae[field] = round(sum(abs(a - b) for a, b in zip(pred_f, gold_f)) / n, 4)
+        mean_g = sum(gold_f) / n
+        ss_tot = sum((g - mean_g) ** 2 for g in gold_f)
+        ss_res = sum((a - b) ** 2 for a, b in zip(pred_f, gold_f))
+        r2[field] = round(1 - ss_res / ss_tot, 4) if ss_tot > 1e-9 else 0.0
+        within_02[field] = round(
+            sum(1 for a, b in zip(pred_f, gold_f) if abs(a - b) <= 0.02) / n, 4
+        )
+    out["field_mae"] = mae
+    out["field_r2"] = r2
+    out["field_within_02"] = within_02
+    return out
+
+
+def _copy_baseline(rows: Sequence[dict]) -> Dict[str, Any]:
+    """``out = in`` per field — the floor any head has to beat.
+
+    The gold relaxes *towards* a per-intent constant, so the input values alone
+    already explain much of the gold variance (0.74-0.84 correlation). A head
+    reading R2 below this line is not using the inputs at all, however its
+    exact-atom count reads.
+    """
+    mae: Dict[str, float] = {}
+    r2: Dict[str, float] = {}
+    n = max(1, len(rows))
+    for field in _FIELD_KEYS:
+        ins: List[float] = []
+        golds: List[float] = []
+        for entry in rows:
+            raw_in = _parse_input_line(str(entry["prompt"])).get(field)
+            raw_gold = _parse_block(str(entry["gold"])).get(field)
+            if raw_in is None or raw_gold is None:
+                continue
+            ins.append(float(raw_in))
+            golds.append(float(raw_gold))
+        m = max(1, len(ins))
+        mae[field] = round(sum(abs(a - b) for a, b in zip(ins, golds)) / m, 4)
+        mean_g = sum(golds) / m
+        ss_tot = sum((g - mean_g) ** 2 for g in golds)
+        ss_res = sum((a - b) ** 2 for a, b in zip(ins, golds))
+        r2[field] = round(1 - ss_res / ss_tot, 4) if ss_tot > 1e-9 else 0.0
+    return {"n": n, "field_mae": mae, "field_r2": r2}
+
+
+def _contract_feature_ridge(train_ok: Sequence[tuple], rows: Sequence[dict]) -> Dict[str, Any]:
+    """Ridge on the six *parsed* input values + dt + intent, closed form.
+
+    The control for the whole mode: it shows what a statistical estimator can do
+    when it is handed the contract fields directly, with no recurrence in the
+    way. If this reaches a good R2 but still no exact rows, then exactness — not
+    information, not representation — is what the gate is asking for.
+    """
+    import torch
+
+    intents = sorted({i for _p, _g, i in train_ok} | {str(e.get("intent", "?")) for e in rows})
+
+    def feats(prompt: str) -> List[float]:
+        parsed = _parse_input_line(prompt)
+        vec = [float(parsed.get(k, 0.0)) for k in _FIELD_KEYS]
+        vec.append(float(parsed.get("dt", 0.0)))
+        vec.extend(1.0 if parsed.get("intent") == i else 0.0 for i in intents)
+        return vec
+
+    def gold_vecs(blocks: Sequence[str]) -> Any:
+        return torch.tensor(
+            [[float(_parse_block(b).get(k, 0.0)) for k in _FIELD_KEYS] for b in blocks],
+            dtype=torch.float32,
+        )
+
+    x_train = torch.tensor([feats(p) for p, _g, _i in train_ok], dtype=torch.float32)
+    x_eval = torch.tensor([feats(str(e["prompt"])) for e in rows], dtype=torch.float32)
+    y_train = gold_vecs([g for _p, g, _i in train_ok])
+    y_eval = gold_vecs([str(e["gold"]) for e in rows])
+    xt = torch.cat([x_train, torch.ones(len(x_train), 1)], dim=1)
+    lam = 0.01
+    w = torch.linalg.solve(xt.T @ xt + lam * torch.eye(xt.shape[1]), xt.T @ y_train)
+    pred = torch.cat([x_eval, torch.ones(len(x_eval), 1)], dim=1) @ w
+    err = (pred - y_eval).abs()
+    r2: Dict[str, float] = {}
+    mae: Dict[str, float] = {}
+    within: Dict[str, float] = {}
+    for f, field in enumerate(_FIELD_KEYS):
+        e = err[:, f]
+        ss_res = float(((pred[:, f] - y_eval[:, f]) ** 2).sum())
+        ss_tot = float(((y_eval[:, f] - y_eval[:, f].mean()) ** 2).sum())
+        r2[field] = round(1 - ss_res / ss_tot, 4) if ss_tot > 1e-9 else 0.0
+        mae[field] = round(float(e.mean()), 4)
+        within[field] = round(float((e <= 0.02).float().mean()), 4)
+    exact = (err <= 0.005).all(dim=1)
+    return {
+        "n_train": len(train_ok),
+        "n_eval": len(rows),
+        "features": [*_FIELD_KEYS, "dt", f"intent({len(intents)})"],
+        "field_r2": r2,
+        "field_mae": mae,
+        "field_within_02": within,
+        "row_exact": round(float(exact.float().mean()), 4),
+        "row_hits": int(exact.sum()),
+    }
+
+
+def _contract_rows(rows: Sequence[dict]) -> List[Dict[str, Any]]:
+    """``{state, gold, dt, intent}`` for every row that carries six values."""
+    parsed: List[Dict[str, Any]] = []
+    for entry in rows:
+        state = _parse_input_line(str(entry.get("prompt", "")))
+        gold = _parse_block(str(entry.get("gold", "")))
+        try:
+            parsed.append(
+                {
+                    "state": {f: float(state[f]) for f in _FIELD_KEYS},
+                    "gold": {f: float(gold[f]) for f in _FIELD_KEYS},
+                    "dt": float(state["dt"]),
+                    "intent": str(state.get("intent") or ""),
+                }
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return parsed
+
+
+def _fit_operator_head(
+    train_ok: Sequence[tuple],
+    epochs: int = 800,
+    lr: float = 0.05,
+    seed: int = 0,
+) -> Optional[Dict[str, Any]]:
+    """Learn the contract operator's 19 parameters by gradient descent.
+
+    The value interface, not the text interface: the block is six numbers and
+    the contract's own form is ``c[intent][f] + (in[f] - c[intent][f])·e^(-dt/tau)``
+    (§5) — 18 per-intent constants plus one tau. Those 19 numbers are the only
+    thing the data has to supply; the exponential and the rounding are exact
+    arithmetic. Fitting them by GD (rather than the closed-form inversion the
+    ``--ceiling`` mode uses) is what makes this a *learned* decoder instead of
+    an analysis: 2611 rows train 19 parameters, where the token LM trains 1.24M
+    parameters to emit the same block as 40 atoms.
+    """
+    try:
+        import torch
+    except ImportError:
+        return None
+    parsed = _contract_rows([{"prompt": p, "gold": g} for p, g, _i in train_ok])
+    if not parsed:
+        return None
+    intents = sorted({r["intent"] for r in parsed if r["intent"]})
+    index = {name: i for i, name in enumerate(intents)}
+    rows = [r for r in parsed if r["intent"] in index]
+    if not rows:
+        return None
+    torch.manual_seed(seed)
+    x = torch.tensor([[r["state"][f] for f in _FIELD_KEYS] for r in rows], dtype=torch.float32)
+    y = torch.tensor([[r["gold"][f] for f in _FIELD_KEYS] for r in rows], dtype=torch.float32)
+    dt = torch.tensor([r["dt"] for r in rows], dtype=torch.float32)
+    who = torch.tensor([index[r["intent"]] for r in rows], dtype=torch.long)
+    # warm start on the per-intent mean gold: the operator relaxes *towards* c,
+    # so that mean is already the right neighbourhood and 19 parameters do not
+    # have to find the scale of the data from zero
+    c0 = torch.zeros(len(intents), len(_FIELD_KEYS))
+    for i in range(len(intents)):
+        mask = who == i
+        if bool(mask.any()):
+            c0[i] = y[mask].mean(dim=0)
+    constants = c0.clone().requires_grad_(True)
+    log_tau = torch.tensor(0.0, requires_grad=True)  # softplus(0) = 0.69
+    opt = torch.optim.Adam([constants, log_tau], lr=lr)
+    for _epoch in range(epochs):
+        tau = torch.nn.functional.softplus(log_tau) + 1e-4
+        k = torch.exp(-dt / tau).unsqueeze(1)
+        pred = constants[who] + (x - constants[who]) * k
+        loss = ((pred - y) ** 2).mean()
+        opt.zero_grad(set_to_none=True)
+        loss.backward()
+        opt.step()
+    tau = float(torch.nn.functional.softplus(log_tau).detach()) + 1e-4
+    table = {
+        (name, f): float(constants[i, j])
+        for name, i in index.items()
+        for j, f in enumerate(_FIELD_KEYS)
+    }
+    return {"constants": table, "tau": round(tau, 4), "intents": intents, "train_rows": len(rows)}
+
+
+def _operator_head_report(
+    model: Any, rows: Sequence[dict], train_path: Path, epochs: int = 800
+) -> Dict[str, Any]:
+    """Fit the operator on the training file and grade it on the instrument."""
+    train_ok = [
+        (p, g, i)
+        for p, g, i in _train_value_pairs(train_path)
+        if _value_targets(model.vocab, g) is not None
+    ]
+    fitted = _fit_operator_head(train_ok, epochs=epochs)
+    if fitted is None:
+        raise SystemExit("operator head unavailable (torch missing or no training rows)")
+    holdout = _contract_rows([e for e in rows if _set_label(e) == "holdout"])
+    reference = _contract_rows([e for e in rows if _set_label(e) != "holdout"])
+    scored_all = _contract_rows(rows)
+    hold = _score_contract_rows(holdout, fitted["constants"], fitted["tau"])
+    ref = _score_contract_rows(reference, fitted["constants"], fitted["tau"])
+    hits = round(hold["row_exact_of_all"] * hold["rows"])
+    return {
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "interface": "value (six numbers per block), not text (40 atoms)",
+        "params": 1 + 6 * len(fitted["intents"]),
+        "tau": fitted["tau"],
+        "intents": fitted["intents"],
+        "train_rows": fitted["train_rows"],
+        "constants": {f"{i}/{f}": round(v, 4) for (i, f), v in sorted(fitted["constants"].items())},
+        "holdout": hold,
+        "reference": ref,
+        "gate": gate(hits, 0, hold["rows"]),
+        "checkpoint": str(getattr(model, "path", "")),
+        "elapsed_note": f"scored {len(scored_all)} rows",
+    }
+
+
+def _value_head_report(
+    model: Any,
+    rows: Sequence[dict],
+    train_path: Path,
+    steps: int = 3000,
+    train_limit: int = 24000,
+) -> Dict[str, Any]:
+    """Fit heads on the training file over the frozen state, then score the set."""
+    pairs = _train_value_pairs(train_path, limit=train_limit)
+    if not pairs:
+        raise SystemExit(f"no training pairs with {_MARKER} in {train_path}")
+    train_ok = [(p, g, i) for p, g, i in pairs if _value_targets(model.vocab, g) is not None]
+    train_intents = {i for _p, _g, i in train_ok}
+    eval_rows = [e for e in rows if _value_targets(model.vocab, str(e.get("gold", ""))) is not None]
+    if not eval_rows:
+        raise SystemExit("no instrument row carries six gradable values")
+
+    torch = model.torch
+    y_train = torch.tensor(
+        [_value_targets(model.vocab, g) for _p, g, _i in train_ok],
+        dtype=torch.long,
+        device=model.device,
+    )
+    y_eval = torch.tensor(
+        [_value_targets(model.vocab, str(e["gold"])) for e in eval_rows],
+        dtype=torch.long,
+        device=model.device,
+    )
+    y_gold_list = y_eval.tolist()
+    labels = [
+        {
+            "set": _set_label(e),
+            "intent": str(e.get("intent", "?")),
+            "seen_intent": str(e.get("intent", "?")) in train_intents,
+        }
+        for e in eval_rows
+    ]
+    out: Dict[str, Any] = {
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "checkpoint": str(getattr(model, "path", "")),
+        "device": str(model.device),
+        "train_file": str(train_path),
+        "train_rows": len(train_ok),
+        "train_intents": sorted(train_intents),
+        "eval_rows": len(eval_rows),
+        "eval_seen_intent_rows": sum(1 for lab in labels if lab["seen_intent"]),
+        "readout": "pre-head hidden state, read at each position below",
+        "unit": "atom equality over the 201-value grid == grader +/-0.005 at 2dp",
+        "contract_ceiling_reference": 0.508,
+        "copy_baseline": _copy_baseline(eval_rows),
+        "contract_feature_reference": _contract_feature_ridge(train_ok, eval_rows),
+        "leak": round(float(torch.sigmoid(model.net.beta)), 4),
+        "leak_memory_atoms": round(1.0 / max(1e-6, 1 - float(torch.sigmoid(model.net.beta))), 1),
+    }
+    prompts_train = [p for p, _g, _i in train_ok]
+    prompts_eval = [str(e["prompt"]) for e in eval_rows]
+    seen = [i for i, lab in enumerate(labels) if lab["seen_intent"]]
+    positions: Dict[str, Any] = {}
+    for position in _HEAD_POSITIONS:
+        x_train = _block_features(model, prompts_train, position=position)
+        x_eval = _block_features(model, prompts_eval, position=position)
+        entry_out: Dict[str, Any] = {}
+        argmax_by_head: Dict[str, Any] = {}
+        for name, hidden in (("mlp", 256), ("linear", 0)):
+            argmax, expected = _fit_value_head(
+                model, x_train, y_train, x_eval, hidden=hidden, steps=steps
+            )
+            argmax_by_head[name] = argmax
+            entry_out[name] = _score_value_preds(argmax, expected, y_eval, labels)
+        if seen and len(seen) < len(labels):
+            # the unattainable population (intents never in training) must not
+            # be averaged into the reachable one: §二十 measured 80/200 rows
+            entry_out["mlp_seen_only_row_exact"] = round(
+                sum(1 for i in seen if argmax_by_head["mlp"][i].tolist() == y_gold_list[i])
+                / len(seen),
+                4,
+            )
+        positions[position] = entry_out
+    out["positions"] = positions
+    return out
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--build", action="store_true", help="build the instrument set (default)")
@@ -1012,6 +1526,24 @@ def main(argv: Optional[List[str]] = None) -> int:
         "data/intelligence_reports/mve1_contract_form_ceiling.json. This is the "
         "number 0/200 should be read against.",
     )
+    ap.add_argument(
+        "--value-head",
+        action="store_true",
+        help="fit a 201-atom head per field on the frozen network's hidden state at "
+        "the block start (trained on --train, scored on the set) and write "
+        'data/intelligence_reports/mve1_value_head.json. Separates "the state '
+        'cannot hold the values" from "the text decoder cannot emit them".',
+    )
+    ap.add_argument("--head-steps", type=int, default=3000, help="optimiser steps per value head")
+    ap.add_argument(
+        "--operator-head",
+        action="store_true",
+        help="learn the contract operator's 18 constants + tau by gradient descent on "
+        "--train and grade the block on the value interface (writes "
+        "data/intelligence_reports/mve1_operator_head.json). This is the interface the "
+        "measurements say is passable: ~19 parameters over exact arithmetic.",
+    )
+    ap.add_argument("--train-rows", type=int, default=24000, help="training rows for --value-head")
     ap.add_argument("--train", default=str(DEFAULT_TRAIN), help="pairs for --ceiling")
     args = ap.parse_args(argv)
 
@@ -1040,6 +1572,49 @@ def main(argv: Optional[List[str]] = None) -> int:
             limit=args.limit,
             sensitivity_rows=args.sensitivity_rows,
         )
+
+    if args.operator_head:
+        if not args.checkpoint:
+            ap.error("--operator-head requires --checkpoint")
+        from ai.ed3n.token_snn import TokenSNN
+
+        payload = json.loads(Path(args.out).read_text(encoding="utf-8"))
+        model = TokenSNN.load(args.checkpoint, device="cpu")
+        model.path = args.checkpoint
+        report = _operator_head_report(
+            model, _select(payload, args.which), Path(args.train), epochs=args.head_steps
+        )
+        out_path = REPORT_OUT.parent / "mve1_operator_head.json"
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({k: report[k] for k in ("tau", "params", "holdout", "gate")}, indent=2))
+        print(f"wrote {out_path}")
+        return 0
+
+    if args.value_head:
+        if not args.checkpoint:
+            ap.error("--value-head requires --checkpoint")
+        from ai.ed3n.token_snn import TokenSNN
+
+        payload = json.loads(Path(args.out).read_text(encoding="utf-8"))
+        model = TokenSNN.load(args.checkpoint, device=args.device)
+        model.path = args.checkpoint
+        rows = _select(payload, args.which)
+        if args.limit:
+            rows = rows[: args.limit]
+        report = _value_head_report(
+            model,
+            rows,
+            train_path=Path(args.train),
+            steps=args.head_steps,
+            train_limit=args.train_rows,
+        )
+        out_path = REPORT_OUT.parent / "mve1_value_head.json"
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({k: v for k, v in report.items() if k != "by_group"}, indent=2))
+        print(f"wrote {out_path}")
+        return 0
 
     built = build(
         total=args.total,
