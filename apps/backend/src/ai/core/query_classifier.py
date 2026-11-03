@@ -110,6 +110,21 @@ _FILE_SPECIFIC = re.compile(
 _POLITENESS_TOKENS = frozenset(
     {"請", "请", "幫我", "帮我", "麻煩", "麻烦", "please", "can you", "could you"}
 )
+# 任務是「名詞 + 動作」。TASK 的關鍵詞（工作／待辦／行程）全是名詞，名詞出現
+# 在陳述句裡只表示使用者在說自己的事（「我在圖書館工作」「這週工作好忙」），
+# 不是派任務；要成為指令，句子必須帶著請求／動作（建立、完成、幫我、列表…）。
+# 沒有這道門，閘門會建立一個任務、再把使用者的整句當標題覆述回去。
+_TASK_ORDER_CUE = re.compile(
+    r"建立|新增|添加|創建|删除|刪除|移除|完成|更新|修改|規劃|规划|拆解|拆成|"
+    r"提醒|安排|列表|清單|清单|進度|进度|幫我|帮我|請你|请你|請幫|请帮|麻煩|麻烦|記得|记得|"
+    r"\b(?:add|create|delete|remove|complete|update|plan|list|remind|schedule)\b",
+    re.IGNORECASE,
+)
+# 只剩任務名詞的一句仍是請求（「任務」「待辦事項」＝把清單給我）。
+_TASK_NOUN_ONLY = re.compile(
+    r"^(?:我的)?(?:任務|任務列表|待辦事項|待辦|行程|排程|提醒|tasks?|todos?)[？?]?$",
+    re.IGNORECASE,
+)
 # 土木防誤判門控（R1）：「板」單字誤傷電腦主板類；強複合詞則為真土木信號。
 _CIVIL_FALSE_POSITIVE = re.compile(
     r"(主板|主機板|主机板|電路板|电路板|\bB\d{3,4}[A-Z]*\b|PCB|黑板|平板|面板)",
@@ -655,6 +670,15 @@ class QueryClassifier:
         return result
 
     def classify(self, text: str) -> QueryResult:
+        """分类使用者输入。
+
+        The single entry point: every branch (semantic / dictionary / regex)
+        goes through the same statement guard, so "我在圖書館工作" cannot be
+        classified as a task just because it contains 工作.
+        """
+        return self._statement_is_not_a_task(self._classify(text), text)
+
+    def _classify(self, text: str) -> QueryResult:
         """
         分类使用者输入。
         返回 QueryResult 包含 primary_type, confidence, actionability, action_type,
@@ -697,6 +721,31 @@ class QueryClassifier:
 
         # Step 8: 回传 UNKNOWN
         return QueryResult(QueryType.UNKNOWN, 0.3, 0.0, "none", reason="no_match_fallback")
+
+    def _statement_is_not_a_task(self, result: QueryResult, text: str) -> QueryResult:
+        """A statement about the user's life is not an order to create a task.
+
+        "我在圖書館工作" and "這週工作好忙" both contain 工作, so TASK used to
+        win, the gate created a task, and the reply was the user's own sentence
+        wrapped in "已執行：task_mgr。" — the standard set judges that a parrot,
+        and the sentence really did get written into the task file. The noun is
+        the *topic*; an order needs an action word.
+        """
+        if result.primary_type != QueryType.TASK:
+            return result
+        stripped = (text or "").strip()
+        if _TASK_ORDER_CUE.search(stripped) or _TASK_NOUN_ONLY.match(stripped):
+            return result
+        secondary = result.secondary_type if result.secondary_type != QueryType.TASK else None
+        return QueryResult(
+            primary_type=QueryType.UNKNOWN,
+            confidence=result.confidence,
+            actionability=0.0,
+            action_type="none",
+            secondary_type=secondary,
+            secondary_confidence=result.secondary_confidence if secondary else 0.0,
+            reason="statement_is_not_a_task",
+        )
 
     def _dictionary_step(self, text: str, has_negation: bool, result: QueryResult) -> QueryResult:
         """Step 2: dictionary hit, yielding to regex only when the cede rules fire."""

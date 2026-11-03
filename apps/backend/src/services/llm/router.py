@@ -313,6 +313,15 @@ _TRANSLATION_REQUEST_RE = re.compile(
     re.IGNORECASE,
 )
 
+# The "what did I just say" shape — a memory question, owned by the recall
+# layer (services/llm/memory_integration.py). Only the meta prefix is listed:
+# 記得 is left out on purpose ("記得帶傘" is a reminder, not a memory query).
+_RECALL_META_QUESTION = re.compile(
+    r"剛才|刚刚|剛剛|之前說|之前说|先前說|先前说|我說過|我说过|說過|说过|"
+    r"\bwhat did i say\b|\bsaid earlier\b",
+    re.IGNORECASE,
+)
+
 
 def _is_negated(folded: str, keyword: str, index: int) -> bool:
     """True when a negator immediately governs the keyword at *index*, or a
@@ -2849,7 +2858,16 @@ class AngelaLLMService:
         never let that be invisible. Translation requests likewise fall
         through to the honest refusal instead of an intimacy/weather
         template matched on some incidental keyword.
+
+        A memory question ("我剛才說我在哪裡工作？") also skips them: the
+        memory layer owns it, and when memory has nothing to answer with, the
+        honest reply is that we do not know — not "工作辛苦了！你真的很棒！"
+        matched on the word 工作. A canned line here is a *wrong* answer that
+        looks confident, which is exactly what the standard set scores as
+        off-topic.
         """
+        if _RECALL_META_QUESTION.search(user_message or ""):
+            return False
         if _TRANSLATION_REQUEST_RE.search(user_message or ""):
             return False
         try:

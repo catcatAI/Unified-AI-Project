@@ -55,6 +55,10 @@ DECLARED: Dict[str, str] = {
     "knowledge_pipeline": "knowledge",
     "dialogue-memory": "memory",
     "memory": "memory",
+    # "記住囉，小花！" records what the user just said — the value comes from
+    # their sentence, not from knowledge or generation. The frame is surface,
+    # but the layer that owns the content is memory (LAYER_SEPARATION.md).
+    "memory-teaching": "memory",
     "deterministic-math": "reasoning",
     "dual_rail": "reasoning",
     "math": "reasoning",
@@ -95,6 +99,8 @@ def actual_layer(reply: str, question: str, events: List[Dict[str, Any]]) -> str
             return "reasoning"
     if any("composed-template" in str(e.get("returned") or "") for e in events):
         return "surface"
+    if any("backend='memory-teaching'" in str(e.get("returned") or "") for e in events):
+        return "memory"
     copied = longest_common_run(question, reply)
     if copied >= max(4, len(_norm(question)) // 2):
         return "surface"

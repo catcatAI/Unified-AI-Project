@@ -102,6 +102,42 @@ def test_singleton_honours_the_env_override(tmp_path, monkeypatch):
         reset_taught_facts()
 
 
+def test_a_statement_is_not_an_answered_question(store):
+    """使用者正在告訴我們的事，不是要我們回答的問題。
+
+    「我的生日是九月十號」入库後如果被 lookup 撿到，回覆就是
+    「你教過我：我的生日是 九月十號。」——把使用者的句子原樣端回去
+    （標準集判成 parrot），而且它答的是一句沒人問過的話。
+    """
+    store.learn_from_turn("我的生日是九月十號。")
+    assert store.facts(), "the fact must be stored"
+    assert store.lookup("我的生日是九月十號") is None
+    # 問同一個事實仍然是問題，照答。
+    assert "九月十號" in (store.lookup("我的生日是幾號？") or "")
+
+
+def test_learned_from_names_the_sentence_that_taught_the_fact(store):
+    """ack 要知道「這一回合有沒有學到東西」，否則它會替沒學到的句子背書。"""
+    assert store.learned_from("Zorblax 的首都是 Quuxville。") is False
+    store.learn_from_turn("Zorblax 的首都是 Quuxville。")
+    assert store.learned_from("Zorblax 的首都是 Quuxville。") is True
+    assert store.learned_from("Nolvane 的首都是 Quuxville。") is False
+    assert store.learned_from("") is False
+
+
+def test_the_statement_does_not_reach_the_chat_shortcircuit(tmp_path, monkeypatch):
+    from api.routes.chat_routes import _try_taught_facts
+
+    monkeypatch.setenv("ANGELA_TAUGHT_FACTS", str(tmp_path / "statement.json"))
+    reset_taught_facts()
+    try:
+        get_taught_facts().learn_from_turn("Zorblax 的首都是 Quuxville。")
+        assert _try_taught_facts("Zorblax 的首都是 Quuxville。", "test-session") is None
+        assert _try_taught_facts("Zorblax 的首都是哪裡？", "test-session") is not None
+    finally:
+        reset_taught_facts()
+
+
 def test_chat_shortcircuit_answers_from_taught_facts(tmp_path, monkeypatch):
     from api.routes.chat_routes import _try_taught_facts
 

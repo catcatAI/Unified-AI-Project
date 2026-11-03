@@ -286,9 +286,32 @@ class TaughtFacts:
                 return True
         return False
 
+    def learned_from(self, statement: str) -> bool:
+        """True when this exact sentence is stored as a fact we learned.
+
+        The acknowledgment needs to know whether *this turn* taught something:
+        "Zorblax 的首都是 Quuxville。" is a fact now, so the honest reply is
+        "記住囉！". Without the check every statement would be acknowledged —
+        including the ones that taught nothing, where a canned line is the
+        only thing left to say and pretending we stored it would be a lie.
+        """
+        wanted = (statement or "").strip()[:200]
+        if not wanted:
+            return False
+        with self._lock:
+            return any(fact.source == wanted for fact in self._facts.values())
+
     def lookup(self, question: str) -> Optional[str]:
-        """Answer from taught facts when the question names subject + relation."""
+        """Answer from taught facts when the question names subject + relation.
+
+        Only a *question* is answered. A statement is what the user is telling
+        us in this very turn, so "answering" it means repeating it back
+        ("你教過我：我的生日是 九月十號。") — the standard set calls that a
+        parrot, and it also answers a sentence the user did not ask about.
+        """
         if not question:
+            return None
+        if not _is_question(question):
             return None
         normalized = _norm(question)
         with self._lock:

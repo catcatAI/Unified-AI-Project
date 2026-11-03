@@ -222,6 +222,29 @@ def test_the_acknowledgment_is_never_a_parrot(fact):
     assert classify_state(StandardItem(kind="dialogue", message=fact), response.text) != PARROT
 
 
+def test_a_third_person_fact_is_acknowledged_not_answered_about_weather(tmp_path, monkeypatch):
+    """「Zorblax 的首都是 Quuxville。」教了一個事實，就該確認，不是聊聊天氣。
+
+    實測（2026-11-02，audit_placement）：記憶層把這個事實存好了，回覆卻是
+    「雨天有雨天的趣味…」——雞同鴨講，而且讓「這句到底是知識還是記憶」在
+    稽核裡變成未知。確認句屬記憶層（值來自使用者的句子）。
+    """
+    from ai.memory.taught_facts import get_taught_facts, reset_taught_facts
+
+    monkeypatch.setenv("ANGELA_TAUGHT_FACTS", str(tmp_path / "ack.json"))
+    reset_taught_facts()
+    try:
+        get_taught_facts().learn_from_turn("Zorblax 的首都是 Quuxville。")
+        response = _ack(_ServiceWithBackends(["unified"]), "Zorblax 的首都是 Quuxville。")
+        assert response is not None
+        assert response.route == "MEMORY"
+        assert "記住囉" in response.text
+        # 沒有教會任何事的句子不得被背書：假裝記住了是另一種說謊。
+        assert _ack(_ServiceWithBackends(["unified"]), "今天天氣不錯") is None
+    finally:
+        reset_taught_facts()
+
+
 def test_a_generative_backend_is_not_pre_empted_by_the_frame():
     """接得上真正會生成答案的後端時，罐頭框架不得先回答。
 

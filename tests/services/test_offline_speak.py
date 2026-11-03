@@ -160,6 +160,29 @@ def test_offline_gate_never_confirms_nothing():
 
 
 @pytest.mark.asyncio
+async def test_a_memory_question_never_gets_a_canned_template():
+    """F6b: 「我剛才說我在哪裡工作？」是記憶題，罐頭模板不得接手。
+
+    實測（2026-11-02，純本地 1096 題標準集）：記憶層在冷問時沒有答案，
+    模板層就用「工作」匹配到 work_encouragement，回了「工作辛苦了！你真的很
+    棒！」——答錯得很自信，比誠實說不知道更糟。記憶題只有記憶層能答。
+    """
+    from services.llm.router import AngelaLLMService
+
+    service = object.__new__(AngelaLLMService)
+    for message in (
+        "我剛才說我在哪裡工作？",
+        "我剛剛說過我幾歲？",
+        "我之前說我的貓叫什麼？",
+        "what did I say earlier?",
+    ):
+        assert service._template_layers_enabled(message) is False, message
+    # 不是記憶題就照舊（模板層正常運作）。
+    service.template_matcher = object()
+    assert service._template_layers_enabled("今天好累") is True
+
+
+@pytest.mark.asyncio
 async def test_offline_translation_never_answers_love_template():
     """F6: 「翻譯：我愛你成英文」不得吃到 intimacy 模板「我也愛你！」。"""
     from core.interfaces.protocols import LLMResponse  # noqa: F401

@@ -335,6 +335,28 @@ class TestWiringSweepAntiMisjudgment:
             result = QueryClassifier().classify(s)
             assert result.primary_type == QueryType.TASK, s
 
+    def test_a_statement_about_oneself_is_not_a_task(self):
+        """「工作」是名詞：出現在陳述句裡不是派任務。
+
+        舊版把「我在圖書館工作」判成 TASK，閘門就建立一個任務，回覆是
+        「已執行：task_mgr。（…已建立任務 #370：我在圖書館工作）」——標準集
+        判成 parrot，而使用者的句子真的被寫進任務檔。
+        """
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        for s in ("我在圖書館工作", "這週工作好忙", "我的行程很滿"):
+            result = QueryClassifier().classify(s)
+            assert result.primary_type != QueryType.TASK, s
+            assert result.action_type == "none", s
+
+    def test_a_task_order_keeps_its_type(self):
+        """有動作詞才是指令——這道門不能把真正的任務請求一起擋掉。"""
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        for s in ("建立任務：買牛奶", "提醒我明天開會", "任務", "待辦事項", "任務列表"):
+            result = QueryClassifier().classify(s)
+            assert result.primary_type == QueryType.TASK, s
+
     def test_file_with_entity_signal_stays_file(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
 

@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import atexit
 import copy
 import json
 import os
@@ -66,6 +67,41 @@ from ai.response.human_speech import (  # noqa: E402
 SANDBOX_DATA_DIR = Path(
     os.environ.get("ANGELA_PROBE_DATA_DIR") or (REPO_ROOT / "data" / "probe_native_dialogue")
 )
+# The sandbox is wiped at start-up and there is exactly one of it, so two probes
+# running at once destroy each other's measurement. Measured 2026-11-02: a
+# budget-gate run started while a probe was in flight deleted the vector store
+# under it ("Collection … does not exist" for the rest of the run) and the whole
+# 1096-item run had to be thrown away.
+PROBE_LOCK = REPO_ROOT / "data" / "probe_native_dialogue.lock"
+
+
+def _pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except PermissionError:
+        # EPERM: the process exists, it just is not ours to signal.
+        return True
+    except OSError:
+        return False
+    return True
+
+
+def acquire_probe_lock(path: Path = PROBE_LOCK) -> Path:
+    """Refuse to start while another probe is running on the same sandbox."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        try:
+            other = int(path.read_text(encoding="utf-8").strip() or 0)
+        except (OSError, ValueError):
+            other = 0
+        if other and other != os.getpid() and _pid_alive(other):
+            raise SystemExit(
+                f"另一個探針正在跑（pid {other}）——沙盒只有一份，同時跑兩個會毀掉兩邊的"
+                f"量測。等它結束，或先停掉它（kill {other}）。"
+            )
+    path.write_text(str(os.getpid()), encoding="utf-8")
+    atexit.register(lambda: path.unlink(missing_ok=True))
+    return path
 
 
 def isolate_data_dir() -> Path:
@@ -75,9 +111,18 @@ def isolate_data_dir() -> Path:
     probe would write the taught facts into the user's real store (the
     taught-fact recall then answered from *older* sessions, which looks like
     a capability that is not there).
+
+    The task store has no knob at all: it lives in ``~/.angela/tasks`` and a
+    reply that creates a task appends a row there. A few probe runs left **371**
+    rows in the user's real task list (all of them standard-set sentences) —
+    the measurement must not write into the thing it is measuring around.
     """
     os.environ["ANGELA_DATA_DIR"] = str(SANDBOX_DATA_DIR)
     os.environ["VECTOR_STORE_PATH"] = str(SANDBOX_DATA_DIR / "vector_store")
+    from services.handlers import task_manager_handler as task_store
+
+    task_store._TASKS_DIR = SANDBOX_DATA_DIR / "tasks"
+    task_store._TASKS_FILE = task_store._TASKS_DIR / "tasks.json"
     return SANDBOX_DATA_DIR
 
 
@@ -940,6 +985,7 @@ async def main() -> int:
     # The sandbox must be set before the backend modules are imported, and it
     # must start EMPTY: a sandbox that keeps the previous run's memory would
     # make the "cold" question warm (the measurement would not reproduce).
+    acquire_probe_lock()
     isolate_data_dir()
     if SANDBOX_DATA_DIR.exists():
         shutil.rmtree(SANDBOX_DATA_DIR, ignore_errors=True)

@@ -226,6 +226,24 @@ def _is_teaching_statement(message: str) -> bool:
     return bool(_TEACHING_FIRST_PERSON.match(text))
 
 
+def _taught_this_turn(statement: str) -> bool:
+    """True when the sentence was just stored as a taught fact.
+
+    A third-person statement ("Zorblax 的首都是 Quuxville。") teaches memory a
+    fact, but it is not the user talking about themselves — the first-person
+    acknowledgment above does not cover it, and without this the native path
+    answered it with an unrelated canned line (measured 2026-11-02: the fact
+    was stored, then the reply was a weather template).
+    """
+    try:
+        from ai.memory.taught_facts import get_taught_facts
+
+        return get_taught_facts().learned_from(statement)
+    except Exception as exc:  # pragma: no cover - optional store
+        logger.debug("taught-facts check unavailable: %s", exc)
+        return False
+
+
 # The questions that ask for *the user's* name. "我的貓叫什麼" also contains
 # 叫什麼 but asks about the cat, so the pattern requires 名字／姓名 (or the
 # English "my name"): the name lookup must not answer the cat with the user.
@@ -580,13 +598,13 @@ class MemoryIntegration:
         actually generate: with a real LLM registered the user gets a real
         reply, and this frame stays what it is — the native path's fallback.
         """
-        if not _is_teaching_statement(user_message):
+        fact = (user_message or "").strip()
+        if not _is_teaching_statement(fact) and not _taught_this_turn(fact):
             return None
         if _has_generative_backend(self._svc):
             return None
         from core.interfaces.protocols import ChatResponse
 
-        fact = (user_message or "").strip()
         value = _statement_value(fact)
         if value:
             text = f"記住囉，{value}！"
