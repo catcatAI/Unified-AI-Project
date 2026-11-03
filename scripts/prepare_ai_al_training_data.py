@@ -94,7 +94,11 @@ def _rel(path: Path) -> str:
 
 
 def _state_line(
-    state: Dict[str, object], intent: str, side: str, dt: Optional[float] = None
+    state: Dict[str, object],
+    intent: str,
+    side: str,
+    dt: Optional[float] = None,
+    decimals: int = 2,
 ) -> str:
     """One compact, token-friendly line describing an AL state.
 
@@ -102,17 +106,42 @@ def _state_line(
     only when the source dataset exposed it (``generate_al_dataset.py
     --expose-dt``): the output state is a state, not a timestep. A source
     without the field serialises byte-identically to before.
+
+    ``decimals`` is a *measurement* knob, not cosmetics. The block is graded at
+    1e-3 against this text, so 2dp puts 0.005 of inherited error into the input
+    and another 0.005 into the gold: at short dt that alone exceeds the grader's
+    tolerance and the row is unanswerable no matter how exact the model is. 3dp
+    is the coarsest printing that makes the graded comparison decidable.
     """
+    d = max(2, min(6, int(decimals)))
     line = (
-        f"<al_{side}> v={float(state['valence']):.2f} a={float(state['arousal']):.2f} "
-        f"d={float(state['dominance']):.2f} fatigue={float(state['fatigue']):.2f} "
-        f"stress={float(state['stress']):.2f} health={float(state['health']):.2f} "
+        f"<al_{side}> v={float(state['valence']):.{d}f} a={float(state['arousal']):.{d}f} "
+        f"d={float(state['dominance']):.{d}f} fatigue={float(state['fatigue']):.{d}f} "
+        f"stress={float(state['stress']):.{d}f} health={float(state['health']):.{d}f} "
         f"mode={state['routing_mode']} intent={intent}"
     )
-    return line + (f" dt={float(dt):.2f}" if dt is not None else "")
+    return line + (f" dt={float(dt):.{d}f}" if dt is not None else "")
 
 
-def load_records(path: Path = SRC) -> List[dict]:
+def _src_given(argv: List[str]) -> bool:
+    """Whether the caller named ``--src`` explicitly (on the command line)."""
+    return any(a == "--src" or a.startswith("--src=") for a in argv)
+
+
+def _manifest_source(manifest: Path) -> Optional[Path]:
+    """The source path a previous build recorded, if the manifest is readable."""
+    try:
+        data = json.loads(Path(manifest).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    source = data.get("source")
+    if not isinstance(source, str) or not source:
+        return None
+    path = Path(source)
+    return path if path.is_absolute() else REPO_ROOT / path
+
+
+def load_records(path: Path = SRC, decimals: int = 2) -> List[dict]:
     """Read the pilot dataset and turn each example into a training pair."""
     data = json.loads(path.read_text(encoding="utf-8"))
     pairs: List[dict] = []
@@ -120,12 +149,14 @@ def load_records(path: Path = SRC) -> List[dict]:
         intent = str(item.get("intent") or "unknown")
         dt = item.get("dt")
         inp = (
-            _state_line(item["al_state_in"], intent, "in", dt=dt)  # type: ignore[arg-type]
+            _state_line(item["al_state_in"], intent, "in", dt=dt, decimals=decimals)  # type: ignore[arg-type]
             + " | "
             + str(item["input_text"])
         )
         out = (
-            str(item["expected_response"]) + "\n" + _state_line(item["al_state_out"], intent, "out")
+            str(item["expected_response"])
+            + "\n"
+            + _state_line(item["al_state_out"], intent, "out", decimals=decimals)
         )
         pairs.append(
             {
@@ -163,8 +194,8 @@ def _benchmark_norms() -> List[str]:
     return texts
 
 
-def build(val_ratio: float, src: Path = SRC) -> Dict[str, object]:
-    pairs = load_records(src)
+def build(val_ratio: float, src: Path = SRC, decimals: int = 2) -> Dict[str, object]:
+    pairs = load_records(src, decimals=decimals)
     bench = set(_benchmark_norms())
     kept = [p for p in pairs if _norm(p["input"].split("|", 1)[-1]) not in bench]
     leaked = len(pairs) - len(kept)
@@ -188,6 +219,7 @@ def build(val_ratio: float, src: Path = SRC) -> Dict[str, object]:
                     else "<al_in> v a d fatigue stress health mode intent | <input_text>"
                 ),
                 "output": "<expected_response>\\n<al_out> v a d fatigue stress health mode intent",
+                "decimals": max(2, min(6, int(decimals))),
             },
             "note": (
                 "The response comes first because that is what a reader sees; the "
@@ -237,6 +269,13 @@ def main(argv: List[str] | None = None) -> int:
         "producing the *next* batch passes its own path so it never overwrites "
         "the files the current round trained on.",
     )
+    ap.add_argument(
+        "--decimals",
+        type=int,
+        default=2,
+        help="decimal places for the six state values + dt (default 2: byte-identical "
+        "to the existing corpora; 3 makes a 1e-3 grader decidable — see _state_line)",
+    )
     ap.add_argument("--val-out", default=str(VAL_OUT), help="val split destination")
     ap.add_argument("--manifest-out", default=str(MANIFEST_OUT), help="manifest destination")
     args = ap.parse_args(argv)
@@ -245,10 +284,17 @@ def main(argv: List[str] | None = None) -> int:
     val_out = Path(args.val_out).expanduser()
     manifest_out = Path(args.manifest_out).expanduser()
     src = Path(args.src).expanduser().resolve()
+    if args.check and argv is None and not _src_given(sys.argv[1:]):
+        # --check compares against a *build*, so it needs the source that build
+        # used. ai_al_manifest.json records it; without this, a bare --check
+        # silently re-renders the 10-row pilot and reports a mismatch.
+        recorded = _manifest_source(manifest_out)
+        if recorded is not None and recorded.is_file():
+            src = recorded
     if not src.is_file():
         print(f"check failed: missing source {src}")
         return 1
-    built = build(args.val_ratio, src)
+    built = build(args.val_ratio, src, decimals=args.decimals)
     train_body = "".join(
         json.dumps({"input": r["input"], "output": r["output"]}, ensure_ascii=False) + "\n"
         for r in built["train"]

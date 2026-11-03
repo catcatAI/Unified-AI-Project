@@ -747,3 +747,85 @@ class TestContractTableAndCeiling:
             [self._row("seen", state, gold, dt=0.25)], constants, 1.0
         )
         assert tight["row_exact_all_intents_rounding_aware"] == 0.0
+
+    def test_closed_form_constants_are_exact_and_beat_a_convergence_floor(self, probe):
+        """For a fixed tau the operator is linear in c: no GD floor, no lr."""
+        targets = self._targets()
+        truth = {("seen", f): targets["seen"][probe._FIELD_LONG[f]] for f in probe._FIELD_KEYS}
+        rows = []
+        for dt, x in ((0.25, 0.9), (0.5, 0.1), (1.0, 0.75), (2.0, 0.05)):
+            k = math.exp(-dt)
+            rows.append(
+                self._row(
+                    "seen",
+                    {f: x for f in probe._FIELD_KEYS},
+                    {
+                        f: truth[("seen", f)] + (x - truth[("seen", f)]) * k
+                        for f in probe._FIELD_KEYS
+                    },
+                    dt=dt,
+                )
+            )
+        solved = probe._solve_operator_constants(rows, 1.0)
+        for f in probe._FIELD_KEYS:
+            assert abs(solved[("seen", f)] - truth[("seen", f)]) < 1e-9
+        assert probe._operator_mse(rows, solved, 1.0) < 1e-18
+
+    def test_state_line_decimals_control_the_printable_precision(self, probe):
+        """3dp is the coarsest printing a 1e-3 grader can decide."""
+        state = {
+            "valence": -0.10532,
+            "arousal": 0.595303,
+            "dominance": -0.435188,
+            "fatigue": 0.285198,
+            "stress": -0.1,
+            "health": 0.525106,
+            "routing_mode": "neutral",
+        }
+        line3 = probe.prep._state_line(state, "seen", "in", dt=0.5, decimals=3)
+        assert "v=-0.105" in line3 and "a=0.595" in line3 and "dt=0.500" in line3
+        parsed = probe._parse_block(line3)
+        assert abs(float(parsed["v"]) - state["valence"]) <= 0.0005
+        # the default stays 2dp so every existing round file keeps checking out
+        assert "v=-0.11" in probe.prep._state_line(state, "seen", "in")
+
+    def test_gold_precision_must_match_the_input_line(self, probe, gen):
+        """A 2dp gold under a 3dp input put 0.005 of the grader's own error in.
+
+        That is the 15/200 that were unreachable even with the true constants:
+        the operator was right to 0.0005 and still graded off by 0.0053.
+        """
+        # gen.transition speaks the long field names; the block speaks the short ones
+        state_in = {"valence": -0.1053, "arousal": 0.5953, "dominance": -0.4352}
+        state_in.update({"fatigue": 0.2852, "stress": 0.1234, "health": 0.5251})
+        state_in["routing_mode"] = "neutral"
+        base = {f: 0.5 for f in probe._FIELD_KEYS}
+        targets = {f: 0.8 for f in probe._FIELD_KEYS}
+        long_targets = {probe._FIELD_LONG[f]: 0.8 for f in probe._FIELD_KEYS}
+        golds2 = probe.family_golds(state_in, "seen", base, {"seen": long_targets}, decimals=2)
+        golds3 = probe.family_golds(state_in, "seen", base, {"seen": long_targets}, decimals=3)
+        truth = gen.transition(state_in, long_targets, gen._DT_LADDER[1])
+        two = probe._parse_block(golds2[1])
+        three = probe._parse_block(golds3[1])
+        # the 2dp gold is up to 0.005 away from the transition it describes; the
+        # 3dp one is up to 0.0005 — the difference between a decidable grader
+        # and one that spends its whole tolerance on its own printing
+        assert (
+            max(abs(float(two[f]) - truth[probe._FIELD_LONG[f]]) for f in probe._FIELD_KEYS)
+            < 0.0051
+        )
+        assert (
+            max(abs(float(three[f]) - truth[probe._FIELD_LONG[f]]) for f in probe._FIELD_KEYS)
+            < 0.0006
+        )
+        assert golds2[1] != golds3[1]
+        gold = probe._parse_block(golds3[1])
+        row = self._row(
+            "seen",
+            {f: float(state_in[probe._FIELD_LONG[f]]) for f in probe._FIELD_KEYS},
+            {f: float(gold[f]) for f in probe._FIELD_KEYS},
+            dt=gen._DT_LADDER[1],
+        )
+        constants = {("seen", f): targets[f] for f in probe._FIELD_KEYS}
+        scored = probe._score_contract_rows([row], constants, 1.0)
+        assert scored["row_exact_all_intents"] == 1.0

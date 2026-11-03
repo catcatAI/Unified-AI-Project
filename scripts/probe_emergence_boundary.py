@@ -127,15 +127,20 @@ def family_golds(
     intent: str,
     baseline: Dict[str, float],
     targets: Dict[str, Dict[str, float]],
+    decimals: int = 2,
 ) -> List[str]:
-    """The four legal targets for one input: one per dt rung (decision 1)."""
+    """The four legal targets for one input: one per dt rung (decision 1).
+
+    ``decimals`` must match the input line's: a 3dp input graded against a 2dp
+    gold carries 0.005 of the *grader's own* rounding as if it were model error.
+    """
     target = targets.get(intent, baseline)
     mode = str(state_in["routing_mode"])
     golds: List[str] = []
     for dt in gen._DT_LADDER:
         out: Dict[str, object] = dict(gen.transition(state_in, target, dt))  # type: ignore[arg-type]
         out["routing_mode"] = mode  # carried: 10/10 pilot rows keep it
-        golds.append(prep._state_line(out, intent, "out"))
+        golds.append(prep._state_line(out, intent, "out", decimals=decimals))
     return golds
 
 
@@ -680,6 +685,7 @@ def build(
     ref_intents: Sequence[str] = _REFERENCE_INTENTS,
     max_len: int = 192,
     min_per_cell: int = 10,
+    decimals: int = 2,
 ) -> Dict[str, object]:
     """Build the holdout set (+ reference) as one deterministic JSON payload.
 
@@ -730,9 +736,11 @@ def build(
             slot = len(holdout) if take_holdout else len(reference)
             rung = slot % len(gen._DT_LADDER)
             dt = gen._DT_LADDER[rung]
-            prompt_in = prep._state_line(state_in, intent, "in", dt=dt) + " | " + text
+            prompt_in = (
+                prep._state_line(state_in, intent, "in", dt=dt, decimals=decimals) + " | " + text
+            )
             prompt = (prompt_in + "\n" + response).strip()
-            family = family_golds(state_in, intent, baseline, targets)
+            family = family_golds(state_in, intent, baseline, targets, decimals=decimals)
             gold = family[rung]
             if not pair_fits(prompt, gold, max_len):
                 continue
@@ -1415,11 +1423,62 @@ def _contract_rows(rows: Sequence[dict]) -> List[Dict[str, Any]]:
     return parsed
 
 
+def _solve_operator_constants(
+    parsed: Sequence[Dict[str, Any]], tau: float
+) -> Dict[Tuple[str, str], float]:
+    """Closed-form per-(intent, field) constants for a fixed tau.
+
+    ``out = c + (in - c)·k`` is *linear in c*, so for a fixed tau the constants
+    are a least-squares solve, not an optimisation: ``c = Σ a·b / Σ a²`` with
+    ``a = 1-k`` and ``b = gold - k·in``. Weights ``1/(1+k²)`` are the inverse
+    variance of that residual, because the input's own printing error arrives
+    multiplied by k. Gradient descent reaches the same 19 numbers only up to its
+    convergence floor — which is exactly the ~0.002 the head was missing rows by.
+    """
+    acc: Dict[Tuple[str, str], List[float]] = {}
+    for row in parsed:
+        k = math.exp(-row["dt"] / tau)
+        w = 1.0 / (1.0 + k * k)
+        a = 1.0 - k
+        for f in _FIELD_KEYS:
+            key = (row["intent"], f)
+            num, den = acc.get(key, (0.0, 0.0))
+            acc[key] = (
+                num + w * a * (row["gold"][f] - k * row["state"][f]),
+                den + w * a * a,
+            )
+    constants: Dict[Tuple[str, str], float] = {}
+    for key, (num, den) in acc.items():
+        if den > 1e-12:
+            constants[key] = num / den
+    return constants
+
+
+def _operator_mse(
+    parsed: Sequence[Dict[str, Any]], constants: Dict[Tuple[str, str], float], tau: float
+) -> float:
+    """Train-side error, used to pick tau. MSE, not exact: exact is quantised."""
+    total = 0.0
+    n = 0
+    for row in parsed:
+        known = (row["intent"], _FIELD_KEYS[0]) in constants
+        if not known:
+            continue
+        k = math.exp(-row["dt"] / tau)
+        for f in _FIELD_KEYS:
+            c = constants[(row["intent"], f)]
+            pred = c + (row["state"][f] - c) * k
+            total += (pred - row["gold"][f]) ** 2
+            n += 1
+    return total / n if n else float("inf")
+
+
 def _fit_operator_head(
     train_ok: Sequence[tuple],
     epochs: int = 800,
     lr: float = 0.05,
     seed: int = 0,
+    solver: str = "ls",
 ) -> Optional[Dict[str, Any]]:
     """Learn the contract operator's 19 parameters by gradient descent.
 
@@ -1444,6 +1503,27 @@ def _fit_operator_head(
     rows = [r for r in parsed if r["intent"] in index]
     if not rows:
         return None
+    if solver == "ls":
+        # exact for a fixed tau, so tau is the only thing left to search
+        best = None
+        for tau in _TAU_GRID:
+            constants = _solve_operator_constants(rows, tau)
+            if not constants:
+                continue
+            mse = _operator_mse(rows, constants, tau)
+            if best is None or mse < best[0]:
+                best = (mse, tau, constants)
+        if best is None:
+            return None
+        _mse, tau, table = best
+        return {
+            "constants": table,
+            "tau": round(tau, 4),
+            "intents": intents,
+            "train_rows": len(rows),
+            "solver": "ls",
+            "train_mse": round(_mse, 6),
+        }
     torch.manual_seed(seed)
     x = torch.tensor([[r["state"][f] for f in _FIELD_KEYS] for r in rows], dtype=torch.float32)
     y = torch.tensor([[r["gold"][f] for f in _FIELD_KEYS] for r in rows], dtype=torch.float32)
@@ -1474,19 +1554,31 @@ def _fit_operator_head(
         for name, i in index.items()
         for j, f in enumerate(_FIELD_KEYS)
     }
-    return {"constants": table, "tau": round(tau, 4), "intents": intents, "train_rows": len(rows)}
+    return {
+        "constants": table,
+        "tau": round(tau, 4),
+        "intents": intents,
+        "train_rows": len(rows),
+        "solver": "gd",
+    }
 
 
 def _operator_head_report(
-    model: Any, rows: Sequence[dict], train_path: Path, epochs: int = 800
+    model: Any,
+    rows: Sequence[dict],
+    train_path: Path,
+    epochs: int = 800,
+    solver: str = "ls",
 ) -> Dict[str, Any]:
     """Fit the operator on the training file and grade it on the instrument."""
-    train_ok = [
-        (p, g, i)
-        for p, g, i in _train_value_pairs(train_path)
-        if _value_targets(model.vocab, g) is not None
-    ]
-    fitted = _fit_operator_head(train_ok, epochs=epochs)
+    # The atom grid gates the *text* interface: a block whose values are off the
+    # tokenizer's grid cannot be emitted at all. This head reads the six floats
+    # directly, so gating it on the vocab would make a 3dp corpus unlearnable by
+    # construction — the gate would be the reason, not the data. Counted, kept.
+    pairs = _train_value_pairs(train_path)
+    expressible = sum(1 for _p, g, _i in pairs if _value_targets(model.vocab, g) is not None)
+    train_ok = pairs
+    fitted = _fit_operator_head(train_ok, epochs=epochs, solver=solver)
     if fitted is None:
         raise SystemExit("operator head unavailable (torch missing or no training rows)")
     holdout = _contract_rows([e for e in rows if _set_label(e) == "holdout"])
@@ -1497,6 +1589,26 @@ def _operator_head_report(
     # the contract's intent table is a runtime lookup (§5), not a learned weight,
     # so score the unseen-intent rows twice: learned only, and with the table
     table = _contract_table()
+    # both solvers on the same rows and the same grader: the closed form is exact
+    # for a fixed tau, GD stops wherever its convergence happens to land
+    comparison: Dict[str, Any] = {}
+    for name in ("ls", "gd"):
+        other = (
+            fitted if name == solver else _fit_operator_head(train_ok, epochs=epochs, solver=name)
+        )
+        if other is None:
+            continue
+        scored = _score_contract_rows(
+            holdout, other["constants"], other["tau"], targets=table[0] if table else None
+        )
+        comparison[name] = {
+            "tau": other["tau"],
+            "hits": round(scored["row_exact_all_intents"] * scored["rows"]),
+            "hits_rounding_aware": round(
+                scored["row_exact_all_intents_rounding_aware"] * scored["rows"]
+            ),
+            "rows": scored["rows"],
+        }
     hold_table = (
         _score_contract_rows(holdout, fitted["constants"], fitted["tau"], targets=table[0])
         if table
@@ -1535,6 +1647,9 @@ def _operator_head_report(
         "intents": fitted["intents"],
         "train_rows": fitted["train_rows"],
         "constants": {f"{i}/{f}": round(v, 4) for (i, f), v in sorted(fitted["constants"].items())},
+        "solver": fitted.get("solver", solver),
+        "solver_comparison": comparison,
+        "train_rows_atom_expressible": expressible,
         "holdout": hold,
         "holdout_with_contract_table": hold_table,
         "reference": ref,
@@ -1648,12 +1763,24 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     ap.add_argument("--device", default="auto", help="auto | xpu | cuda | cpu")
     ap.add_argument("--total", type=int, default=GATE_N, help="holdout rows (gate N)")
+    ap.add_argument(
+        "--decimals",
+        type=int,
+        default=2,
+        help="decimal places in the instrument's <al_in>/<al_out> lines (default 2: the "
+        "rounds the checkpoints trained on; 3 makes the +/-0.005 grader decidable)",
+    )
     ap.add_argument("--seed", type=int, default=11)
     ap.add_argument("--skip", type=int, default=10000, help="corpus rows no round has used")
     ap.add_argument("--window", type=int, default=40000, help="rows scanned after --skip")
     ap.add_argument("--max-len", type=int, default=192, help="training window (TokenConfig)")
     ap.add_argument("--out", default=str(SET_OUT))
-    ap.add_argument("--report", default=str(REPORT_OUT))
+    ap.add_argument(
+        "--report",
+        default=None,
+        help="report destination; default is one file per mode under data/intelligence_reports "
+        "(mve1_operator_head.json, mve1_value_head.json, ...)",
+    )
     ap.add_argument(
         "--ceiling",
         action="store_true",
@@ -1690,7 +1817,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"ceiling unavailable (missing rows or {args.train})")
             return 1
         payload = {"set": str(args.out), "train": str(args.train), **ceiling}
-        out_path = REPORT_OUT.parent / "mve1_contract_form_ceiling.json"
+        out_path = (
+            Path(args.report)
+            if args.report
+            else REPORT_OUT.parent / "mve1_contract_form_ceiling.json"
+        )
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(payload, indent=2))
@@ -1704,7 +1835,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             set_file=Path(args.out),
             which=args.which,
             device=args.device,
-            report=Path(args.report),
+            report=Path(args.report) if args.report else REPORT_OUT,
             limit=args.limit,
             sensitivity_rows=args.sensitivity_rows,
         )
@@ -1720,7 +1851,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         report = _operator_head_report(
             model, _select(payload, args.which), Path(args.train), epochs=args.head_steps
         )
-        out_path = REPORT_OUT.parent / "mve1_operator_head.json"
+        out_path = (
+            Path(args.report) if args.report else REPORT_OUT.parent / "mve1_operator_head.json"
+        )
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps({k: report[k] for k in ("tau", "params", "holdout", "gate")}, indent=2))
@@ -1745,7 +1878,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             steps=args.head_steps,
             train_limit=args.train_rows,
         )
-        out_path = REPORT_OUT.parent / "mve1_value_head.json"
+        out_path = Path(args.report) if args.report else REPORT_OUT.parent / "mve1_value_head.json"
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps({k: v for k, v in report.items() if k != "by_group"}, indent=2))
@@ -1758,6 +1891,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         skip=args.skip,
         window=args.window,
         max_len=args.max_len,
+        decimals=args.decimals,
     )
     body = json.dumps(built, indent=2, ensure_ascii=False) + "\n"
     out = Path(args.out)
@@ -1766,8 +1900,35 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"check failed: missing {out.name}")
             return 1
         if out.read_text(encoding="utf-8") != body:
-            print(f"check failed: {out.name} differs from a fresh build")
-            return 1
+            # The rows are the instrument. ``training_files_scanned`` is a
+            # property of the data directory at build time, so a new round file
+            # landing there must not turn an unchanged instrument into a failed
+            # check — but it is still reported, because it is the leak scan.
+            try:
+                on_disk = json.loads(out.read_text(encoding="utf-8"))
+            except ValueError:
+                print(f"check failed: {out.name} is not valid JSON")
+                return 1
+            strip = lambda d: {  # noqa: E731
+                **{k: v for k, v in d.items() if k != "provenance"},
+                "provenance": {
+                    k: v
+                    for k, v in (d.get("provenance") or {}).items()
+                    if k != "training_files_scanned"
+                },
+            }
+            if strip(on_disk) != strip(built):
+                print(f"check failed: {out.name} differs from a fresh build")
+                return 1
+            before = (on_disk.get("provenance") or {}).get("training_files_scanned")
+            after = built["provenance"]["training_files_scanned"]
+            print(
+                f"check ok (rows identical): {built['total']} holdout + "
+                f"{built['reference_total']} reference; leak scan now covers "
+                f"{len(after)} files (was {len(before or {})}), "
+                f"overlap {built['provenance']['overlap_with_training']}"
+            )
+            return 0
         print(f"check ok: {built['total']} holdout + {built['reference_total']} reference")
         return 0
 

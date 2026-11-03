@@ -136,3 +136,80 @@ def test_out_paths_are_configurable(prep, tmp_path):
     assert prep.main([*argv, "--check"]) == 0
     train.write_text(train.read_text(encoding="utf-8") + "{}\n", encoding="utf-8")
     assert prep.main([*argv, "--check"]) == 1
+
+
+def test_state_line_decimals_set_the_printable_precision(prep, tmp_path):
+    """3dp is what a 1e-3 grader needs; 2dp stays the default for old rounds."""
+    state = {
+        "valence": -0.10532,
+        "arousal": 0.595303,
+        "dominance": -0.435188,
+        "fatigue": 0.285198,
+        "stress": 0.123456,
+        "health": 0.525106,
+        "routing_mode": "neutral",
+    }
+    two = prep._state_line(state, "math_query", "in", dt=0.5)
+    three = prep._state_line(state, "math_query", "in", dt=0.5, decimals=3)
+    assert "v=-0.11 " in two and "dt=0.50" in two
+    assert "v=-0.105 " in three and "dt=0.500" in three
+    # clamped: the format string must never be breakable from the CLI
+    assert prep._state_line(state, "math_query", "in", decimals=99) == (
+        prep._state_line(state, "math_query", "in", decimals=6)
+    )
+    assert "v=-0.11 " in prep._state_line(state, "math_query", "in", decimals=0)
+
+
+def test_build_records_the_decimal_places_it_used(prep, tmp_path):
+    src = tmp_path / "src.json"
+    src.write_text(
+        json.dumps(
+            {
+                "examples": [
+                    {
+                        "sample_id": "s1",
+                        "input_text": "2 + 2",
+                        "expected_response": "4",
+                        "al_state_in": {
+                            "valence": 0.1111,
+                            "arousal": 0.2222,
+                            "dominance": 0.3333,
+                            "fatigue": 0.4444,
+                            "stress": 0.5555,
+                            "health": 0.6666,
+                            "routing_mode": "neutral",
+                        },
+                        "al_state_out": {
+                            "valence": 0.1234,
+                            "arousal": 0.2345,
+                            "dominance": 0.3456,
+                            "fatigue": 0.4567,
+                            "stress": 0.5678,
+                            "health": 0.6789,
+                            "routing_mode": "neutral",
+                        },
+                        "intent": "math_query",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    built = prep.build(0.0, src, decimals=3)
+    assert built["manifest"]["format"]["decimals"] == 3
+    assert "v=0.111" in built["train"][0]["input"]
+    assert "v=0.123" in built["train"][0]["output"]
+    assert prep.build(0.0, src)["manifest"]["format"]["decimals"] == 2
+
+
+def test_manifest_source_round_trips_relative_paths(prep, tmp_path):
+    """--check must compare against the source the build recorded, not the pilot."""
+    src = tmp_path / "round.json"
+    src.write_text(json.dumps({"examples": []}), encoding="utf-8")
+    manifest = tmp_path / "m.json"
+    manifest.write_text(json.dumps({"source": str(src)}), encoding="utf-8")
+    assert prep._manifest_source(manifest) == src
+    (manifest).write_text(json.dumps({"source": "does/not/exist.json"}), encoding="utf-8")
+    assert prep._manifest_source(manifest) == prep.REPO_ROOT / "does/not/exist.json"
+    manifest.write_text("not json", encoding="utf-8")
+    assert prep._manifest_source(manifest) is None
