@@ -617,6 +617,11 @@
       "referenced": true,
       "purpose": "Hardware-Adaptive Intelligence Report — 智能驗收報告 (最小單位=模型驗證, 無偽裝)"
     },
+    "hybrid_boundary.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "A mixed (multi-approach) decoder for the MVE-1 boundary, with the mix measured."
+    },
     "import_card_deck.py": {
       "category": "tool",
       "referenced": true,
@@ -801,6 +806,11 @@
       "category": "probe",
       "referenced": true,
       "purpose": "L2-3 未見推理泛化 — 硬件規格自適應（<50MB, <3s, 分批+sleep）"
+    },
+    "probe_scale_envelope.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "Measure the capacity/scale envelope of the token-SNN decoder on this box."
     },
     "probe_snn_recall.py": {
       "category": "probe",
