@@ -15,7 +15,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import random
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -276,11 +278,28 @@ def main() -> int:
                 f"exact={point['exact']:.3f} (n={point['n']})"
             )
 
+    # A run can learn for nineteen epochs and then diverge in the twentieth:
+    # round-10 measured epoch 19 at loss 1.04 and epoch 20 at 7.02 with the
+    # same lr, which is the scheduled-sampling feedback eating itself. The old
+    # per-epoch save then wrote the diverged weights over the good ones and the
+    # run was lost. So: never save a non-finite epoch, and keep a sidecar of the
+    # best finite epoch to restore if the last one is worse.
+    best_path = Path(str(args.out) + ".best")
+    best: Dict[str, float] = {"loss": float("inf"), "epoch": -1.0}
+
     def log_row(row: dict) -> None:
-        print(f"  epoch {row['epoch'] + 1}: loss={row['loss']:.4f}", flush=True)
+        loss = float(row["loss"])
+        print(f"  epoch {row['epoch'] + 1}: loss={loss:.4f}", flush=True)
+        if not math.isfinite(loss):
+            print(f"    (non-finite loss — not saved over {args.out})", flush=True)
+            return
         # Per-epoch checkpoint: the B570 faults stochastically mid-run, and a
-        # 300 KB save costs nothing next to one epoch of training.
+        # save costs nothing next to one epoch of training.
         model.save(args.out)
+        if loss < best["loss"]:
+            best["loss"] = loss
+            best["epoch"] = float(row["epoch"] + 1)
+            model.save(best_path)
         if args.epoch_pause > 0:
             time.sleep(args.epoch_pause)
 
@@ -295,6 +314,15 @@ def main() -> int:
         ss_final=args.ss_final,
     )
     train_elapsed = time.time() - started
+    last_loss = float(history[-1]["loss"]) if history else float("inf")
+    if best_path.is_file() and math.isfinite(best["loss"]) and best["loss"] < last_loss:
+        shutil.copyfile(best_path, args.out)
+        print(
+            f"restored epoch {int(best['epoch'])} (loss={best['loss']:.4f}) over the "
+            f"final epoch (loss={last_loss:.4f})",
+            flush=True,
+        )
+    best_path.unlink(missing_ok=True)
 
     # Persist the finished training run *before* evaluation: on the B570 the
     # eval phase has been observed to hang the device (xe CAT error / UR
@@ -336,6 +364,8 @@ def main() -> int:
         "seconds": round(elapsed, 1),
         "train_seconds": round(train_elapsed, 1),
         "loss_history": history,
+        "best_loss": None if not math.isfinite(best["loss"]) else round(best["loss"], 4),
+        "best_epoch": int(best["epoch"]) if best["epoch"] > 0 else None,
         "train_exact_200": train_match,
         "val_exact_200": val_match,
         "eval": {"path": args.eval_data, "sample": args.eval_sample, **eval_match},

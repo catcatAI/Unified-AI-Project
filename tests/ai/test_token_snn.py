@@ -402,3 +402,33 @@ def test_train_on_runs_with_scheduled_sampling(vocab):
     history = ramped.train_on(pairs, epochs=3, batch_size=2, seed=0, ss_final=1.0)
     assert len(history) == 3
     assert all(row["loss"] == row["loss"] for row in history)  # finite
+
+
+def test_stacked_layers_carry_the_embedding_forward(vocab):
+    """Depth needs a path for token identity that does not go through spikes.
+
+    Measured 2026-11-04: three stacked LIF layers at d_emb 256 / d_hidden 4096
+    flattened to the unconditional distribution (loss 3.89 against a 4.10-nat
+    marginal entropy) at both lr 3e-3 and 3e-4, and removing the DC offset of
+    the inter-layer drive did not move it. Adding a per-layer skip from the
+    embedding dropped the same config to 2.96 within four epochs.
+    """
+    import torch
+
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=16, layers=3, max_len=32))
+    ids = torch.tensor([[1, 2, 3, 4]]).to(model.device)
+    logits = model.net(ids)
+    assert tuple(logits.shape) == (1, 4, len(vocab))
+    assert torch.isfinite(logits).all()
+    # one skip per layer above the first, and the first is the no-op slot
+    skips = list(model.net.w_skip)
+    assert len(skips) == 3
+    assert type(skips[0]).__name__ == "Identity"
+    assert sum(p.numel() for p in model.net.w_skip.parameters()) == 2 * (8 * 16 + 16)
+
+
+def test_single_layer_checkpoints_have_no_skip_weights(vocab):
+    """Rounds 1-9 trained with layers=1 must keep loading byte-for-byte."""
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=16, layers=1, max_len=16))
+    keys = list(model.net.state_dict())
+    assert not any("w_skip" in k for k in keys)

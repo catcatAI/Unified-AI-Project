@@ -359,6 +359,10 @@ def _make_net(torch: Any, pad_id: int = 0) -> Any:
             self.w_rec = nn.ModuleList(
                 nn.Linear(cfg.d_hidden, cfg.d_hidden, bias=False) for _ in range(self.n_layers)
             )
+            self.w_skip = nn.ModuleList(
+                [nn.Identity()]
+                + [nn.Linear(cfg.d_emb, cfg.d_hidden) for _ in range(self.n_layers - 1)]
+            )
             self.head = nn.Linear(cfg.d_hidden, vocab_size)
             # Membrane potential accumulates with steady-state gain ~1/(1-leak)
             # (=10x at beta 0.9), so raw membrane saturates the softmax on
@@ -395,10 +399,12 @@ def _make_net(torch: Any, pad_id: int = 0) -> Any:
                 for _ in range(max(1, int(self.cfg.timesteps))):
                     for layer in range(self.n_layers):
                         drive = x if layer == 0 else spk[layer - 1]
+                        skip = self.w_skip[layer](x) if layer else 0.0
                         mem[layer] = (
                             leak * mem[layer]
                             + self.w_in[layer](drive)
                             + self.w_rec[layer](spk[layer])
+                            + skip
                         )
                         spk[layer] = self._spike(mem[layer] - torch.abs(self.threshold))
                 out = (
