@@ -1276,6 +1276,36 @@ collected — 0 errors**).
 > apps/backend/tests/` = **9,121 passed / 107 skipped / 0 failed**；
 > `check_fact_gates.py` **ALL PASS**。
 
+> ✅ **NOTE (Updated 2026-11-04, 表層不得代替核心：稽核與交棒)**: **§X
+> #280**: 使用者要求確認「模板／記憶不得直接輸出、該交給能生成答案的層再
+> 處理」是否仍成立，並全專案找問題。**判準只有一份**：
+> `services/llm/generation_gate.py`（`GENERATIVE_BACKENDS`＝openai/deepseek/
+> anthropic/google/ollama/`llamacpp`/`llamacpp-qwen`/`llamacpp-gemma`；unified／
+> ED3N／GARDEN **不算**，它們不能吃提示改寫）。**修掉 5 條真跑偏**：①
+> `try_memory_retrieval` 的 `memory-template`；② `try_conversation_recall`；
+> ③ `router._recall_user_fact`；④ `chat_routes._taught_fact_turn`（回
+> `(native_reply, evidence)` 恰一）；⑤ **本輪新發現**——`_try_neural_retrieval`
+> 把教過的對話對用編碼器找回後**原句重播**（標 `hit_source="neural"`）：相似度
+> 是神經的、內容是記憶，有生成後端時改成發布 `taught_facts` 證據；這類答案
+> 也**不再進回應快取**（教過的東西會增長，快取重播會讓更正失效）。順手修
+> `llama_cpp` vs `llamacpp` 命名 bug（llama.cpp 三個 slot 先前對記憶層隱形）、
+> `generation_available()` 的**首回合盲點**（module global 尚未指派時退回讀
+> service registry）、`_format_chat_response` 對 dict 生產者遺失
+> `model/confidence/hit_score/hit_source`、以及 `STATUS_MATRIX.md` 被手改
+> （改回由 `docs/status_matrix.yaml` 生成）。知識層的**因果問句**在有生成後端
+> 時也讓位（「為什麼天空是藍的？」不能拿屬性值 `blue` 當解釋；native 保留
+> offline 契約）。證據契約＝`services/llm/memory_evidence.py`＋
+> `prompt_builder._append_memory_evidence`（中英 locale）。
+> **量測（不是引用舊值）**：全量 `pytest tests/ apps/backend/tests/` =
+> **9,207 passed / 107 skipped / 0 failed**（8:11）；純本地對話 1096 題**逐項
+> 與 nd9 相同**（711/1096＝64.9%、學習效應 +0.4818、神經層 22.45%），因為交棒
+> 只在有生成後端時生效；`census --check` 預存命中 0、**核心 0.00/10**、系統分
+> **6.41**（不變）、placement **7/7**、`check_fact_gates.py` **ALL PASS**。
+> 報告：`docs/AUDIT_REPORT_2026-11-04.md`（已修／需注意／查過沒問題三類）；
+> 需注意的三項照實寫：`state` 0/324（知識缺口，pass_rate 上限 0.704）、
+> `semantic-qa` 仍被 `classify_source` 算 neural（改標籤會改量測定義，需單獨
+> 一輪）、`generation_available()` 看不到未註冊的自建 service 實例。
+
 ### JavaScript/TypeScript
 
 ```bash

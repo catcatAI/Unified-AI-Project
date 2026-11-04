@@ -26,6 +26,8 @@
   "angela.dialogue_summary": "[對話摘要]",
   "angela.recent_dialogue": "[近期對話]",
   "angela.related_memories": "[相關記憶]",
+  "angela.memory_evidence": "【記憶層：使用者先前親口說過的事】",
+  "angela.memory_evidence_instruction": "以上是使用者自己說過的話（記憶層的紀錄），不是查證過的知識。請用你自己的話回答；與問題無關就不要引用，也不要說成是知識庫查到的。",
   "angela.draft_response": "[模型初步想法]",
   "angela.template_example": "【語氣示例】",
   "angela.template_example_instruction": "以上是語氣示例，不是答案本身。請用你自己的句子回應，保持相同語氣與人格，但內容必須真正回答使用者的問題。",

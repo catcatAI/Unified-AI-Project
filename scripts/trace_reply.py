@@ -126,6 +126,9 @@ class Recorder:
         elif isinstance(value, (tuple, list)) and value and isinstance(value[0], str):
             # e.g. SemanticQA.answer -> (answer, similarity)
             value_text = value[0]
+        elif isinstance(value, (tuple, list)) and value and isinstance(value[0], dict):
+            # e.g. _taught_fact_turn -> (reply_dict | None, evidence | None)
+            value_text = str(value[0].get("response") or value[0].get("text") or "")
         if isinstance(preview, str):
             text = preview
         else:
@@ -154,6 +157,7 @@ def _patch_stages(recorder: Recorder) -> None:
     from api.routes import chat_routes
 
     for name in (
+        "_taught_fact_turn",
         "_try_taught_facts",
         "_gate_math",
         "_try_math_verification",

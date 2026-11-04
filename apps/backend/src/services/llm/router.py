@@ -322,6 +322,14 @@ _RECALL_META_QUESTION = re.compile(
     re.IGNORECASE,
 )
 
+# A causal question asks *why*, so a stored attribute ("blue") is a
+# confident non-answer rather than an explanation. With a generator
+# registered the knowledge layer defers these (see `_try_knowledge`).
+_CAUSAL_QUESTION_RE = re.compile(
+    r"為什麼|为什么|為何|为何|原因|\bwhy\b",
+    re.IGNORECASE,
+)
+
 
 def _is_negated(folded: str, keyword: str, index: int) -> bool:
     """True when a negator immediately governs the keyword at *index*, or a
@@ -697,7 +705,10 @@ class AngelaLLMService:
         meta = getattr(response, "metadata", None) or {}
         if meta.get("knowledge") or meta.get("fallback") or meta.get("cached"):
             return False
-        if getattr(response, "hit_source", None) in ("template", "memory"):
+        # "neural" here means a *taught pair* found by encoder similarity (the
+        # unified engine's memory), not a generated answer: the store grows as
+        # the user teaches, so a cached replay would survive a correction.
+        if getattr(response, "hit_source", None) in ("template", "memory", "neural"):
             return False
         non_generative_models = {"template-based", "honest-no-answer", "ensemble"}
         return (response.model or "") not in non_generative_models
@@ -2296,6 +2307,16 @@ class AngelaLLMService:
             except Exception:
                 logger.debug("ignored Exception (best-effort path)", exc_info=True)
 
+            # A causal question is not an attribute lookup. The curated store
+            # can only return the attribute ("為什麼天空是藍的？" → "blue"), a
+            # confident non-answer that *looks* like an explanation. With a
+            # generator registered, let it explain; the native path keeps the
+            # curated value because it has nothing better offline (the
+            # offline-speak contract pins that behaviour).
+            if self._llm_backend_available() and _CAUSAL_QUESTION_RE.search(user_message):
+                logger.debug("Causal question: deferring the attribute answer to the generator")
+                return None
+
             answer = route_knowledge(user_message)
             if answer:
                 response_time = (time.time() - start_time) * 1000
@@ -2793,6 +2814,14 @@ class AngelaLLMService:
             prefix = "User taught Angela:"
             if fact.startswith(prefix):
                 fact = fact[len(prefix) :].strip()
+            # A recalled fact is memory evidence. With a generator registered
+            # the model must phrase the reply (the memory layer keeps the
+            # record, not the voice); only the native path answers verbatim.
+            if self._llm_backend_available():
+                from services.llm.memory_evidence import remember as remember_evidence
+
+                remember_evidence(context, fact, "user_fact")
+                return None
             response_time = (time.time() - start_time) * 1000
             return ChatResponse(
                 text=f"我記得：{fact}",
@@ -3286,20 +3315,19 @@ class AngelaLLMService:
         return None
 
     def _llm_backend_available(self) -> bool:
-        """True when a live (non-unified) backend can generate the reply.
+        """True when a backend that can generate the reply is registered.
 
         The unified engine is the project's own offline stack, not a language
         model: with it alone the canned fallback is the only thing that can
         answer, so templates may still be served verbatim.
+
+        The check itself lives in ``generation_gate`` (one definition): the
+        older copy here called every non-unified backend generative, which
+        handed a template to ED3N/GARDEN — engines that cannot follow a prompt.
         """
-        backends = getattr(self, "backends", None) or {}
-        try:
-            for btype in backends:
-                if getattr(btype, "value", str(btype)) != "unified":
-                    return True
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.debug("Backend availability probe failed: %s", exc)
-        return False
+        from services.llm.generation_gate import has_generative_backend
+
+        return has_generative_backend(self)
 
     async def _serve_template_selection(
         self,
@@ -3856,6 +3884,17 @@ class AngelaLLMService:
                 return None
             similarity, answer = self._closest_taught_pair(user_message, pairs)
             if answer is None or similarity < _NEURAL_RETRIEVAL_MIN_SIM:
+                return None
+            # A taught pair is a *memory* of an exchange, however the encoder
+            # found it. Similarity is neural, the content is not: replaying it
+            # verbatim pre-empts a registered model exactly like a template
+            # would, and the `hit_source="neural"` label then makes retrieval
+            # look like generation. With a generator present the pair is
+            # evidence; the model writes the reply.
+            if self._llm_backend_available():
+                from services.llm.memory_evidence import remember as remember_evidence
+
+                remember_evidence(context, str(answer), "taught_facts")
                 return None
             return ChatResponse(
                 text=str(answer),

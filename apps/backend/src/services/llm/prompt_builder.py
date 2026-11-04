@@ -827,6 +827,7 @@ def construct_angela_prompt(
     _append_image_analysis(messages, context)
     _append_history(messages, context)
     _append_retrieved_context(messages, context)
+    _append_memory_evidence(messages, context)
     _append_multimodal_entries(messages, context)
     _append_dialogue_context(messages, context)
     _append_recent_memories(messages, context)
@@ -1345,6 +1346,32 @@ def _append_draft_response(messages: List[Dict], context: Dict) -> None:
             "content": (
                 f"\n{prompt('angela.draft_response')}\n{draft_response}\n\n"
                 f"{prompt('angela.refinement_instruction', name=_resolve_ai_name(context))}\n"
+            ),
+        }
+    )
+
+
+def _append_memory_evidence(messages: List[Dict], context: Dict) -> None:
+    """Attach the memory layer's records as *evidence*, not as the reply.
+
+    When a memory hit (a taught fact, a conversation statement, a recalled
+    user fact) is handed to a generator, the model must answer in its own
+    words and may not present the record as verified knowledge. The layer is
+    named explicitly so the model does not confuse "the user said so" with
+    "this is true".
+    """
+    from services.llm.memory_evidence import collect
+
+    records = collect(context)
+    if not records:
+        return
+    lines = [f"- {item['text']}" for item in records]
+    messages.append(
+        {
+            "role": "system",
+            "content": (
+                f"\n{prompt('angela.memory_evidence')}\n" + "\n".join(lines) + "\n\n"
+                f"{prompt('angela.memory_evidence_instruction')}\n"
             ),
         }
     )

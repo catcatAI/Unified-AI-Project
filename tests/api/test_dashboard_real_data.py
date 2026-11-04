@@ -65,13 +65,22 @@ class TestPetPanel:
         from api.routes.system_routes import system_pet_interact, system_pet_state
 
         matrix = _get_state_matrix()
-        before = float(matrix.gamma.values.get("happiness", 0.5))
-        asyncio.run(system_pet_interact({"action": "pet"}))
-        after = float(matrix.gamma.values.get("happiness", 0.5))
-        assert after != before, "the interaction did not reach the state matrix"
-        # The reported state must agree with the matrix.
-        reported = asyncio.run(system_pet_state())
-        assert abs(float(reported["happiness"]) - after) < 1e-6
+        # The matrix is a process-wide singleton: an earlier test may have
+        # driven happiness to the 1.0 cap, where a +0.1 pet cannot move it.
+        # Pin a value below the cap so this test measures the *path*, not the
+        # residue of whatever ran before it.
+        original = float(matrix.gamma.values.get("happiness", 0.5))
+        matrix.gamma.values["happiness"] = 0.5
+        try:
+            before = float(matrix.gamma.values.get("happiness", 0.5))
+            asyncio.run(system_pet_interact({"action": "pet"}))
+            after = float(matrix.gamma.values.get("happiness", 0.5))
+            assert after != before, "the interaction did not reach the state matrix"
+            # The reported state must agree with the matrix.
+            reported = asyncio.run(system_pet_state())
+            assert abs(float(reported["happiness"]) - after) < 1e-6
+        finally:
+            matrix.gamma.values["happiness"] = original
 
     def test_an_unknown_action_is_rejected(self):
         import asyncio

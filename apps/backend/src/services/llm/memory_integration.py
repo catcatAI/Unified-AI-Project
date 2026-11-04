@@ -14,6 +14,9 @@ import math
 import re
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
+from services.llm.generation_gate import GENERATIVE_BACKENDS, generation_available
+from services.llm.memory_evidence import remember as remember_evidence
+
 if TYPE_CHECKING:
     from services.llm.router import AngelaLLMService, LLMResponse
 
@@ -129,19 +132,16 @@ _EMOTION_WORDS = (
 # because the native path has nothing better, not because a canned frame is a
 # good answer: letting it pre-empt a backend that can answer is exactly the
 # "templates replace the core" regression this project already paid for once.
-_GENERATIVE_BACKENDS = {"openai", "deepseek", "anthropic", "google", "ollama", "llama_cpp"}
+#
+# The definition lives in ONE place now (generation_gate). The copy that used
+# to be here said "llama_cpp" while the provider enum says "llamacpp", so a
+# llama.cpp backend was invisible to this check (see generation_gate).
+_GENERATIVE_BACKENDS = GENERATIVE_BACKENDS
 
 
 def _has_generative_backend(service: Any) -> bool:
     """True when a backend that can generate is registered on the service."""
-    backends = getattr(service, "backends", None)
-    if not backends:
-        return False
-    for name in backends:
-        key = str(getattr(name, "value", name)).lower()
-        if key in _GENERATIVE_BACKENDS:
-            return True
-    return False
+    return generation_available(service)
 
 
 # The value a fact sentence states. Only the shapes a grammar gives you —
@@ -496,6 +496,15 @@ class MemoryIntegration:
             if recall is not None:
                 return recall
 
+            # A stored reply pair is a canned line ("memory template"), i.e.
+            # the surface layer. With a backend that can generate, it is never
+            # the answer: the retrieved conversation statements above are
+            # already published as evidence, and the model writes the reply in
+            # its own words. Serving the template here was the last path where
+            # a memory template could pre-empt a live model.
+            if _has_generative_backend(self._svc):
+                return None
+
             if results and len(results) > 0:
                 best_template, score = results[0]
 
@@ -635,6 +644,12 @@ class MemoryIntegration:
         """
         if not _RECALL_QUESTION.search(user_message or ""):
             return None
+        # The template connector and the memory-retrieval connector both ask
+        # this question in one turn; the second must not repeat the scan (or
+        # the evidence) just because the first one handed off.
+        if context.get("_conversation_recall_done"):
+            return None
+        context["_conversation_recall_done"] = True
         manager = getattr(self._svc, "memory_manager", None)
         if manager is None:
             return None
@@ -673,6 +688,7 @@ class MemoryIntegration:
         # 住哪裡？") — the answer must carry *all* of them, not just the first.
         clauses = _recall_clauses(user_message)
         answers: List[str] = []
+        matched_statements: List[str] = []
         for clause in clauses:
             clause_words = set(_attribute_words(clause))
             best_statement: Optional[str] = None
@@ -687,6 +703,7 @@ class MemoryIntegration:
                 best_statement = _semantic_match(statements, clause_words)
             if best_statement is None:
                 continue
+            matched_statements.append(best_statement)
             name = _statement_name(best_statement)
             if name and _NAME_QUESTION.search(clause):
                 answers.append(f"你叫{name}" if language == "zh" else f"your name is {name}")
@@ -697,6 +714,14 @@ class MemoryIntegration:
                     else f'"{best_statement[:120]}"'
                 )
         if not answers:
+            return None
+
+        # With a generator registered, the statement is *evidence* and the
+        # model writes the reply. The extractive answer below is the native
+        # path's degraded mode — it must not speak in the model's place.
+        if _has_generative_backend(self._svc):
+            for statement in matched_statements:
+                remember_evidence(context, statement, "conversation")
             return None
 
         if len(answers) == 1:

@@ -531,30 +531,24 @@ def _validate_and_truncate_input(
     return user_message
 
 
-def _try_taught_facts(
-    user_message: str,
-    session_id: str,
-    schema_version: str = "2.0",
-    truncation_message: str = "",
-) -> Optional[Dict[str, Any]]:
-    """Answer from facts the user taught in conversation — *memory*, not knowledge.
-
-    Layer contract (docs/06-project-management/LAYER_SEPARATION.md): a user's
-    statement is a record attributable to that user, not a verified fact, so the
-    reply must say so ("你教過我") and is labelled ``source=memory``. It also
-    never runs through ``route_knowledge``: memory must not be scored as
-    knowledge. Runs after the teaching step and before recall/LLM so a
-    correction applies to the next question immediately.
-    """
+def _lookup_taught_fact(user_message: str) -> Optional[str]:
+    """The fact the user taught earlier that answers this question (or None)."""
     try:
         from ai.memory.taught_facts import get_taught_facts
 
-        answer = get_taught_facts().lookup(user_message)
+        return get_taught_facts().lookup(user_message)
     except Exception as exc:  # pragma: no cover - optional store
         logger.debug("taught-facts lookup unavailable: %s", exc)
         return None
-    if not answer:
-        return None
+
+
+def _memory_response(
+    answer: str,
+    session_id: str,
+    schema_version: str = "2.0",
+    truncation_message: str = "",
+) -> Dict[str, Any]:
+    """The native path's memory reply — labelled as memory, never as model output."""
     attributed = f"你教過我：{answer}"
     result = {
         "response_text": attributed,
@@ -574,6 +568,54 @@ def _try_taught_facts(
     except Exception:  # pragma: no cover - diagnostics only
         logger.debug("latest-response cache unavailable", exc_info=True)
     return result
+
+
+def _try_taught_facts(
+    user_message: str,
+    session_id: str,
+    schema_version: str = "2.0",
+    truncation_message: str = "",
+) -> Optional[Dict[str, Any]]:
+    """Answer from facts the user taught in conversation — *memory*, not knowledge.
+
+    Layer contract (docs/06-project-management/LAYER_SEPARATION.md): a user's
+    statement is a record attributable to that user, not a verified fact, so the
+    reply must say so ("你教過我") and is labelled ``source=memory``. It also
+    never runs through ``route_knowledge``: memory must not be scored as
+    knowledge. Runs after the teaching step and before recall/LLM so a
+    correction applies to the next question immediately.
+
+    When a backend that can generate is registered the caller does NOT use
+    this function: the fact is published as ``memory_evidence`` and the model
+    writes the reply (see ``_taught_fact_turn``). This extractive answer is
+    the native path's degraded mode.
+    """
+    answer = _lookup_taught_fact(user_message)
+    if not answer:
+        return None
+    return _memory_response(answer, session_id, schema_version, truncation_message)
+
+
+def _taught_fact_turn(
+    user_message: str,
+    session_id: str,
+    schema_version: str = "2.0",
+    truncation_message: str = "",
+) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, str]]]:
+    """Resolve a taught-fact turn: (native reply, evidence for the generator).
+
+    Exactly one of the two is set. With a generator the memory layer must not
+    speak (the fact becomes prompt evidence); without one the extractive
+    "你教過我：…" answer is the honest degraded mode.
+    """
+    answer = _lookup_taught_fact(user_message)
+    if not answer:
+        return None, None
+    from services.llm.generation_gate import generation_available
+
+    if generation_available():
+        return None, {"text": answer, "source": "taught_facts"}
+    return _memory_response(answer, session_id, schema_version, truncation_message), None
 
 
 async def _try_math_verification(
@@ -1898,6 +1940,21 @@ def _format_chat_response(
     _derived_route = _declared_route or _metadata.get("route") or _route_map.get(_backend)
     if _derived_route is None:
         _derived_route = "fallback" if _metadata.get("fallback") else "unknown"
+
+    def _read(name: str, default: Any = None) -> Any:
+        """Read a field from either shape, so a dict does not lose its data.
+
+        The early-return dict producers (knowledge pipeline, memory) declare
+        model/confidence/hit_score/hit_source, but ``getattr`` on a dict
+        always misses: every such answer was reported with confidence None
+        and hit_source "none" while the dict actually carried the values.
+        """
+        if isinstance(llm_response, dict):
+            value = llm_response.get(name)
+        else:
+            value = getattr(llm_response, name, None)
+        return default if value is None else value
+
     return {
         "response_text": response_text,
         "response": response_text,
@@ -1908,10 +1965,10 @@ def _format_chat_response(
         "emotion_confidence": emotion_result.get("confidence", 0.5) if emotion_result else 0.5,
         "emotion_intensity": emotion_result.get("intensity", 0.5) if emotion_result else 0.5,
         "backend": _backend,
-        "model": getattr(llm_response, "model", None) or "unknown",
-        "confidence": getattr(llm_response, "confidence", None),
-        "hit_score": getattr(llm_response, "hit_score", 0.0),
-        "hit_source": getattr(llm_response, "hit_source", "none"),
+        "model": _read("model") or "unknown",
+        "confidence": _read("confidence"),
+        "hit_score": _read("hit_score", 0.0),
+        "hit_source": _read("hit_source", "none"),
         "route": _derived_route,
         # Abstain 通道（v1）：結構化棄權信封（無棄權=None，形狀穩定）。
         "abstain": _extract_abstain_envelope(llm_response),
@@ -2053,12 +2110,26 @@ async def _run_chat_pipeline(
 
     # Step 1c: answer from what the user just taught. Freshest state wins over
     # recall/LLM, so "不是 A，是 B" is reflected in the very next question.
-    taught_shortcircuit = _try_taught_facts(user_message, session_id, schema_ver, trunc_msg)
+    #
+    # With a backend that can generate, memory does not speak: the fact is
+    # published as evidence for the model (which writes the reply in its own
+    # words). The extractive "你教過我：…" answer is the native path's degraded
+    # mode — a memory layer pre-empting a live model is the surface layer
+    # pretending to be the core.
+    taught_shortcircuit, taught_evidence = _taught_fact_turn(
+        user_message, session_id, schema_ver, trunc_msg
+    )
     if taught_shortcircuit is not None:
         return taught_shortcircuit
+    memory_evidence = [taught_evidence] if taught_evidence else []
 
     # Step 2: Initialize context + best-effort priming (EDA / dispatch / MSBA)
     context = _prime_chat_context(user_message, user_name, origin, extra_context, history)
+    if memory_evidence:
+        from services.llm.memory_evidence import remember as _remember_memory
+
+        for item in memory_evidence:
+            _remember_memory(context, item["text"], item["source"])
     # Step 2b: role binding (backend slot / memory namespace / trace id)
     _apply_role_binding(context)
 

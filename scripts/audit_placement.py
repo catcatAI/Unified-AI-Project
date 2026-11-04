@@ -90,7 +90,7 @@ def actual_layer(reply: str, question: str, events: List[Dict[str, Any]]) -> str
             continue
         if stage == "route_knowledge" and _norm(text) in _norm(reply):
             return "knowledge"
-        if stage == "_try_taught_facts" and _norm(text) in _norm(reply):
+        if stage in ("_taught_fact_turn", "_try_taught_facts") and _norm(text) in _norm(reply):
             return "memory"
         if stage == "answer" and _norm(text) in _norm(reply):
             return "knowledge"  # SemanticQA: the engine's own knowledge store

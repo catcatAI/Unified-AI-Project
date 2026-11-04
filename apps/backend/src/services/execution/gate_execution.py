@@ -376,18 +376,11 @@ class GateExecutionOwner:
 
     @staticmethod
     def _llm_generation_available() -> bool:
-        """True when the router has a live non-unified backend (no init side effects)."""
+        """True when the router has a generative backend (no init side effects)."""
         try:
-            import services.llm.router as _router_mod
+            from services.llm.generation_gate import generation_available
 
-            svc = getattr(_router_mod, "_llm_service", None)
-            if svc is None:
-                return False
-            backends = getattr(svc, "backends", None) or {}
-            for btype in backends:
-                if getattr(btype, "value", str(btype)) != "unified":
-                    return True
-            return False
+            return generation_available()
         except Exception as exc:
             # 探针异常 ≠ 后端不健康：静默会把代码写入请求错误拦回旧的
             # “请确认”行为，且外层 chat_routes 的 warning 永不可达

@@ -26,6 +26,8 @@
   "angela.dialogue_summary": "[Dialogue Summary]",
   "angela.recent_dialogue": "[Recent Dialogue]",
   "angela.related_memories": "[Related Memories]",
+  "angela.memory_evidence": "[Memory Layer: what the user told you earlier]",
+  "angela.memory_evidence_instruction": "The lines above are the user's own words (memory records), not verified knowledge. Answer in your own words; ignore them if they do not answer the question, and never present them as a knowledge-base lookup.",
   "angela.draft_response": "[Model Draft Response]",
   "angela.template_example": "[Tone Example]",
   "angela.template_example_instruction": "The text above is a TONE example, not the answer. Reply in your own words, keeping the same tone and personality, but the content must actually answer what the user asked.",

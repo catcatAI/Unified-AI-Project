@@ -722,6 +722,36 @@ class PromptManager:
             )
         )
 
+        # ── Memory evidence (a record, never the answer) ─────────────────
+        self.register(
+            PromptTemplate(
+                key="angela.memory_evidence",
+                templates={
+                    "en": "[Memory Layer: what the user told you earlier]",
+                    "zh": "【記憶層：使用者先前親口說過的事】",
+                },
+                tags=["system"],
+            )
+        )
+        self.register(
+            PromptTemplate(
+                key="angela.memory_evidence_instruction",
+                templates={
+                    "en": (
+                        "The lines above are the user's own words (memory records), not "
+                        "verified knowledge. Answer in your own words; ignore them if they "
+                        "do not answer the question, and never present them as a "
+                        "knowledge-base lookup."
+                    ),
+                    "zh": (
+                        "以上是使用者自己說過的話（記憶層的紀錄），不是查證過的知識。"
+                        "請用你自己的話回答；與問題無關就不要引用，也不要說成是知識庫查到的。"
+                    ),
+                },
+                tags=["system"],
+            )
+        )
+
         # ── Draft / refinement ───────────────────────────────────────────
         self.register(
             PromptTemplate(

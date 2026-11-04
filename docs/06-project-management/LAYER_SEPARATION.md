@@ -42,13 +42,13 @@
 | -------------------------------- | --------- | ---------------------------- | ------------------------------------ | ------------------------------------------------------------------- |
 | 對話中教的事實可回想             | memory    | `ai/memory/taught_facts.py`  | `scripts/probe_dialogue_teaching.py` | 7/7 每階段；冷問 7/7 棄權；回答標 `source=memory`                   |
 | 原生引擎（GARDEN）從對話學會事實 | learning  | `ai/garden/garden_engine.py` | `scripts/probe_neural_learning.py`   | **fail**：冷 0%／教後 0%／刪來源後 0%；物件明碼在 `dictionary.json` |
-| 策展事實回想                     | knowledge | `ai/knowledge_base.py`       | `scripts/run_benchmarks.py`          | knowledge 46.7%（7/15）、knowledge_mc 95%                           |
-| 離線百科抽取                     | knowledge | `ai/knowledge/wiki_facts.py` | `scripts/run_benchmarks.py`          | 7/15 答案句含正確關鍵詞，其餘棄權                                   |
+| 策展事實回想                     | knowledge | `ai/knowledge_base.py`       | `scripts/run_benchmarks.py`          | knowledge 53.3%（8/15）、knowledge_mc 100%（40/40）                 |
+| 離線百科抽取                     | knowledge | `ai/knowledge/wiki_facts.py` | `scripts/run_benchmarks.py`          | 8/15 答案句含正確關鍵詞，其餘棄權                                   |
 | 路由／模板                       | surface   | `services/llm/router.py`     | `scripts/probe_native_dialogue.py`   | 只記來源分佈，不作正確性宣稱                                        |
 
 數字與日期同步在登記簿；門禁會擋「模組標記 ≠ 登記層」「記憶走知識路徑」「學習宣稱沒有刪除來源的證據」。
 
-## 兩個結構性防線（不是靠自律）
+## 三個結構性防線（不是靠自律）
 
 1. **記憶不進知識路徑**：`route_knowledge()` 不得 import
    `ai.memory`（AST 檢查），對話教學只在聊天管線回應，且標
@@ -56,6 +56,15 @@
    維度永遠不可能被對話記憶餵高。
 2. **學習宣稱必須有刪除來源的證據**：`evidence.source_deleted` 必須是
    `true`，且探針要真的重建「只留參數」的狀態再問一次。沒有這一步的探針，測的是儲存。
+3. **有可生成後端時，記憶只發布證據、不說話**：判定只有一份
+   （`services/llm/generation_gate.py`），回憶／教學確認／使用者事實／HAM
+   記憶模板一律把原句放進 context 的 `memory_evidence` 並回 `None`，由模型
+   用自己的話回答（`services/llm/memory_evidence.py`＋
+   `prompt_builder._append_memory_evidence`）。沒有生成後端（native）時才由
+   記憶層直接回答，且標 `source=memory`。理由：罐頭句與改寫過的模型回覆在
+   畫面上長得一樣，但只有後者是「這一刻產生的」；讓前者先答，記憶分就會被
+   讀成對話能力。同樣的讓位也套用在知識層的**因果問句**（「為什麼天空是藍
+   的？」不能拿屬性值 `blue` 當解釋）。
 
 ## 反模式（看到就退件）
 

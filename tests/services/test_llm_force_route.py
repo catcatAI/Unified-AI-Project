@@ -859,6 +859,35 @@ def test_format_chat_response_surfaces_abstain():
     assert out2["abstain"] is None
 
 
+def test_format_chat_response_keeps_a_dict_producers_fields():
+    """A dict producer declares model/confidence/hit_*; getattr dropped them.
+
+    The knowledge pipeline and the memory layer return plain dicts. The
+    payload used to show confidence None / hit_source "none" even though the
+    dict carried the values, so a caller could not tell how sure the lookup
+    was or where the hit came from.
+    """
+    from api.routes.chat_routes import _format_chat_response
+
+    served = {
+        "text": "水的沸點是 100°C。",
+        "backend": "knowledge_pipeline",
+        "route": "knowledge",
+        "model": "curated-kb",
+        "confidence": 0.9,
+        "hit_score": 0.8,
+        "hit_source": "curated",
+    }
+    out = _format_chat_response(
+        "水的沸點是 100°C。", served, None, "v1", "", "水的沸點？", 500, "s1"
+    )
+    assert out["model"] == "curated-kb"
+    assert out["confidence"] == 0.9
+    assert out["hit_score"] == 0.8
+    assert out["hit_source"] == "curated"
+    assert out["route"] == "knowledge"
+
+
 def test_post_response_feedback_abstain_aware(monkeypatch):
     """10b 閉環：棄權回合 record_intent_outcome(success=False) 且不補 served
     分母；正常回合 success=True 且 chat_svc.record_served_turn 呼叫一次。"""
