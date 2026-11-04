@@ -388,3 +388,13 @@ epoch、同 `lr 1e-3` 對照：1.45M → loss 0.580／TF 0.785／block 0.829；8
 epoch 亦為 0）。深層 LIF 需 embedding
 skip 才不塌成 unigram（3.89→2.96）；`epoch 20` 發散靠 `<out>.best`
 還原（1.0373）。
+
+**訓練穩定性（2026-11-04，§二十九）**：`train_on`
+內建 guard（失控→還原最佳權重＋lr 砍半、非有限 batch 跳過）、`--patience`
+以驗證 loss 選模與早停、`--lr-schedule cosine --warmup`。 `dynamics()`
+的判別特徵是
+`sensitive`（\|mem−θ\|<2 的比率，surrogate 梯度帶），不是放電率：0.239→TF
+0.785、0.015→0.786、0.002→0.185；round-9 的 θ 漂到 6.75。**86M 邊界配置加規則後（20
+epoch、lr 1e-3）：loss 0.9879／val 0.9678／TF 0.765／block 0.805／`format_ok`
+11/20** （無規則時 1.037／0.185／0.176／0/20）→
+§二十八 的負面結論改判為訓練不穩。

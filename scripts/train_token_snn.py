@@ -158,6 +158,45 @@ def main() -> int:
         default="auto",
         help="torch device for training/inference: auto (xpu>cuda>cpu), xpu, cuda, cpu",
     )
+    ap.add_argument(
+        "--guard",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="stability rule (default on): a non-finite epoch, or one more than "
+        "--diverge-factor times the best so far, restores the best finite weights "
+        "and halves the lr. Oscillation is allowed; runaway is not.",
+    )
+    ap.add_argument(
+        "--diverge-factor",
+        type=float,
+        default=3.0,
+        help="how many times the best epoch counts as a runaway (default 3.0)",
+    )
+    ap.add_argument(
+        "--lr-schedule",
+        choices=("cosine", "constant"),
+        default="cosine",
+        help="base learning-rate shape; the guard may still lower it (default cosine)",
+    )
+    ap.add_argument(
+        "--warmup",
+        type=int,
+        default=0,
+        help="epochs of linear warmup before the schedule (default 0)",
+    )
+    ap.add_argument(
+        "--min-lr",
+        type=float,
+        default=1e-5,
+        help="floor for both the schedule and the guard's halving (default 1e-5)",
+    )
+    ap.add_argument(
+        "--patience",
+        type=int,
+        default=0,
+        help="stop when validation loss has not improved for N epochs; also makes "
+        "the saved checkpoint the best *validation* epoch (default 0 = off)",
+    )
     ap.add_argument("--out", default=str(OUT_DIR / "token_snn.pt"))
     ap.add_argument("--report", default=str(REPORT_DIR / "token_snn.json"))
     ap.add_argument(
@@ -280,23 +319,83 @@ def main() -> int:
 
     # A run can learn for nineteen epochs and then diverge in the twentieth:
     # round-10 measured epoch 19 at loss 1.04 and epoch 20 at 7.02 with the
-    # same lr, which is the scheduled-sampling feedback eating itself. The old
-    # per-epoch save then wrote the diverged weights over the good ones and the
-    # run was lost. So: never save a non-finite epoch, and keep a sidecar of the
-    # best finite epoch to restore if the last one is worse.
+    # same lr, which is the scheduled-sampling feedback eating itself. Two rules
+    # now stand between that and a lost run: the model's own guard rolls back to
+    # the best finite weights and halves the lr instead of leaving them ruined,
+    # and selection here is by *validation* loss, so the checkpoint that survives
+    # is the one that generalises rather than the one that memorised hardest.
     best_path = Path(str(args.out) + ".best")
     best: Dict[str, float] = {"loss": float("inf"), "epoch": -1.0}
+    val_curve: List[dict] = []
+    stop = {"now": False}
+
+    def val_loss() -> float:
+        """Teacher-forced loss on the held-out split: one forward pass, no
+        generation, so it is cheap enough to run every epoch."""
+        import torch as _torch
+
+        was = model.net.training
+        model.net.eval()
+        total, steps = 0.0, 0
+        with _torch.no_grad():
+            for start in range(0, len(val_fit), args.batch):
+                chunk = list(val_fit[start : start + args.batch])
+                ids, mask, _ = model.make_batch(chunk)
+                got = float(model.loss(ids, mask).detach())
+                if math.isfinite(got):
+                    total += got
+                    steps += 1
+        if was:
+            model.net.train()
+        return total / steps if steps else float("nan")
+
+    def schedule(epoch: int) -> float:
+        """Warm up, then cosine down: the standard shape that keeps the first
+        epochs from shocking a fresh stack and the last ones from oscillating."""
+        if args.warmup and epoch < args.warmup:
+            return args.lr * (epoch + 1) / args.warmup
+        if args.lr_schedule == "constant":
+            return args.lr
+        span = max(1, args.epochs - max(0, args.warmup))
+        done = min(1.0, max(0.0, (epoch - args.warmup) / span))
+        return args.min_lr + 0.5 * (args.lr - args.min_lr) * (1 + math.cos(math.pi * done))
 
     def log_row(row: dict) -> None:
         loss = float(row["loss"])
-        print(f"  epoch {row['epoch'] + 1}: loss={loss:.4f}", flush=True)
+        note = ""
+        if row.get("rolled_back"):
+            note = "  [rolled back: restored best weights, lr halved]"
+        if row.get("skipped"):
+            note += f"  [skipped {row['skipped']} non-finite batches]"
+        print(
+            f"  epoch {row['epoch'] + 1}: loss={loss:.4f} lr={row.get('lr', args.lr):.2e}{note}",
+            flush=True,
+        )
         if not math.isfinite(loss):
             print(f"    (non-finite loss — not saved over {args.out})", flush=True)
             return
-        # Per-epoch checkpoint: the B570 faults stochastically mid-run, and a
-        # save costs nothing next to one epoch of training.
         model.save(args.out)
-        if loss < best["loss"]:
+        if args.patience or args.eval_every:
+            got = val_loss()
+            point = {"epoch": row["epoch"] + 1, "val_loss": round(got, 4)}
+            val_curve.append(point)
+            if math.isfinite(got):
+                print(f"    val_loss={got:.4f}", flush=True)
+                stop["last_val"] = got
+                if got < best["loss"]:
+                    best["loss"] = got
+                    best["epoch"] = float(row["epoch"] + 1)
+                    model.save(best_path)
+                    stop["stale"] = 0
+                else:
+                    stop["stale"] = stop.get("stale", 0) + 1
+                    if args.patience and stop["stale"] >= args.patience:
+                        stop["now"] = True
+                        print(
+                            f"    early stop: no val improvement for " f"{args.patience} epochs",
+                            flush=True,
+                        )
+        if best["epoch"] < 0:
             best["loss"] = loss
             best["epoch"] = float(row["epoch"] + 1)
             model.save(best_path)
@@ -312,17 +411,36 @@ def main() -> int:
         on_epoch=on_epoch,
         tail_weight=args.tail_weight,
         ss_final=args.ss_final,
+        lr_at=schedule,
+        guard=args.guard,
+        diverge_factor=args.diverge_factor,
+        min_lr=args.min_lr,
+        should_stop=lambda: stop["now"],
     )
     train_elapsed = time.time() - started
     last_loss = float(history[-1]["loss"]) if history else float("inf")
-    if best_path.is_file() and math.isfinite(best["loss"]) and best["loss"] < last_loss:
+    # only compare like with like: when validation drove selection, the last
+    # train loss says nothing about whether the saved epoch is the better one
+    last_seen = stop.get("last_val", last_loss) if val_curve else last_loss
+    if best_path.is_file() and math.isfinite(best["loss"]) and best["loss"] < last_seen:
         shutil.copyfile(best_path, args.out)
+        label = "val_loss" if val_curve else "loss"
+        final = f"{label}={last_seen:.4f}" if math.isfinite(last_seen) else "a stopped run"
         print(
-            f"restored epoch {int(best['epoch'])} (loss={best['loss']:.4f}) over the "
-            f"final epoch (loss={last_loss:.4f})",
+            f"restored epoch {int(best['epoch'])} ({label}={best['loss']:.4f}) over {final}",
             flush=True,
         )
     best_path.unlink(missing_ok=True)
+    dynamics = model.dynamics(train_fit, n=8)
+    print(
+        "  dynamics: "
+        + f"verdict={dynamics['verdict']} beta={dynamics['beta']} "
+        + " ".join(
+            f"L{row['layer']}(rate={row['spike_rate']:.2f},sens={row['sensitive']:.3f})"
+            for row in dynamics["per_layer"]
+        ),
+        flush=True,
+    )
 
     # Persist the finished training run *before* evaluation: on the B570 the
     # eval phase has been observed to hang the device (xe CAT error / UR
@@ -366,6 +484,11 @@ def main() -> int:
         "loss_history": history,
         "best_loss": None if not math.isfinite(best["loss"]) else round(best["loss"], 4),
         "best_epoch": int(best["epoch"]) if best["epoch"] > 0 else None,
+        "best_is_validation": bool(val_curve),
+        "val_curve": val_curve,
+        "rolled_back_epochs": [r["epoch"] + 1 for r in history if r.get("rolled_back")],
+        "stopped_early": bool(history and history[-1].get("stopped")),
+        "dynamics": dynamics,
         "train_exact_200": train_match,
         "val_exact_200": val_match,
         "eval": {"path": args.eval_data, "sample": args.eval_sample, **eval_match},

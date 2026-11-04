@@ -432,3 +432,71 @@ def test_single_layer_checkpoints_have_no_skip_weights(vocab):
     model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=16, layers=1, max_len=16))
     keys = list(model.net.state_dict())
     assert not any("w_skip" in k for k in keys)
+
+
+def _tiny_pairs():
+    return [("abc", "def"), ("bcd", "efg")] * 3
+
+
+def test_guard_rolls_back_and_lowers_the_rate(vocab):
+    """The stability rule: a runaway epoch restores weights instead of keeping them.
+
+    Round-10 lost nineteen good epochs to a twentieth (loss 1.04 -> 7.02 at
+    unchanged lr). The rule under test is that no epoch may sit more than
+    ``diverge_factor`` times the best one: it rolls back, halves the rate and
+    carries on, so the run degrades into oscillation rather than ruin.
+    """
+    import math
+
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=16))
+    history = model.train_on(_tiny_pairs(), epochs=6, batch_size=2, lr=200.0, diverge_factor=1.2)
+    rows = [row for row in history if "loss" in row and "lr" in row]
+    assert any(row["rolled_back"] for row in rows), "the rule was never exercised"
+    assert all(math.isfinite(row["loss"]) for row in rows)
+    # the rate only ever goes down, and it moves when a rollback happens
+    rates = [row["lr"] for row in rows]
+    assert rates == sorted(rates, reverse=True)
+    assert rates[-1] < rates[0]
+    # weights after the run are finite everywhere (a rollback restored them)
+    assert all(bool(model.torch.isfinite(p).all()) for p in model.net.parameters())
+
+
+def test_guard_is_off_by_request(vocab):
+    """`--no-guard` must be a real opt-out, not a silently ignored flag."""
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=16))
+    history = model.train_on(
+        _tiny_pairs(), epochs=3, batch_size=2, lr=200.0, diverge_factor=1.2, guard=False
+    )
+    assert not any(row.get("rolled_back") for row in history)
+
+
+def test_lr_at_and_should_stop_are_honoured(vocab):
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=16))
+    seen = []
+    history = model.train_on(
+        _tiny_pairs(),
+        epochs=6,
+        batch_size=2,
+        lr=1e-2,
+        lr_at=lambda epoch: 1e-2 / (epoch + 1),
+        should_stop=lambda: len(seen) >= 2,
+        on_epoch=seen.append,
+    )
+    assert [round(row["lr"], 6) for row in history[:3]] == [0.01, 0.005, 0.003333]
+    assert history[-1].get("stopped") is True
+    assert len(history) == 3, "must stop at the epoch after the second callback"
+
+
+def test_dynamics_reports_a_silenced_stack(vocab):
+    """The feature that tells 'alive' from 'firing without gradient'."""
+    import torch
+
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=16, layers=2, max_len=16))
+    alive = model.dynamics(_tiny_pairs(), n=2)
+    assert alive["verdict"] in {"alive", "firing-without-gradient"}
+    assert [row["layer"] for row in alive["per_layer"]] == [0, 1]
+    with torch.no_grad():
+        model.net.threshold.fill_(1000.0)
+    silenced = model.dynamics(_tiny_pairs(), n=2)
+    assert silenced["verdict"] == "dead-or-saturated"
+    assert all(row["spike_rate"] == 0.0 for row in silenced["per_layer"])

@@ -35,6 +35,7 @@ separate, measurable step.
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -687,6 +688,77 @@ class TokenSNN:
             "tail_tokens": tail_tot,
         }
 
+    # -- dynamics -----------------------------------------------------------
+    def dynamics(self, pairs: Sequence[Tuple[str, str]], n: int = 8) -> Dict[str, Any]:
+        """Measure what the stack is actually doing on real rows.
+
+        A spiking stack fails in three recognisable ways, and loss alone cannot
+        tell them apart: it can be **dead** (no layer fires, nothing propagates),
+        **saturated** (every unit fires every step, the rate carries no token),
+        or **alive**. The decisive feature is the pre-activation mass near the
+        threshold: that is the only region where the surrogate gradient is
+        non-zero, so a layer with 44% firing but nothing near threshold is firing
+        and learning nothing. This measures the forward pass only — no training,
+        no grader — so it is cheap enough to print every run and compare runs.
+        """
+        torch = self.torch
+        net = self.net
+        was_training = net.training
+        net.eval()
+        captured: List[Tuple[Any, Any]] = []
+        original = net._spike
+
+        def spy(x: Any) -> Any:
+            out = original(x)
+            captured.append((x.detach(), out.detach()))
+            return out
+
+        net._spike = spy  # type: ignore[method-assign]
+        try:
+            ids, _mask, _cuts = self.make_batch(list(pairs[:n]))
+            with torch.no_grad():
+                net(ids.to(self.device))
+        finally:
+            net._spike = original  # type: ignore[method-assign]
+            if was_training:
+                net.train()
+        layers = int(net.n_layers)
+        steps = len(captured) // max(1, layers)
+        out: Dict[str, Any] = {
+            "rows": len(pairs[:n]),
+            "layers": layers,
+            "beta": round(float(torch.sigmoid(net.beta)), 4),
+            "threshold": round(abs(float(net.threshold)), 4),
+            "per_layer": [],
+        }
+        for layer in range(layers):
+            pre = torch.stack([captured[t * layers + layer][0] for t in range(steps)])
+            spk = torch.stack([captured[t * layers + layer][1] for t in range(steps)])
+            # the surrogate is sigmoid(5x): its derivative is 5*s*(1-s), i.e.
+            # 1.25 at x=0, 0.33 at |x|=1 and 0.09 at |x|=2. Outside roughly +-2
+            # the layer fires but receives almost no gradient.
+            near = float((pre.abs() < 0.1).float().mean())
+            sensitive = float((pre.abs() < 2.0).float().mean())
+            out["per_layer"].append(
+                {
+                    "layer": layer,
+                    "spike_rate": round(float(spk.mean()), 4),
+                    "token_variance": round(float(spk.var(0).mean()), 6),
+                    "near_threshold": round(near, 4),
+                    "sensitive": round(sensitive, 4),
+                    "mem_abs_mean": round(float(pre.abs().mean()), 4),
+                }
+            )
+        rates = [row["spike_rate"] for row in out["per_layer"]]
+        sensitive = [row["sensitive"] for row in out["per_layer"]]
+        if min(rates) < 0.01 or max(rates) > 0.99:
+            out["verdict"] = "dead-or-saturated"
+        elif min(sensitive) < 0.01:
+            out["verdict"] = "firing-without-gradient"
+        else:
+            out["verdict"] = "alive"
+        return out
+
     # -- training -----------------------------------------------------------
     def train_on(
         self,
@@ -699,6 +771,11 @@ class TokenSNN:
         on_epoch: Any = None,
         tail_weight: float = 1.0,
         ss_final: float = 0.0,
+        lr_at: Any = None,
+        guard: bool = True,
+        diverge_factor: float = 3.0,
+        min_lr: float = 1e-5,
+        should_stop: Any = None,
     ) -> List[Dict[str, float]]:
         """Train on ``pairs``.
 
@@ -707,13 +784,44 @@ class TokenSNN:
         ~0 to ``ss_final`` across the epochs, so early epochs learn the
         mapping from gold context and late epochs practise on the model's own
         predictions — the regime greedy decoding will actually run in.
+
+        ``guard`` is the stability rule, and it exists because a run without it
+        lost nineteen good epochs to a twentieth (2026-11-04, loss 1.04 -> 7.02
+        at unchanged lr). Under the guard an epoch is allowed to oscillate: it
+        may get worse and come back. What it may not do is run away. A
+        non-finite epoch, or one more than ``diverge_factor`` times the best
+        epoch so far, restores the best finite weights, halves the learning rate
+        (floored at ``min_lr``) and continues. So "how do I train this" stops
+        needing an answer: any lr either learns, oscillates, or steps itself
+        down, but the checkpoint on disk is always a finite model that trained.
+
+        History rows carry the evidence: ``lr`` actually used, ``skipped``
+        non-finite batches, and ``rolled_back``. ``lr_at(epoch)`` overrides the
+        base rate per epoch (schedules live in the caller); ``should_stop()`` is
+        polled between epochs so validation can end a run early.
         """
         torch = self.torch
         torch.manual_seed(seed)
         opt = torch.optim.Adam(self.net.parameters(), lr=lr)
         history: List[Dict[str, float]] = []
+        best_loss = float("inf")
+        best_state: Optional[Dict[str, Any]] = None
+        lr_scale = 1.0
         order = list(range(len(pairs)))
         for epoch in range(epochs):
+            epoch_lr = max(min_lr, (lr_at(epoch) if lr_at is not None else lr) * lr_scale)
+            if should_stop is not None and should_stop():
+                history.append(
+                    {
+                        "epoch": epoch,
+                        "loss": float("nan"),
+                        "lr": round(epoch_lr, 8),
+                        "stopped": True,
+                    }
+                )
+                break
+            for group in opt.param_groups:
+                group["lr"] = epoch_lr
             torch.manual_seed(seed + epoch)
             shuffled = order[:]
             import random
@@ -722,6 +830,7 @@ class TokenSNN:
             p_ss = ss_final * (epoch + 1) / max(1, epochs) if ss_final > 0.0 else 0.0
             total = 0.0
             steps = 0
+            skipped = 0
             for start in range(0, len(shuffled), batch_size):
                 chunk = [pairs[i] for i in shuffled[start : start + batch_size]]
                 opt.zero_grad()
@@ -736,16 +845,51 @@ class TokenSNN:
                         )
                     else:
                         loss = self.loss(ids, mask, weights)
+                if not bool(torch.isfinite(loss)):
+                    # one bad batch must not poison the weights for the epochs
+                    # that follow: drop the step instead of stepping into NaN
+                    opt.zero_grad(set_to_none=True)
+                    skipped += 1
+                    continue
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.net.parameters(), 1.0)
                 opt.step()
                 total += float(loss.detach())
                 steps += 1
-            history.append({"epoch": epoch, "loss": total / max(1, steps)})
+            row: Dict[str, Any] = {
+                "epoch": epoch,
+                "loss": total / max(1, steps) if steps else float("nan"),
+                "lr": round(epoch_lr, 8),
+                "skipped": skipped,
+                "rolled_back": False,
+            }
+            loss_now = float(row["loss"])
+            if guard:
+                finite = math.isfinite(loss_now)
+                runaway = (
+                    finite and math.isfinite(best_loss) and loss_now > diverge_factor * best_loss
+                )
+                if not finite or runaway:
+                    row["rolled_back"] = True
+                    row["rollback_from"] = None if not finite else round(loss_now, 4)
+                    if best_state is not None:
+                        self.net.load_state_dict(best_state)
+                    # a stale Adam state would step the restored weights with the
+                    # momentum of the diverged ones, so the optimiser is rebuilt
+                    lr_scale = max(min_lr / max(1e-12, lr), lr_scale * 0.5)
+                    opt = torch.optim.Adam(self.net.parameters(), lr=max(min_lr, lr * lr_scale))
+                    row["loss"] = best_loss if math.isfinite(best_loss) else loss_now
+                else:
+                    best_loss = min(best_loss, loss_now)
+                    if steps:
+                        best_state = {
+                            k: v.detach().clone() for k, v in self.net.state_dict().items()
+                        }
+            history.append(row)
             if log is not None:
-                log(history[-1])
+                log(row)
             if on_epoch is not None:
-                on_epoch(history[-1])
+                on_epoch(row)
         return history
 
     # -- inference ----------------------------------------------------------
