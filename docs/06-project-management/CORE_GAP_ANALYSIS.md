@@ -295,6 +295,12 @@ held-out 抽 200 greedy）
   `gpu_layers=-1` 真的在跑 GPU）；torch 仍是 **CPU
   build**，SNN 訓練沒有吃到這張卡。要吃 GPU 需要 torch XPU/Vulkan
   build（使用者決定的預算問題之一）。
+  **2026-11-05 更正**：上面描述的是**當時的 venv**。現在 venv 是
+  `torch 2.14.1+xpu`、`torch.xpu.is_available()=True`（Arc B570），
+  `resolve_device()` 選 `xpu`，`scripts/train_token_snn.py` 實跑
+  `device=xpu` 成功。GARDEN 的 `TensorSNNCore` 例外地**預設 CPU**：它的稀疏
+  每樣本 Hebbian 更新在 XPU 上實測慢约 7x（forward 則快約 10x），
+  顯式 `device="xpu"` 才走加速器（AGENTS §X #281）。
 - 三選一的決策面不變（GPU 規模訓練／承認 0.00／LLM 當部署核心）；這一輪只是把「架構本身有缺陷」這個變因**排除掉**，讓剩下的缺口乾淨地只剩規模。
 
 重跑（A/B 全套，約 10 分鐘）：

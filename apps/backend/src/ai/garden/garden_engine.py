@@ -33,7 +33,6 @@ from ai.data_eng.assemble import decode_slot_budget, select_anchored_keys
 from ai.data_eng.presets import REFLEX_PRESETS, resolve_reflex
 from core.system.config.magic_numbers import (
     cache_value,
-    compute_bool,
     confidence_value,
     learning_rate,
     limit_value,
@@ -786,14 +785,19 @@ class GARDENEngine:
             else limit_value("ai.garden.engine.snn_timesteps", 6)
         )
 
-        # Use compute config to determine device for SNN
-        use_gpu = compute_bool("garden_snn", True)
-        if use_gpu:
-            if device == "cpu":
-                device = "cuda"  # Will be handled by SNN core's dual backend
-        else:
-            device = "cpu"
+        # GARDEN keeps its SNN on CPU by default.  The per-sample Hebbian
+        # updates are many tiny scattered ops and were measured ~7x slower on
+        # the available Intel Arc XPU than on the CPU (the forward pass is
+        # ~10x faster there, so an explicit device="xpu"/"cuda" is honoured for
+        # inference-heavy callers).  The previous code rewrote "cpu" into the
+        # literal string "cuda" whenever compute_bool("garden_snn") was on, but
+        # TensorSNNCore never used that string: it declared a GPU it was not
+        # using, and on this machine torch.cuda.is_available() is False anyway
+        # (the GPU is exposed through torch.xpu).  Resolve once, so
+        # ``engine.device`` reports the device the weights actually live on.
+        from core.system.config.compute_device import resolve_torch_device
 
+        device = resolve_torch_device(device)
         self.model_name = model_name
         self.device = device
 

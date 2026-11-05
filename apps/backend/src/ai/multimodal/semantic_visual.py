@@ -19,6 +19,7 @@ import sys
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+from core.system.config.compute_device import move_batch_to_device
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 _CLIP_AVAILABLE = False
 _CLIP_MODEL = None
 _CLIP_PROCESSOR = None
+_CLIP_DEVICE = "cpu"  # device the loaded model lives on (inputs follow it)
 _TORCH_CHECKED = False
 _TORCH_AVAILABLE = False
 
@@ -56,7 +58,7 @@ def _check_torch_subprocess() -> bool:
 
 def _lazy_init_clip():
     """Try to load CLIP model and processor. Returns (model, processor) or (None, None)."""
-    global _CLIP_AVAILABLE, _CLIP_MODEL, _CLIP_PROCESSOR
+    global _CLIP_AVAILABLE, _CLIP_MODEL, _CLIP_PROCESSOR, _CLIP_DEVICE
     if _CLIP_AVAILABLE:
         return _CLIP_MODEL, _CLIP_PROCESSOR
     if not _check_torch_subprocess():
@@ -66,6 +68,7 @@ def _lazy_init_clip():
     try:
         import torch
         import transformers
+        from core.system.config.compute_device import resolve_feature_device
         from transformers import CLIPModel, CLIPProcessor
 
         model_name = "openai/clip-vit-base-patch32"
@@ -74,10 +77,16 @@ def _lazy_init_clip():
         _CLIP_MODEL = CLIPModel.from_pretrained(model_name, revision=_REVISION)
         _CLIP_PROCESSOR = CLIPProcessor.from_pretrained(model_name, revision=_REVISION)
         _CLIP_MODEL.eval()
-        if torch.cuda.is_available():
-            _CLIP_MODEL = _CLIP_MODEL.cuda()  # type: ignore[call-arg]
+        # An Intel Arc exposes its GPU through torch.xpu, so a hardcoded
+        # ``torch.cuda.is_available()`` left the model on CPU.  One resolver.
+        # compute.semantic_visual=off means "force CPU" (see
+        # configs/system/compute.default.yaml); it must not be ignored just
+        # because an accelerator exists.
+        _CLIP_DEVICE = resolve_feature_device("semantic_visual", "auto", torch_module=torch)
+        if _CLIP_DEVICE != "cpu":
+            _CLIP_MODEL = _CLIP_MODEL.to(_CLIP_DEVICE)
         _CLIP_AVAILABLE = True
-        logger.info("SemanticVisualEncoder: CLIP loaded (%s)", model_name)
+        logger.info("SemanticVisualEncoder: CLIP loaded (%s on %s)", model_name, _CLIP_DEVICE)
     except Exception as e:
         logger.warning("SemanticVisualEncoder: CLIP load failed: %s", e)
         _CLIP_AVAILABLE = False
@@ -137,7 +146,7 @@ class SemanticVisualEncoder:
             import torch
 
             img = Image.open(io.BytesIO(image_data)).convert("RGB")
-            inputs = processor(images=img, return_tensors="pt")
+            inputs = move_batch_to_device(processor(images=img, return_tensors="pt"), _CLIP_DEVICE)
             with torch.no_grad():
                 outputs = model.get_image_features(**inputs)
                 # get_image_features() may return BaseModelOutputWithPooling named tuple
@@ -166,7 +175,7 @@ class SemanticVisualEncoder:
         try:
             import torch
 
-            inputs = processor(images=img, return_tensors="pt")
+            inputs = move_batch_to_device(processor(images=img, return_tensors="pt"), _CLIP_DEVICE)
             with torch.no_grad():
                 outputs = model.get_image_features(**inputs)
                 if hasattr(outputs, "pooler_output"):
@@ -204,8 +213,11 @@ class SemanticVisualEncoder:
         try:
             import torch
 
-            inputs = processor(
-                text=texts, return_tensors="pt", padding=True, truncation=True, max_length=77
+            inputs = move_batch_to_device(
+                processor(
+                    text=texts, return_tensors="pt", padding=True, truncation=True, max_length=77
+                ),
+                _CLIP_DEVICE,
             )
             with torch.no_grad():
                 outputs = model.get_text_features(**inputs)

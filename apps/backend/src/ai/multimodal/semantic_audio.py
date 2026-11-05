@@ -20,6 +20,7 @@ import sys
 from typing import Any, Optional, Tuple
 
 import numpy as np
+from core.system.config.compute_device import move_batch_to_device
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ _WHISPER_AVAILABLE = False
 _WHISPER_MODEL = None
 _WHISPER_PROCESSOR = None
 _WHISPER_FEATURE_EXTRACTOR = None
+_WHISPER_DEVICE = "cpu"  # device the loaded model lives on (inputs follow it)
 _TORCH_CHECKED = False
 _TORCH_AVAILABLE = False
 
@@ -58,6 +60,7 @@ def _check_torch_subprocess() -> bool:
 def _lazy_init_whisper():
     """Try to load Whisper model and processor. Returns (model, processor, feature_extractor) or (None, None, None)."""
     global _WHISPER_AVAILABLE, _WHISPER_MODEL, _WHISPER_PROCESSOR, _WHISPER_FEATURE_EXTRACTOR
+    global _WHISPER_DEVICE
     if _WHISPER_AVAILABLE:
         return _WHISPER_MODEL, _WHISPER_PROCESSOR, _WHISPER_FEATURE_EXTRACTOR
     if not _check_torch_subprocess():
@@ -67,6 +70,7 @@ def _lazy_init_whisper():
     try:
         import torch
         import transformers
+        from core.system.config.compute_device import resolve_feature_device
         from transformers import WhisperFeatureExtractor, WhisperModel, WhisperProcessor
 
         model_name = "openai/whisper-tiny"  # Smallest Whisper for speed
@@ -78,10 +82,15 @@ def _lazy_init_whisper():
             model_name, revision=_REVISION
         )
         _WHISPER_MODEL.eval()
-        if torch.cuda.is_available():
-            _WHISPER_MODEL = _WHISPER_MODEL.cuda()  # type: ignore[call-arg]
+        # An Intel Arc exposes its GPU through torch.xpu, so a hardcoded
+        # ``torch.cuda.is_available()`` left the model on CPU.  One resolver.
+        # compute.semantic_audio=off means "force CPU" (see
+        # configs/system/compute.default.yaml).
+        _WHISPER_DEVICE = resolve_feature_device("semantic_audio", "auto", torch_module=torch)
+        if _WHISPER_DEVICE != "cpu":
+            _WHISPER_MODEL = _WHISPER_MODEL.to(_WHISPER_DEVICE)
         _WHISPER_AVAILABLE = True
-        logger.info("SemanticAudioEncoder: Whisper loaded (%s)", model_name)
+        logger.info("SemanticAudioEncoder: Whisper loaded (%s on %s)", model_name, _WHISPER_DEVICE)
     except Exception as e:
         logger.warning("SemanticAudioEncoder: Whisper load failed: %s", e)
         _WHISPER_AVAILABLE = False
@@ -157,6 +166,7 @@ class SemanticAudioEncoder:
             else:
                 # Fallback: use processor
                 inputs = processor(samples, sampling_rate=self.SAMPLE_RATE, return_tensors="pt")
+            inputs = move_batch_to_device(inputs, _WHISPER_DEVICE)
 
             with torch.no_grad():
                 encoder_outputs = model.encoder(**inputs)

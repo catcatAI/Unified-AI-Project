@@ -68,6 +68,8 @@ class TextEncoder:
         self._clip_available = False
         self._model: Optional[Any] = None
         self._processor: Optional[Any] = None
+        # Device the loaded CLIP model lives on (inputs must follow it).
+        self._device: str = "cpu"
 
     def _get_clip(self):
         """Lazy-load CLIP model and processor."""
@@ -79,6 +81,7 @@ class TextEncoder:
             return None, None
         try:
             import torch
+            from core.system.config.compute_device import resolve_feature_device
             from transformers import CLIPModel, CLIPProcessor
 
             model_name = "openai/clip-vit-base-patch32"
@@ -87,10 +90,16 @@ class TextEncoder:
             self._model = CLIPModel.from_pretrained(model_name, revision=_REVISION)
             self._processor = CLIPProcessor.from_pretrained(model_name, revision=_REVISION)
             self._model.eval()
-            if torch.cuda.is_available():
-                self._model = self._model.cuda()  # type: ignore[call-arg]
+            # ``torch.cuda.is_available()`` is not the same question as "is
+            # there an accelerator": an Intel Arc answers through torch.xpu and
+            # stayed unused here.  Central resolver, one answer.
+            # TextEncoder is the CLIP text tower, so it follows the same
+            # feature switch as the visual encoder (compute.semantic_visual).
+            self._device = resolve_feature_device("semantic_visual", "auto", torch_module=torch)
+            if self._device != "cpu":
+                self._model = self._model.to(self._device)
             self._clip_available = True
-            logger.info("TextEncoder: CLIP loaded (%s)", model_name)
+            logger.info("TextEncoder: CLIP loaded (%s on %s)", model_name, self._device)
         except Exception as e:
             logger.warning("TextEncoder: CLIP load failed: %s", e)
             self._clip_available = False
@@ -129,6 +138,7 @@ class TextEncoder:
             return None
         try:
             import torch
+            from core.system.config.compute_device import move_batch_to_device
 
             inputs = processor(
                 text=texts,
@@ -137,9 +147,19 @@ class TextEncoder:
                 truncation=True,
                 max_length=77,
             )
+            inputs = move_batch_to_device(inputs, self._device)
             with torch.no_grad():
                 text_features = model.get_text_features(**inputs)
-            vecs = text_features.cpu().numpy().astype(np.float32)
+            # transformers >= 5 returns a BaseModelOutputWithPooling here, not
+            # a bare tensor: the old ``.cpu()`` raised AttributeError and this
+            # encoder silently returned None (i.e. zeros) on every call.  The
+            # pooled projection is the 512-dim CLIP embedding; keep accepting a
+            # plain tensor for older versions.
+            if hasattr(text_features, "pooler_output"):
+                text_features = text_features.pooler_output
+            elif hasattr(text_features, "text_embeds"):
+                text_features = text_features.text_embeds
+            vecs = text_features.detach().cpu().numpy().astype(np.float32)
             norms = np.linalg.norm(vecs, axis=1, keepdims=True)
             norms[norms == 0] = 1.0
             return np.asarray(vecs / norms, dtype=np.float32)

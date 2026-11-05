@@ -21,7 +21,11 @@ class TestSNNNeuralStateInjection:
         core._register_key("r1")
         core._register_key("r2")
         core.add_relation("emo_happy", "r1", weight=0.9, bidirectional=True)
-        core.add_relation("emo_sadness", "r2", weight=0.9, bidirectional=True)
+        # Deliberately stronger than emo_happy→r1: top-k keeps one neuron per
+        # timestep, and two equal weights would make the winner depend on the
+        # backend's tie-breaking order (torch topk vs numpy argpartition), not
+        # on the injection.  The assertion must test the injection, not a tie.
+        core.add_relation("emo_sadness", "r2", weight=0.95, bidirectional=True)
 
         # Without neural_state: only emo_happy's target r1 is activated.
         base = core.forward({"emo_happy": 1.0})
@@ -33,6 +37,13 @@ class TestSNNNeuralStateInjection:
             context={"neural_state": {"emo_sadness": 0.8}},
         )
         assert "r2" in injected
+        # A zero-confidence injection must not add anything: the slot merges
+        # *activations*, it does not register keys on its own.
+        zero = core.forward(
+            {"emo_happy": 1.0},
+            context={"neural_state": {"emo_sadness": 0.0}},
+        )
+        assert zero == base
 
     def test_neural_state_ignores_unregistered_keys(self):
         core = TensorSNNCore(timesteps=4)

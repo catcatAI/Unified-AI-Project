@@ -114,9 +114,16 @@ def _get_backend():
 # -- Backend helper functions (abstract torch/numpy API differences) ----------
 
 
-def _zeros(shape):
+def _zeros(shape, device: Optional[str] = None):
+    """Allocate a zero float32 array on ``device`` (torch) — CPU for numpy.
+
+    ``device`` is ignored by the numpy backend.  Defaults to CPU so checkpoint
+    loading and module-level helpers never depend on the caller's accelerator.
+    """
     xp, is_torch = _get_backend()
     if is_torch:
+        if device:
+            return xp.zeros(shape, dtype=xp.float32, device=device)
         return xp.zeros(shape, dtype=xp.float32)
     return xp.zeros(shape, dtype=np.float32)
 
@@ -146,12 +153,27 @@ def _numel(arr):
     return arr.size
 
 
-def _as_array(lst):
+def _as_array(lst, device: Optional[str] = None):
     """Convert a Python list of ints to a backend index array (torch or numpy)."""
     xp, _ = _get_backend()
     if _is_torch:
+        if device:
+            return xp.tensor(lst, dtype=xp.long, device=device)
         return xp.tensor(lst, dtype=xp.long)
     return np.asarray(lst, dtype=np.int64)
+
+
+def _topk_indices(arr, k: int):
+    """Return the indices of the ``k`` largest values (unsorted), any backend.
+
+    ``np.argpartition`` cannot consume an XPU/CUDA tensor — it raises
+    "can't convert device type tensor to numpy", which is why a
+    ``TensorSNNCore`` that actually honoured its ``device`` would have crashed
+    in ``forward()``.  The torch branch keeps the computation on the device.
+    """
+    if hasattr(arr, "topk"):  # torch tensor
+        return arr.topk(k).indices
+    return np.argpartition(arr, -k)[-k:]
 
 
 def _save_checkpoint(path: str, state: dict) -> None:
@@ -362,7 +384,22 @@ class TensorSNNCore:
         self.base_threshold = threshold
         self.timesteps = timesteps
         self.decay = decay
-        self.device = device
+
+        # Device is honoured for real: every tensor this core creates lands on
+        # it (``_new_zeros``/``_as_array(device=...)``).  Previously the string
+        # was stored and never used, so a configured "cuda"/"xpu" still ran on
+        # CPU with no warning.  Default stays CPU: GARDEN's per-sample Hebbian
+        # updates are many tiny scattered ops (measured ~7x slower on an Intel
+        # Arc B570 than on the CPU), while the forward pass is ~10x faster on
+        # the GPU — callers that care about inference latency may pass an
+        # explicit accelerate device.
+        _xp, _is_torch_backend = _get_backend()
+        if _is_torch_backend:
+            from core.system.config.compute_device import resolve_torch_device
+
+            self.device = resolve_torch_device(device)
+        else:
+            self.device = "cpu"
 
         from core.system.config.magic_numbers import (
             compute_int,
@@ -442,6 +479,10 @@ class TensorSNNCore:
     # Key registry
     # ------------------------------------------------------------------
 
+    def _new_zeros(self, shape):
+        """Zero array on this core's device (CPU for the numpy backend)."""
+        return _zeros(shape, self.device)
+
     def _register_key(self, key: str) -> int:
         if key in self._key_to_idx:
             self._touch(self._key_to_idx[key])
@@ -510,7 +551,7 @@ class TensorSNNCore:
         # Allow shrinking: allocate only modest headroom over the live size so
         # the matrix reclaims dead space instead of being pinned at max_vocab².
         alloc = max(new_size, int(new_size * 1.25) + 64)
-        idx_arr = _as_array(keep_indices)
+        idx_arr = _as_array(keep_indices, self.device)
         # Vectorized sub-matrix extraction: W[keep, keep]. Use the backend's
         # native index_select (torch) / ix_ (numpy) — a SINGLE op — because
         # double advanced indexing (W[idx][:, idx]) materializes a huge
@@ -522,7 +563,7 @@ class TensorSNNCore:
         # Allocate with headroom so subsequent registrations fill existing
         # rows instead of re-copying the whole matrix each time.  The live
         # region is new_size x new_size; forward() slices to it.
-        new_W = _zeros((alloc, alloc))
+        new_W = self._new_zeros((alloc, alloc))
         new_W[:new_size, :new_size] = sub
         self._W = new_W
         self._reindex(keep_indices)
@@ -590,7 +631,7 @@ class TensorSNNCore:
         if self._W is not None and new_size <= self._W.shape[0]:
             return
         if self._W is None:
-            self._W = _zeros((new_size, new_size))
+            self._W = self._new_zeros((new_size, new_size))
             return
         old_size = self._W.shape[0]
         if new_size <= old_size:
@@ -602,7 +643,7 @@ class TensorSNNCore:
         # The live region is the first ``vocab_size`` rows/cols; forward()
         # slices to that region.
         target = max(new_size, int(old_size * 1.25) + 64)
-        new_W = _zeros((target, target))
+        new_W = self._new_zeros((target, target))
         new_W[:old_size, :old_size] = self._W
         self._W = new_W
 
@@ -650,7 +691,7 @@ class TensorSNNCore:
         context: Optional[Dict[str, Any]],
     ):
         """Build initial activation vector from input_keys + neural_state injection."""
-        a = _zeros(self.vocab_size)
+        a = self._new_zeros(self.vocab_size)
         for key, conf in input_keys.items():
             idx = self._key_to_idx.get(key)
             if idx is not None:
@@ -695,15 +736,15 @@ class TensorSNNCore:
 
         # Top-k competition
         if _numel(potential) > max_active:
-            sorted_idx = np.argpartition(potential, -max_active)[-max_active:]
+            sorted_idx = _topk_indices(potential, max_active)
         else:
             sorted_idx = _nonzero_indices(potential)
         spike_mask = _float(potential >= threshold)
-        topk_mask = _zeros(V)
-        if hasattr(sorted_idx, "tolist"):
-            topk_mask[sorted_idx.tolist()] = 1.0
-        else:
-            topk_mask[sorted_idx] = 1.0
+        topk_mask = self._new_zeros(V)
+        # Index in place with the backend's own index array: a torch tensor
+        # indexes on its device, numpy takes the array.  Calling .tolist()
+        # first would force a device→host sync every timestep.
+        topk_mask[sorted_idx] = 1.0
         spikes = spike_mask * topk_mask
 
         # Reset potential for spiking neurons (refractory period).
@@ -724,9 +765,14 @@ class TensorSNNCore:
         """Run LIF integration with top-k competition.
 
         input_keys is a dict of key → confidence (from VectorDictionary.encode()).
-        Each key activates its neuron at the given confidence level instead of
-        a hard binary 1.0.  Low-confidence matches contribute less to the SNN
-        dynamics, letting learned weights override weak signals.
+        A key whose confidence is positive activates its neuron; ``0.0`` leaves
+        it inactive.
+
+        Known simplification: the sparse propagation path sums whole weight
+        rows, so the *magnitude* of a confidence does not scale the incoming
+        current (a 0.1 signal propagates like 1.0).  The earlier dense ``a @ W``
+        did scale it.  Restoring magnitude weighting changes every GARDEN
+        output and needs its own measured round — do not "fix" it in passing.
 
         Returns dict of concept_key -> cumulative activation.
         """
@@ -743,8 +789,8 @@ class TensorSNNCore:
         thr_mult = self.modulator.get_threshold_multiplier()
         threshold = max(0.01, self.base_threshold * thr_mult)
 
-        potential = _zeros(V)
-        cumulative = _zeros(V)
+        potential = self._new_zeros(V)
+        cumulative = self._new_zeros(V)
         total_active = 0
         max_active = max(1, int(V * top_k_ratio))
 
@@ -823,8 +869,8 @@ class TensorSNNCore:
         is_torch = self._W.__class__.__module__.startswith("torch")
         if is_torch:
             xp, _ = _get_backend()
-            src_t = xp.as_tensor(src_idx, dtype=xp.int64)
-            tgt_t = xp.as_tensor(tgt_idx, dtype=xp.int64)
+            src_t = xp.as_tensor(src_idx, dtype=xp.int64, device=self.device)
+            tgt_t = xp.as_tensor(tgt_idx, dtype=xp.int64, device=self.device)
             src_a = self._W.new_tensor(src_conf, dtype=self._W.dtype)
             tgt_a = self._W.new_tensor(tgt_conf, dtype=self._W.dtype)
             gate = src_a.unsqueeze(1) * tgt_a.unsqueeze(0)  # [S, T]
@@ -948,13 +994,18 @@ class TensorSNNCore:
             live_cols = min(W.shape[1], V)
             live = W[:live_rows, :live_cols]
             alloc = max(V, int(V * 1.25) + 64)
-            new_W = _zeros((alloc, alloc))
+            new_W = self._new_zeros((alloc, alloc))
             # Cross-backend: a numpy checkpoint (saved by a torch-less box as
             # .npy + .json) loading on a torch runtime must be converted —
             # torch >= 2.0 rejects `tensor[...] = numpy_array` assignment.
-            if _is_torch and isinstance(live, np.ndarray):
+            # A torch checkpoint is CPU-pinned by _load_checkpoint; move it to
+            # this core's device so the copy below stays on-device.
+            if _is_torch:
                 xp, _ = _get_backend()
-                live = xp.from_numpy(np.ascontiguousarray(live))
+                if isinstance(live, np.ndarray):
+                    live = xp.from_numpy(np.ascontiguousarray(live))
+                if hasattr(live, "to"):
+                    live = live.to(self.device)
             new_W[:live_rows, :live_cols] = live
             self._W = new_W
         else:
@@ -982,9 +1033,9 @@ class TensorSNNCore:
         V = self.vocab_size
         xp, is_torch = _get_backend()
         if is_torch:
-            self._W = xp.rand(V, V, dtype=xp.float32) * 0.3
+            self._W = xp.rand(V, V, dtype=xp.float32, device=self.device) * 0.3
             self._W = (self._W + self._W.T) / 2.0
-            mask = xp.rand(V, V) > 0.05
+            mask = xp.rand(V, V, device=self.device) > 0.05
             self._W[mask] = 0.0
         else:
             self._W = np.random.rand(V, V).astype(np.float32) * 0.3
@@ -1029,6 +1080,7 @@ class TensorSNNCore:
         return {
             "vocab_size": self.vocab_size,
             "max_vocab": self.max_vocab,
+            "device": self.device,
             "weight_matrix_shape": live_shape,
             "matrix_density": round(density, 4),
             "mean_weight": round(mean_weight, 4),

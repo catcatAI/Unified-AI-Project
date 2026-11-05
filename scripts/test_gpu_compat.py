@@ -48,14 +48,20 @@ print("Starting torch import...", flush=True)
 try:
     import torch
     print(f"torch {torch.__version__} imported", flush=True)
+    # "No CUDA" is not "no GPU": an Intel Arc answers through torch.xpu.
     print(f"CUDA: {torch.cuda.is_available()}", flush=True)
-    if torch.cuda.is_available():
-        dev = torch.cuda.get_device_name(0)
-        print(f"GPU: {dev}", flush=True)
-    # Quick CPU test
-    x = torch.randn(100, 100)
+    print(f"XPU: {hasattr(torch, 'xpu') and torch.xpu.is_available()}", flush=True)
+    if hasattr(torch, "xpu") and torch.xpu.is_available():
+        dev = "xpu"
+        print(f"GPU: {torch.xpu.get_device_name(0)}", flush=True)
+    elif torch.cuda.is_available():
+        dev = "cuda"
+        print(f"GPU: {torch.cuda.get_device_name(0)}", flush=True)
+    else:
+        dev = "cpu"
+    x = torch.randn(100, 100, device=dev)
     y = torch.mm(x, x.t())
-    print(f"Matrix multiply: {y.shape}", flush=True)
+    print(f"Matrix multiply on {dev}: {y.shape}", flush=True)
 except Exception as e:
     print(f"ERROR: {e}", flush=True)
     sys.exit(1)
@@ -150,27 +156,22 @@ def main():
     print("=" * 60)
 
     if results.get("wgpu (Vulkan/DX12)", {}).get("success"):
-        print("1. USE wgpu: Best option for GPU compute on this system")
-        print("   Install: pip install wgpu[all]")
-        print("   API: WebGPU standard, works with Vulkan/DX12/Metal")
+        print("1. wgpu is available (optional): WebGPU via Vulkan/DX12")
     elif results.get("kompute (Vulkan)", {}).get("success"):
-        print("1. USE kompute: Vulkan compute wrapper")
-        print("   Install: pip install kompute")
-        print("   API: Simple tensor operations via Vulkan")
+        print("1. kompute is available (optional): Vulkan compute wrapper")
     else:
-        print("1. Install GPU packages first:")
-        print("   pip install wgpu[all]  # For Vulkan/DX12")
-        print("   pip install pyopencl    # For OpenCL (needs ICD)")
+        print("1. No wgpu/kompute backend — that is fine: this project does not use them.")
 
     if results.get("torch (subprocess 20s)", {}).get("success"):
-        print("2. torch works in subprocess — use multiprocessing")
+        print("2. torch works (xpu > cuda > cpu) — this is the backend token-SNN uses")
+        print("   (scripts/train_token_snn.py --device auto)")
     else:
-        print("2. torch blocked — focus on numpy or wgpu backend")
+        print("2. torch blocked — SNN falls back to the numpy backend")
 
     print("\n3. For SNN training:")
-    print("   - Small models (<1000 neurons): numpy is fine")
-    print("   - Medium models (1K-10K neurons): use wgpu/kompute")
-    print("   - Large models (>10K neurons): need proper GPU backend")
+    print("   - token-SNN: torch on the resolved device (xpu/cuda when available)")
+    print("   - GARDEN TensorSNNCore: CPU by default — its sparse per-sample")
+    print("     Hebbian updates measured slower on an Intel Arc XPU than on the CPU")
 
 
 if __name__ == "__main__":

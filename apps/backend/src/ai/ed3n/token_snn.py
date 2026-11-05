@@ -438,14 +438,15 @@ def resolve_device(torch: Any, wanted: str = "auto") -> str:
     compute-bound; on CPU the same run is 1-2 orders of magnitude slower.
     Only floating-point dtypes the device supports are used — consumer Intel
     Arc cards have no FP64, so nothing here ever creates double tensors.
+
+    Resolution lives in ``core.system.config.compute_device`` so GARDEN, the
+    multimodal encoders and this trainer cannot drift apart (``cuda`` is not
+    the same question as "is there an accelerator?" — an Intel Arc answers
+    ``xpu``).  Signature kept for existing callers.
     """
-    if wanted and wanted != "auto":
-        return wanted
-    if hasattr(torch, "xpu") and torch.xpu.is_available():
-        return "xpu"
-    if torch.cuda.is_available():
-        return "cuda"
-    return "cpu"
+    from core.system.config.compute_device import resolve_torch_device
+
+    return resolve_torch_device(wanted, torch_module=torch)
 
 
 class TokenSNN:

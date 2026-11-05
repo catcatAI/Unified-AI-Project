@@ -1194,6 +1194,10 @@ collected — 0 errors**).
 > B570（Vulkan）但 torch 是 CPU
 > build，SNN 訓練沒吃到 GPU（GPU 預算是待決策項）。
 > **官方核心分不變：0.00/10**。實測表：`CORE_GAP_ANALYSIS.md` 第七節。
+> **2026-11-05 更正**：上面「torch 是 CPU build、SNN 訓練沒吃到 GPU」描述的是
+> **當時的 venv**，不是架構限制。現在的 venv 是 `torch 2.14.1+xpu`，
+> `torch.xpu.is_available()=True`（Arc B570），`resolve_device()` 選 `xpu`，
+> `train_token_snn.py` 實跑 `device=xpu` 成功（§X #281）。
 
 > ✅ **NOTE (Updated 2026-10-24, 表現層稽核＋防洩漏)**: **§X #277**: 三件事。(1)
 > **順序確認**：路由 manifest
@@ -1305,6 +1309,63 @@ collected — 0 errors**).
 > 需注意的三項照實寫：`state` 0/324（知識缺口，pass_rate 上限 0.704）、
 > `semantic-qa` 仍被 `classify_source` 算 neural（改標籤會改量測定義，需單獨
 > 一輪）、`generation_available()` 看不到未註冊的自建 service 實例。
+
+> ✅ **NOTE (Updated 2026-11-05, 裝置宣告 vs 實際使用)**: **§X #281**:
+> 「宣告用了 GPU、實際用 CPU」這一類不一致，修成**可驗證的裝置使用**，
+> 分數與門檻完全沒動。**找到的真缺陷**：(1) `TensorSNNCore.device` 只被存、
+> 從沒被用——`GardenEngine`／`VectorDictionary` 在
+> `compute_bool("garden_snn")` 開啟時把 `"cpu"` 改寫成字面值 `"cuda"`，但
+> tensor 全在 CPU 建立，等於宣告了一張不存在的卡（本機
+> `torch.cuda.is_available()` 是 `False`，GPU 走 `torch.xpu`）；(2) 同一段
+> `_compute_timestep()` 用 `np.argpartition` 處理 potential，一旦真的把 tensor
+> 放到加速器上就會拋 `can't convert xpu:0 device type tensor to numpy`
+> ——所以「把 device 接上」若沒先修這裡就是錯的修復；(3) 三個自稱 GPU 的
+> 表徵器（CLIP 文字/影像、Whisper）寫死 `torch.cuda.is_available()`，在
+> Arc 上永遠留在 CPU；(4) **實跑才發現的獨立 bug**：
+> `text_encoder.encode_batch()` 在 transformers 5.15 上對
+> `BaseModelOutputWithPooling` 呼叫 `.cpu()` → `AttributeError` → 回 `None`
+> → `encode()` 回全零向量（ED3N 文字路徑、multimodal bridge、
+> training pipeline 全都拿到零向量）。
+> **修法**：新增唯一解析器
+> `core/system/config/compute_device.py`（`resolve_torch_device`：
+> 明確可用裝置 → `xpu` > `cuda` > `cpu`，不可用就降級並記 warning；
+> `resolve_feature_device` 先讀 `compute.<feature>.mode`，`off` 就回
+> `cpu`——配置說「強制 CPU」時不得因為偵測到加速器就擅自使用；
+> `token_snn.resolve_device` 改為委派，簽名不變）；`TensorSNNCore` 真的把
+> 每個 tensor 建在 `self.device`（`_new_zeros`／`_as_array(device=)`／
+> `as_tensor(device=)`），top-k 改走後端原生 `topk`；`garden_engine`／
+> `dictionary` 不再偽造 `"cuda"`；CLIP/Whisper 改走解析器並用
+> `move_batch_to_device` 一起搬輸入；`TextEncoder` 同時接受 pooled output 與
+> 舊版裸 tensor。**測試與一個 tie-break 陷阱**：top-k 換成原生 `topk` 後，
+> 平手時誰贏由後端決定（舊的 `np.argpartition` 與 `torch.topk` 會挑到不同
+> 的神經元）；`tests/ai/bridge/test_snn_neural_state_injection.py` 原本的兩條
+> 關聯權重都是 0.9，靠的就是 numpy 的平手順序，因此改成 0.95 vs 0.9，讓
+> 「注入使 r2 勝出」變成真正的因果（全量測試中唯一的失敗就是這一條，已修）。
+> **測試**：
+> `tests/core/config/test_compute_device.py`（19）＋
+> `tests/ai/garden/test_snn_device.py`（10；XPU 上真的跑 parity／eviction／
+> save-load，無硬體則 skip）＋
+> `tests/ai/multimodal/test_text_encoder_outputs.py`（4）。
+> **照實量測（不是宣稱）**：XPU vs CPU（Arc B570）
+> forward 50 次 20k×20k → **0.83s vs 8.79s**（GPU 快 ~10x）；同樣的稀疏
+> Hebbian 200 次更新 → **1.45s vs 0.22s**（GPU 慢 ~7x）→ 因此
+> **GARDEN 預設仍是 CPU**（訓練是每樣本一次的小散寫），顯式
+> `device="xpu"` 才走加速器；CLIP 文字 64 條穩態 **0.013s vs 0.125s**、影像
+> **0.028s vs 0.165s**（首次有 ~1s 編譯暖機）；CLIP/Whisper/TextEncoder 的
+> CPU vs XPU 輸出 **max diff ≤ 4.8e-7、cosine 1.000000**；
+> `train_token_snn.py --limit 120` 實跑 **`device=xpu`** 成功、能存檔；
+> 診斷腳本（`scripts/test_gpu_direct.py`／`test_gpu_compat.py`）現在會回報
+> XPU，不再把 Arc 說成「No CUDA GPU」。**測試**：
+> `tests/core/config/test_compute_device.py`（16）＋
+> `tests/ai/garden/test_snn_device.py`（10；XPU 上真的跑 parity／eviction／
+> save-load，無硬體則 skip）＋
+> `tests/ai/multimodal/test_text_encoder_outputs.py`（4）。
+> **沒有改**：門檻、評測題、`held-out`、量測定義；核心分仍
+> **0.00/10**、系統分仍 **6.41**（這輪只碰裝置與一個表徵 bug）。
+> **驗收**：全量 `pytest tests/ apps/backend/tests/` =
+> **9,248 passed / 107 skipped / 0 failed**（8:27）；`check_fact_gates.py`
+> **ALL PASS**；black／isort／flake8 乾淨。報告：`docs/AUDIT_REPORT_2026-11-05.md`。
+
 
 ### JavaScript/TypeScript
 
