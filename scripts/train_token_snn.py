@@ -84,7 +84,17 @@ def exact_match(
 ) -> Dict[str, float]:
     picks = pairs if len(pairs) <= sample else random.Random(seed).sample(pairs, sample)
     hits = 0
-    for prompt, answer in picks:
+    # generate() re-runs the whole prefix per token, so one row costs
+    # O(len^2) forward passes: measured ~8 s/row at 143 tokens on XPU, i.e. the
+    # default 200-row probe is a silent 25-minute tail after training. Print
+    # progress, otherwise a finished run looks hung.
+    started = time.time()
+    for i, (prompt, answer) in enumerate(picks, 1):
+        if i % 25 == 0:
+            print(
+                f"    exact-match {i}/{len(picks)} ({time.time() - started:.0f}s)",
+                flush=True,
+            )
         # budget in vocab units: token vocabs make answers shorter in ids,
         # and an over-long budget lets the decode run past EOS into junk.
         budget = len(model.vocab.encode(answer)) + 8
@@ -98,6 +108,13 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--train", default=str(DEFAULT_TRAIN))
     ap.add_argument("--val", default=str(DEFAULT_VAL))
+    ap.add_argument(
+        "--match-sample",
+        type=int,
+        default=200,
+        help="rows for the final free-running exact match (default 200; 0 skips it). "
+        "Each row costs O(len^2) forwards, so this is the slow tail of a run.",
+    )
     ap.add_argument(
         "--eval-data",
         default="",
@@ -120,8 +137,10 @@ def main() -> int:
         type=float,
         default=1.0,
         help="loss weight for the <al_out> state block (1.0 = off). Round-1 "
-        "measurement: that block is 34% of answer tokens, trains to 77-80% "
-        "teacher-forced while the response sits at 14-26%, so it carries the "
+        # literal % must be escaped: argparse formats help with %-substitution,
+        # so an unescaped percent crashes `--help` ("%o format")
+        "measurement: that block is 34%% of answer tokens, trains to 77-80%% "
+        "teacher-forced while the response sits at 14-26%%, so it carries the "
         "loss without teaching generation. Lower it to spend the gradient on "
         "the response. The loss is a weighted *mean*, so the LR scale does "
         "not change.",
@@ -134,7 +153,7 @@ def main() -> int:
         help="scheduled-sampling ceiling (0.0 = off, plain teacher forcing). "
         "The mixing probability ramps linearly to this value across epochs: "
         "late training feeds the model its own predictions, the regime greedy "
-        "decoding runs in. Round-2 evidence: response_tf 23% teacher-forced "
+        "decoding runs in. Round-2 evidence: response_tf 23%% teacher-forced "
         "but exact 0 free-running (exposure bias).",
     )
     ap.add_argument("--d-emb", type=int, default=96)
@@ -305,6 +324,11 @@ def main() -> int:
         f"vocab={len(vocab)} train={len(train)} (fit {len(train_fit)}) "
         f"val={len(val)} (fit {len(val_fit)}) len<={cfg.max_len}"
     )
+    if not train_fit:
+        # empty here used to surface as "max() iterable argument is empty"
+        # inside dynamics(), three steps later and nowhere near the cause
+        print(f"no training row fits max_len={cfg.max_len}; raise --max-len")
+        return 1
 
     import torch
 
@@ -479,8 +503,16 @@ def main() -> int:
         print("eval on cpu", flush=True)
 
     # Train-side match is a memorisation check (it must not be reported as skill).
-    train_match = exact_match(model, train_fit, 200, seed=1)
-    val_match = exact_match(model, val_fit, 200, seed=2) if val_fit else {"n": 0, "exact": 0.0}
+    if args.match_sample > 0:
+        train_match = exact_match(model, train_fit, args.match_sample, seed=1)
+        val_match = (
+            exact_match(model, val_fit, args.match_sample, seed=2)
+            if val_fit
+            else {"n": 0, "exact": 0.0}
+        )
+    else:
+        train_match = {"n": 0, "exact": 0.0}
+        val_match = {"n": 0, "exact": 0.0}
     eval_match = {"n": 0, "exact": 0.0}
     eval_tf = {"tokens": 0, "tf_acc": 0.0}
     if held_out:
