@@ -173,6 +173,14 @@ def main() -> int:
         help="how many times the best epoch counts as a runaway (default 3.0)",
     )
     ap.add_argument(
+        "--theta-max",
+        type=float,
+        default=2.0,
+        help="upper bound for the learned spike threshold (default 2.0; 0 disables). "
+        "Beyond it the surrogate gradient is gone, so an unbounded threshold is a "
+        "free way to stop learning while the loss still looks fine.",
+    )
+    ap.add_argument(
         "--lr-schedule",
         choices=("cosine", "constant"),
         default="cosine",
@@ -260,6 +268,7 @@ def main() -> int:
         readout=args.readout,
         layers=args.layers,
         timesteps=args.timesteps,
+        theta_max=args.theta_max,
     )
     texts = [p + "\n" + a for p, a in train]
     if args.vocab == "token":

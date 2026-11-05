@@ -62,6 +62,16 @@ class TokenConfig:
     # effective value equals the configured value.
     beta: float = 0.9
     threshold: float = 0.5
+    # ``theta_max`` bounds the learned threshold (CORE_GAP §三十). The surrogate
+    # gradient is sigmoid(alpha * (mem - theta)), so a threshold that drifts far
+    # above the membrane distribution is a *free* way to stop learning: round-9
+    # trained theta from 0.5 to 6.75, silenced 97% of its spikes and left
+    # |mem| = 24.5, all while the loss curve looked fine. The threshold is a
+    # parameter (that part works), so the bound is a projection after each step
+    # rather than a reparametrisation: the forward path and every existing
+    # checkpoint stay bit-identical while the value is held inside the band where
+    # spikes carry gradient. 0 disables the bound (the historical behaviour).
+    theta_max: float = 2.0
     surrogate_alpha: float = 5.0
     # ``readout`` selects what the output head reads each step:
     #   "membrane" — the membrane potential (SLAYER, Shrestha & Orchard
@@ -854,6 +864,10 @@ class TokenSNN:
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.net.parameters(), 1.0)
                 opt.step()
+                theta_max = float(getattr(self.config, "theta_max", 0.0) or 0.0)
+                if theta_max > 0.0 and hasattr(self.net, "threshold"):
+                    with torch.no_grad():
+                        self.net.threshold.data.clamp_(0.0, theta_max)
                 total += float(loss.detach())
                 steps += 1
             row: Dict[str, Any] = {

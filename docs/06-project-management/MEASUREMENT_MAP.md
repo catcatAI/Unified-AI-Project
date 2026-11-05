@@ -398,3 +398,13 @@ skip 才不塌成 unigram（3.89→2.96）；`epoch 20` 發散靠 `<out>.best`
 epoch、lr 1e-3）：loss 0.9879／val 0.9678／TF 0.765／block 0.805／`format_ok`
 11/20** （無規則時 1.037／0.185／0.176／0/20）→
 §二十八 的負面結論改判為訓練不穩。
+
+**值介面分工（2026-11-04，§三十）**：狀態 block 的六個值是
+`target(intent) + (in − target)·exp(−dt/τ)` 的線性算子（單格 R²
+0.9987、最大誤差 0.006 = 2dp 捨入；係數對角 ≈0.46），不是可學的樣式 —— guarded
+86M 的逐類別 TF 是 field 0.998 / punct 0.993 / word 0.955 / **digit 0.084 /
+value_atom
+0.010**，且 200 列可背到 1.000、2633 列訓練 0.471 但驗證 0.035。所以回應文字歸 SNN、block 歸算子（3dp
+hybrid `exact_of_all`
+1.0，320/320）；`hybrid_boundary.py --predict --response-from`
+是這條分工的執行入口。`theta_max`（預設 2.0）每步投影，擋住 round-9 那種 θ 漂到 6.75 然後梯度歸零的死法。

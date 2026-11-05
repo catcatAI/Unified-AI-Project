@@ -500,3 +500,34 @@ def test_dynamics_reports_a_silenced_stack(vocab):
     silenced = model.dynamics(_tiny_pairs(), n=2)
     assert silenced["verdict"] == "dead-or-saturated"
     assert all(row["spike_rate"] == 0.0 for row in silenced["per_layer"])
+
+
+def test_theta_max_bounds_the_learned_threshold(vocab):
+    """An unbounded threshold is a free way to stop learning (CORE_GAP §三十).
+
+    Round-9 drove theta from 0.5 to 6.75 and silenced 97% of its spikes while the
+    loss curve stayed healthy, because the surrogate gradient is
+    ``sigmoid(5 * (mem - theta))``: far above the membrane distribution nothing
+    reaches the threshold and nothing reaches the gradient either. The bound is a
+    projection after each step, so it must hold for a deliberately abusive rate.
+    """
+    bound = 0.8
+    # the bound is a projection, not a starting condition, so both models are
+    # started out of band at the same 5.0 and given one step
+    bounded = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=16, theta_max=bound))
+    free = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=16, theta_max=0.0))
+    for model in (bounded, free):
+        with model.torch.no_grad():
+            model.net.threshold.fill_(5.0)
+        model.train_on(_tiny_pairs(), epochs=1, batch_size=2, lr=1e-4)
+    assert float(bounded.net.threshold) <= bound + 1e-6
+    assert float(free.net.threshold) > bound, "0 must not clamp"
+    assert TokenConfig().theta_max == 2.0, "the bound is on by default"
+    assert TokenConfig(theta_max=0.0).to_dict()["theta_max"] == 0.0
+
+
+def test_theta_max_zero_is_the_historical_behaviour(vocab):
+    """0 must mean 'no bound', not 'clamp at zero' — 0 is how it is turned off."""
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=16, theta_max=0.0))
+    model.train_on(_tiny_pairs(), epochs=2, batch_size=2, lr=5e-2)
+    assert float(model.net.threshold) != 0.0

@@ -298,6 +298,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         "(empty = skip; use --checkpoint to load a saved hybrid instead of refitting)",
     )
     ap.add_argument("--checkpoint", default="", help="load a saved hybrid JSON for --predict")
+    ap.add_argument(
+        "--response-from",
+        default="",
+        help="write the *response* half of the line with this token checkpoint and the "
+        "block with the fitted operator. The two halves are separate problems: the "
+        "block is a linear relaxation (out = target + (in - target) * exp(-dt/tau)), "
+        "which the operator solves exactly, while the response is free text. Asking "
+        "one SNN for both is what pinned free-running exactness at 0/20.",
+    )
     ap.add_argument("--out", default=str(CHECKPOINTS / "hybrid_boundary.json"))
     ap.add_argument("--report", default=str(REPORTS / "hybrid_boundary.json"))
     args = ap.parse_args(argv)
@@ -393,6 +402,15 @@ def main(argv: Optional[List[str]] = None) -> int:
             block = "<al_out> " + " ".join(f"{f}={pred[f]:.3f}" for f in FIELD_KEYS)
             block += f" mode={state.get('mode', 'neutral')} intent={row['intent']}"
             print(f"intent={row['intent']} dt={row['dt']} via={chosen_of(row['intent'])}")
+            if args.response_from:
+                from ai.ed3n.token_snn import TokenSNN
+
+                model = TokenSNN.load(args.response_from, map_location="cpu")
+                prompt = line.split("|", 1)[-1].strip()
+                # the model may keep writing into the block; the block is the
+                # operator's, so the response stops where <al_out> starts
+                text = model.generate(prompt, max_new=48).split("<al_out>")[0].strip()
+                print("<response> " + text)
             print(block)
             constants_here = {
                 f: constants[(row["intent"], f)]
