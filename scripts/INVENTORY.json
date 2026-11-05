@@ -822,6 +822,11 @@
       "referenced": true,
       "purpose": "L1-3 未見改述探針 — 硬件規格自適應（<100MB, <3s, 批量+sleep）"
     },
+    "probe_stability.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "Measure whether long training erodes the recurrent structure."
+    },
     "quick_snn_test.py": {
       "category": "experimental",
       "referenced": true,

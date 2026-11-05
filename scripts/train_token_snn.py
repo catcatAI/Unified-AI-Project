@@ -181,6 +181,21 @@ def main() -> int:
         "free way to stop learning while the loss still looks fine.",
     )
     ap.add_argument(
+        "--leak-floor",
+        type=float,
+        default=0.0,
+        help="floor for the effective membrane leak (default 0 = off). The leak falls "
+        "monotonically while training, which shortens the memory horizon for free; "
+        "flooring it keeps the recurrence integrating instead of wire-through.",
+    )
+    ap.add_argument(
+        "--gain-cap",
+        type=float,
+        default=0.0,
+        help="cap on the spectral radius of each w_rec (default 0 = off). Above 1 a "
+        "perturbation grows per step and only the threshold keeps the stack bounded.",
+    )
+    ap.add_argument(
         "--lr-schedule",
         choices=("cosine", "constant"),
         default="cosine",
@@ -269,6 +284,8 @@ def main() -> int:
         layers=args.layers,
         timesteps=args.timesteps,
         theta_max=args.theta_max,
+        leak_floor=args.leak_floor,
+        gain_cap=args.gain_cap,
     )
     texts = [p + "\n" + a for p, a in train]
     if args.vocab == "token":

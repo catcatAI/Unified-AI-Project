@@ -408,3 +408,12 @@ value_atom
 hybrid `exact_of_all`
 1.0，320/320）；`hybrid_boundary.py --predict --response-from`
 是這條分工的執行入口。`theta_max`（預設 2.0）每步投影，擋住 round-9 那種 θ 漂到 6.75 然後梯度歸零的死法。
+
+**結構侵蝕（2026-11-05，§三十一）**：`scripts/probe_stability.py`
+逐 epoch 記 β、 `sr(w_rec)`、θ 與自主軌道。200 列 / 120 epoch：β
+0.898→0.803（視窗 9.8→5.1 步）、 `sr` 0.55→1.36/1.81、θ 0.49→0.90、train
+3.19→0.666、val 最佳 0.8216@ep49 →
+0.917，即「loss 還在降時結構已改道」。`--leak-floor 0.9 --gain-cap 1.0`
+後 β 不動、`sr`
+≤0.85、val 退化 +0.089→**+0.020**、最佳移到 ep75（train 較差 0.666→0.759）。判定讀 β/sr；自主軌道因
+`w_in` bias 常數驅動而不可作判準（`w_rec`=0 仍放電）。

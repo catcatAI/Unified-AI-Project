@@ -72,6 +72,21 @@ class TokenConfig:
     # checkpoint stay bit-identical while the value is held inside the band where
     # spikes carry gradient. 0 disables the bound (the historical behaviour).
     theta_max: float = 2.0
+    # ``leak_floor`` keeps the membrane from *buying* short horizons.
+    # Measured (probe_stability, 200 rows, 120 epochs): while the loss falls,
+    # beta slides 0.900 -> 0.826 and sr(w_rec) climbs 0.55 -> 1.29, i.e. the
+    # stack trades local integration for faster wire-through, and autonomous
+    # activity after the input stops decays 0.54 -> 0.16. The trade is degenerate
+    # (the product is what the task sees, and beta has a hard ceiling at 1), so
+    # leaving both free lets every run sidle toward the same corner: no memory,
+    # gain above 1, structure held only by the threshold clip. 0 disables.
+    leak_floor: float = 0.0
+    # ``gain_cap`` bounds the spectral radius of each recurrent matrix (power
+    # iteration + rescale after the step). >1 means a perturbation grows for a
+    # step, so the only thing keeping the stack bounded is the threshold, i.e.
+    # saturation. 0 disables. Both bounds are projections, like theta_max, so a
+    # checkpoint written without them loads and runs unchanged.
+    gain_cap: float = 0.0
     surrogate_alpha: float = 5.0
     # ``readout`` selects what the output head reads each step:
     #   "membrane" — the membrane potential (SLAYER, Shrestha & Orchard
@@ -770,6 +785,66 @@ class TokenSNN:
             out["verdict"] = "alive"
         return out
 
+    # -- structure control ---------------------------------------------------
+    def spectral_radius(self, weight: Any, iters: int = 100, tol: float = 1e-4) -> float:
+        """Largest |eigenvalue| of one recurrent matrix, by power iteration.
+
+        Iterates to convergence (relative 1e-4, max ``iters``) rather than a
+        fixed count: a truncated estimate *under*-reads the radius, and the
+        projection then leaves the matrix slightly above its cap — measured as
+        1.20 on a matrix that was supposed to be capped at 1.0 with 12 sweeps.
+        """
+        torch = self.torch
+        with torch.no_grad():
+            v = torch.randn(weight.shape[1], device=weight.device)
+            v = v / (v.norm() + 1e-12)
+            prev, n = 0.0, 0.0
+            for _ in range(iters):
+                v = weight @ v
+                n = float(v.norm())
+                if n == 0.0:
+                    return 0.0
+                v = v / n
+                if prev and abs(n - prev) <= tol * n:
+                    break
+                prev = n
+        return n
+
+    def _project_structure(self) -> None:
+        """Hold the recurrent stack inside the band where it can hold state.
+
+        Three free quantities can each buy a lower loss without learning the
+        task: theta (silence the stack), beta (forget faster) and w_rec's gain
+        (wire-through instead of integrate). Theta is bounded in ``theta_max``;
+        this applies the other two, after the optimiser step, as projections:
+
+        - ``leak_floor`` floors sigmoid(beta), so the memory horizon
+          1/(1-beta) cannot shrink without bound.
+        - ``gain_cap`` rescales any w_rec whose spectral radius exceeds the cap.
+          >1 is the point where a perturbation grows per step and the threshold
+          clip becomes the only bound.
+
+        Projections rather than reparameterisation, for the same reason as
+        theta: forward() is untouched, and checkpoints written with the bounds
+        off load and run bit-identically.
+        """
+        torch = self.torch
+        theta_max = float(getattr(self.config, "theta_max", 0.0) or 0.0)
+        leak_floor = float(getattr(self.config, "leak_floor", 0.0) or 0.0)
+        gain_cap = float(getattr(self.config, "gain_cap", 0.0) or 0.0)
+        with torch.no_grad():
+            if theta_max > 0.0 and hasattr(self.net, "threshold"):
+                self.net.threshold.data.clamp_(0.0, theta_max)
+            if leak_floor > 0.0 and hasattr(self.net, "beta"):
+                lo = math.log(leak_floor / (1.0 - leak_floor))
+                self.net.beta.data.clamp_(min=lo)
+            if gain_cap > 0.0:
+                for layer in getattr(self.net, "w_rec", []):
+                    weight = layer.weight
+                    radius = self.spectral_radius(weight)
+                    if radius > gain_cap:
+                        weight.mul_(gain_cap / radius)
+
     # -- training -----------------------------------------------------------
     def train_on(
         self,
@@ -865,10 +940,7 @@ class TokenSNN:
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.net.parameters(), 1.0)
                 opt.step()
-                theta_max = float(getattr(self.config, "theta_max", 0.0) or 0.0)
-                if theta_max > 0.0 and hasattr(self.net, "threshold"):
-                    with torch.no_grad():
-                        self.net.threshold.data.clamp_(0.0, theta_max)
+                self._project_structure()
                 total += float(loss.detach())
                 steps += 1
             row: Dict[str, Any] = {
