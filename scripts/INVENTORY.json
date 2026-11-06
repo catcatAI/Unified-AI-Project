@@ -57,6 +57,11 @@
       "referenced": true,
       "purpose": "Run one AI+AL training round, then auto-produce the next batch (round-2 second half)."
     },
+    "al_c_logit.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "C-logit：相位有沒有改變**模型自己的機率分布**？（`al_c_param.py` 的下一級）"
+    },
     "al_c_param.py": {
       "category": "tool",
       "referenced": true,

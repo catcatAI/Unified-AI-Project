@@ -267,3 +267,17 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 **級別**：C-param。改的是取樣條件，模型不知道被調制。**沒量**：真實模型上的輸出差異（需 N 次重複＋檢定）。
 
 **下一步二選一**：C-logit（需要本地模型或 logit_bias 支援）或 C-state（生成路徑吃狀態，大）。
+
+### 2026-11-07 續三 — C-logit 在真模型上成立（`phase-reaches-logits`）
+
+- `core/life/al_logit_bias.py`：`phase_bias()` /
+  `apply_to()`，相位 → 高/低喚醒詞彙的 logit 偏移（±4.0 × offset）。
+- 量測 `scripts/al_c_logit.py`
+  用**真模型**（`data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf`，llama.cpp
+  `logits_processor`）：谷底 p(calm)=**0.335**、p(energy)=0.0000；峰 p(energy)=**0.097**、p(calm)=0.0002；最大
+  **KL 0.930**；Δ 跨中點翻號；r=**0.918**。
+- 控制組：中點偏移全 0 → logits
+  **逐位相同**；置換 r=−0.337；wall-clock 偽造品不可重現。報告：`data/intelligence_reports/al_c_logit.json`。
+- 閘門抓到兩個量測 bug（記錄偏移前的值、改複本卻回傳原陣列）——修好後 KL 由 0 變 0.93。**量測工具也要有反例測試**。
+
+**級別**：C-logit。改的是模型自己的輸出分布，但由外部施加。**未接生產**：供應商是 HTTP 客戶端、不知 token 表；需要 in-process 解碼器才能安全接上（介面已備）。
