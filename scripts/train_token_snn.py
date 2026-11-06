@@ -31,7 +31,9 @@ from ai.ed3n.token_snn import (  # noqa: E402
     TokenConfig,
     TokenSNN,
     TokenVocab,
+    _VALUE_ATOMS_BY_DECIMALS,
     resolve_device,
+    tokenize,
 )
 
 DEFAULT_TRAIN = REPO_ROOT / "apps" / "backend" / "data" / "processed" / "core_train.jsonl"
@@ -284,6 +286,15 @@ def main() -> int:
         "values, so this turns its emission into copy-with-scale over a bounded "
         "alphabet rather than digit-carrying arithmetic (CORE_GAP §十八).",
     )
+    ap.add_argument(
+        "--value-decimals",
+        type=int,
+        choices=(2, 3),
+        default=3,
+        help="how many decimals the corpus writes its values with: 2 = the graded "
+        "contract grid (201 atoms), 3 = the round-7 3-dp grid (2001 atoms). "
+        "Only matters with --numeric-atoms; a mismatch makes that flag a no-op.",
+    )
     args = ap.parse_args()
 
     train_path = Path(args.train)
@@ -315,7 +326,27 @@ def main() -> int:
             min_count=1,
             max_vocab=cfg.max_vocab,
             numeric_atoms=bool(args.numeric_atoms),
+            value_decimals=int(args.value_decimals),
         )
+        if args.numeric_atoms:
+            # A precision mismatch makes the flag a silent no-op: the 2-dp grid
+            # cannot match a 3-dp corpus, and the run then looks "tested" while
+            # every value is still emitted digit by digit (measured: 0.721 with
+            # the flag against 0.723 without). Say so instead of reporting 0.72.
+            grid = set(_VALUE_ATOMS_BY_DECIMALS[int(args.value_decimals)])
+            hit = sum(1 for atom in vocab.itos if atom in grid)
+            corpus = used = 0
+            for prompt, answer in train:
+                for atom in tokenize(prompt + answer, True, int(args.value_decimals)):
+                    corpus += 1
+                    used += atom in grid
+            print(f"numeric atoms: {hit} in vocab, {used}/{corpus} training atoms on grid")
+            if used == 0:
+                print(
+                    "  no training value matches the "
+                    f"{args.value_decimals}-dp grid; the flag does nothing — "
+                    "use --value-decimals to match the corpus"
+                )
     else:
         vocab = CharVocab.build(texts, min_count=cfg.min_count, max_vocab=cfg.max_vocab)
     train_fit = fits(train, vocab, cfg.max_len)
@@ -528,6 +559,7 @@ def main() -> int:
         "train": str(train_path),
         "vocab_kind": args.vocab,
         "numeric_atoms": bool(args.numeric_atoms),
+        "value_decimals": int(args.value_decimals),
         "pairs": {"train": len(train), "train_fit": len(train_fit), "val_fit": len(val_fit)},
         "vocab_size": len(vocab),
         "config": cfg.to_dict(),

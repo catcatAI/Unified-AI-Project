@@ -216,6 +216,21 @@ _VALUE_ATOMS: Tuple[str, ...] = (
 STATE_VALUE_ATOMS = frozenset(_VALUE_ATOMS)
 _VALUE_CAND = re.compile(r"(-?\d\.\d\d)(?![0-9])")
 
+# The same closed alphabet at a different precision. Round-7's 3-dp corpus writes
+# ``0.261``, which the 2-dp candidate pattern above cannot match (it needs exactly
+# two decimals and no third digit follows), so ``numeric_atoms=True`` silently did
+# nothing on that corpus — measured: block accuracy 0.721 with the flag against
+# 0.723 without, i.e. a no-op, because every value atom was still emitted digit by
+# digit. ``value_decimals`` picks which grid the corpus is written on.
+_VALUE_ATOMS_BY_DECIMALS: Dict[int, Tuple[str, ...]] = {
+    2: _VALUE_ATOMS,
+    3: tuple(f"{i / 1000:.3f}" for i in range(-1000, 1001)),
+}
+
+
+def _value_candidate(decimals: int) -> "re.Pattern[str]":
+    return re.compile(rf"(-?\d\.\d{{{decimals}}})(?![0-9])")
+
 
 def _tokenize_plain(text: str) -> List[str]:
     """The historical atomisation: words, and digits split one by one."""
@@ -233,7 +248,7 @@ def _tokenize_plain(text: str) -> List[str]:
     return out
 
 
-def tokenize(text: str, numeric_atoms: bool = False) -> List[str]:
+def tokenize(text: str, numeric_atoms: bool = False, value_decimals: int = 2) -> List[str]:
     """Split text into self-delimiting atoms (decode is a plain join).
 
     * a word absorbs the whitespace *before* it — ``tokenize("the cat") ==
@@ -261,11 +276,19 @@ def tokenize(text: str, numeric_atoms: bool = False) -> List[str]:
     raw = str(text or "")
     if not numeric_atoms:
         return _tokenize_plain(raw)
+    atoms = _VALUE_ATOMS_BY_DECIMALS.get(int(value_decimals))
+    if atoms is None:
+        raise ValueError(
+            f"value_decimals={value_decimals} has no alphabet; "
+            f"choose one of {sorted(_VALUE_ATOMS_BY_DECIMALS)}"
+        )
+    grid = frozenset(atoms)
+    cand = _value_candidate(int(value_decimals))
     out: List[str] = []
-    for part in _VALUE_CAND.split(raw):
+    for part in cand.split(raw):
         if not part:
             continue
-        if part in STATE_VALUE_ATOMS:
+        if part in grid:
             out.append(part)
         else:
             out.extend(_tokenize_plain(part))
@@ -281,10 +304,13 @@ class TokenVocab:
 
     kind = "token"
 
-    def __init__(self, tokens: Sequence[str], numeric_atoms: bool = False) -> None:
+    def __init__(
+        self, tokens: Sequence[str], numeric_atoms: bool = False, value_decimals: int = 2
+    ) -> None:
         self.itos: List[str] = list(tokens)
         self.stoi: Dict[str, int] = {t: i for i, t in enumerate(self.itos)}
         self.numeric_atoms = bool(numeric_atoms)
+        self.value_decimals = int(value_decimals)
         for special in (*SPECIALS, "\n"):
             if special not in self.stoi:
                 self.stoi[special] = len(self.itos)
@@ -313,10 +339,11 @@ class TokenVocab:
         min_count: int = 1,
         max_vocab: int = 12000,
         numeric_atoms: bool = False,
+        value_decimals: int = 2,
     ) -> "TokenVocab":
         counts: Dict[str, int] = {}
         for text in texts:
-            for atom in tokenize(text, numeric_atoms):
+            for atom in tokenize(text, numeric_atoms, value_decimals):
                 counts[atom] = counts.get(atom, 0) + 1
         ordered = [a for a, n in counts.items() if n >= min_count and a not in SPECIALS]
         ordered.sort(key=lambda a: (-counts[a], a))
@@ -327,13 +354,20 @@ class TokenVocab:
             # smaller than the alphabet keeps the alphabet and drops words,
             # because a missing value atom is unlearnable while a missing word
             # only degrades to <unk>.
-            extra = [a for a in ordered if a not in STATE_VALUE_ATOMS]
-            return cls(list(_VALUE_ATOMS) + extra[: max(0, max_vocab - len(_VALUE_ATOMS))], True)
-        return cls(ordered[:max_vocab], numeric_atoms=numeric_atoms)
+            atoms = _VALUE_ATOMS_BY_DECIMALS[int(value_decimals)]
+            closed = frozenset(atoms)
+            extra = [a for a in ordered if a not in closed]
+            return cls(
+                list(atoms) + extra[: max(0, max_vocab - len(atoms))], True, int(value_decimals)
+            )
+        return cls(ordered[:max_vocab], numeric_atoms=numeric_atoms, value_decimals=value_decimals)
 
     def encode(self, text: str, add_eos: bool = False) -> List[int]:
         unk = self.stoi[UNK]
-        ids = [self.stoi.get(atom, unk) for atom in tokenize(text, self.numeric_atoms)]
+        ids = [
+            self.stoi.get(atom, unk)
+            for atom in tokenize(text, self.numeric_atoms, self.value_decimals)
+        ]
         if add_eos:
             ids.append(self.eos_id)
         return ids
@@ -352,11 +386,20 @@ class TokenVocab:
         return "".join(out)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"kind": self.kind, "itos": self.itos, "numeric_atoms": self.numeric_atoms}
+        return {
+            "kind": self.kind,
+            "itos": self.itos,
+            "numeric_atoms": self.numeric_atoms,
+            "value_decimals": self.value_decimals,
+        }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TokenVocab":
-        return cls(data["itos"], numeric_atoms=bool(data.get("numeric_atoms", False)))
+        return cls(
+            data["itos"],
+            numeric_atoms=bool(data.get("numeric_atoms", False)),
+            value_decimals=int(data.get("value_decimals", 2)),
+        )
 
     def __len__(self) -> int:
         return len(self.itos)

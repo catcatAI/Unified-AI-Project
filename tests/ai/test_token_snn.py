@@ -237,6 +237,38 @@ def test_numeric_atoms_keep_the_alphabet_closed_and_roundtripping():
     assert tokenize("7.1944", numeric_atoms=True) == list("7.1944")
 
 
+def test_numeric_atoms_can_target_the_three_decimal_grid():
+    """A 3-dp corpus needs its own grid, or the flag silently does nothing.
+
+    Round-7's 3-dp corpus writes ``0.261``; the 2-dp candidate pattern needs
+    exactly two decimals and no third digit, so it never matched and every
+    value was still emitted digit by digit (measured block accuracy 0.721 with
+    ``--numeric-atoms`` against 0.723 without).
+    """
+    atoms = tokenize("v=0.261", numeric_atoms=True, value_decimals=3)
+    assert atoms[-1] == "0.261"
+    assert "".join(atoms) == "v=0.261"
+    assert tokenize("0.261", numeric_atoms=True) == list("0.261")
+    vocab = TokenVocab.build(["v=0.261"], min_count=1, numeric_atoms=True, value_decimals=3)
+    for value in ("-1.000", "0.000", "0.261", "1.000"):
+        assert value in vocab.stoi, value
+    assert vocab.decode(vocab.encode("v=0.261")) == "v=0.261"
+    with pytest.raises(ValueError):
+        tokenize("0.261", numeric_atoms=True, value_decimals=4)
+
+
+def test_value_decimals_survive_save_load(tmp_path):
+    """The grid is part of the representation: a checkpoint must keep it."""
+    vocab = TokenVocab.build(["v=0.261"], min_count=1, numeric_atoms=True, value_decimals=3)
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=24))
+    path = tmp_path / "d3.pt"
+    model.save(path)
+    restored = TokenSNN.load(path)
+    assert restored.vocab.value_decimals == 3
+    assert restored.vocab.encode("0.261") == vocab.encode("0.261")
+    assert TokenVocab.build(["x"], min_count=1).value_decimals == 2
+
+
 def test_numeric_atom_mode_survives_save_load(tmp_path):
     """A checkpoint must remember the representation it was trained under."""
     vocab = TokenVocab.build(["v=0.26 a=0.17"], min_count=1, numeric_atoms=True)
