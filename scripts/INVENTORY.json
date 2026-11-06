@@ -57,6 +57,11 @@
       "referenced": true,
       "purpose": "Run one AI+AL training round, then auto-produce the next batch (round-2 second half)."
     },
+    "al_c_learn.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "C-learn：相位決定「這次經歷被記得多深」（`al_c_state.py` 的下一級）"
+    },
     "al_c_logit.py": {
       "category": "tool",
       "referenced": true,

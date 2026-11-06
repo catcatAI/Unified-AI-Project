@@ -296,3 +296,20 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 
 **四級現況**：C-param ✓（T ±0.15）、C-logit ✓（真模型 KL 0.93）、C-state
 ✓（自有 SNN，全或無門檻）、黑箱 hidden-state 調制 ✗。
+
+### 2026-11-07 續五 — C-learn 成立（`phase-decides-what-gets-kept`）
+
+- `core/life/al_learning_gate.py`：`learning_gain()`
+  → 可塑性增益（中點 1.0、兩端 0.4/1.6）；`sanitize_gain()`
+  是模型側的壞值後備（→ 1.0）。
+- 接線：`TensorSNNCore.hebbian_update(..., plasticity=…)` 乘進
+  `lr`。缺席／壞值 → 1.0（逐位不變，已測）。
+- 量測 `scripts/al_c_learn.py`（72 個互不相同的配對、各經歷一次）：平均權重
+  **0.181 → 0.719**，已固化數 **0 →
+  72**，ρ(權重, 增益)=**1.000**、ρ(固化數, 增益)=**0.905**；控制組 0.0；真實振盪器排程可逐位重現、wall-clock 正弦不可。報告：`data/intelligence_reports/al_c_learn.json`。
+- 教訓：第一版 3 輪 → 權重飽和 → ΔW≈0。**量到沒差時先確認不是天花板壓住機制**。
+- **未接生產**：`GARDENEngine.learn_from_interaction` / `learn_batch` 尚未傳
+  `plasticity`。
+
+**五級現況**：C-param ✓、C-logit ✓（真模型 KL 0.93）、C-state
+✓（自有 SNN）、C-learn ✓（權重層，未接生產）、黑箱 hidden-state 調制 ✗。

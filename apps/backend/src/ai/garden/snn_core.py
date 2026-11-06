@@ -835,6 +835,7 @@ class TensorSNNCore:
         lr: float = 0.05,
         target_strength: float = 0.35,
         weight_decay: float = 0.002,
+        plasticity: float = 1.0,
     ) -> float:
         """Hebbian weight update with Oja's rule + targeted row decay.
 
@@ -851,10 +852,29 @@ class TensorSNNCore:
         double loop that crosses the torch/numpy scalar boundary once per
         element (the dominant cost in batch training at V≈8k).
 
+        ``plasticity`` (C-learn, 2026-11-07) scales the effective learning
+        rate by the caller's internal phase -- the same data at a different
+        point of the AL cycle is laid down with a different gain. It defaults
+        to 1.0 and any non-finite or non-positive value collapses back to 1.0,
+        so an unwired caller behaves bit-identically to before.
+
         Returns total weight delta applied.
         """
         if not input_keys or not target_keys:
             return 0.0
+
+        # Normalize unconditionally: None, bools and garbage all collapse to 1.0
+        # so a caller that forwards a missing value still behaves exactly as before.
+        if plasticity is None or isinstance(plasticity, bool):
+            plasticity = 1.0
+        else:
+            try:
+                gain = float(plasticity)
+            except (TypeError, ValueError):
+                gain = 1.0
+            plasticity = gain if math.isfinite(gain) and gain > 0.0 else 1.0
+        if plasticity != 1.0:
+            lr = lr * plasticity
 
         # Register any unseen keys first (preserves legacy auto-registration),
         # then map to row/col indices, vectorized.
