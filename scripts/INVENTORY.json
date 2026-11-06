@@ -67,6 +67,11 @@
       "referenced": true,
       "purpose": "C-param：相位有沒有進到**生成請求**？（`scripts/al_phase_effect.py` 的下一級）"
     },
+    "al_c_state.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "C-state：相位改的是模型的**內部體質**，不是輸入也不是輸出（`al_c_logit.py` 的下一級）"
+    },
     "al_channel_audit.py": {
       "category": "tool",
       "referenced": true,

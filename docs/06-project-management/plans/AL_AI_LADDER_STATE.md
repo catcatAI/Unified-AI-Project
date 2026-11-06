@@ -281,3 +281,18 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - 閘門抓到兩個量測 bug（記錄偏移前的值、改複本卻回傳原陣列）——修好後 KL 由 0 變 0.93。**量測工具也要有反例測試**。
 
 **級別**：C-logit。改的是模型自己的輸出分布，但由外部施加。**未接生產**：供應商是 HTTP 客戶端、不知 token 表；需要 in-process 解碼器才能安全接上（介面已備）。
+
+### 2026-11-07 續四 — C-state 成立（`phase-changes-internal-dynamics`）
+
+- `core/life/al_snn_modulation.py`：`modulate()`
+  → 閾值倍率（中點 1.0、兩端 0.5/1.5）。
+- 接線：`ai/garden/snn_core.py::forward` 讀 `context["al_modulation"]`，乘進
+  `threshold`。缺席／壞值 → 1.0（逐位不變）。
+- 量測 `scripts/al_c_state.py`：同一 `input_keys`、同一 `W`，谷相位 →
+  **0 個概念**（基線 4 個，L1=1.0），ρ=**0.952**（置換 0.381），控制組逐位相同；切換點隨權重移動（0.5/0.6/0.75
+  → activation
+  **0.525/0.330/0.038**）。報告：`data/intelligence_reports/al_c_state.json`。
+- 性質：**全或無**（SNN 本性），不是漸變。C-state 在**自有模型**（GARDEN）上成立；黑箱模型（Qwen）的內部狀態仍未觸及。
+
+**四級現況**：C-param ✓（T ±0.15）、C-logit ✓（真模型 KL 0.93）、C-state
+✓（自有 SNN，全或無門檻）、黑箱 hidden-state 調制 ✗。

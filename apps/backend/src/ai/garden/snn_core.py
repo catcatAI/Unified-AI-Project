@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 from typing import Any, Dict, List, Optional
 
@@ -787,7 +788,19 @@ class TensorSNNCore:
             return {}
 
         thr_mult = self.modulator.get_threshold_multiplier()
-        threshold = max(0.01, self.base_threshold * thr_mult)
+        # C-state（2026-11-07）：AL 的內生相位改的是**閾值**，不是輸入——
+        # 同樣的 input_keys、同樣的 W，脈衝樣式因體質而不同。
+        # 缺席／壞值 → 1.0，行為與接線前逐位相同。
+        al_mult = 1.0
+        _al = (context or {}).get("al_modulation")
+        if isinstance(_al, dict):
+            try:
+                al_mult = float(_al.get("threshold_multiplier", 1.0))
+            except (TypeError, ValueError):
+                al_mult = 1.0
+            if not math.isfinite(al_mult) or al_mult <= 0.0:
+                al_mult = 1.0
+        threshold = max(0.01, self.base_threshold * thr_mult * al_mult)
 
         potential = self._new_zeros(V)
         cumulative = self._new_zeros(V)
