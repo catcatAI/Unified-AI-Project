@@ -406,5 +406,8 @@ class TestSnapshotContract:
         assert callers == {"core/life/al_state.py"}
 
     def test_the_tracker_public_surface_is_one_reader_and_one_writer(self):
+        # ``clock_status`` is not a second state reader: it reports the clock
+        # guard's verdict (whether the last reading looked forged), never the
+        # affect value. The rule this pins is one state reader, one writer.
         public = {n for n in dir(AffectTracker) if not n.startswith("_")}
-        assert public == {"arousal", "observe_level"}
+        assert public == {"arousal", "observe_level", "clock_status"}

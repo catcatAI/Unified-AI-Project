@@ -338,29 +338,63 @@ def rung_restart(rng, tmp: Path) -> Dict[str, float]:
 
 
 def rung_clock_attack(tmp: Path) -> Dict[str, Optional[float]]:
-    """Backward and forward clock jumps: does the system have an opinion?
+    """Forged clocks: does the system have an opinion *and* act on it?
 
-    ``rollback_freeze``: state after a 10^6 s backward jump minus state before —
-    zero means the value is silently held. ``forward_jump``: decay by the jump,
-    no suspicion. ``suspicion`` stays ``None`` because no estimate exists to be
-    suspicious *with*: the module has no predicted-clock state (review §11.3).
+    The mechanism is a second, unforgeable time source: ``time.monotonic`` moves
+    forward by 1 s while the injected ``time.time`` is jumped. What is measured:
+
+    - ``detect_backward`` / ``detect_forward``: fraction of forged samples flagged;
+    - ``false_alarm``: fraction of honest samples flagged;
+    - ``rollback_freeze``: state change on a backward jump (the value is held, which
+      is now a *reported* hold rather than a silent one).
+
+    A guard that flags everything would score 1.0 on detection and 1.0 on false
+    alarms, so both are reported and the rung is only passed when both are right.
     """
     level = 0.9
     path = tmp / "attack.json"
-    clock = [1_000_000.0]
-    tracker = ar.AffectTracker(path=path, clock=lambda: clock[0])
+    wall = [1_000_000.0]
+    mono = [10_000.0]
+    tracker = ar.AffectTracker(path=path, clock=lambda: wall[0], monotonic=lambda: mono[0])
     tracker.observe_level(level)
-    normal = tracker.arousal()
 
-    clock[0] -= 1_000_000.0  # clock rolls back a week
-    rolled = tracker.arousal()
-    clock[0] += 2_000_000.0  # ...then jumps a week forward
+    honest = 0
+    honest_total = 0
+    for _ in range(20):  # one second each, in step
+        wall[0] += 1.0
+        mono[0] += 1.0
+        tracker.arousal()
+        verdict = tracker.clock_status()
+        honest_total += 1
+        honest += 1 if verdict is not None and verdict.suspicion else 0
+
+    # A fresh tracker for the freeze measurement: `arousal()` is a pure read and
+    # does not persist, so comparing a read taken at t with one taken after the
+    # rollback compares two different stored states. Read, roll back, read again.
+    freeze_tracker = ar.AffectTracker(
+        path=tmp / "attack_freeze.json", clock=lambda: wall[0], monotonic=lambda: mono[0]
+    )
+    freeze_tracker.observe_level(level)
+    before_rollback = freeze_tracker.arousal()
+
+    wall[0] -= 1_000_000.0  # clock rolls back a week, monotonic does not
+    mono[0] += 1.0
+    rolled = freeze_tracker.arousal()
+    backward_flag = freeze_tracker.clock_status()
+
+    wall[0] += 2_000_000.0  # ...then jumps a week forward
+    mono[0] += 1.0
     jumped = tracker.arousal()
+    forward_flag = tracker.clock_status()
 
     return {
-        "rollback_freeze": abs(rolled - normal),
-        "forward_jump": abs(jumped - ar.advance(ar.AffectState(BASELINE, level, 0.0), 1e6).arousal),
-        "suspicion": None,  # no clock estimate -> nothing to be suspicious with
+        "detect_backward": float(backward_flag.suspicion) if backward_flag else 0.0,
+        "detect_forward": float(forward_flag.suspicion) if forward_flag else 0.0,
+        "false_alarm": honest / honest_total if honest_total else 0.0,
+        "rollback_freeze": abs(rolled - before_rollback),
+        "forward_jump": abs(
+            jumped - ar.advance(ar.AffectState(BASELINE, level, 0.0), 1e6).arousal
+        ),
     }
 
 
@@ -405,7 +439,15 @@ def run(tmp_root: Optional[Path] = None) -> Dict[str, object]:
     table: Dict[str, Dict[str, object]] = {}
     for name, values in rungs.items():
         if name == "r7_clock":
-            table[name] = {"values": values, "verdict": "mechanism-missing"}
+            caught = float(values["detect_backward"]) + float(values["detect_forward"])
+            false_alarms = float(values["false_alarm"])
+            if caught == 0.0:
+                verdict = "mechanism-missing"
+            elif caught == 2.0 and false_alarms <= 0.05:
+                verdict = "doubt-works"
+            else:
+                verdict = "doubt-weak"
+            table[name] = {"values": values, "verdict": verdict}
             continue
         al = float(values["al"])
         worst = max(float(v) for k, v in values.items() if k != "al")
@@ -449,6 +491,14 @@ def main() -> int:
     print(f"{'rung':<16}" + "".join(f"{c:>10}" for c in cols) + "  verdict")
     for name, row in result["rungs"].items():
         vals = row["values"]
+        if name == "r7_clock":
+            print(
+                f"{name:<16}{'—':>10}{'—':>10}{'—':>10}{'—':>10}{'—':>10}  "
+                f"{row['verdict']} (detect back/fwd="
+                f"{vals['detect_backward']:.0f}/{vals['detect_forward']:.0f}, "
+                f"false alarms={vals['false_alarm']:.0%})"
+            )
+            continue
         cells = "".join(
             f"{vals[k]:>10.2e}" if isinstance(vals.get(k), (int, float)) else f"{'--':>10}"
             for k in cols

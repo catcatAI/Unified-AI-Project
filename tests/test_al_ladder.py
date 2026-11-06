@@ -72,10 +72,18 @@ def test_control_passing_is_reported_as_sound_not_evidence(ladder):
     assert ladder._verdict(0.0, 0.025, control=0.37) == "al-wins"
 
 
-def test_clock_attack_has_no_suspicion_to_report(ladder, tmp_path):
-    """``None`` is not a pass: the module has no clock estimate."""
+def test_clock_attack_is_detected_without_false_alarms(ladder, tmp_path):
+    """r7 became scoreable when the monotonic reference arrived.
+
+    A guard that flags everything would pass detection and fail the false-alarm
+    column, so both have to hold.
+    """
     out = ladder.rung_clock_attack(tmp_path)
-    assert out["suspicion"] is None
+    assert out["detect_backward"] == 1.0
+    assert out["detect_forward"] == 1.0
+    assert out["false_alarm"] == 0.0
+    # The value is still held on a rollback (that is a separate decision), but
+    # now the hold is reported instead of silent.
     assert out["rollback_freeze"] == pytest.approx(0.0, abs=1e-12)
 
 

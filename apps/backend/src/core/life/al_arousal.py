@@ -49,6 +49,7 @@ from pathlib import Path
 from typing import Callable, Dict, Optional, Union
 
 from core.data_config import get_data_root
+from core.life.al_clock_guard import ClockGuard, ClockVerdict
 from core.system.config.magic_numbers import threshold_value
 
 logger = logging.getLogger(__name__)
@@ -211,9 +212,23 @@ class AffectTracker:
     它再呼叫 :meth:`observe_level`。
     """
 
-    def __init__(self, path: Optional[PathLike] = None, clock: Clock = time.time) -> None:
+    def __init__(
+        self,
+        path: Optional[PathLike] = None,
+        clock: Clock = time.time,
+        monotonic: Optional[Clock] = None,
+    ) -> None:
+        """``monotonic`` 給的是**不可偽造**的參考時鐘（生產為 ``time.monotonic``）。
+
+        給了它，每次取樣就會比對「wall-clock 說經過多久」與「單調時鐘說經過
+        多久」，突變會被記成存疑（``clock_status()``）。不給（測試、或只有一個
+        時間來源的場合）就完全沿用舊行為：不判讀、不改變任何轉移。
+        """
         self._path = Path(path) if path is not None else get_data_root() / "al_affect.json"
         self._clock = clock
+        self._monotonic = monotonic
+        self._guard: Optional[ClockGuard] = ClockGuard() if monotonic is not None else None
+        self._clock_verdict: Optional[ClockVerdict] = None
         self._lock = threading.Lock()
         self._state: Optional[AffectState] = self._load()
 
@@ -226,18 +241,34 @@ class AffectTracker:
             "tau_fall": _tau(TAU_FALL_KEY, DEFAULT_TAU_FALL_S),
         }
 
+    # -- 時鐘存疑 ----------------------------------------------------------
+    def clock_status(self) -> Optional[ClockVerdict]:
+        """最後一次取樣的判讀；沒有 ``monotonic`` 參考時鐘 → ``None``。
+
+        這不是「現在幾點」，而是「我剛才讀到的時間可不可信」——開機後第一次
+        讀數必然是 ``baseline``，因為還沒有東西可以比對。
+        """
+        with self._lock:
+            return self._clock_verdict
+
+    def _now(self) -> float:
+        now = self._clock()
+        if self._guard is not None and self._monotonic is not None:
+            self._clock_verdict = self._guard.sample(now, self._monotonic())
+        return now
+
     # -- 讀 ----------------------------------------------------------------
     def arousal(self) -> Optional[float]:
         """現在的喚醒度；從未觀測 → ``None``（D11）。純讀，不落盤。"""
         with self._lock:
             if self._state is None:
                 return None
-            return advance(self._state, self._clock(), **self._params()).arousal
+            return advance(self._state, self._now(), **self._params()).arousal
 
     # -- 寫（只給 al_state.submit_event 呼叫）--------------------------------
     def observe_level(self, level: float) -> None:
         with self._lock:
-            self._state = observe(self._state, level, self._clock(), **self._params())
+            self._state = observe(self._state, level, self._now(), **self._params())
             self._save(self._state)
 
     # -- 落盤 --------------------------------------------------------------
@@ -295,7 +326,8 @@ def get_affect_tracker() -> AffectTracker:
     global _TRACKER
     with _TRACKER_LOCK:
         if _TRACKER is None:
-            _TRACKER = AffectTracker()
+            # 生產環境兩條時間軸：wall-clock 決定狀態推進，單調時鐘負責判真假。
+            _TRACKER = AffectTracker(clock=time.time, monotonic=time.monotonic)
         return _TRACKER
 
 

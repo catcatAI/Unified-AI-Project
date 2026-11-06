@@ -265,9 +265,13 @@ def run(tmp_root: Optional[Path] = None) -> Dict[str, object]:
         ablated=restart_without_persistence(tmp),
     )
 
+    clock = ladder.rung_clock_attack(tmp)
+    caught = float(clock["detect_backward"]) + float(clock["detect_forward"])
     rows["r7_clock"] = {
-        "values": ladder.rung_clock_attack(tmp),
-        "verdict": "mechanism-missing",
+        "values": clock,
+        "verdict": (
+            "doubt-works" if caught == 2.0 and float(clock["false_alarm"]) <= 0.05 else "doubt-weak"
+        ),
     }
 
     admissible = [k for k, v in rows.items() if v["verdict"] == "admissible"]
@@ -335,9 +339,12 @@ def main() -> int:
     cols = ("al", "clone", "table_noise", "call_clock", "imitate")
     print(f"{'rung':<15}" + "".join(f"{c:>12}" for c in cols) + f"{'ablated':>10}  verdict")
     for name, row in result["rungs"].items():
-        if "values" not in row or name == "r7_clock":
+        if name == "r7_clock":
+            v = row["values"]
             print(
-                f"{name:<15}{'—':>12}{'—':>12}{'—':>12}{'—':>12}{'—':>12}{'—':>10}  {row['verdict']}"
+                f"{name:<15}{'—':>12}{'—':>12}{'—':>12}{'—':>12}{'—':>12}{'—':>10}  "
+                f"{row['verdict']} (back/fwd={v['detect_backward']:.0f}/{v['detect_forward']:.0f}, "
+                f"false alarms={v['false_alarm']:.0%})"
             )
             continue
         cells = {"al": row["values"]["al"], "clone": row["values"].get("clone")} | {
