@@ -718,3 +718,40 @@ get_rhythm_tracker().activation_preview() → learning_gain() → 增益
 - 增益一路從 `learning_gain()` 進來，範圍 0.4–1.6；真正的振幅上限受
   `target_strength` 與飽和支配（§15 的教訓）。
 - 黑箱模型的 hidden-state 調制仍 **✗**：需要能吃 hidden state / KV 的解碼器。
+
+---
+
+## 17. 一個命令跑完整套閘門（2026-11-07 續）
+
+§10–§16 是七支各自獨立的量測。問題是：**沒有人一次跑過全部，這套「證據」會隨時間腐爛**——換了參數、改了模型、某支腳本不再 import，而文件還寫著「成立」。
+
+`scripts/al_evidence_gate.py`
+把八層收成一張表（含電源循環），並且要求**證據紀律**：每一層都必須回報至少一個控制組／反偽造項。只回報「有效應」、沒有控制組的層，判
+`no-control`，不算證據。
+
+### 現況（2026-11-07 實跑，約 10 秒）
+
+| 層            | 判詞                                   | 控制組 | 一句話                     |
+| ------------- | -------------------------------------- | ------ | -------------------------- |
+| rhythm-source | `self-rhythm-admissible`               | 3      | 自然週期 43.542 s          |
+| power-cycle   | （無判詞，`passed`）                   | 2      | 3.203 s 斷電，誤差 7.8e-07 |
+| phase-effect  | `phase-affects-decision`               | 4      | 相位解釋 96.5%             |
+| c-param       | `generation-params-modulated`          | 1      | T 0.551–0.849              |
+| c-logit       | `phase-reaches-logits`                 | 2      | 真模型 KL 0.93             |
+| c-state       | `phase-changes-internal-dynamics`      | 2      | 切換點擺幅 0.487           |
+| c-learn       | `phase-decides-what-gets-kept`         | 2      | 權重擺幅 0.537             |
+| c-learn-wired | `phase-reaches-learning-in-production` | 2      | ΔW 0.167                   |
+
+總判詞 **`all-rungs-admissible`**。
+
+### 這支閘門自己也會失敗
+
+`tests/test_al_evidence_gate.py`
+釘住三種必須拒絕的情況：沒有控制組、控制組失敗、判詞漂移（有人改掉某支腳本的判詞字串，總閘門會紅）。另外釘住層級順序與判詞表，避免「少跑一層也說全綠」。
+
+### 誠實描述
+
+- 這張表證明的是**機制**在八個層級上成立，不是「AI 有生命」。它沒有量下游品質、沒有量長期線上效果，也沒有碰黑箱模型的 hidden
+  state。
+- `c-param`
+  只有 1 個控制組，是這張表裡最薄的一層（其餘 2–4 個）。薄就標出來，不平均掉。

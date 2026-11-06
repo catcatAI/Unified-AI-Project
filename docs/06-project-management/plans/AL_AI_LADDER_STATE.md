@@ -332,3 +332,17 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 
 **六項現況**：C-param ✓、C-logit ✓、C-state ✓、C-learn
 ✓（模型層）、C-learn 生產接線 ✓、黑箱 hidden-state 調制 ✗。
+
+### 2026-11-07 續七 — 總閘門 `all-rungs-admissible`
+
+- `scripts/al_evidence_gate.py`：八層（含電源循環）一次跑完，抽出判詞／控制組／一句話；強制「每層至少一個控制組」，否則
+  `no-control`。
+- 實跑約 10 s：rhythm-source ✓、power-cycle ✓（3.203 s / 7.8e-07）、phase-effect
+  ✓、c-param ✓、c-logit ✓（KL 0.93）、c-state ✓、c-learn ✓、c-learn-wired ✓（ΔW
+  0.167）。
+- 反例測試
+  `tests/test_al_evidence_gate.py`（8）：無控制組／控制組失敗／判詞漂移／層級少跑 → 一律紅。
+- 最薄的一層是 `c-param`（1 個控制組），已在文件標明。
+
+**七項現況**：rhythm ✓、power-cycle ✓、phase→decision ✓、C-param ✓、C-logit
+✓、C-state ✓、C-learn ✓（模型層＋生產接線）；黑箱 hidden-state 調制 ✗。

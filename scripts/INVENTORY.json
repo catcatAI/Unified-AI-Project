@@ -87,6 +87,11 @@
       "referenced": true,
       "purpose": "Where does AL state reach generation, and how much of it survives the trip?"
     },
+    "al_evidence_gate.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "把六個耦合層級的閘門收成**一個可重跑的命令**（AL 生命證據的總回歸）"
+    },
     "al_forgery.py": {
       "category": "tool",
       "referenced": true,
