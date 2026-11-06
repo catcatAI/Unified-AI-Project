@@ -313,3 +313,22 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 
 **五級現況**：C-param ✓、C-logit ✓（真模型 KL 0.93）、C-state
 ✓（自有 SNN）、C-learn ✓（權重層，未接生產）、黑箱 hidden-state 調制 ✗。
+
+### 2026-11-07 續六 — C-learn 接上生產路徑（`phase-reaches-learning-in-production`）
+
+- `GARDENEngine._plasticity_gain()` 讀 `activation_preview()` →
+  `learning_gain()`；`learn_from_interaction` 與
+  `learn_batch`（含 auto-regressive pass）都傳 `plasticity=`；摘要新增
+  `plasticity` 欄位。
+- `RhythmTracker.activation_preview()`（新）：純讀、不推進、不落盤——批次學習每個樣本都要讀，不能每個樣本寫磁碟。
+- 量測 `scripts/al_c_learn_wired.py`（真
+  `GARDENEngine`、8 段互動、只換相位）：SNN 權重差 **0.1671**；每段
+  `hebbian_delta` **0.2365 → 0.8724**（比值 3.688
+  vs 增益比 3.717）；`learn_batch` 差 **0.0275**；拋錯／NaN 的源 → 與中立
+  **0.0**；同相位重跑 **0.0**。
+- 控制組修正：原本用「沒有 tracker」，失敗（ΔW 0.052）——`get_rhythm_tracker()`
+  是單例，永遠會建一個，所以那不是真實狀態。改量「源壞掉」。
+- **仍未量**：下游品質（held-out 任務）、長期線上效果。
+
+**六項現況**：C-param ✓、C-logit ✓、C-state ✓、C-learn
+✓（模型層）、C-learn 生產接線 ✓、黑箱 hidden-state 調制 ✗。

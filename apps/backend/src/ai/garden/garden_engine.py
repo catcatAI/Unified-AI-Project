@@ -1656,6 +1656,37 @@ class GARDENEngine:
                     new_keys.append(new_key)
         return new_keys
 
+    def _plasticity_gain(self) -> float:
+        """C-learn（2026-11-07）：AL 的內生相位 → 這一刻的可塑性增益。
+
+        GARDEN 的 Hebbian 更新是**同一個模型、同一批資料**下唯一會留下痕跡的
+        地方。讓相位去縮放它，學習就不再是「每次都一樣用力」——覺醒高時共現
+        容易固化，谷底時幾乎不留痕。
+
+        實作紀律：
+        - 只讀 ``activation_preview()``（不推進、不落盤），因為批次學習每個
+          樣本都要問一次；
+        - 沒有 tracker、壞型別、缺模組 → 恰為 1.0（與未接線時逐位相同）。
+        """
+        try:
+            from core.life.al_learning_gate import learning_gain
+            from core.life.al_oscillator import get_rhythm_tracker
+        except ImportError:  # pragma: no cover - 只有拆掉生命層時才會發生
+            logger.debug("AL learning gate unavailable; plasticity stays neutral")
+            return 1.0
+        try:
+            tracker = get_rhythm_tracker()
+            preview = getattr(tracker, "activation_preview", None)
+            if callable(preview):
+                activation = preview()
+            else:
+                raw = getattr(tracker, "activation", None)
+                activation = raw() if callable(raw) else raw
+        except Exception:  # noqa: BLE001 - 學習不能因為節律源壞掉而停擺
+            logger.debug("AL rhythm unavailable; plasticity stays neutral", exc_info=True)
+            return 1.0
+        return learning_gain(activation).gain
+
     def learn_from_interaction(
         self,
         user_text: str,
@@ -1703,12 +1734,14 @@ class GARDENEngine:
 
         # Hebbian update
         delta = 0.0
+        plasticity = self._plasticity_gain()
         if input_keys and output_keys:
             delta = self.snn.hebbian_update(
                 input_keys,
                 output_keys,
                 lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05),
                 target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.35),
+                plasticity=plasticity,
             )
 
         return {
@@ -1717,6 +1750,7 @@ class GARDENEngine:
             "input_keys": input_keys,
             "output_keys": output_keys,
             "hebbian_delta": round(delta, 6),
+            "plasticity": round(plasticity, 6),
         }
 
     def _batch_non_engine_indices(self, samples: List[Dict[str, str]]) -> List[int]:
@@ -1844,6 +1878,7 @@ class GARDENEngine:
         batch_text_keys: Dict[str, Dict[str, float]],
         lr: float,
         target_str: float,
+        plasticity: float = 1.0,
     ) -> Tuple[float, float, bool]:
         """One sample's structural Hebbian + auto-regressive pass.
 
@@ -1884,6 +1919,7 @@ class GARDENEngine:
             {f"tpl:{out_tpl}": 1.0},
             lr=lr,
             target_strength=target_str,
+            plasticity=plasticity,
         )
         hebbian_delta += delta
 
@@ -1901,6 +1937,7 @@ class GARDENEngine:
                 {f"tpl:{out_tpl}": 1.0},
                 lr=lr * 0.5,
                 target_strength=target_str,
+                plasticity=plasticity,
             )
             auto_regressive_delta += delta_ar
         return hebbian_delta, auto_regressive_delta, True
@@ -1921,11 +1958,13 @@ class GARDENEngine:
         lr = learning_rate("ai.garden.engine.hebbian_lr", 0.05)
         target_str = confidence_value("ai.garden.engine.hebbian_target_strength", 0.35)
         batch_text_keys = self._batch_encode_unique(samples, filtered_indices)
+        # 一個批次讀一次相位：同一批資料的相對權重不變，只有整體深度隨體質移動。
+        plasticity = self._plasticity_gain()
 
         for idx in filtered_indices:
             s = samples[idx]
             hd, ard, updated = self._batch_hebbian_update(
-                idx, s, template_pairs, batch_text_keys, lr, target_str
+                idx, s, template_pairs, batch_text_keys, lr, target_str, plasticity
             )
             hebbian_delta += hd
             auto_regressive_delta += ard

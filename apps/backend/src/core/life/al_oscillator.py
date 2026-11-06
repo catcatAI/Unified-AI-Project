@@ -262,6 +262,17 @@ class RhythmTracker:
         with self._lock:
             return self._osc.phase
 
+    def activation_preview(self) -> float:
+        """當下的驅動量，**不推進、不落盤**。
+
+        ``activation()`` 會推進振盪器並每次 `_save()`，那是給「一次對話一個
+        樣本」用的。學習路徑（GARDEN 的 Hebbian 更新）每個樣本都要讀一次
+        gain，用 `activation()` 等於每個樣本寫一次磁碟；這裡只讀 (x, v) 的
+        現值，代價是一次鎖。
+        """
+        with self._lock:
+            return self._osc.activation
+
     def state(self) -> dict:
         with self._lock:
             return {

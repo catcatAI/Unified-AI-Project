@@ -666,3 +666,55 @@ threshold = max(0.01, base_threshold · thr_mult)
 - 只主張「相位改變了留下來的結構，方向由增益決定」。**沒有**主張「這樣學比較好」——沒有量下游任務表現。
 - **尚未接生產**：`GARDENEngine.learn_from_interaction` / `learn_batch` 目前不傳
   `plasticity`，所以這條路徑還沒被線上聊天驅動。接上去是下一步（介面已備、預設中性）。
+
+---
+
+## 16. C-learn 接上生產路徑（2026-11-07 續）
+
+§15 證明的是 `hebbian_update(plasticity=…)`
+有效——那是模型層。這一節問的是另一件事：**線上聊天走的那條路**有沒有讀到相位。如果沒有，C-learn 就只是實驗室裡的東西。
+
+### 接法
+
+`GARDENEngine._plasticity_gain()`：
+
+```
+get_rhythm_tracker().activation_preview() → learning_gain() → 增益
+```
+
+- `learn_from_interaction`：每次互動讀一次，傳進
+  `hebbian_update(plasticity=…)`，並在回傳摘要多一個 `plasticity`
+  欄位（可觀測，不必猜）。
+- `_batch_train_associations` →
+  `_batch_hebbian_update`：批次開頭讀一次，結構更新與 auto-regressive 更新都用同一個增益。
+- **`activation_preview()`（新）**：只讀 `(x, v)` 現值，不推進、不落盤。原本的
+  `activation()` 每次呼叫都會
+  `_save()`，批次學習每個樣本都用它等於每個樣本寫一次磁碟。
+
+### 判準（`scripts/al_c_learn_wired.py`）
+
+同一個引擎、同一批 8 段互動、同一個順序，只換 `get_rhythm_tracker()`
+背後的相位：
+
+| 檢查             | 結果                                                                         |
+| ---------------- | ---------------------------------------------------------------------------- |
+| 生產路徑讀到相位 | 谷 vs 峰的 SNN 權重最大逐點差 **0.1671**                                     |
+| 增量隨相位縮放   | 每段互動 `hebbian_delta` **0.2365 → 0.8724**，比值 **3.688**（增益比 3.717） |
+| 批次路徑也接了   | `learn_batch` 谷 vs 峰 **0.0275**                                            |
+| 控制組逐位相同   | 節律源**拋錯**或回 **NaN** → 與中立相位 **0.0**                              |
+| 不是噪音         | 同一相位跑兩次 **0.0**                                                       |
+
+判定 `phase-reaches-learning-in-production`。
+
+### 為什麼控制組換了
+
+第一版控制組是「完全沒有 tracker」，它失敗了（ΔW 0.052）——因為
+`get_rhythm_tracker()`
+是單例，**一定會建一個 tracker**，所以「沒有源」在生產環境不是一種真實狀態。改成「源壞掉」更強也更貼近現實：拋錯與 NaN 都必須收斂到中性，學習既不能停擺也不能變成亂數。
+
+### 誠實描述
+
+- **有接線 ≠ 有效果**。這裡量的是「相位會改變學習留下的權重」，**沒有**量「這樣學比較好」：沒有 held-out 任務、沒有下游品質指標。長期線上效果需要長時間跑 + 評估，仍未做。
+- 增益一路從 `learning_gain()` 進來，範圍 0.4–1.6；真正的振幅上限受
+  `target_strength` 與飽和支配（§15 的教訓）。
+- 黑箱模型的 hidden-state 調制仍 **✗**：需要能吃 hidden state / KV 的解碼器。

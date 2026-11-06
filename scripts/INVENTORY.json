@@ -62,6 +62,11 @@
       "referenced": true,
       "purpose": "C-learn：相位決定「這次經歷被記得多深」（`al_c_state.py` 的下一級）"
     },
+    "al_c_learn_wired.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "C-learn 的**生產接線**量測：真實 `GARDENEngine` 的學習路徑吃到了相位"
+    },
     "al_c_logit.py": {
       "category": "tool",
       "referenced": true,

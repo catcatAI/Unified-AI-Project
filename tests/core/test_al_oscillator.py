@@ -128,3 +128,35 @@ def test_persisted_file_is_readable_json(tmp_path):
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert payload["version"] == 1
     assert {"x", "v", "at"} <= set(payload)
+
+
+class TestActivationPreview:
+    """`activation_preview` exists because the learning path reads it per sample.
+
+    It must be a pure read: same value as the stepped `activation()` would report
+    without advancing the oscillator or rewriting the state file.
+    """
+
+    def test_preview_matches_the_current_activation(self, tmp_path):
+        tracker = RhythmTracker(tmp_path / "rhythm.json", clock=lambda: 1000.0)
+        tracker.activation(1010.0)
+        assert tracker.activation_preview() == pytest.approx(tracker._osc.activation)
+
+    def test_preview_does_not_advance_or_write(self, tmp_path):
+        path = tmp_path / "rhythm.json"
+        tracker = RhythmTracker(path, clock=lambda: 1000.0)
+        tracker.activation(1010.0)
+        before_state = tracker.state()
+        before_bytes = path.read_bytes()
+
+        for _ in range(50):
+            tracker.activation_preview()
+
+        assert tracker.state() == before_state
+        assert path.read_bytes() == before_bytes
+
+    def test_a_stepped_call_does_move_the_preview(self, tmp_path):
+        tracker = RhythmTracker(tmp_path / "rhythm.json", clock=lambda: 1000.0)
+        first = tracker.activation_preview()
+        tracker.activation(1020.0)
+        assert tracker.activation_preview() != first
