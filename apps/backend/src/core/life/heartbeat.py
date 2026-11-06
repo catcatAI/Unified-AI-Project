@@ -46,6 +46,16 @@ def dynamic_interval(
     return max(min_interval, min(max_interval, base_rate / rate))
 
 
+def effective_arousal(arousal: float, endogenous: float, weight: float = 0.2) -> float:
+    """把內生節律源的 activation（0..1）加成到 0..100 的喚醒度上。
+
+    分開成純函數的理由與 ``dynamic_interval`` 相同：可量測、可被測試釘住。
+    ``endogenous`` 來自 ``core.life.al_oscillator``，是**自己會動**的來源；
+    這一行就是「節拍有內生週期」在生產路徑上的全部內容。
+    """
+    return arousal + weight * 100.0 * max(0.0, min(1.0, endogenous))
+
+
 class MetabolicHeartbeat:
     def __init__(self, update_interval: Optional[float] = None):
         self.update_interval = (
@@ -267,6 +277,18 @@ class MetabolicHeartbeat:
                 stress = state.get("stress_level", hb_cfg.get("default_stress", 0.5))
                 arousal = state.get("arousal", hb_cfg.get("default_arousal", 50.0))
 
+                # 內生節律：喚醒度有一部分不來自觀測，而來自自己的相位。
+                endogenous = 0.0
+                try:
+                    from core.life.al_oscillator import get_rhythm_tracker
+
+                    endogenous = get_rhythm_tracker().activation()
+                except Exception as exc:  # pragma: no cover - 退化成外部驅動
+                    logger.debug("endogenous rhythm unavailable: %s", exc)
+                arousal_eff = effective_arousal(
+                    arousal, endogenous, _hb("heartbeat.rhythm_weight", 0.2)
+                )
+
                 # Dynamic Interval
                 min_int = _hb("heartbeat.min_interval", 5.0)
                 max_int = _hb("heartbeat.max_interval", 60.0)
@@ -275,7 +297,7 @@ class MetabolicHeartbeat:
                 mul = _hb("heartbeat.stress_multiplier", 2)
                 beat_interval = dynamic_interval(
                     stress,
-                    arousal,
+                    arousal_eff,
                     min_interval=min_int,
                     max_interval=max_int,
                     base_rate=base_rate,
@@ -287,6 +309,7 @@ class MetabolicHeartbeat:
                     {
                         "stress": round(stress, 3),
                         "arousal": round(arousal, 3),
+                        "endogenous": round(endogenous, 3),
                         "dynamic_interval": round(beat_interval, 3),
                         "system_health": round(self._system_health_score, 3),
                     },

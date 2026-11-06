@@ -25,6 +25,12 @@ rhythm is wanted, it has to come from a source that has its own dynamics (the
 bio integrator, or arousal with its rise/fall pair), and then the measurement is
 whether that source's period survives to the beat.
 
+That source now exists (``core/life/al_oscillator.py``, wired into the beat via
+``heartbeat.effective_arousal``), and ``scripts/al_rhythm_source.py`` measures
+whether the period survives. This script keeps measuring the **mapping alone**,
+which is still memoryless: the verdict below is about ``dynamic_interval``, not
+about the beat, and it is supposed to stay "inherited" forever.
+
 Usage:
     ./.venv/bin/python scripts/al_heartbeat_rhythm.py
     ./.venv/bin/python scripts/al_heartbeat_rhythm.py --json data/intelligence_reports/al_heartbeat_rhythm.json

@@ -66,3 +66,14 @@ def test_intervals_stay_in_band(rhythm):
     assert result["within_bounds"] is True
     lo, hi = result["statistics"]["inherited_sine"]["interval_range"]
     assert 5.0 <= lo <= hi <= 60.0
+
+
+def test_endogenous_activation_lifts_the_beats_arousal():
+    """The beat's arousal is (observed + endogenous); with no source it is unchanged."""
+    from core.life.heartbeat import effective_arousal
+
+    assert effective_arousal(50.0, 0.0) == 50.0
+    assert effective_arousal(50.0, 1.0) > 50.0
+    # Clamped: a caller passing a bad activation cannot blow the range up.
+    assert effective_arousal(50.0, 5.0) == effective_arousal(50.0, 1.0)
+    assert effective_arousal(50.0, -3.0) == 50.0

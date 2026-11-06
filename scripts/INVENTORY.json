@@ -82,6 +82,11 @@
       "referenced": true,
       "purpose": "Power-cycle continuity, end to end: real file, real clock, real new process."
     },
+    "al_rhythm_source.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "內生節律的證據與反證：`core/life/al_oscillator.py` 到底提供了什麼。"
+    },
     "analyze_roadmap_from_logs.py": {
       "category": "analysis",
       "referenced": true,
