@@ -21,6 +21,31 @@ from core.system.state_store.global_store import state_store
 logger = logging.getLogger(__name__)
 
 
+def dynamic_interval(
+    stress: float,
+    arousal: float,
+    *,
+    min_interval: float = 5.0,
+    max_interval: float = 60.0,
+    base_rate: float = 30.0,
+    stress_divisor: float = 50.0,
+    stress_multiplier: float = 2.0,
+) -> float:
+    """心跳的節拍間隔：壓力與喚醒度的**純函數**。
+
+    抽成模組級函數（原本內嵌在 ``_run_loop``）的唯一理由是讓它可被量測。
+    行為完全不變：同樣的公式、同樣的上下限、同樣的預設值。
+
+    這裡也是「節律是否自己產生」這個問題的答案所在：函數沒有狀態、沒有
+    延遲、沒有鄰居耦合，所以**它不會自己振盪**。任何看起來像節律的東西，
+    都是輸入（stress / arousal）帶進來的；輸入不變，間隔就不變。
+    """
+    rate = stress * stress_multiplier + (arousal / stress_divisor)
+    if rate <= 0.0:
+        return max_interval
+    return max(min_interval, min(max_interval, base_rate / rate))
+
+
 class MetabolicHeartbeat:
     def __init__(self, update_interval: Optional[float] = None):
         self.update_interval = (
@@ -248,15 +273,21 @@ class MetabolicHeartbeat:
                 base_rate = _hb("heartbeat.base_rate", 30.0)
                 div = _hb("heartbeat.stress_divisor", 50.0)
                 mul = _hb("heartbeat.stress_multiplier", 2)
-                dynamic_interval = max(
-                    min_int, min(max_int, base_rate / (stress * mul + (arousal / div)))
+                beat_interval = dynamic_interval(
+                    stress,
+                    arousal,
+                    min_interval=min_int,
+                    max_interval=max_int,
+                    base_rate=base_rate,
+                    stress_divisor=div,
+                    stress_multiplier=mul,
                 )
                 state_store.emit_event(
                     "heartbeat.pulse",
                     {
                         "stress": round(stress, 3),
                         "arousal": round(arousal, 3),
-                        "dynamic_interval": round(dynamic_interval, 3),
+                        "dynamic_interval": round(beat_interval, 3),
                         "system_health": round(self._system_health_score, 3),
                     },
                 )
@@ -268,7 +299,7 @@ class MetabolicHeartbeat:
                 await self._process_metabolism()
                 await self._observe_environment()
 
-                await asyncio.sleep(dynamic_interval)
+                await asyncio.sleep(beat_interval)
             except (
                 Exception
             ) as e:  # broad exception acceptable: heartbeat loop must be resilient to errors

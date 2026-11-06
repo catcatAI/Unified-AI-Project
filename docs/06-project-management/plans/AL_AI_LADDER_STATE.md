@@ -177,3 +177,29 @@ PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/al_channel_audit.py
 PYTHONPATH=apps/backend/src ./.venv/bin/python -m pytest \
     tests/test_al_ladder.py tests/test_al_forgery.py tests/test_al_channel_audit.py -q
 ```
+
+---
+
+## 9. 進度日誌（append-only，最新在下）
+
+### 2026-11-06 晚 — M1 收尾
+
+| 項目                 | 結果                                                                                                     | 產出                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 時鐘存疑             | 倒退 1/1、前跳 1/1、誠實樣本誤報 0%；同時偽造兩源偵測不到（系統邊界）                                    | `core/life/al_clock_guard.py`、`AffectTracker(monotonic=)`、`clock_status()`                      |
+| 關機再開（真換進程） | 隔 3.1 s 重開，誤差 **5.8e-7**；「保留最後值」偽造誤差 8.3e-2、「歸零」8.6e-2                            | `scripts/al_power_cycle.py`（三個進程：write → sleep → read）                                     |
+| 心跳節律             | **沒有自發節律**：輸入不變 → CV = 0；正弦輸入 → CV 0.181、lag1 0.987（是輸入的濾波副本）；間隔與歷史無關 | `core/life/heartbeat.py:dynamic_interval()`（純函數，行為不變）、`scripts/al_heartbeat_rhythm.py` |
+
+一句話：**心跳的節奏是被輸入帶進來的，不是它自己產生的。**
+要主張節律，必須指名有自己動態的來源（bio
+integrator 或 arousal 的 rise/fall 兩級），再量那個週期有沒有傳到節拍上。
+
+量測修正（值得記）：`al_power_cycle.py`
+第一版把「讀取進程自己的啟動時間」算進誤差，得到 3.2e-3 的假失敗；改成以**落盤時間戳**為間隔起點後誤差降到 5.8e-7。量測工具本身也要有回歸測試，否則它會穩定地報錯。
+
+### 下一步（更新後）
+
+1. **GRU／neural ODE 進偽造品預算**（3.5 人日）——唯一會改變結論的實驗。
+2. 路線參數化 `mode: prompt|param|logit|state` + provenance（1.5–2 人日）。
+3. M2 時鐘自估與校時（σ 驅動查詢，6–9 人日）。
+4. M4 閉環（C-logit 3–4、C-state 8–12、A/B/C 統計 2）。

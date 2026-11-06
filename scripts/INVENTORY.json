@@ -67,10 +67,20 @@
       "referenced": true,
       "purpose": "Which rungs survive an *optimised* fake? Provenance and ablation for the AL layer."
     },
+    "al_heartbeat_rhythm.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Is the heartbeat's rhythm generated, or inherited from its inputs?"
+    },
     "al_ladder.py": {
       "category": "tool",
       "referenced": true,
       "purpose": "Time-ladder probe: what can the AL core do that a trained baseline cannot?"
+    },
+    "al_power_cycle.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Power-cycle continuity, end to end: real file, real clock, real new process."
     },
     "analyze_roadmap_from_logs.py": {
       "category": "analysis",
