@@ -71,7 +71,11 @@ INNER_DT = (0.5, 60.0)
 # is 4.5-30 tau_rise and 0.3-2 tau_fall: the MLP never saw it, and it is not yet
 # a settled state.
 OUTER_DT = (90.0, 600.0)
-SENSITIVE = 0.05  # a rung is informative when the worst baseline misses by more
+# These are *exactness* rungs: the production rule is exact by construction, so
+# "correct" means agreeing with it to float noise. A candidate 0.025 away (a
+# constant that guesses the baseline) is wrong, not "close": letting a loose
+# tolerance count as a pass is how a rung stops measuring anything.
+SENSITIVE = 1e-03
 
 
 # =============================================================================
@@ -255,36 +259,37 @@ def rung_sampling(models, rng) -> Dict[str, float]:
 
 
 def rung_attractor(models, rng) -> Dict[str, float]:
-    """No events for a long time: the only fixed point is the baseline, 0.3.
+    """No events for a long time: does the *trajectory* relax onto the baseline?
 
     An earlier version of this rung held ``v == target == 0.8`` and called
-    staying at 0.8 a fixed point; it is not one. With no event the target relaxes
-    to the baseline by design (``tau_fall``), so 0.8 *should* decay and the rung
-    was measuring the rule working. The scorable question is the one the review
-    asks (its section 5.4 signature tests): does the state settle exactly on the
-    baseline and approach it monotonically, or wander/oscillate on the way?
+    staying at 0.8 a fixed point; it is not one. A second version scored only the
+    endpoint, and that was worse in a subtler way: a constant predictor that
+    always answers 0.3 passes it (0 error, monotone by triviality). Endpoint-only
+    scoring cannot tell a decay from a lucky constant.
 
-    ``attractor_error`` = |value after 10 tau_fall - baseline| (should be ~0).
-    ``non_monotone_steps`` = steps that moved away from the baseline, in percent.
-    The score is the pair's worst component, so either failure is visible.
+    So the score is the mean absolute error along the curve (ten checkpoints out
+    to 10 tau_fall) against the analytic trajectory, with the fraction of
+    non-monotone steps as the second component. A constant fails the curve error
+    immediately; a rule that wanders fails monotonicity.
     """
     out = {}
     for m in models:
-        err = 0.0
+        curve_err = 0.0
         non_monotone = 0
         steps = 0
         for start in (0.1, 0.5, 0.8, 1.0):
             s = ar.AffectState(start, start, 0.0)
             prev = start
             for k in range(1, 11):
-                cur = m.step(s, float(k) * TAU_FALL)
-                if abs(cur.arousal - BASELINE) > abs(prev - BASELINE) + 1e-9:
+                now = float(k) * TAU_FALL
+                truth = ar.advance(s, now).arousal
+                got = m.step(s, now).arousal
+                curve_err += abs(got - truth)
+                if abs(got - BASELINE) > abs(prev - BASELINE) + 1e-9:
                     non_monotone += 1
                 steps += 1
-                prev = cur.arousal
-            settled = m.step(s, 10.0 * TAU_FALL).arousal
-            err = max(err, abs(settled - BASELINE))
-        out[m.name] = max(err, non_monotone / max(steps, 1))
+                prev = got
+        out[m.name] = max(curve_err / steps, non_monotone / steps)
     return out
 
 
@@ -371,9 +376,9 @@ def _verdict(al: float, worst_baseline: float, control: float) -> str:
     time *and* so is the constant function. Those come back as
     ``sound-not-evidence``: worth having, but not something to quote.
     """
-    if worst_baseline < SENSITIVE:
+    if worst_baseline <= SENSITIVE:
         return "not-sensitive"
-    if control < SENSITIVE:
+    if control <= SENSITIVE:
         return "sound-not-evidence"
     if al <= 0.1 * worst_baseline:
         return "al-wins"

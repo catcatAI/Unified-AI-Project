@@ -55,17 +55,21 @@ def test_al_is_exact_where_the_mlp_extrapolates_badly(ladder):
     assert mlp_err > ladder.SENSITIVE
 
 
-def test_a_constant_predictor_passes_the_attractor_rung(ladder):
-    """The attractor is the baseline, so guessing the baseline is right — which
-    is exactly why a control that passes marks a rung as not-evidence."""
+def test_a_constant_predictor_is_visible_on_the_attractor_rung(ladder):
+    """Endpoint-only scoring let a constant pass; scoring the curve does not."""
     const = ladder.ConstModel()
-    assert ladder.rung_attractor([const], None)["const"] < 1e-12
+    err = ladder.rung_attractor([const], None)["const"]
+    assert err > ladder.SENSITIVE
 
 
 def test_control_passing_is_reported_as_sound_not_evidence(ladder):
     assert ladder._verdict(1e-16, 0.32, control=0.0) == "sound-not-evidence"
     assert ladder._verdict(0.0, 0.14, control=0.27) == "al-wins"
-    assert ladder._verdict(0.5, 0.02, control=0.9) == "not-sensitive"
+    # A rung where nothing misses by more than float noise is not sensitive.
+    assert ladder._verdict(0.5, 1e-6, control=0.9) == "not-sensitive"
+    # 0.025 is not "close" on an exactness rung: a constant guessing the
+    # baseline must not be able to count as a pass by tolerance.
+    assert ladder._verdict(0.0, 0.025, control=0.37) == "al-wins"
 
 
 def test_clock_attack_has_no_suspicion_to_report(ladder, tmp_path):

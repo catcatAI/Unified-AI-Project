@@ -57,6 +57,11 @@
       "referenced": true,
       "purpose": "Run one AI+AL training round, then auto-produce the next batch (round-2 second half)."
     },
+    "al_forgery.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Which rungs survive an *optimised* fake? Provenance and ablation for the AL layer."
+    },
     "al_ladder.py": {
       "category": "tool",
       "referenced": true,
