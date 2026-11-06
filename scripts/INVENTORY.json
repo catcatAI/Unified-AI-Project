@@ -57,6 +57,11 @@
       "referenced": true,
       "purpose": "Run one AI+AL training round, then auto-produce the next batch (round-2 second half)."
     },
+    "al_channel_audit.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Where does AL state reach generation, and how much of it survives the trip?"
+    },
     "al_forgery.py": {
       "category": "tool",
       "referenced": true,
