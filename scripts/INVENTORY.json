@@ -57,6 +57,11 @@
       "referenced": true,
       "purpose": "Run one AI+AL training round, then auto-produce the next batch (round-2 second half)."
     },
+    "al_c_param.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "C-param：相位有沒有進到**生成請求**？（`scripts/al_phase_effect.py` 的下一級）"
+    },
     "al_channel_audit.py": {
       "category": "tool",
       "referenced": true,

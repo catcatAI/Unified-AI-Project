@@ -1145,6 +1145,18 @@ class ChatService:
         if not self._llm_service:
             logger.warning("ChatService.generate_text: LLM service not available")
             return None
+        # C-param：AL 的內生相位進入請求參數（`core/life/al_generation_params`）。
+        # 快照讀不到／冇 rhythm → 原值不動，這條路徑的行為與以前逐位相同。
+        try:
+            from core.life.al_generation_params import modulate
+            from core.life.al_state import get_al_state
+
+            mod = modulate(temperature, max_tokens, get_al_state())
+            temperature, max_tokens = mod.temperature, mod.max_tokens
+            if mod.source:
+                logger.debug("[C-param] %s", mod.as_dict())
+        except Exception as exc:  # AL 不在 → 不調制，不靜默改值
+            logger.debug("AL generation modulation unavailable: %s", exc)
         try:
             if not hasattr(self._llm_service, "generate_text"):
                 logger.warning("ChatService.generate_text: LLM service has no generate_text method")

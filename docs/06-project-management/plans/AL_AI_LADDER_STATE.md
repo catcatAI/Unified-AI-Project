@@ -251,3 +251,19 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 
 **新增測試紀律**：生產快照永遠帶 `rhythm`，所以量其他來源貢獻的測試必須
 `rhythm=None` 釘住（已改 `test_al_memory_policy.py`、`test_al_arousal.py`）。
+
+### 2026-11-07 續二 — C-param 接上生成（`generation-params-modulated`）
+
+- `core/life/al_generation_params.py`：`modulate()` 把 `rhythm.activation`
+  映到請求參數（T ±0.15、tokens ±10%，界線 0.1–1.5 / 64–8192）。
+- 生產接點：`services/chat_service.py::generate_text`（參數真正送往 LLM 的位置）。無 rhythm
+  → 逐位不動。
+- 量測 `scripts/al_c_param.py`（**驅動真的
+  `generate_text`**，攔下送往 LLM 的參數）：八相位 T **0.551–0.849**、tokens
+  461–563、擺幅 42.5%；控制組 0.7/512 逐位不變；相位解釋 2,400 樣本溫度變異
+  **96.5%**，置換後
+  **0.79%**。報告：`data/intelligence_reports/al_c_param.json`。
+
+**級別**：C-param。改的是取樣條件，模型不知道被調制。**沒量**：真實模型上的輸出差異（需 N 次重複＋檢定）。
+
+**下一步二選一**：C-logit（需要本地模型或 logit_bias 支援）或 C-state（生成路徑吃狀態，大）。
