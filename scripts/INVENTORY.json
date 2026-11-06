@@ -77,6 +77,11 @@
       "referenced": true,
       "purpose": "Time-ladder probe: what can the AL core do that a trained baseline cannot?"
     },
+    "al_phase_effect.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "相位有沒有改變決定？—— 從「有節律」走到「節律有作用」。"
+    },
     "al_power_cycle.py": {
       "category": "tool",
       "referenced": true,

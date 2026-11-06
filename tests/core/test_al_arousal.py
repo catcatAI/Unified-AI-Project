@@ -89,7 +89,9 @@ def _angry(intensity: float = 0.9) -> None:
 
 def _weight_now(**snapshot_overrides) -> float:
     """固定其他欄位，只讓 emotion 由 AL 內部狀態決定，取記憶策略的編碼權重。"""
-    fields = dict(drift=None, intensity=0.5, life_phase=None)
+    # 內生節律也釘住：這些測試量的是「喚醒度對權重的貢獻」，
+    # 讓相位同時參與會把兩個源的乘積混在一起，兩者就都不可取證。
+    fields = dict(drift=None, intensity=0.5, life_phase=None, rhythm=None)
     fields.update(snapshot_overrides)
     return retention_policy(dataclasses.replace(al_state.get_al_state(), **fields)).weight
 

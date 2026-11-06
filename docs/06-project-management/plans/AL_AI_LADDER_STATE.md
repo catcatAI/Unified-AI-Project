@@ -232,3 +232,22 @@ Pol 型鬆弛振盪器（二階非線性 ODE，RK4 積分），狀態 `(x, v)` �
 
 **誠實邊界**：這證明「系統內有一個不依賴輸入的自持週期，且它是狀態的一部分」，不證明生命。振盪器是節律的**必要條件**；生命證據仍要過階梯與偽造品預算，而且下一個問題變成「那個 43.5
 s 的相位有沒有真的影響行為」，不是「有沒有節律」。
+
+### 2026-11-07 續 — 相位 → 決定（`phase-affects-decision`）
+
+節律接進了**決定**，不只是節拍：
+
+- `ALSnapshot.rhythm = {activation, phase}`，`source["rhythm"]="core.life.al_oscillator"`（與
+  `emotion` 分欄，I9）。
+- `al_memory_policy`：`weight ×= 1 + 0.2·(activation − 0.5)` →
+  0.9–1.1。權重寫進記憶，改 retrieval 與衰減，是持久痕跡而非 prompt。
+- 量測
+  `scripts/al_phase_effect.py`：八相位權重 0.937–1.143（**22.1%**），相位解釋 2,400 樣本權重變異
+  **96.5%**；拔掉 rhythm → spread **0.0**；置換後變異仍 22.2% 但解釋力掉到
+  **0.66%**；固定值與 wall-clock 兩個偽造品都被擋。報告：`data/intelligence_reports/al_phase_effect.json`。
+
+**邊界**：這是 state →
+decision，不是「同一個模型」。生成參數與 logits 沒有被碰。下一步二選一：C-param（把相位接進 temperature/tokens，小）或 C-state（讓生成路徑能吃狀態，大）。
+
+**新增測試紀律**：生產快照永遠帶 `rhythm`，所以量其他來源貢獻的測試必須
+`rhythm=None` 釘住（已改 `test_al_memory_policy.py`、`test_al_arousal.py`）。

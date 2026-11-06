@@ -43,7 +43,9 @@ def _snap(**overrides):
     「未觀測退基準」的斷言隨環境漂移。其他欄位（health/tendency/...）
     保留環境真值，因此也能用來驗「其他欄位不影響策略」。
     """
-    fields = dict(drift=None, intensity=None, life_phase=None)
+    # ``rhythm`` 也要釘 None：生產快照一定有內生相位（振盪器一直在跑），
+    # 不釘住的話「未觀測退基準」會隨環境的相位漂移。
+    fields = dict(drift=None, intensity=None, life_phase=None, rhythm=None)
     fields.update(overrides)
     return dataclasses.replace(al_state.get_al_state(), **fields)
 
@@ -58,6 +60,7 @@ class TestUnobservedFallsBackToDefaults:
             "retention": "default",
             "weight": "default",
             "consolidate": "default",
+            "rhythm": None,
         }
 
     @pytest.mark.parametrize(
@@ -171,6 +174,7 @@ class TestPurityAndScope:
             "retention": "state",
             "weight": "default",
             "consolidate": "default",
+            "rhythm": None,
         }
 
     def test_same_snapshot_yields_identical_policy(self):
@@ -226,3 +230,33 @@ class TestConsolidationIdentityGate:
         policy = retention_policy(_snap(drift={"identity": 0.5}))
         assert policy.retention_seconds == pytest.approx(BASE_RETENTION_SECONDS * 0.5)
         assert policy.source["retention"] == "state"
+
+
+class TestRhythmTerm:
+    """內生節律項（2026-11-07）：相位 → 編碼權重，逐量歸因。
+
+    這一項的語義與上面不同源：``intensity``/``arousal`` 是「觀測到什麼」，
+    ``rhythm`` 是「自己在那個相位」。混在一欄就無法回答「怎麼變的」。
+    """
+
+    def test_rhythm_lifts_and_lowers_the_weight(self):
+        low = retention_policy(_snap(rhythm={"activation": 0.0, "phase": 0.0})).weight
+        high = retention_policy(_snap(rhythm={"activation": 1.0, "phase": 0.5})).weight
+        assert high > low
+        # factor = 1 + RHYTHM_GAIN·(a − 0.5) → a=0 給 0.9、a=1 給 1.1
+        assert high / low == pytest.approx(1.1 / 0.9, rel=1e-9)
+
+    def test_absent_rhythm_leaves_the_rule_untouched(self):
+        base = retention_policy(_snap()).weight
+        assert retention_policy(_snap(rhythm=None)).weight == base
+
+    def test_provenance_names_the_oscillator(self):
+        policy = retention_policy(_snap(rhythm={"activation": 0.7, "phase": 0.2}))
+        assert policy.source["rhythm"] == "core.life.al_oscillator"
+        assert policy.source["weight"] == "state"
+
+    def test_bad_activation_is_unobserved_not_zero(self):
+        # 「壞型別 = 未觀測」：不能讀成 0.0（那是「在谷底」的觀測）
+        policy = retention_policy(_snap(rhythm={"activation": "nan-ish", "phase": 0.1}))
+        assert policy.source["rhythm"] is None
+        assert policy.weight == retention_policy(_snap(rhythm=None)).weight

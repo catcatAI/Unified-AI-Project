@@ -129,6 +129,17 @@ class Oscillator:
         return self.activation
 
     @property
+    def phase(self) -> float:
+        """極限環上的相位，[0, 1)。
+
+        取相平面的角度：``atan2(−v/ω, x)``。這是無因次量（0..1 就是一圈），
+        與週期無關，所以改 μ 時「相位」的意義不變。選這個定義而不是「距離上次
+        穿越幾個週期」是因為後者需要一個歷史，而 (x, v) 已經帶著它。
+        """
+        angle = math.atan2(-self.v / self.omega, self.x)
+        return (angle % (2.0 * math.pi)) / (2.0 * math.pi)
+
+    @property
     def activation(self) -> float:
         """0..1 的驅動量。極限環的振幅約 ±2，這裡固定映射，不做自適應正規化。
 
@@ -246,9 +257,20 @@ class RhythmTracker:
             self._save()
             return value
 
+    def phase(self) -> float:
+        """當下相位 [0, 1)，不推進（與 ``activation`` 不同，這是純讀）。"""
+        with self._lock:
+            return self._osc.phase
+
     def state(self) -> dict:
         with self._lock:
-            return {"x": self._osc.x, "v": self._osc.v, "at": self._last, "stale": self.stale}
+            return {
+                "x": self._osc.x,
+                "v": self._osc.v,
+                "at": self._last,
+                "phase": self._osc.phase,
+                "stale": self.stale,
+            }
 
 
 _tracker: Optional[RhythmTracker] = None

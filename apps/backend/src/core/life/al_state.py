@@ -170,6 +170,10 @@ class ALSnapshot:
     emotion: Optional[Dict[str, float]]
     tendency: Optional[Dict[str, float]]
     drift: Optional[Dict[str, float]]
+    # 內生節律：``activation`` 0..1、``phase`` [0,1)。與 ``emotion`` 分開理由是
+    # 觀測 vs 內生：arousal 來自事件，rhythm 來自自己的相位，混在一欄就無法
+    # 逐量歸因（I9）。未接上振盪器 → None（D11）。
+    rhythm: Optional[Dict[str, float]] = None
 
     def as_dict(self) -> Dict[str, Any]:
         """序列化 — I9 機器驗證的對象。"""
@@ -437,6 +441,19 @@ def _as_float(value: Any) -> Optional[float]:
         return None
 
 
+def _read_rhythm() -> Optional[Dict[str, float]]:
+    """內生節律的當下值。振盪器缺席（import 失敗、狀態檔壞）→ ``None``，
+    不退回 0.0：``activation=0`` 是一個「在谷底」的觀測，不是「沒量到」。"""
+    try:
+        from core.life.al_oscillator import get_rhythm_tracker
+
+        tracker = get_rhythm_tracker()
+        return {"activation": float(tracker.activation()), "phase": float(tracker.phase())}
+    except Exception as exc:
+        logger.debug("[ALState] rhythm unavailable: %s", exc)
+        return None
+
+
 def get_al_state() -> ALSnapshot:
     """取 AL 唯讀快照（contract §9 的讀路徑，唯一的對外交換量）。"""
     born_at, ticks = load_clock()
@@ -447,6 +464,7 @@ def get_al_state() -> ALSnapshot:
     intensity = _read_intensity()
     tendency = _read_tendency()
     emotion = _read_emotion()
+    rhythm = _read_rhythm()
 
     source: Dict[str, Optional[str]] = {
         "born_at": "al_state.clock" if born_at is not None else None,
@@ -464,6 +482,8 @@ def get_al_state() -> ALSnapshot:
             "core.life.life_essence.get_all_blended_tendencies" if tendency is not None else None
         ),
         "drift": "provider:drift" if drift_raw is not None else None,
+        # 內生節律不走 provider，也不經事件：它就是自己的相位。
+        "rhythm": "core.life.al_oscillator" if rhythm is not None else None,
     }
 
     snapshot = ALSnapshot(
@@ -483,6 +503,7 @@ def get_al_state() -> ALSnapshot:
         emotion=emotion,
         tendency=tendency,
         drift=drift_raw if isinstance(drift_raw, dict) else None,
+        rhythm=rhythm,
     )
     validate_snapshot(snapshot)
     return snapshot

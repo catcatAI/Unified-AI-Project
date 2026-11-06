@@ -55,6 +55,12 @@ WEIGHT_GAIN = 1.0
 # 語義：喚醒度高時發生的事該記得更牢；觀測源是 ``emotion.arousal``（時間上
 # 逼近 target 的 fast 狀態），所以同一句話在不同「歷史」下會得到不同權重。
 AROUSAL_GAIN = 0.4
+# 內生節律對編碼加權的調節（2026-11-07）：``factor = 1 + RHYTHM_GAIN·(activation − 0.5)``
+# → ±10%。觀測源是快照的 ``rhythm.activation``（``core.life.al_oscillator`` 的
+# 極限環位置），所以**同一句話在不同相位寫入會得到不同權重**——這是相位能
+# 影響行為的第一條路徑，而且是持久的那一條（寫進記憶而不是只改一句 prompt）。
+# 振幅刻意小：它是 43 s 週期的緩慢調制，不該蓋過强度與喚醒度。
+RHYTHM_GAIN = 0.2
 # 固化只認這個階段名（``LifePhase.name`` 經 ``_phase_str`` 序列化）。
 CONSOLIDATION_PHASE = "CONSOLIDATION"
 
@@ -143,6 +149,16 @@ def retention_policy(snapshot: ALSnapshot) -> RetentionPolicy:
         weight *= 1.0 + AROUSAL_GAIN * (arousal - AROUSAL_BASELINE)
         weight_source = _SOURCE_STATE
 
+    # --- 內生節律：相位 → 編碼權重 -----------------------------------------
+    # 這一項與上面兩項不同源：上面是「觀測到什麼」，這裡是「自己在哪個相位」。
+    # 缺席 → 不動（D11），所以沒有振盪器的環境行為與以前完全一樣。
+    rhythm = snapshot.rhythm if isinstance(snapshot.rhythm, dict) else None
+    rhythm_activation = _finite_float(rhythm.get("activation")) if rhythm else None
+    if rhythm_activation is not None:
+        rhythm_activation = min(max(rhythm_activation, 0.0), 1.0)
+        weight *= 1.0 + RHYTHM_GAIN * (rhythm_activation - 0.5)
+        weight_source = _SOURCE_STATE
+
     # --- 該固化嗎 ← life_phase + 身份漂移閘 -------------------------------
     consolidate = False
     consolidate_source = _SOURCE_DEFAULT
@@ -170,5 +186,8 @@ def retention_policy(snapshot: ALSnapshot) -> RetentionPolicy:
             "retention": retention_source,
             "weight": weight_source,
             "consolidate": consolidate_source,
+            # 逐量歸因（I9）：weight 是由幾個源乘出來的，這裡記「相位有沒有參與」，
+            # 否則「怎麼突然變了」在記憶層查不出來。
+            "rhythm": "core.life.al_oscillator" if rhythm_activation is not None else None,
         },
     )
