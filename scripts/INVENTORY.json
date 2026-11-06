@@ -57,6 +57,11 @@
       "referenced": true,
       "purpose": "Run one AI+AL training round, then auto-produce the next batch (round-2 second half)."
     },
+    "al_ladder.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Time-ladder probe: what can the AL core do that a trained baseline cannot?"
+    },
     "analyze_roadmap_from_logs.py": {
       "category": "analysis",
       "referenced": true,
