@@ -1,26 +1,29 @@
 #!/usr/bin/env python
-"""固定評分協定：相位調制到底有沒有用？（唯一可用的判準）
+"""固定評分協定 v3：相位調制到底有沒有用？（跨 regime × 任務族）
 
-§23 之後的問題不是「哪個數字對」，而是**量測本身可以被三個旋鈕翻轉**（讀出、剪枝
-門檻、訓練量）。所以先固定協定，再只用協定下結論。
+v2 只跑兩個 regime、一個任務族，結論是 `regime-dependent-no-claim`。v3 的改動是
+**增加獨立維度**，不是再調參數：
+
+* regime 矩陣擴成 epochs ∈ {1, 3, 5}；
+* 任務族擴成兩個、干擾結構不同：
+  - ``hard``：所有 cue 共用一個噪聲位，每 cue 有自己的 token；
+  - ``many_to_one``：兩個 cue 共用同一個 target（干擾真的存在，但答案仍可學）。
 
 協定（寫死在常數裡，不從命令列給）
 
-1. **讀出**：膜電位（§20 量到脈衝次數在同權重下完全無鑑別力）；
-2. **任務**：`hard`（48 候選 + 共用噪聲位）；
-3. **regime 矩陣**：epochs ∈ {1, 5}，兩個都要跑、**兩個都要報**（不允许挑）；
-4. **難度校準**：每個 regime 先用中性臂在固定 lr 格點上校準，取第一個讓中性臂
-   top-1 落在 [0.30, 0.70] 的 lr。校準不到就標 `uninformative`——該 regime 不能
-   拿來下結論（天花板或地板都不算證據）；
-5. **種子**：12 個固定種子；
-6. **控制組**：`shuffled`（同增益打亂）；
-7. **判詞**：`_verdict` 要求 margin **與** top-1 同向；只升 margin 不算贏。
+1. **讀出**：膜電位（§20：脈衝次數在同權重下無鑑別力）；
+2. **難度校準**：每個（任務族 × regime）沿固定階梯 × lr 格點，取第一個讓**中性臂**
+   top-1 落在 [0.30, 0.70] 的組合；校準不到就標 ``uninformative``（天花板與地板都
+   不算證據）；
+3. **種子**：12 個固定；校準另用 3 個；
+4. **控制組**：``shuffled``——**同一組增益**打亂順序，分離「平均增益」與「時序」；
+5. **判詞**：margin **與** top-1 必須同向；只升 margin 不算贏。
 
 整體判詞
 
-* ``insufficient-informative-regimes``：可下結論的 regime 少於 2 個；
-* ``mechanism-benefit-consistent``：所有可下結論的 regime 都是 `phase-beats-matched-mean`；
-* ``no-mechanism-benefit-consistent``：所有可下結論的 regime 都沒有贏過 neutral；
+* ``insufficient-informative-regimes``：可下結論的格 < 2；
+* ``mechanism-benefit-consistent``：所有可下結論的格都是 `phase-beats-matched-mean`；
+* ``no-mechanism-benefit-consistent``：所有格都沒贏過 neutral；
 * ``regime-dependent-no-claim``：其餘（方向不一致）。
 """
 
@@ -33,6 +36,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import random
 import statistics
 import sys
 from pathlib import Path
@@ -41,17 +45,27 @@ from typing import Dict, List, Sequence
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v2"
+PROTOCOL_VERSION = "al-downstream-v3"
 READOUT = "potential"
-EPOCHS_MATRIX = (1, 5)
-# 難度階梯：候選數 × 噪聲位。先小後大，第一個讓中性臂落在中段的就採用。
-# v1 只用固定任務 + lr 格點，結果 ep5 在任何 lr 都停在 0.979（結構上太容易）；
-# 所以難度也必須是可校準的維度，而且用固定階梯、不是逐格硬調。
-LADDER = ((48, 3), (96, 3), (96, 2), (144, 2), (144, 1))
+EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
 HIT_RANGE = (0.30, 0.70)
 SEEDS = (11, 23, 37, 41, 53, 67, 79, 83, 97, 101, 113, 127)
 CALIBRATION_SEEDS = (11, 23, 37)
+
+# 難度階梯：每個任務族由易到難，第一個校準得動的就採用。
+FAMILIES: Dict[str, List[Dict[str, object]]] = {
+    "hard": [
+        {"pairs": 48, "noise_bits": 3, "shared": True},
+        {"pairs": 96, "noise_bits": 2, "shared": True},
+        {"pairs": 144, "noise_bits": 1, "shared": True},
+    ],
+    "many_to_one": [
+        {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 24},
+        {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 12},
+        {"pairs": 96, "noise_bits": 2, "shared": True, "target_group": 24},
+    ],
+}
 
 DOWNSTREAM_SCRIPT = Path(__file__).with_name("al_c_learn_downstream.py")
 
@@ -71,32 +85,32 @@ _downstream = _load("al_c_learn_downstream", DOWNSTREAM_SCRIPT)
 assert READOUT == "potential", "the protocol fixes the readout; change it here deliberately"
 
 
-def calibrate(epochs: int) -> Dict[str, object]:
-    """沿固定難度階梯 × lr 格點，找第一個讓中性臂落在中段的組合。"""
-    base = dict(_downstream.TASKS["hard"])
+def _task(family: str, step: Dict[str, object], lr: float) -> Dict[str, object]:
+    base = dict(_downstream.TASKS["hard"] if family == "hard" else _downstream.TASKS[family])
+    base.update(step)
+    base["lr"] = lr
+    return base
+
+
+def calibrate(family: str, epochs: int) -> Dict[str, object]:
+    """沿該任務族的固定階梯 × lr 格點，找第一個讓中性臂落在中段的組合。"""
     trials: List[Dict[str, object]] = []
-    for pairs, noise_bits in LADDER:
+    for step in FAMILIES[family]:
         for lr in LR_GRID:
-            task = dict(base)
-            task.update(pairs=pairs, noise_bits=noise_bits, lr=lr)
+            task = _task(family, step, lr)
+            pairs = int(task["pairs"])  # type: ignore[arg-type]
             hits = []
             for seed in CALIBRATION_SEEDS:
                 core = _downstream._train([1.0] * (pairs * epochs), seed, task, epochs)
                 hits.append(_downstream._evaluate(core, task)["hit_rate"])
             mean_hit = statistics.fmean(hits)
-            trials.append(
-                {
-                    "pairs": pairs,
-                    "noise_bits": noise_bits,
-                    "lr": lr,
-                    "neutral_hit_rate": round(mean_hit, 3),
-                }
-            )
+            entry = dict(step)
+            entry.update(lr=lr, neutral_hit_rate=round(mean_hit, 3))
+            trials.append(entry)
             if HIT_RANGE[0] <= mean_hit <= HIT_RANGE[1]:
                 return {
                     "informative": True,
-                    "pairs": pairs,
-                    "noise_bits": noise_bits,
+                    "step": dict(step),
                     "lr": lr,
                     "neutral_hit_rate": round(mean_hit, 3),
                     "trials": trials,
@@ -104,20 +118,13 @@ def calibrate(epochs: int) -> Dict[str, object]:
     return {"informative": False, "trials": trials}
 
 
-def evaluate_cell(calibration: Dict[str, object], epochs: int) -> Dict[str, object]:
-    task = dict(_downstream.TASKS["hard"])
-    task.update(
-        pairs=calibration["pairs"],
-        noise_bits=calibration["noise_bits"],
-        lr=calibration["lr"],
-    )
+def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> Dict[str, object]:
+    task = _task(family, calibration["step"], float(calibration["lr"]))  # type: ignore[arg-type]
     pairs = int(task["pairs"])  # type: ignore[arg-type]
     period = _downstream.natural_period()
     phase_gains = _downstream._schedule(period, pairs * epochs)
 
     rows: Dict[str, List[Dict[str, float]]] = {"neutral": [], "phase": [], "shuffled": []}
-    import random
-
     for seed in SEEDS:
         shuffled = phase_gains[:]
         random.Random(seed * 7919).shuffle(shuffled)
@@ -133,9 +140,8 @@ def evaluate_cell(calibration: Dict[str, object], epochs: int) -> Dict[str, obje
     }
     matched = abs(gains["phase"] - gains["neutral"]) <= 0.05
     return {
-        "pairs": calibration["pairs"],
-        "noise_bits": calibration["noise_bits"],
-        "lr": calibration["lr"],
+        "family": family,
+        "task": {key: task[key] for key in ("pairs", "noise_bits", "lr") if key in task},
         "epochs": epochs,
         "arms": {
             name: {
@@ -150,6 +156,13 @@ def evaluate_cell(calibration: Dict[str, object], epochs: int) -> Dict[str, obje
     }
 
 
+NO_BENEFIT = (
+    "no-downstream-difference",
+    "margin-gain-without-hit-gain",
+    "timing-does-not-matter-only-gain",
+)
+
+
 def overall_verdict(cells: Sequence[Dict[str, object]]) -> str:
     informative = [cell for cell in cells if cell["informative"]]
     if len(informative) < 2:
@@ -157,38 +170,44 @@ def overall_verdict(cells: Sequence[Dict[str, object]]) -> str:
     verdicts = [cell["cell"]["verdict"] for cell in informative]  # type: ignore[index]
     if all(v == "phase-beats-matched-mean" for v in verdicts):
         return "mechanism-benefit-consistent"
-    if all(
-        v
-        in (
-            "no-downstream-difference",
-            "margin-gain-without-hit-gain",
-            "timing-does-not-matter-only-gain",
-        )
-        for v in verdicts
-    ):
+    if all(v in NO_BENEFIT for v in verdicts):
         return "no-mechanism-benefit-consistent"
     return "regime-dependent-no-claim"
 
 
 def run() -> Dict[str, object]:
     cells: List[Dict[str, object]] = []
-    for epochs in EPOCHS_MATRIX:
-        calibration = calibrate(epochs)
-        if not calibration["informative"]:
-            cells.append({"epochs": epochs, "informative": False, "calibration": calibration})
-            continue
-        cell = evaluate_cell(calibration, epochs)
-        cells.append(
-            {"epochs": epochs, "informative": True, "calibration": calibration, "cell": cell}
-        )
+    for family in FAMILIES:
+        for epochs in EPOCHS_MATRIX:
+            calibration = calibrate(family, epochs)
+            if not calibration["informative"]:
+                cells.append(
+                    {
+                        "family": family,
+                        "epochs": epochs,
+                        "informative": False,
+                        "calibration": calibration,
+                    }
+                )
+                continue
+            cell = evaluate_cell(family, calibration, epochs)
+            cells.append(
+                {
+                    "family": family,
+                    "epochs": epochs,
+                    "informative": True,
+                    "calibration": calibration,
+                    "cell": cell,
+                }
+            )
 
     return {
         "protocol": PROTOCOL_VERSION,
         "readout": READOUT,
-        "ladder": [list(step) for step in LADDER],
         "epochs_matrix": list(EPOCHS_MATRIX),
         "lr_grid": list(LR_GRID),
         "hit_range": list(HIT_RANGE),
+        "families": {name: steps for name, steps in FAMILIES.items()},
         "seeds": list(SEEDS),
         "cells": cells,
         "verdict": overall_verdict(cells),
@@ -206,18 +225,19 @@ def main(argv=None) -> int:
         cal = cell["calibration"]
         if not cell["informative"]:
             tops = ", ".join(
-                f"{t['pairs']}/{t['noise_bits']}@lr{t['lr']}: {t['neutral_hit_rate']}"
-                for t in cal["trials"]  # type: ignore[index]
+                f"{t.get('pairs')}@{t['lr']}: {t['neutral_hit_rate']}"
+                for t in cal["trials"][-3:]  # type: ignore[index]
             )
-            print(f"epochs {cell['epochs']}: UNINFORMATIVE (neutral top-1 -> {tops})")
+            print(f"{cell['family']:<12} ep{cell['epochs']}: UNINFORMATIVE (…{tops})")
             continue
         body = cell["cell"]
+        arms = body["arms"]
         print(
-            f"epochs {cell['epochs']}: pairs {body['pairs']} bits {body['noise_bits']} "
-            f"lr {body['lr']} neutral top-1 {cal['neutral_hit_rate']}  "  # type: ignore[index]
-            f"neutral {body['arms']['neutral']['margin_mean']:+.5f}/{body['arms']['neutral']['hit_rate_mean']}  "
-            f"phase {body['arms']['phase']['margin_mean']:+.5f}/{body['arms']['phase']['hit_rate_mean']}  "
-            f"shuffled {body['arms']['shuffled']['margin_mean']:+.5f}/{body['arms']['shuffled']['hit_rate_mean']}  "
+            f"{cell['family']:<12} ep{cell['epochs']}: lr {body['task'].get('lr')} "
+            f"neutral top-1 {cal['neutral_hit_rate']}  "
+            f"N {arms['neutral']['margin_mean']:+.5f}/{arms['neutral']['hit_rate_mean']}  "
+            f"P {arms['phase']['margin_mean']:+.5f}/{arms['phase']['hit_rate_mean']}  "
+            f"S {arms['shuffled']['margin_mean']:+.5f}/{arms['shuffled']['hit_rate_mean']}  "
             f"-> {body['verdict']}"
         )
     print(f"verdict: {result['verdict']}")

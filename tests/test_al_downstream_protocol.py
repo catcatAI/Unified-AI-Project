@@ -57,19 +57,30 @@ class TestProtocolConstants:
     def test_regime_matrix_is_not_a_single_regime(self, protocol):
         assert len(protocol.EPOCHS_MATRIX) >= 2
 
-    def test_ladder_gets_harder_not_easier(self, protocol):
-        sizes = [pairs for pairs, _ in protocol.LADDER]
-        assert sizes == sorted(sizes)
+    def test_there_is_more_than_one_task_family(self, protocol):
+        # v3 的改動是增加獨立維度：只換 regime 不足以判斷機制。
+        assert len(protocol.FAMILIES) >= 2
+
+    def test_each_family_ladder_starts_easy(self, protocol):
+        for steps in protocol.FAMILIES.values():
+            sizes = [int(step["pairs"]) for step in steps]
+            assert sizes == sorted(sizes)
 
 
 class TestCell:
     def test_cell_keeps_the_arms_gain_matched(self, protocol):
-        cell = protocol.evaluate_cell({"pairs": 48, "noise_bits": 3, "lr": 0.03}, epochs=1)
+        cell = protocol.evaluate_cell(
+            "hard",
+            {"step": {"pairs": 48, "noise_bits": 3, "shared": True}, "lr": 0.03},
+            epochs=1,
+        )
         assert cell["gain_matched"] is True
         means = {name: cell["arms"][name]["gain_mean"] for name in cell["arms"]}
         assert abs(means["phase"] - means["neutral"]) <= 0.05
         assert abs(means["shuffled"] - means["neutral"]) <= 0.05
 
     def test_cell_reports_every_arm(self, protocol):
-        cell = protocol.evaluate_cell({"pairs": 48, "noise_bits": 3, "lr": 0.03}, epochs=1)
+        cell = protocol.evaluate_cell(
+            "hard", {"step": {"pairs": 48, "noise_bits": 3, "shared": True}, "lr": 0.03}, epochs=1
+        )
         assert set(cell["arms"]) == {"neutral", "phase", "shuffled"}

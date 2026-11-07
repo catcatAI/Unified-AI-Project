@@ -76,6 +76,18 @@ SEEDS = (11, 23, 37, 41, 53, 67)
 TASKS: Dict[str, Dict[str, object]] = {
     "easy": {"pairs": 16, "noise_bits": 3, "shared": False, "lr": 0.05, "threshold": 0.25},
     "hard": {"pairs": 48, "noise_bits": 3, "shared": True, "lr": 0.03, "threshold": 0.25},
+    # 第二個任務族：真正互相競爭的 cue —— 每 group 個 cue 共用一個主 token，
+    # 只能靠各自的專屬 token 分辨。干擾結構不同於 hard（hard 是全體共用一個噪聲位）。
+    # 多對一：兩個 cue 共用同一個 target。干擾真的存在（同一列由兩組 cue 累積），
+    # 但答案仍然可學 —— 這才是「干擾結構不同、難度可校準」的第二族。
+    "many_to_one": {
+        "pairs": 48,
+        "noise_bits": 3,
+        "shared": True,
+        "target_group": 24,
+        "lr": 0.03,
+        "threshold": 0.25,
+    },
 }
 DEFAULT_TASK = "hard"
 
@@ -91,7 +103,8 @@ def _pairs(task: Dict[str, object]) -> List[Tuple[List[str], str]]:
             cue += [f"n{i % bits}", "shared"]
         else:
             cue += [f"n{(i * 7 + j) % bits}" for j in range(bits)]
-        pairs.append((cue, f"t{i:02d}"))
+        target = f"t{i % int(task.get('target_group') or count):02d}"
+        pairs.append((cue, target))
     return pairs
 
 

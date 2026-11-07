@@ -100,7 +100,7 @@
     "al_downstream_protocol.py": {
       "category": "tool",
       "referenced": true,
-      "purpose": "固定評分協定：相位調制到底有沒有用？（唯一可用的判準）"
+      "purpose": "固定評分協定 v3：相位調制到底有沒有用？（跨 regime × 任務族）"
     },
     "al_evidence_gate.py": {
       "category": "tool",

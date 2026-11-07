@@ -433,3 +433,16 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   **+0.3455/1.000**、shuffled +0.0571/0.668 → `phase-beats-matched-mean`。
 - 整體 **`regime-dependent-no-claim`**：方向相反，不能宣告有效或無效。
 - 協定是事後訂的（誠實標籤已寫入文件），價值在往後固定、不再挑 regime。
+
+### 2026-11-07 續十四 — 協定 v3（3 regimes × 2 任務族）：方向收斂
+
+- `al-downstream-v3`：epochs {1,3,5} × {`hard`,
+  `many_to_one`}，六格全部校準成功（無 `uninformative`）。
+- hard：ep1 −0.0338/0.481（有害）、ep3 **+0.2172/1.000**、ep5
+  **+0.3455/1.000**（phase-beats）。
+- many_to_one：ep1 −0.0701/0.142（有害）、ep3 +0.0111/0.479、ep5
+  +0.0232/0.479（phase-beats，但幅度僅 hard 的 1/20）。
+- 整體仍
+  `regime-dependent-no-claim`（規則要求全同向），但**方向隨訓練量單調、且跨任務族一致**：1
+  epoch 有害、3/5 epochs 有益。
+- 被否決的兩個任務族（區塊干擾、重疊 cue）都因飽和到 1.000 而不可用，理由寫進協定文件。
