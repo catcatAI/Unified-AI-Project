@@ -93,7 +93,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v14"
+PROTOCOL_VERSION = "al-downstream-v16"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -200,6 +200,54 @@ def _task(family: str, step: Dict[str, object], lr: float) -> Dict[str, object]:
     base.update(step)
     base["lr"] = lr
     return base
+
+
+def _label_shuffle_baseline(
+    family: str, seeds: Sequence[int], readout: Optional[str] = None, epochs: int = 3
+) -> Dict[str, float]:
+    """隨機標籤訓練：權重統計與真訓練相同，但配對是打亂的。
+
+    這是「這台量具有在量學習嗎」的控制：把 pair 的 target 迴圈位移一位再訓練，若命中率仍落在
+    中段，表示任務可靠輸入結構（共用 feature 的共現）解掉，跨臂比較量的就不是學習。若落到亂猜
+    附近，表示命中率確實來自學到的 feature→label 對應。
+    """
+    task = dict(_downstream.TASKS[family])
+    true_pairs = _downstream._pairs(task)
+    targets = [t for _inputs, t in true_pairs]
+    rotated = targets[1:] + targets[:1]
+    pairs = [(inputs, label) for (inputs, _t), label in zip(true_pairs, rotated)]
+    task = dict(task, pairs=len(pairs))
+    hits = []
+    heldout = []
+    for seed in seeds:
+        core = _downstream.TensorSNNCore(
+            threshold=float(task["threshold"]), timesteps=_downstream._readouts.TIMESTEPS
+        )
+        rng = random.Random(seed)
+        for _ in range(epochs):
+            order = pairs[:]
+            rng.shuffle(order)
+            for inputs, label in order:
+                core.hebbian_update(
+                    {key: 1.0 for key in inputs},
+                    {label: 1.0},
+                    lr=float(task["lr"]),
+                    target_strength=_downstream.TARGET_STRENGTH,
+                    plasticity=1.0,
+                )
+        hits.append(
+            _downstream._evaluate(core, task, pairs=true_pairs, readout=readout)["hit_rate"]
+        )
+        heldout.append(
+            _downstream._evaluate(
+                core, task, pairs=_downstream._heldout_pairs(task), readout=readout
+            )["hit_rate"]
+        )
+    return {
+        "train": round(statistics.fmean(hits), 3),
+        "heldout": round(statistics.fmean(heldout), 3),
+        "chance": round(1.0 / len(set(targets)), 3),
+    }
 
 
 def _measure(task: Dict[str, object], seeds, readout: Optional[str] = None) -> Dict[int, float]:
@@ -519,9 +567,21 @@ def run(readout: Optional[str] = None) -> Dict[str, object]:
                 }
             )
 
+    # 量具本身的控制：同一批輸入、打亂的標籤。若這段也拿到中段，跨臂比較量的是輸入結構。
+    controls = {
+        family: _label_shuffle_baseline(family, CALIBRATION_SEEDS, readout=readout)
+        for family in FAMILIES
+    }
+    for name, control in controls.items():
+        print(
+            f"control {name:<12} label-shuffle train {control['train']} "
+            f"held-out {control['heldout']} (chance {control['chance']})"
+        )
+
     return {
         "protocol": PROTOCOL_VERSION,
         "readout": readout or READOUT,
+        "controls": controls,
         "epochs_matrix": list(EPOCHS_MATRIX),
         "lr_grid": list(LR_GRID),
         "hit_range": list(HIT_RANGE),

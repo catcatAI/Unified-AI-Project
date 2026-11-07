@@ -702,3 +702,16 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   +0.1615 但 margin −0.0002 → 降級。
 - 讀法：命中率上升而 margin 不動 = 平手被打破，不是表徵變好。相位調制沒有時序優勢。
 - 檢查：協定單檔 44 passed、flake8=0。
+
+### 2026-11-07 續二十九 — 量具控制：打亂標籤
+
+- 新增
+  `_label_shuffle_baseline`：同批輸入、target 迴圈位移一位再訓練（權重統計同真訓練），用真 pair 評估；寫進每次執行的
+  `controls` 並印出。
+- 實測（`--readout direct`，3 校準種子）：hard 0.000 / conflict 0.000 /
+  structured 0.000 / m2o 0.000，亂猜分別 0.021 / 0.125 / 0.083 / 0.042 →
+  **掉到亂猜以下**（固定雙射使模型把錯標籤學得更牢），是「學到特定對應」的簽名。
+- 結論：conflict 的中段是學來的，不是輸入結構給的；前面跨臂比較量的確實是學習。
+- 協定升
+  `al-downstream-v16`；判詞與 v15 相同（`no-mechanism-benefit-consistent`）。
+- 檢查：協定單檔 46 passed、flake8=0。

@@ -393,3 +393,19 @@ class TestDetectableEffectSize:
 
     def test_no_spread_means_no_estimate(self, protocol):
         assert protocol._min_detectable_delta(0.0, 12, 10) is None
+
+
+class TestLabelShuffleControl:
+    """量具控制：輸入不變、標籤打亂。若仍拿中段，量到的就不是學習。"""
+
+    def test_shuffle_is_much_worse_than_trained(self, protocol):
+        control = protocol._label_shuffle_baseline("conflict", (0, 1), readout="direct")
+        assert control["chance"] == 0.125
+        # 打亂後模型把錯誤的對應學得很牢，真標籤永遠輸：比亂猜還低。
+        assert control["train"] < control["chance"]
+        assert control["heldout"] < control["chance"]
+
+    def test_shuffle_control_reports_chance_for_each_family(self, protocol):
+        for family, targets in (("conflict", 8), ("many_to_one", 24)):
+            control = protocol._label_shuffle_baseline(family, (0,), readout="direct")
+            assert control["chance"] == round(1.0 / targets, 3)
