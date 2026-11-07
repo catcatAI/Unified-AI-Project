@@ -1664,8 +1664,11 @@ class GARDENEngine:
         容易固化，谷底時幾乎不留痕。
 
         實作紀律：
-        - 只讀 ``activation_preview()``（不推進、不落盤），因為批次學習每個
-          樣本都要問一次；
+        - 只讀 ``activation_preview()``（不推進、不落盤）；
+        - 呼叫點是 ``_batch_train_associations`` **每批一次**，所以同批樣本拿到
+          同一個增益：生產環境實作的是「什麼時候學這批」而不是「每個樣本各自的
+          時機」。實驗（``scripts/al_downstream_protocol.py``）操弄的是逐樣本相位，
+          兩者不是同一個變數，別把實驗結果直接算成生產行為；
         - 沒有 tracker、壞型別、缺模組 → 恰為 1.0（與未接線時逐位相同）。
         """
         try:

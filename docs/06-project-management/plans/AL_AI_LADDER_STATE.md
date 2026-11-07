@@ -460,3 +460,17 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   `regime-dependent-no-claim`，但結論改寫：**方向取決於干擾結構，不是訓練量**。
 - 新增回歸測試 3 個（同 label 不當對手、缺失 label 不當對手、多對一可得分 1.0）。
 - 已知未修：校準種子與評估種子重疊 3 個（v5 處理）。
+
+### 2026-11-07 續十六 — 修學習相位預覽的「舊體質」bug，並劃清生產／實驗的界線
+
+- 修 `RhythmTracker.activation_preview()`：原本直接回傳
+  `_osc.activation`，那是**上次推進那一刻**的相位。背景學習若隔很久才跑（沒有對話推振盪器），學到的是舊體質而不是「這一刻」。現在在振盪器副本上前進到
+  `now` 再丟掉，仍然不推進、不落盤；時鐘倒退不倒退振盪器，長缺席以
+  `MAX_CATCHUP_S` 封頂。
+- 新增 `tests/core/test_al_rhythm_preview.py`（5 個）：與時鐘同步、與
+  `activation()` 結果一致、不動狀態且不落盤、長缺席封頂、時鐘倒退不動狀態。
+- 劃清界線（重要）：生產只在 `_batch_train_associations`
+  **每批讀一次**增益，同批樣本共用；實驗操弄的是**逐樣本相位進展**。這兩個不是同一個變數——`hard`
+  族的 +0.34 margin 不能算成生產環境的行為。`garden_engine._plasticity_gain`
+  的 docstring 已改成這樣寫（原本寫「每個樣本都要問一次」，與呼叫點不符）。
+- AL 相關 6 檔測試 65 passed；flake8 = 0。

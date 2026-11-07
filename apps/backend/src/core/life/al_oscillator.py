@@ -262,16 +262,32 @@ class RhythmTracker:
         with self._lock:
             return self._osc.phase
 
-    def activation_preview(self) -> float:
-        """當下的驅動量，**不推進、不落盤**。
+    def activation_preview(self, now: Optional[float] = None) -> float:
+        """當下的驅動量（含尚未推進的 dt），**不推進、不落盤**。
 
         ``activation()`` 會推進振盪器並每次 `_save()`，那是給「一次對話一個
         樣本」用的。學習路徑（GARDEN 的 Hebbian 更新）每個樣本都要讀一次
-        gain，用 `activation()` 等於每個樣本寫一次磁碟；這裡只讀 (x, v) 的
-        現值，代價是一次鎖。
+        gain，用 `activation()` 等於每個樣本寫一次磁碟；這裡在副本上前進到
+        ``now`` 再丟掉，代價是一次鎖加一次短積分。
+
+        為什麼要前進：直接回傳 `self._osc.activation` 是**上次推進那一刻**的
+        相位。背景學習若隔了很久才跑（沒有對話去推振盪器），學到的就是舊體質，
+        而不是「這一刻」的體質——這正是這個方法名字要回答的問題。
         """
         with self._lock:
-            return self._osc.activation
+            at = self._clock() if now is None else float(now)
+            dt = at - self._last
+            if not math.isfinite(dt) or dt <= 0.0:
+                # 時鐘倒退或未前進：與 `activation()` 一致，不往前推算。
+                return self._osc.activation
+            probe = Oscillator(
+                mu=self._osc.mu,
+                omega=self._osc.omega,
+                max_step=self._osc.max_step,
+                x=self._osc.x,
+                v=self._osc.v,
+            )
+            return probe.step(min(dt, MAX_CATCHUP_S))
 
     def state(self) -> dict:
         with self._lock:
