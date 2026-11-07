@@ -38,7 +38,10 @@ sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 from ai.garden.snn_core import TensorSNNCore  # noqa: E402
 
 DOWNSTREAM_SCRIPT = Path(__file__).with_name("al_c_learn_downstream.py")
-LOW_GAIN = 0.2
+# 低谷段的門檻。增益的實際範圍是 0.4–1.6（中性 1.0），所以舊的 0.2 **永遠不會被
+# 觸發**：`low-gain-samples-are-the-losers` 這個判詞在資料完全支持它的時候也判不出來。
+# 0.8 的語義是「明顯低於中性」，落在擺幅的下半段。
+LOW_GAIN = 0.8
 
 
 def _load(name: str, path: Path):
@@ -148,6 +151,9 @@ def run(seed: int = 11, task_name: str = _downstream.DEFAULT_TASK) -> Dict[str, 
     gain_deltas = [row["margin_delta"] for row in rows]
     corr = _correlation([row["gain"] for row in rows], gain_deltas)
     zeros = sum(1 for row in rows if row["gain"] < LOW_GAIN)
+    # 基準率：全部樣本裡有多少比例本來就低增益。沒有這個數字，「翻轉的多半是低增益」
+    # 就可能只是「大部分樣本都低增益」的同義詞。
+    low_base_rate = zeros / len(rows) if rows else 0.0
     empty_targets = sum(1 for row in rows if row["phase_target_row"] <= 0.0)
 
     return {
@@ -159,6 +165,8 @@ def run(seed: int = 11, task_name: str = _downstream.DEFAULT_TASK) -> Dict[str, 
             "max": round(max(phase_gain), 4),
             "mean": round(statistics.fmean(phase_gain), 4),
             "below_low": zeros,
+            "below_low_base_rate": round(low_base_rate, 3),
+            "low_gain_threshold": LOW_GAIN,
         },
         "margin_mean": {
             name: round(statistics.fmean(values), 5) for name, values in margins.items()
@@ -181,6 +189,11 @@ def main(argv=None) -> int:
     result = run(seed=args.seed, task_name=args.task)
     print(f"task: {args.task}  seed: {args.seed}  period {result['period_s']}s")
     print(f"gain schedule: {result['gain']}")
+    flipped_rate = len(result["flipped_rows"]) / max(1, len(result["flips"]))
+    print(
+        f"low-gain base rate: {result['gain']['below_low_base_rate']}"
+        f"  (flipped rows that are low-gain: {flipped_rate:.2f})"
+    )
     print(f"margin mean: {result['margin_mean']}")
     print(
         f"corr(gain, margin delta): {result['gain_delta_correlation']}  "

@@ -71,6 +71,26 @@ class TestPruneFloor:
         assert float(core._W[row, col]) == 0.0
 
 
+class TestThresholdIsReachable:
+    """門檻必須落在增益的實際範圍內，否則那個判詞是一條死路。"""
+
+    def test_low_gain_threshold_splits_the_real_schedule(self, trace):
+        period = trace._downstream.natural_period()
+        gains = trace._downstream._schedule(period, 48)
+        below = [g for g in gains if g < trace.LOW_GAIN]
+        above = [g for g in gains if g >= trace.LOW_GAIN]
+        assert below, "門檻太高：沒有任何樣本算低增益"
+        assert above, "門檻太低：所有樣本都算低增益"
+        # 舊的 0.2 低於整個擺幅（0.4–1.6），所以永遠觸發不了。
+        assert min(gains) > 0.2
+
+    def test_report_exposes_the_base_rate(self, trace):
+        report = trace.run(seed=11)
+        assert 0.0 <= report["gain"]["below_low_base_rate"] <= 1.0
+        # 沒有基準率，就分不清「翻轉的多半低增益」和「大部分樣本都低增益」。
+        assert report["gain"]["low_gain_threshold"] == trace.LOW_GAIN
+
+
 class TestVerdict:
     def _rows(self, gains, deltas):
         return [
