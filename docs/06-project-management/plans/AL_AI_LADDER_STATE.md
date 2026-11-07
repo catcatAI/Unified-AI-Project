@@ -622,3 +622,23 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - 根修方向：任務改成每個 target 有共用 feature
   token（訓練與 held-out 的 cue 都帶），才有真正的 held-out 與學習曲線；在那之前調門檻只是量背誦速度差。
 - 檢查：協定單檔 30 passed、flake8=0。
+
+### 2026-11-07 續二十五 — 真 held-out 與讀出壓平
+
+- 新增任務族 `structured`：每個 target 一個 `feat{tXX}` token，訓練與 held-out
+  cue 都帶；只差在未出現過的 `cueNN`。協定 `FAMILIES` 與 `TASKS` 都加了。
+- 首次量到真遷移：neutral、48 pair、ep1 → 訓練集 top-1 1.000、held-out
+  1.000（亂猜 0.083，12 個 target），margin +0.2389。
+- 但 ep2 margin +0.4585、ep3 起 top-1 0.000 且 margin **恰 0.0000**（0.9545 vs
+  0.9451、1.4354 vs 1.4354）——正確 label 與最強對手電位相等，各 target 被壓平。
+- 因此 `structured` 在協定是
+  `ladder-exhausted`：沒有 step／lr 能讓中性臂在 ep1/3/5 全在 [0.30,0.70]；最佳嘗試 192p/2b@0.02
+  = `{ep1: 0.667, ep3: 0.056}`。
+- 判讀：下游問題在任何訓練長度上都答不了——`hard`／`m2o` 是背誦速度，`structured`
+  第一輪就遷移但第二輪就塌。卡的是讀出，不是判準、種子數或階梯。
+- 下一個根問題：`TensorSNNCore.hebbian_update`
+  重複訓練為何把各 target 膜電位壓成同值。修好之前 `epochs > 1`
+  的格子都不能當學習曲線讀。
+- v12 整體判詞仍
+  `no-mechanism-benefit-consistent`（hard 與 m2o 的格未變）；協定單檔 33
+  passed、flake8=0。

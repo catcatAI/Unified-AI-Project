@@ -231,3 +231,45 @@ class TestHeldOutIsNotTrainingData:
         off_train = downstream._evaluate(core, task, downstream._heldout_pairs(task))["hit_rate"]
         assert on_train > 0.9
         assert off_train <= 0.10
+
+
+class TestStructuredTaskOffersRealHeldOut:
+    """共用 feature token 才讓 held-out 有意義——但這個模型訓久了會壓成同分。"""
+
+    @pytest.fixture(scope="class")
+    def downstream(self):
+        import importlib.util
+
+        script = REPO_ROOT / "scripts" / "al_c_learn_downstream.py"
+        spec = importlib.util.spec_from_file_location("al_downstream_structured_test", script)
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["al_downstream_structured_test"] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def test_feature_token_is_shared_between_train_and_heldout(self, downstream):
+        task = downstream.TASKS["structured"]
+        for cue, target in downstream._pairs(task):
+            assert f"feat{target}" in cue
+        for cue, target in downstream._heldout_pairs(task):
+            assert f"feat{target}" in cue
+
+    def test_one_epoch_transfers_to_unseen_cues(self, downstream):
+        task = downstream.TASKS["structured"]
+        core = downstream._train([1.0] * 48, 11, task, 1)
+        on_train = downstream._evaluate(core, task)["hit_rate"]
+        off_train = downstream._evaluate(core, task, downstream._heldout_pairs(task))["hit_rate"]
+        assert on_train > 0.9
+        assert off_train > 0.9
+
+    def test_more_epochs_flatten_the_readout(self, downstream):
+        """訓練更久會把所有 target 的電位壓成同分，top-1 崩掉——epochs 不是學習曲線。
+
+        這是模型行為，不是測試環境問題；寫成測試是為了讓它不能被悄悄忽略。
+        """
+        task = downstream.TASKS["structured"]
+        one = downstream._train([1.0] * 48, 11, task, 1)
+        three = downstream._train([1.0] * 48 * 3, 11, task, 3)
+        assert downstream._evaluate(one, task)["hit_rate"] > 0.9
+        assert downstream._evaluate(three, task)["hit_rate"] <= 0.1

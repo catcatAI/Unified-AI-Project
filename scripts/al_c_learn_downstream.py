@@ -88,6 +88,17 @@ TASKS: Dict[str, Dict[str, object]] = {
     # 只能靠各自的專屬 token 分辨。干擾結構不同於 hard（hard 是全體共用一個噪聲位）。
     # 多對一：兩個 cue 共用同一個 target。干擾真的存在（同一列由兩組 cue 累積），
     # 但答案仍然可學 —— 這才是「干擾結構不同、難度可校準」的第二族。
+    # 共用判別特徵的任務族：每個 target 有一個 feature token，同一個 target 的多個 cue
+    # 都帶它，held-out cue 也帶。這是「學會」與「背起來」唯一分得開的地方。
+    "structured": {
+        "pairs": 48,
+        "noise_bits": 3,
+        "shared": True,
+        "target_group": 12,
+        "feature_token": True,
+        "lr": 0.03,
+        "threshold": 0.25,
+    },
     "many_to_one": {
         "pairs": 48,
         "noise_bits": 3,
@@ -104,14 +115,20 @@ def _pairs(task: Dict[str, object]) -> List[Tuple[List[str], str]]:
     """每個 cue 有自己的 token，加噪聲位；難版讓所有 cue 共用一個 ``shared`` 位。"""
     count = int(task["pairs"])  # type: ignore[arg-type]
     bits = int(task["noise_bits"])  # type: ignore[arg-type]
+    group = int(task.get("target_group") or count)
     pairs: List[Tuple[List[str], str]] = []
     for i in range(count):
+        target = f"t{i % group:02d}"
         cue = [f"cue{i:02d}"]
         if task["shared"]:
             cue += [f"n{i % bits}", "shared"]
         else:
             cue += [f"n{(i * 7 + j) % bits}" for j in range(bits)]
-        target = f"t{i % int(task.get('target_group') or count):02d}"
+        if task.get("feature_token"):
+            # 共用判別特徵：同一個 target 的所有 cue 都帶同一個 feature token，訓練與
+            # held-out 的 cue 都帶。沒有它，新 cue 的判別 token 從未出現過，held-out
+            # 只能是亂猜（見模組 docstring）。
+            cue.append(f"feat{target}")
         pairs.append((cue, target))
     return pairs
 
@@ -149,12 +166,15 @@ def _heldout_pairs(
     held: List[Tuple[List[str], str]] = []
     for i in range(width):
         j = total + i
+        target = f"t{j % group:02d}"
         cue = [f"cue{j:02d}"]
         if task["shared"]:
             cue += [f"n{j % bits}", "shared"]
         else:
             cue += [f"n{(j * 7 + k) % bits}" for k in range(bits)]
-        held.append((cue, f"t{j % group:02d}"))
+        if task.get("feature_token"):
+            cue.append(f"feat{target}")
+        held.append((cue, target))
     assert not set(id(pair) for pair in held) & set(id(pair) for pair in train)
     return held
 

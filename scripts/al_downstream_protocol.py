@@ -43,6 +43,11 @@ v11 修的是**根**：``_train`` 與 ``_evaluate`` 用的是同一批 pair，�
 只能是「記得多快」，這個模型根本沒有遷移可言。v11 把 ``heldout_hit_rate_mean`` 與
 ``heldout_at_chance`` 寫進每一格，讓這件事每次重跑都會自己現形。
 
+v12 加一族人造任務 ``structured``：每個 target 一個共用的 feature token，訓練與 held-out 的
+cue 都帶，所以 held-out 終於有意義。實測它 ep1 就完全遷移（訓練集與 held-out 都 1.000），但
+ep3 起所有 target 的電位壓成同分（margin 恰 0.0000），top-1 崩成 0.000——``epochs`` 在這模型
+上不是學習曲線，是「先學會、再壓平」。
+
 v9 修的是**校準貼邊**：沿著單調的難度軸「第一個合格就採用」，必然停在界內第一點——實測
 ``many_to_one`` 停在 0.306（餘裕 0.006）、``hard`` 停在 0.333（餘裕 0.033），兩族都是換一批
 種子就會跨出界外的距離。v9 優先選每個 regime 都離上下界至少 ``HIT_MARGIN``=0.05 的候選，
@@ -87,7 +92,7 @@ from typing import Dict, List, Sequence, Tuple
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v11"
+PROTOCOL_VERSION = "al-downstream-v12"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -116,6 +121,14 @@ FAMILIES: Dict[str, List[Dict[str, object]]] = {
         {"pairs": 72, "noise_bits": 2, "shared": True},
         {"pairs": 96, "noise_bits": 2, "shared": True},
         {"pairs": 144, "noise_bits": 1, "shared": True},
+    ],
+    # 共用判別特徵的任務族：每個 target 一個 feature token，訓練與 held-out 的 cue 都帶。
+    # 這一族存在的目的是讓 held-out 有意義；實測它在 ep1 就能完全遷移（train 與 held-out
+    # 都 1.000），但 ep3 起所有 target 的電位壓成同分、margin 恰為 0，top-1 崩成 0。
+    "structured": [
+        {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 12, "feature_token": True},
+        {"pairs": 96, "noise_bits": 3, "shared": True, "target_group": 12, "feature_token": True},
+        {"pairs": 192, "noise_bits": 2, "shared": True, "target_group": 12, "feature_token": True},
     ],
     "many_to_one": [
         {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 24},
