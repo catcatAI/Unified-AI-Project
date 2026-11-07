@@ -499,3 +499,18 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   ep1 沒差、ep3/ep5 受害。整體 `regime-dependent-no-claim`。
 - 這輪的教訓：`uninformative`
   未必是任務沒有中段，也可能是校準取樣太少或取樣被污染。先修儀器，再解釋任務。
+
+### 2026-11-07 續十九 — 協定 v6：固定調制頻率，v5 的「受益」消失
+
+- 缺陷：`_schedule` 讓整段訓練走完一個週期，`epochs`
+  同時放大訓練量並拉長週期（ep5 的相位速度是 ep1 的 1/5）。「訓練夠了」與「振盪慢到像學習率排程」兩種解釋分不開。
+- 修法：`_schedule(period, n, step_per_period=pairs)`，每個 epoch 一個週期；`al_c_learn_downstream.run`
+  與協定 `evaluate_cell` 同步。
+- 重跑 v6：hard ep3 由 `+0.2172/1.000` 變成 `−0.0125/0.516`（沒差）；ep5 由
+  `+0.3455/1.000` 變成 `+0.0637/0.699`，**shuffled 反而更高（+0.0700/0.714）**→
+  `timing-does-not-matter-only-gain`。many_to_one 三格全部
+  `no-downstream-difference`。
+- 整體判詞由 `regime-dependent-no-claim` 變成
+  **`no-mechanism-benefit-consistent`**；v5 的「hard 後期受益」正式撤回，原因寫進協定文件（那個效果是慢週期＝前重後輕的學習率排程，不是時序）。
+- 仍站得住的部分：ep5 的 phase 與 shuffled 都贏 neutral（0.699/0.714 vs
+  0.443）——**增益有起伏有用，順序沒用**。

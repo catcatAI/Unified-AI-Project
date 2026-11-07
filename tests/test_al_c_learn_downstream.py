@@ -97,6 +97,26 @@ class TestArms:
             assert len(report["per_seed_margin"][name]) == len(report["seeds"])
 
 
+class TestSchedule:
+    """調制頻率必須與 epochs 無關，否則「訓練量」與「頻率」是同一個開關。"""
+
+    def test_step_per_period_fixes_the_rate(self, gate):
+        period = gate.natural_period()
+        one = gate._schedule(period, 48, step_per_period=48)
+        five = gate._schedule(period, 48 * 5, step_per_period=48)
+        # 同樣的每樣本速度：每一輪都走完一個週期（容許極限環的微量漂移）。
+        for cycle in range(5):
+            assert five[48 * cycle : 48 * (cycle + 1)] == pytest.approx(one, abs=0.02)
+        # 5 輪是同一個週期重複 5 次，不是把一個週期拉長成 5 倍。
+        stretched = gate._schedule(period, 48 * 5)
+        assert stretched[48:96] != pytest.approx(one, abs=0.02)
+
+    def test_default_still_stretches_one_period_over_the_whole_run(self, gate):
+        one = gate._schedule(6.0, 48)
+        five = gate._schedule(6.0, 48 * 5)
+        assert five[:48] != pytest.approx(one)
+
+
 class TestScoring:
     """候選集必須由目標 label 決定；用 pair 索引拼字串會把命中率截半。"""
 

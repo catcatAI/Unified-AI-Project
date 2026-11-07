@@ -12,12 +12,14 @@ v2 只跑兩個 regime、一個任務族，結論是 `regime-dependent-no-claim`
 協定（寫死在常數裡，不從命令列給）
 
 1. **讀出**：膜電位（§20：脈衝次數在同權重下無鑑別力）；
-2. **難度校準**：每個（任務族 × regime）沿固定階梯 × lr 格點，取第一個讓**中性臂**
+2. **調制頻率**：每個 epoch 走完一個振盪週期（v6 起）；``epochs`` 只改變訓練量，
+   不改變每樣本拿到的相位速度；
+3. **難度校準**：每個（任務族 × regime）沿固定階梯 × lr 格點，取第一個讓**中性臂**
    top-1 落在 [0.30, 0.70] 的組合；校準不到就標 ``uninformative``（天花板與地板都
    不算證據）；
-3. **種子**：12 個固定；校準另用 3 個、**與評估種子互斥**（v5 起）；
-4. **控制組**：``shuffled``——**同一組增益**打亂順序，分離「平均增益」與「時序」；
-5. **判詞**：margin **與** top-1 必須同向；只升 margin 不算贏。
+4. **種子**：12 個固定；校準另用 3 個、**與評估種子互斥**（v5 起）；
+5. **控制組**：``shuffled``——**同一組增益**打亂順序，分離「平均增益」與「時序」；
+6. **判詞**：margin **與** top-1 必須同向；只升 margin 不算贏。
 
 v4 只是**修儀器**：候選 label 由 pair 索引拼字串改成由任務的目標 label 集決定。
 多對一任務裡一個 label 對應多個 pair，索引拼法會讓半數 pair 的 rivals 全空
@@ -51,7 +53,7 @@ from typing import Dict, List, Sequence
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v5"
+PROTOCOL_VERSION = "al-downstream-v6"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -131,7 +133,9 @@ def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> D
     task = _task(family, calibration["step"], float(calibration["lr"]))  # type: ignore[arg-type]
     pairs = int(task["pairs"])  # type: ignore[arg-type]
     period = _downstream.natural_period()
-    phase_gains = _downstream._schedule(period, pairs * epochs)
+    # 每個 epoch 一個週期：不同 epochs 之間的「每樣本相位速度」相同，否則
+    # 「訓練量」與「調制頻率」是同一個開關，兩種解釋分不開。
+    phase_gains = _downstream._schedule(period, pairs * epochs, step_per_period=pairs)
 
     rows: Dict[str, List[Dict[str, float]]] = {"neutral": [], "phase": [], "shuffled": []}
     for seed in SEEDS:

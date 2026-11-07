@@ -45,7 +45,7 @@ import random
 import statistics
 import sys
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
@@ -110,12 +110,17 @@ def _pairs(task: Dict[str, object]) -> List[Tuple[List[str], str]]:
     return pairs
 
 
-def _schedule(period: float, n: int) -> List[float]:
-    """真振盪器走一整個週期，逐樣本取增益。"""
+def _schedule(period: float, n: int, step_per_period: Optional[int] = None) -> List[float]:
+    """逐樣本取增益；``step_per_period`` 決定「每幾個樣本走完一個週期」。
+
+    預設是整段 ``n`` 個樣本走完一個週期。多輪訓練時必須另外指定，否則週期會隨
+    ``epochs`` 一起被拉長（5 輪 = 相位前進慢 5 倍），「訓練量」與「調制頻率」就綁在
+    同一個開關上，兩種解釋分不開。
+    """
     osc = Oscillator()
     osc.step(period * 3.0)
     gains: List[float] = []
-    dt = period / n
+    dt = period / (step_per_period or n)
     for _ in range(n):
         osc.step(dt)
         gains.append(learning_gain(osc.activation).gain)
@@ -220,7 +225,8 @@ def run(
     task = TASKS[task_name]
     period = natural_period()
     n_samples = int(task["pairs"]) * epochs  # type: ignore[arg-type]
-    phase_gains = _schedule(period, n_samples)
+    # 每個 epoch 走完一個週期：每樣本的相位前進速度與 epochs 無關。
+    phase_gains = _schedule(period, n_samples, step_per_period=int(task["pairs"]))  # type: ignore[arg-type]
 
     rows: Dict[str, List[Dict[str, float]]] = {"neutral": [], "phase": [], "shuffled": []}
     gain_means: Dict[str, float] = {}
