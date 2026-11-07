@@ -451,40 +451,71 @@ def _make_net(torch: Any, pad_id: int = 0) -> Any:
             soft = torch.sigmoid(self.cfg.surrogate_alpha * x)
             return hard.detach() + soft - soft.detach()
 
-        def forward(self, ids: Any) -> Any:
-            batch, steps = ids.shape
+        def init_state(self, batch: int, device: Any = None) -> Any:
+            """Zero (mem, spk) per layer — the state a sequence starts from.
+
+            Exposed so autoregressive decoding can carry the state and advance
+            one token at a time: ``generate()`` used to re-run the whole prefix
+            for every new token (O(n²) forwards), which at 10^8 parameters is
+            the difference between minutes and hours for a 115-item benchmark.
+            """
+            # The tensors follow the module's weights; ``device`` stays in the
+            # signature so a caller can be explicit without it ever disagreeing
+            # with where the parameters actually live.
+            shape = (batch, self.cfg.d_hidden)
+            mem = [self.embed.weight.new_zeros(shape) for _ in range(self.n_layers)]
+            spk = [self.embed.weight.new_zeros(shape) for _ in range(self.n_layers)]
+            return mem, spk
+
+        def advance_hidden(self, token_ids: Any, state: Any) -> Any:
+            """Feed one token per row; return (pre-head vector, new_state).
+
+            ``advance`` applies the vocabulary head to this. Training only
+            needs the head on answer positions (see ``TokenSNN.loss``), and the
+            head is ``d_hidden x vocab`` — >90% of the compute per token at
+            10^8 parameters — so the split matters.
+            """
+            mem, spk = state
             leak = torch.sigmoid(self.beta)
-            mem = [
-                self.embed.weight.new_zeros((batch, self.cfg.d_hidden))
-                for _ in range(self.n_layers)
-            ]
-            spk = [
-                self.embed.weight.new_zeros((batch, self.cfg.d_hidden))
-                for _ in range(self.n_layers)
-            ]
-            logits = []
+            # Accept (batch,) or (batch, 1): both mean one token per row. Without
+            # the flatten a (batch, 1) input propagates an extra dimension
+            # through the embedding and the head returns (batch, 1, vocab).
+            x = self.embed(token_ids.reshape(-1))
+            for _ in range(max(1, int(self.cfg.timesteps))):
+                for layer in range(self.n_layers):
+                    drive = x if layer == 0 else spk[layer - 1]
+                    skip = self.w_skip[layer](x) if layer else 0.0
+                    mem[layer] = (
+                        leak * mem[layer]
+                        + self.w_in[layer](drive)
+                        + self.w_rec[layer](spk[layer])
+                        + skip
+                    )
+                    spk[layer] = self._spike(mem[layer] - torch.abs(self.threshold))
+            out = (
+                mem[self.n_layers - 1] if self.cfg.readout == "membrane" else spk[self.n_layers - 1]
+            )
+            if self.cfg.readout == "membrane":
+                out = self.out_norm(out)
+            return out, (mem, spk)
+
+        def advance(self, token_ids: Any, state: Any) -> Any:
+            """Feed one token per row; return (logits, new_state)."""
+            out, state = self.advance_hidden(token_ids, state)
+            return self.head(out), state
+
+        def encode(self, ids: Any) -> Any:
+            """Per-token hidden vectors (batch, steps, d_hidden), no head."""
+            batch, steps = ids.shape
+            state = self.init_state(batch)
+            outs = []
             for t in range(steps):
-                x = self.embed(ids[:, t])
-                for _ in range(max(1, int(self.cfg.timesteps))):
-                    for layer in range(self.n_layers):
-                        drive = x if layer == 0 else spk[layer - 1]
-                        skip = self.w_skip[layer](x) if layer else 0.0
-                        mem[layer] = (
-                            leak * mem[layer]
-                            + self.w_in[layer](drive)
-                            + self.w_rec[layer](spk[layer])
-                            + skip
-                        )
-                        spk[layer] = self._spike(mem[layer] - torch.abs(self.threshold))
-                out = (
-                    mem[self.n_layers - 1]
-                    if self.cfg.readout == "membrane"
-                    else spk[self.n_layers - 1]
-                )
-                if self.cfg.readout == "membrane":
-                    out = self.out_norm(out)
-                logits.append(self.head(out))
-            return torch.stack(logits, dim=1)
+                out, state = self.advance_hidden(ids[:, t], state)
+                outs.append(out)
+            return torch.stack(outs, dim=1)
+
+        def forward(self, ids: Any) -> Any:
+            return self.head(self.encode(ids))
 
     return _SpikeNet
 
@@ -650,19 +681,21 @@ class TokenSNN:
 
     def loss(self, ids: Any, mask: Any, weights: Any = None, targets: Any = None) -> Any:
         torch = self.torch
-        logits = self.net(ids)
-        # Predict token t+1 from prefix <= t, only where the target is answer/eos.
-        logits = logits[:, :-1, :]
+        # The head is d_hidden x vocab: at 10^8 parameters it is >90% of the
+        # per-token compute and of the activation memory, and it is needed only
+        # where a target exists. Applying it to the selected positions is the
+        # same arithmetic as computing (batch, steps, vocab) and masking.
+        hidden = self.net.encode(ids)[:, :-1, :]
         gold = ids if targets is None else targets
         targets = gold[:, 1:]
         target_mask = mask[:, 1:]
-        flat_logits = logits.reshape(-1, logits.shape[-1])
-        flat_targets = targets.reshape(-1)
         flat_mask = target_mask.reshape(-1)
         if int(flat_mask.sum()) == 0:
-            return logits.sum() * 0.0
+            return hidden.sum() * 0.0
+        flat_hidden = hidden.reshape(-1, hidden.shape[-1])[flat_mask]
+        flat_targets = targets.reshape(-1)[flat_mask]
         per_tok = torch.nn.functional.cross_entropy(
-            flat_logits[flat_mask], flat_targets[flat_mask], reduction="none"
+            self.net.head(flat_hidden), flat_targets, reduction="none"
         )
         if weights is None:
             return per_tok.mean()
@@ -732,22 +765,28 @@ class TokenSNN:
                 pred = self.net(ids_t)[:, :-1, :].argmax(dim=-1)
                 target = ids_t[:, 1:]
                 keep = mask[:, 1:]
+                # Vectorised: the old inner loop read one element per position,
+                # i.e. four device→host syncs per token (a 7k-row split became
+                # millions of syncs and minutes of wall time). Counting a slice
+                # is the same arithmetic with four syncs per *row*.
+                ok = (pred == target) & keep
                 for i, cut in enumerate(cuts):
                     # token index = pos + 1; the row's last token is its eos.
                     # A marker-free answer has cut == eos, so its range is empty.
-                    tail_from, tail_to = (
-                        (cut, len(rows[i]) - 1) if cut < len(rows[i]) - 1 else (1, 0)
-                    )
-                    for pos in range(width - 1):
-                        if not bool(keep[i, pos]):
-                            continue
-                        ok = bool(pred[i, pos] == target[i, pos])
-                        if tail_from <= pos + 1 <= tail_to:
-                            tail_hit += int(ok)
-                            tail_tot += 1
-                        else:
-                            resp_hit += int(ok)
-                            resp_tot += 1
+                    row_keep = int(keep[i].sum())
+                    row_ok = int(ok[i].sum())
+                    if cut >= len(rows[i]) - 1:
+                        resp_hit += row_ok
+                        resp_tot += row_keep
+                        continue
+                    lo = max(0, cut - 1)
+                    hi = min(keep.shape[1], len(rows[i]) - 1)
+                    tail_keep = int(keep[i, lo:hi].sum())
+                    tail_ok = int(ok[i, lo:hi].sum())
+                    tail_tot += tail_keep
+                    tail_hit += tail_ok
+                    resp_tot += row_keep - tail_keep
+                    resp_hit += row_ok - tail_ok
         if was_training:
             self.net.train()
         return {
@@ -1033,26 +1072,44 @@ class TokenSNN:
         ids, _ = self.encode_pair(prompt, "")
         ids = ids[:-1] if ids and ids[-1] == self.vocab.eos_id else ids
         ids = ids[: self.config.max_len - 1]
+        was_training = self.net.training
         self.net.eval()
         out: List[int] = []
-        with torch.no_grad():
-            cur = torch.tensor([ids], dtype=torch.long, device=self.device)
-            for _ in range(max_new):
-                logits = self.net(cur)[0, -1]
-                if temperature <= 0:
-                    nxt = int(torch.argmax(logits).item())
-                else:
-                    probs = torch.softmax(logits / temperature, dim=-1)
-                    nxt = int(torch.multinomial(probs, 1).item())
-                if nxt == self.vocab.eos_id:
-                    break
-                if nxt == self.vocab.pad_id or nxt == self.vocab.bos_id:
-                    break
-                out.append(nxt)
-                cur = torch.cat(
-                    [cur, torch.tensor([[nxt]], dtype=torch.long, device=self.device)], dim=1
-                )
-        self.net.train()
+        try:
+            with torch.no_grad():
+                state = self.net.init_state(1, device=self.device)
+                logits = None
+                for token in ids:
+                    logits, state = self.net.advance(
+                        torch.tensor([[token]], dtype=torch.long, device=self.device), state
+                    )
+                if logits is None:  # empty prompt: start from the zero state
+                    logits, state = self.net.advance(
+                        torch.tensor([[self.vocab.bos_id]], dtype=torch.long, device=self.device),
+                        state,
+                    )
+                row = logits[0]
+                for _ in range(max_new):
+                    if temperature <= 0:
+                        nxt = int(torch.argmax(row).item())
+                    else:
+                        probs = torch.softmax(row / temperature, dim=-1)
+                        nxt = int(torch.multinomial(probs, 1).item())
+                    if nxt == self.vocab.eos_id:
+                        break
+                    if nxt == self.vocab.pad_id or nxt == self.vocab.bos_id:
+                        break
+                    out.append(nxt)
+                    # one forward per new token instead of one per prefix token
+                    logits, state = self.net.advance(
+                        torch.tensor([[nxt]], dtype=torch.long, device=self.device), state
+                    )
+                    row = logits[0]
+        finally:
+            # leave the model in the mode the caller had: flipping to train()
+            # unconditionally put an eval-time call site back into train mode.
+            if was_training:
+                self.net.train()
         return str(self.vocab.decode(out))
 
     # -- persistence --------------------------------------------------------

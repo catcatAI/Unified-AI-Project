@@ -98,6 +98,50 @@ def test_generation_stops_at_eos(vocab):
     assert len(out) <= 4
 
 
+def test_advance_matches_forward_step_by_step(vocab):
+    """Incremental decoding must be the same computation, not an approximation.
+
+    ``generate()`` used to re-run the whole prefix for every token (O(n²)
+    forwards). Carrying the state is only safe if one ``advance()`` per token
+    reproduces ``forward()`` exactly.
+    """
+    import torch
+
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=32), device="cpu")
+    ids, _ = model.encode_pair("abc", "def")
+    model.net.eval()
+    with torch.no_grad():
+        full = model.net(torch.tensor([ids]))
+        state = model.net.init_state(1)
+        parts = []
+        for tok in ids:
+            logits, state = model.net.advance(torch.tensor([[tok]]), state)
+            parts.append(logits)
+        inc = torch.stack(parts, dim=1)
+    assert inc.shape == full.shape
+    assert torch.allclose(inc, full)
+
+
+def test_generate_matches_recompute_the_prefix(vocab):
+    """Greedy output is identical to the naive prefix-recompute loop."""
+    import torch
+
+    model = TokenSNN(vocab, TokenConfig(d_emb=8, d_hidden=8, max_len=32), device="cpu")
+    prompt = "abc"
+    ids, _ = model.encode_pair(prompt, "")
+    ids = ids[:-1] if ids and ids[-1] == model.vocab.eos_id else ids
+    naive: list[int] = []
+    cur = torch.tensor([ids])
+    with torch.no_grad():
+        for _ in range(3):
+            nxt = int(torch.argmax(model.net(cur)[0, -1]).item())
+            if nxt in (model.vocab.eos_id, model.vocab.pad_id, model.vocab.bos_id):
+                break
+            naive.append(nxt)
+            cur = torch.cat([cur, torch.tensor([[nxt]])], dim=1)
+    assert model.generate(prompt, max_new=3) == model.vocab.decode(naive)
+
+
 def test_configured_beta_is_the_effective_leak():
     """A configured 0.9 must leak 0.9, not sigmoid(0.9)=0.711.
 
@@ -365,6 +409,12 @@ def test_split_tf_separates_response_from_state_block():
     assert plain["tail_tokens"] == 0
     # without a state block the split must equal the aggregate diagnostic
     assert plain["response_tf"] == model.tf_accuracy([("abc", "def")])["tf_acc"]
+
+    # The two buckets must partition the scored positions exactly; a dropped or
+    # double-counted token would silently move accuracy between them.
+    mixed = [("abc", f"def {AL_OUT_MARK} v=0.1"), ("abc", "def")]
+    split = model.split_tf_accuracy(mixed)
+    assert split["response_tokens"] + split["tail_tokens"] == model.tf_accuracy(mixed)["tokens"]
 
 
 def test_train_on_accepts_a_tail_weight(vocab):

@@ -27,11 +27,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
 from ai.ed3n.token_snn import (  # noqa: E402
+    _VALUE_ATOMS_BY_DECIMALS,
+    AL_OUT_MARK,
     CharVocab,
     TokenConfig,
     TokenSNN,
     TokenVocab,
-    _VALUE_ATOMS_BY_DECIMALS,
     resolve_device,
     tokenize,
 )
@@ -81,15 +82,35 @@ def fits(
     return kept
 
 
+def _response_only(answer: str) -> str:
+    """The free-text response, without the ``<al_out>`` state block.
+
+    Most training answers end with a formulaic block of six numbers. Comparing
+    the *whole* answer makes "exact" a measure of copying that block (34% of
+    the answer tokens) rather than of answering, so a model that gets the
+    question right is still recorded as 0. The block is scored separately by
+    ``split_tf_accuracy`` and by ``hybrid_boundary.py``.
+    """
+    return answer.split(AL_OUT_MARK, 1)[0].strip() if AL_OUT_MARK in answer else answer.strip()
+
+
 def exact_match(
     model: TokenSNN, pairs: List[Tuple[str, str]], sample: int, seed: int = 0
 ) -> Dict[str, float]:
-    picks = pairs if len(pairs) <= sample else random.Random(seed).sample(pairs, sample)
+    # ``sample <= 0`` means "all rows", never "no rows": the old expression
+    # returned an empty sample for 0, and the caller then reported exact=0.0
+    # for a model it had not measured — a silent 0 in the one place a run is
+    # judged. main() chooses to skip the check instead; it no longer has to
+    # rely on the arithmetic to avoid a fake zero.
+    picks = (
+        pairs if sample <= 0 or len(pairs) <= sample else random.Random(seed).sample(pairs, sample)
+    )
     hits = 0
-    # generate() re-runs the whole prefix per token, so one row costs
-    # O(len^2) forward passes: measured ~8 s/row at 143 tokens on XPU, i.e. the
-    # default 200-row probe is a silent 25-minute tail after training. Print
-    # progress, otherwise a finished run looks hung.
+    full_hits = 0
+    # One generate() call is linear in answer length now (the decoder carries
+    # its state); it used to re-run the whole prefix per token, i.e. O(len^2).
+    # Print progress anyway: a % 25 gives the reader a heartbeat.
+
     started = time.time()
     for i, (prompt, answer) in enumerate(picks, 1):
         if i % 25 == 0:
@@ -101,9 +122,18 @@ def exact_match(
         # and an over-long budget lets the decode run past EOS into junk.
         budget = len(model.vocab.encode(answer)) + 8
         got = model.generate(prompt, max_new=min(model.config.max_len, budget))
+        # ``exact`` is the response; ``exact_full`` also requires the state
+        # block, and is reported for comparison rather than for judgement.
         if got.strip() == answer.strip():
+            full_hits += 1
+        if _response_only(got) == _response_only(answer):
             hits += 1
-    return {"n": len(picks), "exact": hits / max(1, len(picks))}
+    n = max(1, len(picks))
+    return {
+        "n": len(picks),
+        "exact": hits / n,
+        "exact_full": full_hits / n,
+    }
 
 
 def main() -> int:
@@ -159,6 +189,16 @@ def main() -> int:
         "but exact 0 free-running (exposure bias).",
     )
     ap.add_argument("--d-emb", type=int, default=96)
+    ap.add_argument(
+        "--max-vocab",
+        type=int,
+        default=0,
+        help="cap on vocabulary size (0 = TokenConfig default, 12000). A small "
+        "cap turns rare words into <unk>: measured on core_train, 12000 gives a "
+        "12.6%% unk rate on the frozen questions, 48000 gives 4.4%% (the rest is "
+        "Chinese, which the English corpus never covers). Larger runs need the "
+        "headroom.",
+    )
     ap.add_argument("--beta", type=float, default=0.9, help="membrane leak (used as-is)")
     ap.add_argument(
         "--readout",
@@ -317,6 +357,8 @@ def main() -> int:
         leak_floor=args.leak_floor,
         gain_cap=args.gain_cap,
     )
+    if args.max_vocab:
+        cfg.max_vocab = int(args.max_vocab)
     texts = [p + "\n" + a for p, a in train]
     if args.vocab == "token":
         # min_count 1: rare words must stay composable (knowledge answers
@@ -595,9 +637,17 @@ def main() -> int:
     report_path = Path(args.report)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+
+    def _show(match: Dict[str, float]) -> str:
+        # ``0.000`` from an empty sample reads as "the model got none right".
+        # It means "not measured", and the two must not print the same.
+        if not int(match.get("n", 0)):
+            return "n/a"
+        return f"{match['exact']:.3f}"
+
     print(
-        f"saved {args.out}\n  train_exact={train_match['exact']:.3f} "
-        f"val_exact={val_match['exact']:.3f} eval_exact={eval_match['exact']:.3f} "
+        f"saved {args.out}\n  train_exact={_show(train_match)} "
+        f"val_exact={_show(val_match)} eval_exact={_show(eval_match)} "
         f"eval_tf_acc={eval_tf['tf_acc']:.3f} "
         f"resp_tf={eval_tf_split.get('response_tf', 0):.3f} "
         f"tail_tf={eval_tf_split.get('tail_tf', 0):.3f} "

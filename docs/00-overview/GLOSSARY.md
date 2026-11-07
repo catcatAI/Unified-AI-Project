@@ -41,7 +41,7 @@ evolve, and interact with its environment.
 Angela's primary inference engine — a hybrid SNN (Spiking Neural Network) +
 dictionary-lookup system for low-latency local reasoning. Uses trie-based reflex
 tables, LRU-cached dictionary encoding, and continuous learning pipelines.
-~8,550 lines across 27 files.
+~8,980 lines across 27 files.
 
 ### Environment Simulator
 
@@ -67,7 +67,7 @@ Execution）為理想架構目標：ζ 已實作；η 在 Python 為獨立子系
 
 Lightweight local inference engine complementing ED3N. Provides vector semantic
 search via `VectorDictionary` (+ optional SentenceTransformer) and sparse SNN
-inference via `TensorSNNCore`. ~6,000 lines across 9 files. Dual-backend (torch
+inference via `TensorSNNCore`. ~6,310 lines across 9 files. Dual-backend (torch
 or numpy) for cross-platform compatibility.
 
 ### GVV (Geometric Vocabulary Vector)

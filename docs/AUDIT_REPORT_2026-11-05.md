@@ -218,3 +218,131 @@ PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_token_snn.py \
 | `scripts/check_fact_gates.py` | **ALL PASS**（`definitions 定義差=11` 為既有 INFO） |
 | `flake8` / `black --check` / `isort --check-only` | 本輪觸及檔案全乾淨 |
 
+## 八、追查「核心分為什麼是 0.00/10」（是不是量測把部分正確吃掉）
+
+問題：核心 0.00 是否其實是「0～0.999 的部分正確被評分規則判成 0」？
+
+三個層次要分開，逐一查：
+
+### 1. 生產路徑：0 因為核心「不在回答路徑上」，不是答錯
+
+`scripts/census_reply_provenance.py` 對同一條被計分的 `NativeBackend` 路徑逐題
+記錄正確答案的生產者：
+
+| 正確答案 | 題數 | 生產者 |
+| --- | --- | --- |
+| knowledge | 8 | 全部 `lookup`（精選庫／wiki 檢索） |
+| math | 32 | 全部 `computed`（確定性算術引擎） |
+| routing | 10 | 全部 `classifier`（分類器標籤） |
+| code | 0 | — |
+
+**49 個正確答案中，由模型（SNN／ED3N／GARDEN／LLM）產生的：0。** 這一類 0 的正確
+讀法是「缺席」——核心沒有被放上場，不是被評分判錯。把它和「量到但錯」混為一談，
+會誤以為核心有 49 題的近失。
+
+### 2. 對照組：把核心直接放上同一批題目，結果仍是 0 正確
+
+`scripts/probe_core_control.py` 用同一批凍結題、同一條評分，讓 GARDEN／ED3N／
+TOK-SNN／LLM 各自回答（`data/intelligence_reports/core_control.json`）：
+
+| 套件 | ED3N answered / 正確 | TOK-SNN answered / 正確 | GARDEN |
+| --- | --- | --- | --- |
+| math（40） | 40 / **0** | 40 / **0** | 0（無覆蓋） |
+| knowledge（15） | 15 / **0** | 15 / **0** | 0（無覆蓋） |
+| code（10） | 10 / **0** | 10 / **0** | 0（無覆蓋） |
+
+所以「有回答」和「答對」是分開量的：coverage 100% 的兩套核心，正確率是 0%。
+
+### 3. 有沒有「近正確」被評分抹掉？用比門檻更寬的規則重測
+
+評分規則（`run_benchmarks.score_item`）不是嚴格的：numeric 只看「最後一個數字」
+（`_final_numbers`，有 final-answer 標記時取標記後第一個），keyword 只要標定概念
+全在即可。也就是說若模型真的算出正解、只是後面又接了別的字，**多數情況會被判錯**
+——這是真的假陰性風險，所以另外用更寬的規則重測：**答案體中任何位置出現正解數字
+都算**（先切掉 TOK-SNN 的 `<al_out>` 情緒狀態塊，避免 `health=0.86` 這類數字干擾，
+也避免它遮蔽前面真正的答案）。實測（同一份 rows）：
+
+| 套件 | 生產者 | 正解字串出現在輸出任何位置 | 答案體中出現正解數字 |
+| --- | --- | --- | --- |
+| math | ED3N | 0 / 40 | 0 / 40 |
+| math | TOK-SNN | 2 / 40 | 0 / 40 |
+| knowledge | ED3N / TOK | 0 / 15、0 / 15 | — |
+| code | ED3N / TOK | 0 / 10、0 / 10 | — |
+
+那 2 筆 TOK-SNN「沾到」是巧合，不是答對：`math-002`（gold 4）命中 `a=0.4`、
+`math-008`（gold 3）命中 `0.37`／`0.33`——兩者都在情緒狀態塊裡，與題目無關。
+
+抽樣輸出也一致：ED3N math 回「何为」「六 〦 亅 兆電子伏 六碳糖」，TOK-SNN 回
+`The 1verage 5] … <al_out> v=0.21 …`，knowledge ED3N 回情緒詞串、TOK 回無關英文
+句子——**沒有任何一題是「意思對、字面不同」**。
+
+### 結論（照實）
+
+- **0.00/10 不是量測下限造成的**：換成最寬鬆的規則重算，仍是 0。
+- 核心的失敗是「規模／表徵」層面的失敗（見 `CORE_GAP_ANALYSIS.md`），不是評分太嚴。
+- 仍存在的量測限制（不影響上面的結論，但要寫清楚）：numeric 只看最後一個數字，
+  若核心哪天算出正解卻在後面接情緒狀態塊，會被判錯（本輪用切掉狀態塊的寬鬆規則
+  重測，0/40 不受影響）；只量四類題型；strict 的 keyword 判定仍是 surface 比對
+  （語意等價但換詞會判錯，只是本次沒有任何一筆落在邊界）；ED3N 讀 `step_decoder`，
+  不是 `generate()`；GARDEN 沒有 prompt-following 能力，等於不參賽。若要更嚴格，
+  應另立一輪「部分正確／語意相近」評分，且不得拿來改動現有門檻。
+
+## 九、108.6M 核心訓練：結果與同輪修掉的三個誤判來源
+
+### 1. 訓練真的跑完了（XPU，1 epoch）
+
+| 項目     | 值                                                                    |
+| -------- | --------------------------------------------------------------------- |
+| 參數     | 108,583,431                                                           |
+| 語料     | 149,489 列（`max_len 192` 可容納 138,671）                            |
+| 設定     | d_emb 512 / d_hidden 2560 / 1 layer / vocab 32,773、batch 4、lr 1e-3 |
+| 時間     | 6,677 s 訓練（總 6,755 s），`device=xpu`                              |
+| loss     | 2.3623（1 epoch）                                                     |
+| dynamics | `alive`（spike rate 0.0816、threshold 1.9995）                        |
+| TF       | 回應 0.4215、狀態塊 0（語料沒有 `<al_out>`，`--tail-weight` 是 no-op） |
+| exact    | train 6/100、val 8/100                                                |
+
+**那 8% 不是能力**：逐一列印命中，5 句是比較句（`giraffe is shorter than turtle.`、
+`train比高铁矮`…）、3 個是 `False`；同一份 val 的前 200 列是 0/200。它學到的是比較句
+的格式與實體次序，不是算術或知識。
+
+### 2. 凍結題目仍是 0（不是沒回答）
+
+| 套件      | 正確 | 有回答 | distinct | LLM 對照 |
+| --------- | ---- | ------ | -------- | -------- |
+| math      | 0/40 | 37/40  | 19       | 27/40    |
+| knowledge | 0/15 | 15/15  | 9        | 11/15    |
+| code      | 0/10 | 6/10   | 5        | 9/10     |
+
+所以 0 不是 coverage、也不是單一模式崩潰：模型在生成不同句子，只是句子不對
+（`3+5×2` → `12`、`2**10` → `120`、不同物理題共用 `The sum of 10 is 10.`）。
+核心分維持 **0.00/10**；系統分 6.41 不變（這輪沒有動任何表現層分數）。
+
+### 3. 同輪修掉的誤判來源
+
+- **`--core-checkpoint` 不再覆蓋生產快取**：原本指定 checkpoint 時探針會寫回
+  `core_control.json`，下一次 `--from-cache` 就會把別顆模型的數字當成上線核心。
+  現在寫到 `core_control_<checkpoint>.json`，並在 payload 記 `core_probe_checkpoint`。
+- **`hebbian_update` 同呼叫剪枝（另一邊的發現）**：`snn_core.py` 先寫權重再對同一列
+  剪枝（floor 0.01），單步增量 `lr × plasticity × target_strength` 在 plasticity < 1
+  時必被剪掉，樣本永遠學不到。修法只豁免本次寫入的格子，其他剪枝不變。實測
+  （hard、seed 11、1 epoch）：修前 23/48 目標列整列 0、phase margin **+0.02946**
+  （0 分被算成「不差」），修後 0 列為 0、margin **−0.03326**——先前的正 margin 是
+  缺陷造成的假象，不是相位調制有效。
+- **`test_ham_al_policy.py` 的 6 個失敗是測試過期，不是生產 bug**：HEAD `ebcbe5d14`
+  把內生節律（`rhythm.activation`）加入記憶權重（文件寫在 `al_memory_policy.py`），
+  但測試 fixture 只清了 `drift/intensity/life_phase`，於是生產快照裡一直在跑的振盪器
+  讓「未觀測」永遠不成立、期望值 1.5 變成 1.4004。fixture 現在釘 `rhythm=None` 與
+  `emotion=None`，並新增一條「相位在場時要留下權重與歸因」的測試。73 條 AL/記憶
+  測試全過。
+
+### 4. 驗收（本輪實跑）
+
+- 全量 `pytest tests/ apps/backend/tests/`：**9,455 passed / 107 skipped / 0 failed**（8:28，
+  HEAD 8a09ae156 前後一致）。
+- `scripts/check_fact_gates.py`：**ALL PASS**。
+- `black` / `isort` / `flake8`：乾淨。
+- 一個過程中的插曲照實記：第一次全量跑出 3 個 `test_al_downstream_protocol` 失敗，
+  是另一邊在跑期間（12:14）提交 `8a09ae156` 改了同一個測試檔——pytest 收集到舊版、
+  斷言時讀到新版，行號與測試名對不上。HEAD 穩定後重跑全綠，單檔也 10/10，不是真缺陷。
+

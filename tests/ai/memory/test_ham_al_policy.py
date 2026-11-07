@@ -48,9 +48,20 @@ def _patch_al(monkeypatch, **overrides):
     """把 ham 內部的 ``get_al_state()`` 指到受控快照。
 
     ham 在函式內 ``from ... import``，呼叫時解析 → patch 模組屬性有效。
-    預設三個觀測欄全 ``None`` ＝ policy 全退基準（一個戳都不留）。
+    預設**所有**觀測欄皆缺席（``drift`` / ``intensity`` / ``life_phase`` /
+    ``emotion`` / ``rhythm`` 全 ``None``）＝ policy 全退基準（一個戳都不留）。
+
+    ``rhythm`` 一定要釘 ``None``：生產快照一定有內生相位（振盪器一直在跑），
+    留著它等於讓每個測試都偷偷觀測到一個 43 秒週期的值，期望值就不再可重現。
+    要量相位本身請在個別測試明確傳 ``rhythm=...``。
     """
-    fields = dict(drift=None, intensity=None, life_phase=None)
+    fields = dict(
+        drift=None,
+        intensity=None,
+        life_phase=None,
+        emotion=None,
+        rhythm=None,
+    )
     fields.update(overrides)
     snap = dataclasses.replace(al_state.get_al_state(), **fields)
     monkeypatch.setattr(al_state, "get_al_state", lambda: snap)
@@ -87,6 +98,19 @@ class TestPolicyExecutesIntoMetadata:
         meta = ham._data[_BUCKET][-1]["metadata"]
         assert meta["importance"] == pytest.approx(0.42)
         assert meta["al_weight"] == pytest.approx(1.5)
+
+    def test_rhythm_phase_stamps_a_weight(self, ham, monkeypatch):
+        """內生相位是觀測源（2026-11-07）：同一句話在不同相位寫入 → 不同權重。
+
+        這條與 ``_patch_al`` 的 ``rhythm=None`` 成對：缺席時不動規則，在場時
+        必須留下可追溯的戳記與歸因，否則「怎麼變的」在記憶層查不出來。
+        """
+        _patch_al(monkeypatch, rhythm={"activation": 1.0, "phase": 0.5})
+        asyncio.run(ham.store_experience("note", "conversation"))
+        meta = ham._data[_BUCKET][-1]["metadata"]
+        assert meta["al_weight"] == pytest.approx(1.1)
+        event = al_state.recent_events()[-1]["payload"]
+        assert event["applied"]["policy"]["source"]["rhythm"] == "core.life.al_oscillator"
 
     def test_consolidation_phase_protects_the_entry(self, ham, monkeypatch):
         _patch_al(monkeypatch, life_phase="CONSOLIDATION", drift={"zeta": 1.0})
@@ -218,6 +242,7 @@ class TestResultEvent:
             "retention": "state",
             "weight": "state",
             "consolidate": "default",
+            "rhythm": None,
         }
         assert payload["applied"]["stamped"]["al_retain_days"] == pytest.approx(15.0)
         assert "TOP SECRET" not in str(payload), "§8：原始內容不進 AL"

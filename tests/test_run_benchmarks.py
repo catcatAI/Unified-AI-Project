@@ -95,6 +95,33 @@ class TestScoring:
         ok, _ = tool.score_item(self._item(), "142")
         assert not ok
 
+    def test_numeric_state_block_does_not_mask_the_answer(self):
+        """原生模型把 <al_out> 量測區塊接在答案後面；那裡的數字不是答案。
+
+        舊規則取「整段最後一個數字」，所以答案正確（42）卻因為尾巴的
+        ``health=0.86`` 被判錯——假陰性。
+        """
+        ok, _ = tool.score_item(self._item(), "42\n<al_out> v=0.21 a=0.4 health=0.86")
+        assert ok
+
+    def test_numeric_state_block_alone_is_not_an_answer(self):
+        """只有 block、沒有回應 → 判錯（block 是 instrumentation，不是答案）。"""
+        ok, _ = tool.score_item(self._item(), "<al_out> v=0.21 a=0.4 health=0.86")
+        assert not ok
+
+    def test_numeric_other_tags_are_left_alone(self):
+        """只有 <al_out> 才是量測區塊；<response> 之類的標籤不得被截掉。"""
+        ok, _ = tool.score_item(self._item(), "<response> 42")
+        assert ok
+
+    def test_keyword_state_block_does_not_vouch(self):
+        """block 裡的詞不得替答案背書（舊行為會讓 carbon／dioxide 過關）。"""
+        item = self._item(
+            metric="keyword-overlap", ground_truth="carbon dioxide", gate=["carbon", "dioxide"]
+        )
+        ok, _ = tool.score_item(item, "not sure\n<al_out> carbon=0.1 dioxide=0.2")
+        assert not ok
+
     def test_keyword_gate(self):
         item = self._item(
             metric="keyword-overlap", ground_truth="carbon dioxide", gate=["carbon", "dioxide"]

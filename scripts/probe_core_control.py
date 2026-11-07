@@ -132,6 +132,18 @@ def _summarize(rows: Dict[str, List[dict]]) -> Dict[str, dict]:
             )
             for name in SNN_PRODUCERS
         }
+        # Readability of the prompt by the token-SNN vocabulary: an item whose
+        # question is entirely <unk> cannot be answered by that model at all.
+        tok_rows = [r for r in suite_rows if r.get("tok", {}).get("prompt_tokens")]
+        if tok_rows:
+            tokens = sum(int(r["tok"]["prompt_tokens"]) for r in tok_rows)
+            unk = sum(int(r["tok"]["prompt_unk"]) for r in tok_rows)
+            cell["tok_prompt_unk"] = round(unk / max(1, tokens), 4)
+            cell["tok_unreadable_items"] = sum(
+                1
+                for r in tok_rows
+                if int(r["tok"]["prompt_unk"]) == int(r["tok"]["prompt_tokens"]) > 0
+            )
         summary[suite] = cell
     return summary
 
@@ -244,6 +256,22 @@ class _TokenSNN:
             raise RuntimeError(self.error or "token-snn unavailable")
         return str(self._model.generate(item.q, max_new=48) or "").strip()
 
+    def coverage(self, prompt: str) -> Dict[str, int]:
+        """How much of the prompt the checkpoint's vocabulary can even read.
+
+        An item whose question tokenises entirely to ``<unk>`` is unanswerable
+        by construction, and a 0 there says nothing about the model. Reporting
+        the rate keeps that separate from a wrong answer.
+        """
+        if not self.ok or self._model is None:
+            return {}
+        ids = self._model.vocab.encode(prompt)
+        unk = self._model.vocab.stoi.get("<unk>", -1)
+        return {
+            "prompt_tokens": len(ids),
+            "prompt_unk": sum(1 for i in ids if i == unk),
+        }
+
 
 class _ED3N:
     """ED3N — the project's other SNN-family core (association + sequence)."""
@@ -348,6 +376,8 @@ def _run_rows(
                     "skipped": bool(skipped),
                     "ms": round((time.time() - started) * 1000, 1),
                 }
+                if name == "tok":
+                    row[name].update(token.coverage(item.q))
             except Exception as exc:  # noqa: BLE001 - unavailability != wrong
                 row[name] = {
                     "answer": "",

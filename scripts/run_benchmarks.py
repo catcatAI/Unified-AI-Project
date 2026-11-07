@@ -486,6 +486,27 @@ def _final_numbers(text: str) -> List[float]:
     return _numbers(text)[-1:]
 
 
+_ANS_END_RE = re.compile(r"<\s*al_out\b", re.I)
+
+
+def _answer_body(text: str) -> str:
+    """切掉模型自己附在答案後面的量測區塊（``<al_out> v=0.21 …``）。
+
+    本專案的原生模型會在回應後面接一段情緒狀態 block（``health=0.86``
+    之類）。那些數字**不是答案**，但 :func:`_final_numbers` 取的是「整段文字
+    的最後一個數字」，於是「13」後面接了 ``v=0.4`` 會被判錯——那是評分的假陰性，
+    不是模型的錯。關鍵詞同理：block 裡的詞不該替答案背書。
+
+    只有 block 而沒有本文的輸出會變成空字串 → 判錯，這是對的（block 不是回應）。
+    這個切法只作用在 numeric／keyword 評分；``sandbox-exec`` 跑的是程式碼，
+    不動它。
+    """
+    m = _ANS_END_RE.search(text)
+    if m is None:
+        return text
+    return text[: m.start()]
+
+
 def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text.lower().strip())
 
@@ -597,7 +618,8 @@ def score_item(item: BenchItem, answer: str, mode: Optional[str] = None) -> Tupl
     text = str(answer)
 
     if item.metric == "numeric-match":
-        nums = _numbers(text) if mode == "loose" else _final_numbers(text)
+        body = _answer_body(text)
+        nums = _numbers(body) if mode == "loose" else _final_numbers(body)
         target = float(item.ground_truth)
         for n in nums:
             if abs(n - target) < 1e-6 * max(1.0, abs(target)):
@@ -605,7 +627,7 @@ def score_item(item: BenchItem, answer: str, mode: Optional[str] = None) -> Tupl
         return False, False
 
     if item.metric == "keyword-overlap":
-        low = _canon(text)
+        low = _canon(_answer_body(text))
         if mode == "loose":
             # The old rule: any single keyword counts. Not correctness.
             if item.gate:

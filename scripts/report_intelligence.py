@@ -107,6 +107,13 @@ def _weakest(suites: Dict[str, float], names: List[str]) -> Optional[float]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--from-cache", action="store_true", help="reuse the existing reports")
+    parser.add_argument(
+        "--core-checkpoint",
+        default="",
+        help="token-SNN checkpoint for the core probe (default: the probe's own "
+        "default). Use this to measure a newly trained core without overwriting "
+        "the one the production path ships.",
+    )
     parser.add_argument("--json", dest="json_path")
     args = parser.parse_args()
 
@@ -195,6 +202,32 @@ def main() -> int:
                 f"{cell['provenance']}"
             )
 
+    # 1c. The core itself, asked the same frozen items. The census above
+    #     attributes *production* answers, so a core that is not wired into the
+    #     chat path can never show up there: a trained model would be reported
+    #     as 0 without ever having been asked. This probe asks it directly and
+    #     scores it with the same oracle. Only the SNN producers are folded into
+    #     the core score; the LLM in that table is the *control group* (someone
+    #     else's model — counting it would turn a download into a score).
+    control_path = REPORT_DIR / "core_control.json"
+    probe_cmd = [sys.executable, "scripts/probe_core_control.py"]
+    # A named checkpoint writes its own file. Writing it to ``core_control.json``
+    # would leave the *production* cache holding another model's numbers, and
+    # the next ``--from-cache`` run would report them as if the shipped core had
+    # earned them — the same substitution this section exists to catch.
+    probe_label = "core_control"
+    if args.core_checkpoint:
+        probe_cmd += ["--token-checkpoint", args.core_checkpoint]
+        probe_label = f"core_control_{Path(args.core_checkpoint).stem}"
+    if args.from_cache and not args.core_checkpoint:
+        control = _load(control_path)
+    else:
+        # An explicitly named checkpoint is always measured, cache or not:
+        # reusing someone else's numbers for a different model is the mistake
+        # this whole section exists to prevent.
+        control = _load(_run(probe_cmd, probe_label, out_flag="--out"))
+    core_probe: Dict[str, dict] = (control or {}).get("suites") or {}
+
     # 2. The paraphrase probe (L1's key metric): the production path on a
     #    frozen benchmark of unseen phrasings, plus the strict diagnostic.
     if args.from_cache:
@@ -281,6 +314,7 @@ def main() -> int:
     # score and can only be lower.
     # ------------------------------------------------------------------ #
     core_scores: Dict[str, float] = {}
+    core_basis: Dict[str, str] = {}
     # One definition lives in ai/meta/intelligence.py: only the SNN family or
     # an LLM is the core. Encoders ("semantic-qa", "neural-bridge", "unified")
     # are the performance layer — the label said "neural", the producer was a
@@ -296,12 +330,45 @@ def main() -> int:
         core = sum(int(prov.get(k, 0)) for k in core_credit)
         return core / total
 
+    def _core_from_probe(suite_name: str) -> Optional[float]:
+        """Best SNN producer's accuracy on the same frozen items.
+
+        ``surface_task`` suites are excluded on purpose: routing asks for the
+        classifier's own label, which no core can produce without being handed
+        the label space, so a 0 there is not an intelligence result.
+        """
+        cell = core_probe.get(suite_name) or {}
+        if not int(cell.get("n") or 0) or cell.get("surface_task"):
+            return None
+        values = [
+            float(cell[name])
+            for name in ("snn", "ed3n", "tok")
+            if isinstance(cell.get(name), (int, float))
+        ]
+        return max(values) if values else None
+
     for dim, suite_name in (("facts", "knowledge"), ("math", "math"), ("tools", "code")):
-        value = _core_from_census(suite_name)
-        if value is None and dim == "tools":
-            value = _core_from_census("routing")
-        if value is not None:
-            core_scores[dim] = value
+        census_value = _core_from_census(suite_name)
+        probed = _core_from_probe(suite_name)
+        if census_value is None and probed is None:
+            core_basis[dim] = "未量：該題目沒有被核心回答過，也沒有跑核心探針"
+            continue
+        if census_value is None:
+            value = probed
+            basis = "core probe（把同一批凍結題目直接丟給核心模型）"
+        elif probed is None:
+            value = census_value
+            basis = "production census（聊天路徑上由核心產生的正確答案）"
+        else:
+            # Both routes were measured. Report both numbers in the basis so a
+            # 0 from each is not mistaken for "only the census was checked".
+            value = max(census_value, probed)
+            basis = (
+                f"census 與 core probe 取較高者"
+                f"（census {census_value:.0%}／probe {probed:.0%}）"
+            )
+        core_scores[dim] = value
+        core_basis[dim] = basis
 
     # Paraphrase: the production path is a neural *encoder* plus deterministic
     # chain composition — not the SNN/LLM core. It counts as zero core credit
@@ -375,7 +442,10 @@ def main() -> int:
         for name, rate in gaps.items():
             print(f"  {name:28} {rate:.0%}")
     print("\n智能（核心＝SNN/LLM 產生且正確；表現層＝路由・模板・記憶・檢索・規則）")
-    print("  核心不能直接量，只能透過表現層間接量：核心產生內容，表現層只負責呈現。")
+    print(
+        "  核心走兩條路量：① 在聊天路徑上真的回答（census）；② 直接把同一批凍結題目丟給它（core probe）。"
+    )
+    print("  兩者取較高者——探針量能力，census 量部署；核心沒接上生產路徑不代表它不會答。")
     for dimension in DIMENSIONS:
         system_value = scores.get(dimension.id)
         core_value = core_scores.get(dimension.id)
@@ -396,17 +466,15 @@ def main() -> int:
         f"\n系統分 {result['score']}/10 = 核心 {core_result['score'] if core_result else 0}"
         f" + 表現層（模板／路由／查表／規則）— 系統分只供對照，不是智能"
     )
-    control_path = REPORT_DIR / "core_control.json"
-    if control_path.exists():
-        control = _load(control_path) or {}
-        suites = control.get("suites") or {}
-        if suites:
+    if control:
+        control_suites = control.get("suites") or {}
+        if control_suites:
             print("\n核心 vs 對照組（LLM）vs 表現層 — 判斷「哪些是智能問題」")
             print(
                 f"  {'suite':10} {'n':>4} {'表現層':>8} {'GARDEN':>8}"
                 f" {'ED3N':>8} {'TOK-SNN':>8} {'LLM':>8}  coverage（有回答/總數）"
             )
-            for suite, cell in suites.items():
+            for suite, cell in control_suites.items():
 
                 def _fmt(value: Optional[float]) -> str:
                     return "未量" if value is None else f"{value:.0%}"
@@ -489,6 +557,8 @@ def main() -> int:
         "bench_suites": suites,
         "provenance": provenance,
         "core_scores": core_scores,
+        "core_basis": core_basis,
+        "core_probe_checkpoint": args.core_checkpoint or None,
         "core_control": {
             "suites": (control or {}).get("suites"),
             "provenance": (control or {}).get("provenance"),
