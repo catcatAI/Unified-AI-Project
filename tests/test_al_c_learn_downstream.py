@@ -50,6 +50,14 @@ class TestVerdict:
         rows = _rows([0.30, 0.31, 0.29], [0.10, 0.11, 0.10], [0.30, 0.29, 0.31])
         assert gate._verdict(rows) == "timing-does-not-matter-only-gain"
 
+    def test_margin_gain_with_worse_top1_is_not_a_win(self, gate):
+        rows = {
+            "phase": [{"margin": 0.30, "hit_rate": 0.45}],
+            "neutral": [{"margin": 0.10, "hit_rate": 0.50}],
+            "shuffled": [{"margin": 0.09, "hit_rate": 0.50}],
+        }
+        assert gate._verdict(rows) == "margin-gain-without-hit-gain"
+
     def test_no_separation_is_reported_as_none(self, gate):
         rows = _rows([0.10, 0.11, 0.10], [0.10, 0.11, 0.10], [0.10, 0.11, 0.10])
         assert gate._verdict(rows) == "no-downstream-difference"

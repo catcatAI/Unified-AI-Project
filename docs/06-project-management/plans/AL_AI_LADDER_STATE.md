@@ -385,3 +385,17 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - 限制：neutral 已在天花板，要更公平需要更難的任務；不能推廣成「相位永遠沒用」。
 
 **現況**：機制八層綠；下游**已量，負**（不是未量）。
+
+### 2026-11-07 續十一 — 難版任務：margin 升 20%、top-1 降一對、時機仍無感
+
+- `scripts/al_c_learn_downstream.py` 加
+  `--task easy|hard`（預設 hard：48 對、共享噪聲位、lr 0.03，neutral
+  ≈ 五成）。12 種子、增益匹配。
+- neutral margin +0.02431 / top-1 0.502；phase +0.02914 / 0.481；shuffled
+  +0.02858 / 0.483 → **`margin-gain-without-hit-gain`**。
+- 逐種子：margin phase>neutral 12/12；top-1 phase<neutral
+  11/12；phase>shuffled 僅 9/12（差 0.00056 < 臂內散佈）→ 時序仍分不出來。
+- 判詞收緊：margin 升而 top-1 降不再算贏，另立
+  `margin-gain-without-hit-gain`；測試 +1（7）。
+
+**現況**：機制八層綠；下游兩幕一致的負結果（easy 天花板、hard 掉到五成）。
