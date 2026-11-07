@@ -409,3 +409,33 @@ class TestLabelShuffleControl:
         for family, targets in (("conflict", 8), ("many_to_one", 24)):
             control = protocol._label_shuffle_baseline(family, (0,), readout="direct")
             assert control["chance"] == round(1.0 / targets, 3)
+
+
+class TestSeedCountControlsTheGate:
+    """種子可以加，但門檻必須跟著 n 走，否則判詞會悄悄變鬆。"""
+
+    def test_gate_uses_the_reported_seed_count(self, protocol):
+        base = {"phase_over_neutral_hit": 20, "phase_over_shuffled_hit": 20, "seeds": 40}
+        verdict, downgrade = protocol._seed_robust("phase-beats-matched-mean", base)
+        assert verdict == "timing-does-not-matter-only-gain"
+        assert downgrade is not None and "need 26/40" in downgrade
+
+        strong = {
+            "phase_over_neutral_hit": 27,
+            "phase_over_shuffled_hit": 27,
+            "seeds": 40,
+        }
+        assert protocol._seed_robust("phase-beats-matched-mean", strong) == (
+            "phase-beats-matched-mean",
+            None,
+        )
+
+    def test_twelve_seeds_still_need_ten(self, protocol):
+        weak = {"phase_over_neutral_hit": 8, "phase_over_shuffled_hit": 8, "seeds": 12}
+        assert protocol._seed_robust("phase-beats-matched-mean", weak)[0] != (
+            "phase-beats-matched-mean"
+        )
+
+    def test_calibration_seeds_cannot_be_reused(self, protocol):
+        with pytest.raises(ValueError):
+            protocol.run(readout="direct", seeds=(11, 23, 211), families=["conflict"])

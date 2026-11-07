@@ -387,32 +387,39 @@ def _seed_robust(verdict: str, seed_wins: Dict[str, int]) -> Tuple[str, str | No
 
     均值差 0.05 可能來自 12:0，也可能是 7:5；後者不是「時序有用」，只是擲硬幣。
     所以 ``phase-beats-matched-mean`` 與 ``phase-loses-to-matched-mean`` 都要求在
-    兩個比較上至少 ``SIGN_TEST_MIN`` 個種子同向，否則降級。
+    兩個比較上至少 ``_sign_test_minimum(n)`` 個種子同向，否則降級。
+
+    門檻不能是常數：把種子從 12 加到 40 卻仍要求 10 個同向，判詞會變鬆。
     """
     seeds = seed_wins["seeds"]
+    need = _sign_test_minimum(int(seeds))
     over_neutral = seed_wins["phase_over_neutral_hit"]
     over_shuffled = seed_wins["phase_over_shuffled_hit"]
     if verdict == "phase-beats-matched-mean":
-        if min(over_neutral, over_shuffled) >= SIGN_TEST_MIN:
+        if min(over_neutral, over_shuffled) >= need:
             return verdict, None
         return "timing-does-not-matter-only-gain", (
             f"seed-robustness failed: phase>neutral {over_neutral}/{seeds}, "
-            f"phase>shuffled {over_shuffled}/{seeds}, need {SIGN_TEST_MIN}/{seeds}"
+            f"phase>shuffled {over_shuffled}/{seeds}, need {need}/{seeds}"
         )
     if verdict == HARM:
         under_neutral = seeds - over_neutral
         under_shuffled = seeds - over_shuffled
-        if min(under_neutral, under_shuffled) >= SIGN_TEST_MIN:
+        if min(under_neutral, under_shuffled) >= need:
             return verdict, None
         return "no-downstream-difference", (
             f"harm not seed-robust: phase<neutral {under_neutral}/{seeds}, "
-            f"phase<shuffled {under_shuffled}/{seeds}, need {SIGN_TEST_MIN}/{seeds}"
+            f"phase<shuffled {under_shuffled}/{seeds}, need {need}/{seeds}"
         )
     return verdict, None
 
 
 def evaluate_cell(
-    family: str, calibration: Dict[str, object], epochs: int, readout: Optional[str] = None
+    family: str,
+    calibration: Dict[str, object],
+    epochs: int,
+    readout: Optional[str] = None,
+    seeds: Optional[Sequence[int]] = None,
 ) -> Dict[str, object]:
     task = _task(family, calibration["step"], float(calibration["lr"]))  # type: ignore[arg-type]
     pairs = int(task["pairs"])  # type: ignore[arg-type]
@@ -428,7 +435,9 @@ def evaluate_cell(
 
     rows: Dict[str, List[Dict[str, float]]] = {"neutral": [], "phase": [], "shuffled": []}
     heldout: Dict[str, List[float]] = {"neutral": [], "phase": [], "shuffled": []}
-    for seed in SEEDS:
+    seeds = tuple(seeds) if seeds else SEEDS
+    need = _sign_test_minimum(len(seeds))
+    for seed in seeds:
         shuffled = phase_gains[:]
         random.Random(seed * 7919).shuffle(shuffled)
         arms = {"neutral": [1.0] * (pairs * epochs), "phase": phase_gains, "shuffled": shuffled}
@@ -450,7 +459,8 @@ def evaluate_cell(
         return sum(1 for x, y in zip(rows[a], rows[b]) if x[key] > y[key])
 
     seed_wins = {
-        "seeds": len(SEEDS),
+        "seeds": len(seeds),
+        "sign_test_min": need,
         "phase_over_neutral_margin": wins("phase", "neutral", "margin"),
         "phase_over_neutral_hit": wins("phase", "neutral", "hit_rate"),
         "phase_over_shuffled_margin": wins("phase", "shuffled", "margin"),
@@ -463,7 +473,7 @@ def evaluate_cell(
     for other in ("neutral", "shuffled"):
         paired[f"phase_vs_{other}_margin"] = _paired_stats(rows, "phase", other, "margin")
     # 這台量具在這個格子上能分辨多小的差：σ 來自配對差的散佈。
-    mde = _min_detectable_delta(paired["phase_vs_neutral_hit"]["sd"], len(SEEDS), SIGN_TEST_MIN)
+    mde = _min_detectable_delta(paired["phase_vs_neutral_hit"]["sd"], len(seeds), need)
 
     raw_verdict = (
         _downstream._verdict(rows)
@@ -533,9 +543,17 @@ def overall_verdict(cells: Sequence[Dict[str, object]]) -> str:
     return "regime-dependent-no-claim"
 
 
-def run(readout: Optional[str] = None) -> Dict[str, object]:
+def run(
+    readout: Optional[str] = None,
+    seeds: Optional[Sequence[int]] = None,
+    families: Optional[Sequence[str]] = None,
+) -> Dict[str, object]:
     cells: List[Dict[str, object]] = []
-    for family in FAMILIES:
+    use_seeds = tuple(seeds) if seeds else SEEDS
+    if set(use_seeds) & set(CALIBRATION_SEEDS):
+        raise ValueError("evaluation seeds must not include calibration seeds")
+    use_families = tuple(families) if families else tuple(FAMILIES)
+    for family in use_families:
         # 每族只校準一次：step 與 lr 固定，epochs 這條軸才只改訓練量。
         calibration = calibrate_family(family, readout=readout)
         for epochs in EPOCHS_MATRIX:
@@ -550,7 +568,7 @@ def run(readout: Optional[str] = None) -> Dict[str, object]:
                     }
                 )
                 continue
-            cell = evaluate_cell(family, calibration, epochs, readout=readout)
+            cell = evaluate_cell(family, calibration, epochs, readout=readout, seeds=use_seeds)
             neutral_hit = float(cell["arms"]["neutral"]["hit_rate_mean"])  # type: ignore[index]
             in_range = HIT_RANGE[0] <= neutral_hit <= HIT_RANGE[1]
             margin = min(neutral_hit - HIT_RANGE[0], HIT_RANGE[1] - neutral_hit)
@@ -570,7 +588,7 @@ def run(readout: Optional[str] = None) -> Dict[str, object]:
     # 量具本身的控制：同一批輸入、打亂的標籤。若這段也拿到中段，跨臂比較量的是輸入結構。
     controls = {
         family: _label_shuffle_baseline(family, CALIBRATION_SEEDS, readout=readout)
-        for family in FAMILIES
+        for family in use_families
     }
     for name, control in controls.items():
         print(
@@ -585,8 +603,9 @@ def run(readout: Optional[str] = None) -> Dict[str, object]:
         "epochs_matrix": list(EPOCHS_MATRIX),
         "lr_grid": list(LR_GRID),
         "hit_range": list(HIT_RANGE),
-        "families": {name: steps for name, steps in FAMILIES.items()},
-        "seeds": list(SEEDS),
+        "families": {name: steps for name, steps in FAMILIES.items() if name in use_families},
+        "seeds": list(use_seeds),
+        "sign_test_min": _sign_test_minimum(len(use_seeds)),
         "cells": cells,
         "verdict": overall_verdict(cells),
     }
@@ -598,9 +617,18 @@ def main(argv=None) -> int:
     # 讀出：預設仍是 ``potential``（16 步擴散，既有報告要能重現）。``direct`` 是一步
     # ``W · a``，不會被擴散壓平；切過去等於重新基線，所有格子都要重跑重報。
     ap.add_argument("--readout", choices=("potential", "direct"), default=READOUT)
+    # 種子可以加，但門檻要跟著 n 走（``_sign_test_minimum``）——否則 40 個種子仍只要求 10 個
+    # 同向，判詞會悄悄變鬆。校準種子永不參與評估。
+    ap.add_argument("--seeds", type=int, default=len(SEEDS))
+    ap.add_argument("--families", default=",".join(FAMILIES))
     args = ap.parse_args(argv)
 
-    result = run(readout=args.readout)
+    seed_list = tuple(SEEDS) + tuple(s for s in range(1000, 1000 + max(0, args.seeds - len(SEEDS))))
+    result = run(
+        readout=args.readout,
+        seeds=seed_list[: args.seeds],
+        families=[f for f in args.families.split(",") if f],
+    )
     print(f"protocol: {result['protocol']}  readout {result['readout']}")
     for cell in result["cells"]:  # type: ignore[union-attr]
         cal = cell["calibration"]

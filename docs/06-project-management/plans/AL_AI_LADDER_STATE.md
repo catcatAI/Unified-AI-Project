@@ -715,3 +715,18 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - 協定升
   `al-downstream-v16`；判詞與 v15 相同（`no-mechanism-benefit-consistent`）。
 - 檢查：協定單檔 46 passed、flake8=0。
+
+### 2026-11-07 續三十 — 加種子必須同時加門檻
+
+- 修 bug：`_seed_robust` 原本用常數
+  `SIGN_TEST_MIN`（10/12），加種子會讓判詞變鬆。改為由 `_sign_test_minimum(n)`
+  導出；`run()` 拒絕校準種子混入評估；`_measure`／`evaluate_cell`／`run` 接受
+  `seeds`，CLI 加 `--seeds`／`--families`。
+- 40 種子重跑 `conflict`（門檻 26/40）：ep1 P−N +0.0396（sd 0.0864、CI ±0.0268 →
+  [0.013, 0.066]）、**僅 22/40 同向**、MDE 0.045；ep3 +0.0052（8/40）；ep5
+  +0.0042（**4/40**，CI 也不含 0）。三格皆 `no-downstream-difference`。
+- 判讀：均值不含 0 但逐種子只有 55%（ep5 甚至 4/40）——多數種子略負、少數大幅正。12 種子時的 8/12（67%）低估散佈；「CI 不含 0」比「逐種子同向」容易被運氣滿足。
+- **污染修正**：第一次擴充種子 `range(200,…)`
+  撞上校準種子 211／223／241，舊守衛只查 `min(seeds)`
+  未擋住；改集合交集＋擴充種子自 1000 起，重跑後數字取代第一次的 +0.0510／27-40。
+- 檢查：協定單檔 49 passed、flake8=0、isort=0。
