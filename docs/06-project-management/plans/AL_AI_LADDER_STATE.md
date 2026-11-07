@@ -730,3 +730,19 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   撞上校準種子 211／223／241，舊守衛只查 `min(seeds)`
   未擋住；改集合交集＋擴充種子自 1000 起，重跑後數字取代第一次的 +0.0510／27-40。
 - 檢查：協定單檔 49 passed、flake8=0、isort=0。
+
+### 2026-11-07 續三十一 — 增益匹配閘門沒有力量
+
+- 發現：`gain_matched` 用
+  `abs(mean(phase)−1.0) <= 0.05`，但排程每 epoch 走完整週期，均值實測 1.0000369（差 3.7e-5）→ 該閘門**不可能失敗**。
+- 改為
+  `_gains_matched()`：驗同上同一組增益（multiset）、順序確實不同（否則 shuffled 是 phase 複本）、均值差 ≤
+  `GAIN_MATCH_TOL`(0.01)；`gain_match` 寫入每格。
+- 順帶暴露混淆：相位臂增益 0.4–1.6、sd 0.4762，`phase` vs `neutral`
+  混了散佈與順序；只有 `phase` vs `shuffled` 隔離時序。
+- 隔離後重讀（v17 `direct`）：conflict P>S 25/40、14/40、6/40（無時序效果）；m2o
+  ep1 P>S **0/40**、ep3 0/12、ep5 5/12
+  → 背誦型任務的傷害**不是散佈造成**，是順序。
+- 判詞不變
+  `no-mechanism-benefit-consistent`，理由更硬：與同散佈隨機順序相比，相位順序沒有好處、在背誦型任務上更差。
+- 檢查：協定單檔 53 passed、flake8=0。

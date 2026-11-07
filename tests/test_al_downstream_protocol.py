@@ -439,3 +439,35 @@ class TestSeedCountControlsTheGate:
     def test_calibration_seeds_cannot_be_reused(self, protocol):
         with pytest.raises(ValueError):
             protocol.run(readout="direct", seeds=(11, 23, 211), families=["conflict"])
+
+
+class TestGainMatchingHasPower:
+    """均值容差不可能失敗（排程剛好走完整週期），所以閘門必須驗分佈與順序。"""
+
+    def test_mean_delta_is_exactly_zero_by_construction(self, protocol):
+        gains = protocol._downstream._schedule(
+            protocol._downstream.natural_period(), 96, step_per_period=96
+        )
+        match = protocol._gains_matched(gains, gains[::-1])
+        # 實測 3.7e-5：均值不是精確 1.0，但任何 0.01 以上的容差都不會綁定。
+        assert abs(match["mean_delta"]) < 1e-3
+        assert abs(match["mean_delta"]) < protocol.GAIN_MATCH_TOL
+        assert match["multiset_match"] is True
+
+    def test_a_copy_is_not_a_shuffle(self, protocol):
+        gains = protocol._downstream._schedule(
+            protocol._downstream.natural_period(), 96, step_per_period=96
+        )
+        # 同一條排程當「打亂臂」等於兩臂相同：順序沒有不同，閘門必須擋下來。
+        assert protocol._gains_matched(gains, gains)["order_differs"] is False
+
+    def test_a_reversed_schedule_is_a_legal_shuffle(self, protocol):
+        gains = protocol._downstream._schedule(
+            protocol._downstream.natural_period(), 96, step_per_period=96
+        )
+        assert protocol._gains_matched(gains, gains[::-1])["order_differs"] is True
+
+    def test_unequal_multisets_are_rejected(self, protocol):
+        gains = [0.4, 1.0, 1.6]
+        match = protocol._gains_matched(gains, [0.4, 1.0, 1.0])
+        assert match["multiset_match"] is False

@@ -104,6 +104,9 @@ HIT_RANGE = (0.30, 0.70)
 # 找不到才退回第一個合格者並標 ``centred: False``。這條餘裕規則是在看到 v8 的 0.299 之後
 # 才加的——它會改變「用哪一題」，所以必須寫出來。
 HIT_MARGIN = 0.05
+# 相位臂均值與中性臂（1.0）的差：實測 3.7e-5，由「每 epoch 走完整週期」決定。這個容差不是控制，
+# 只是防止排程被改壞；真正的匹配檢查是同一組增益與不同順序。
+GAIN_MATCH_TOL = 0.01
 SEEDS = (11, 23, 37, 41, 53, 67, 79, 83, 97, 101, 113, 127)
 # 校準種子必須與評估種子**互斥**：共用種子等於先看答案再出題，被校準到 [0.30, 0.70]
 # 的中性臂會在評估時被同一批種子稍微優待（v4 及以前就是這樣）。
@@ -338,6 +341,30 @@ def _sign_test_minimum(seeds: int, alpha: float = 0.05) -> int:
 SIGN_TEST_MIN = _sign_test_minimum(len(SEEDS))
 
 
+def _gains_matched(
+    phase_gains: Sequence[float], shuffled_gains: Sequence[float], neutral_gain: float = 1.0
+) -> Dict[str, object]:
+    """增益匹配要檢查「分佈」，不是「均值」。
+
+    排程每個 epoch 剛好走完一個週期，所以相位臂均值實測 1.0000369（差 3.7e-5），任何 0.01 以上
+    的均值容差**都不可能失敗**——一個不可能失敗的閘門不是控制。真正有力量的是：打亂臂與相位臂
+    有同一組增益（打亂只換順序）、且順序確實不同（否則 shuffled 只是 phase 的複本）。相位臂的
+    散佈（0.4–1.6）本身也是混淆：對 ``neutral`` 的比較同時混了「時序」與「每步增益有大小」，
+    只有對 ``shuffled`` 才隔離時序。
+    """
+    mean_delta = statistics.fmean(phase_gains) - neutral_gain
+    return {
+        "mean_delta": round(mean_delta, 6),
+        "phase_gain_sd": round(statistics.pstdev(phase_gains), 4),
+        "phase_gain_min": round(min(phase_gains), 4),
+        "phase_gain_max": round(max(phase_gains), 4),
+        # 打亂臂必須是同一組增益的**不同順序**：同分佈（否則兩臂的「量」不同）且順序不同
+        # （否則 shuffled 只是 phase 的複本，兩臂比較等於自己比自己）。
+        "multiset_match": sorted(phase_gains) == sorted(shuffled_gains),
+        "order_differs": list(phase_gains) != list(shuffled_gains),
+    }
+
+
 def _paired_stats(
     rows: Dict[str, List[Dict[str, float]]], a: str, b: str, key: str
 ) -> Dict[str, float]:
@@ -475,13 +502,16 @@ def evaluate_cell(
     # 這台量具在這個格子上能分辨多小的差：σ 來自配對差的散佈。
     mde = _min_detectable_delta(paired["phase_vs_neutral_hit"]["sd"], len(seeds), need)
 
-    raw_verdict = (
-        _downstream._verdict(rows)
-        if abs(gains["phase"] - gains["neutral"]) <= 0.05
-        else "gain-not-matched"
+    # 增益匹配：均值容差不可能失敗（排程恰好走完整週期），所以真正有力量的是分佈與順序。
+    match = _gains_matched(phase_gains, shuffled)
+    matched = (
+        bool(match["multiset_match"])
+        and bool(match["order_differs"])
+        and abs(float(match["mean_delta"])) <= GAIN_MATCH_TOL
     )
+    raw_verdict = _downstream._verdict(rows) if matched else "gain-not-matched"
     verdict, downgrade = _seed_robust(raw_verdict, seed_wins)
-    matched = abs(gains["phase"] - gains["neutral"]) <= 0.05
+
     return {
         "family": family,
         "task": {key: value for key, value in task.items() if key != "threshold"},
@@ -510,6 +540,7 @@ def evaluate_cell(
             statistics.fmean(heldout[name]) <= 2 / len(targets) for name in heldout
         ),
         "gain_matched": bool(matched),
+        "gain_match": match,
         "seed_wins": seed_wins,
         "paired": paired,
         "detectable_hit_delta": mde,
