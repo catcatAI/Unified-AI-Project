@@ -58,6 +58,24 @@ class TestVerdict:
         }
         assert gate._verdict(rows) == "margin-gain-without-hit-gain"
 
+    def test_a_clear_loss_is_reported_as_a_loss(self, gate):
+        # phase 兩項都明顯更差、且多數種子同時輸給兩個臂：這是負結果，不是「沒差」。
+        rows = {
+            "phase": [{"margin": -0.10, "hit_rate": 0.20}] * 3,
+            "neutral": [{"margin": 0.10, "hit_rate": 0.55}] * 3,
+            "shuffled": [{"margin": 0.10, "hit_rate": 0.55}] * 3,
+        }
+        assert gate._verdict(rows) == "phase-loses-to-matched-mean"
+
+    def test_a_small_deficit_stays_a_non_result(self, gate):
+        rows = {
+            "phase": [{"margin": 0.10, "hit_rate": 0.50}] * 3,
+            "neutral": [{"margin": 0.10, "hit_rate": 0.50}, {"margin": 0.30, "hit_rate": 0.50}]
+            + [{"margin": 0.10, "hit_rate": 0.50}],
+            "shuffled": [{"margin": 0.10, "hit_rate": 0.50}] * 3,
+        }
+        assert gate._verdict(rows) == "no-downstream-difference"
+
     def test_no_separation_is_reported_as_none(self, gate):
         rows = _rows([0.10, 0.11, 0.10], [0.10, 0.11, 0.10], [0.10, 0.11, 0.10])
         assert gate._verdict(rows) == "no-downstream-difference"

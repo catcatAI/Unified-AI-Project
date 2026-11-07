@@ -45,6 +45,15 @@ class TestOverallVerdict:
         cells = [_cell("no-downstream-difference"), _cell("timing-does-not-matter-only-gain")]
         assert protocol.overall_verdict(cells) == "no-mechanism-benefit-consistent"
 
+    def test_consistent_harm_is_its_own_claim(self, protocol):
+        # 一致的負結果不能退化成「沒贏」，否則反例會被記成空白。
+        cells = [_cell("phase-loses-to-matched-mean")] * 3
+        assert protocol.overall_verdict(cells) == "mechanism-harm-consistent"
+
+    def test_harm_counts_as_no_benefit_when_mixed(self, protocol):
+        cells = [_cell("phase-loses-to-matched-mean"), _cell("no-downstream-difference")]
+        assert protocol.overall_verdict(cells) == "no-mechanism-benefit-consistent"
+
     def test_opposite_directions_make_no_claim(self, protocol):
         cells = [_cell("phase-beats-matched-mean"), _cell("no-downstream-difference")]
         assert protocol.overall_verdict(cells) == "regime-dependent-no-claim"

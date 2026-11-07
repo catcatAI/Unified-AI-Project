@@ -29,6 +29,7 @@ v4 只是**修儀器**：候選 label 由 pair 索引拼字串改成由任務的
 * ``insufficient-informative-regimes``：可下結論的格 < 2；
 * ``mechanism-benefit-consistent``：所有可下結論的格都是 `phase-beats-matched-mean`；
 * ``no-mechanism-benefit-consistent``：所有格都沒贏過 neutral；
+* ``mechanism-harm-consistent``：所有可下結論的格都是 `phase-loses-to-matched-mean`；
 * ``regime-dependent-no-claim``：其餘（方向不一致）。
 """
 
@@ -165,7 +166,9 @@ NO_BENEFIT = (
     "no-downstream-difference",
     "margin-gain-without-hit-gain",
     "timing-does-not-matter-only-gain",
+    "phase-loses-to-matched-mean",
 )
+HARM = "phase-loses-to-matched-mean"
 
 
 def overall_verdict(cells: Sequence[Dict[str, object]]) -> str:
@@ -175,6 +178,9 @@ def overall_verdict(cells: Sequence[Dict[str, object]]) -> str:
     verdicts = [cell["cell"]["verdict"] for cell in informative]  # type: ignore[index]
     if all(v == "phase-beats-matched-mean" for v in verdicts):
         return "mechanism-benefit-consistent"
+    if all(v == HARM for v in verdicts):
+        # 一致的負結果也是一種結論；不能只因為方向是負的就退回「沒差」。
+        return "mechanism-harm-consistent"
     if all(v in NO_BENEFIT for v in verdicts):
         return "no-mechanism-benefit-consistent"
     return "regime-dependent-no-claim"

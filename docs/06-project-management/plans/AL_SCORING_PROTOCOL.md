@@ -156,3 +156,28 @@ v3 的 `_evaluate` 用 `out.get(f"t{j:02d}") for j in range(len(pairs)) if j != 
 校準種子 (11,
 23, 37) 與評估種子（12 個）**重疊**，難度選擇與評估共用 3 個種子。這會讓落在 [0.30,
 0.70] 的中性臂在評估時稍微被優待。修法是把校準種子換成互斥集合並重跑（v5），在修好之前，上表的中性臂位置只能當「大致中段」，不能當精確校準點。
+
+## 判詞詞彙修訂：把「明顯更差」叫出來（同一份 v4 資料，重新標記）
+
+v4 的判詞只有「贏」與「沒差」兩種結局，於是 `many_to_one` ep3／ep5 的
+`−0.0865／0.194` 與 `−0.1177／0.266`（中性臂
+`−0.0245／0.309`、`−0.0294／0.330`）被寫成
+`no-downstream-difference`。那是**把負結果記成空白**：phase 不是沒差，是兩項指標都明顯更差，而且多數種子上同時輸給兩個臂。
+
+新增判詞
+`phase-loses-to-matched-mean`，條件與「贏」對稱：margin 與 top-1 都變差、赢 shuffled 的差距也為負、且超過種子散佈、多數種子同時輸給 neutral 與 shuffled。整體判詞多一個
+`mechanism-harm-consistent`（所有可下結論的格都是負向）；混在
+`no-mechanism-benefit-consistent` 的情況則保留原判詞。
+
+重跑（資料與 v4 相同，只有標記改變）：
+
+| 任務族      | regime   | 判詞（修訂後）                                 |
+| ----------- | -------- | ---------------------------------------------- |
+| hard        | ep1      | `no-downstream-difference`（缺額在種子散佈內） |
+| hard        | ep3、ep5 | `phase-beats-matched-mean`                     |
+| many_to_one | ep1      | `uninformative`                                |
+| many_to_one | ep3、ep5 | **`phase-loses-to-matched-mean`**              |
+
+整體 `regime-dependent-no-claim`，但現在是**兩個方向都有名字的反向結果**：`hard`
+在後期訓練受益，`many_to_one`
+在同樣的訓練量下受害。這比「一邊有益、另一邊沒差」更精確，也更難用「大概是雜訊」帶過。

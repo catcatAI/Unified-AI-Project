@@ -24,6 +24,8 @@
   為好處；
 * ``timing-does-not-matter-only-gain``：``phase`` 贏 ``neutral`` 但贏不過 ``shuffled``
   ——好處來自平均增益，不是時機；
+* ``phase-loses-to-matched-mean``：margin 與 top-1 **都**明顯變差，且多數種子上
+  ``phase`` 同時輸給兩個臂——這是負結果，要寫出來，不是「沒差」；
 * ``no-downstream-difference``：其餘。
 
 ``--task easy`` 是第一版（16 對，中性臂打滿分，比較在天花板上）；
@@ -191,6 +193,16 @@ def _verdict(rows: Dict[str, List[Dict[str, float]]]) -> str:
     beats_both = sum(1 for p, n, s in zip(phase, neutral, shuffled) if p > n and p > s)
 
     if margin_gain <= spread:
+        # 「沒有好處」與「明顯有害」是兩件事。原本一律回報 no-downstream-difference，
+        # 等於把一個可信的負結果寫成「沒差」——那會讓後面的結論少掉一個反例。
+        losers = sum(1 for p, n, s in zip(phase, neutral, shuffled) if p < n and p < s)
+        if (
+            margin_gain < -spread
+            and hit_phase < hit_neutral
+            and beats_shuffled < -spread
+            and losers > len(phase) / 2
+        ):
+            return "phase-loses-to-matched-mean"
         return "no-downstream-difference"
     if hit_phase < hit_neutral:
         # margin 變好但打中的變少：方向相反，不能算贏

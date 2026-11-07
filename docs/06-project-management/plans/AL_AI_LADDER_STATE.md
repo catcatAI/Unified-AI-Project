@@ -474,3 +474,16 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   族的 +0.34 margin 不能算成生產環境的行為。`garden_engine._plasticity_gain`
   的 docstring 已改成這樣寫（原本寫「每個樣本都要問一次」，與呼叫點不符）。
 - AL 相關 6 檔測試 65 passed；flake8 = 0。
+
+### 2026-11-07 續十七 — 判詞補上「明顯更差」，負結果不再被記成空白
+
+- 問題：`_verdict` 只有「贏／沒差」，`many_to_one` ep3/ep5 的 phase（margin
+  −0.0865、−0.1177；top-1 0.194、0.266）被寫成
+  `no-downstream-difference`，等於把可信的負結果抹掉。
+- 修法：新增
+  `phase-loses-to-matched-mean`（與「贏」對稱：兩項都差、贏 shuffled 的差距為負且超過種子散佈、多數種子同時輸兩臂）；整體多一個
+  `mechanism-harm-consistent`；`NO_BENEFIT` 納入新判詞。
+- 重跑（資料同 v4，只有標記改變）：hard ep1 沒差、ep3/ep5 贏；many_to_one
+  ep3/ep5 **`phase-loses-to-matched-mean`**；整體仍
+  `regime-dependent-no-claim`——但現在是「一邊受益、另一邊受害」的雙向結論。
+- 新增測試 4 個（明顯虧損要叫虧損、小虧損仍算沒結果、一致的負結果是結論、混合時歸 no-benefit）。
