@@ -94,6 +94,18 @@ TASKS: Dict[str, Dict[str, object]] = {
     # 只能靠各自的專屬 token 分辨。干擾結構不同於 hard（hard 是全體共用一個噪聲位）。
     # 多對一：兩個 cue 共用同一個 target。干擾真的存在（同一列由兩組 cue 累積），
     # 但答案仍然可學 —— 這才是「干擾結構不同、難度可校準」的第二族。
+    # 衝突證據的任務族：cue 只由跨 target 共用的 feature 組成，沒有專屬 token。正確答案要靠
+    # 多數證據勝出，所以命中率有真正的中段，而且 held-out（同批 feature、沒出現過的組合）
+    # 與訓練集一致——這才是「學會」而不是「背起來」。
+    "conflict": {
+        "pairs": 96,
+        "features": 12,
+        "cue_tokens": 5,
+        "support": 2,
+        "target_group": 8,
+        "lr": 0.01,
+        "threshold": 0.25,
+    },
     # 共用判別特徵的任務族：每個 target 有一個 feature token，同一個 target 的多個 cue
     # 都帶它，held-out cue 也帶。這是「學會」與「背起來」唯一分得開的地方。
     "structured": {
@@ -117,9 +129,33 @@ TASKS: Dict[str, Dict[str, object]] = {
 DEFAULT_TASK = "hard"
 
 
+def _conflict_cue(task: Dict[str, object], index: int, target: str) -> List[str]:
+    """衝突證據：cue 只由**跨 target 共用**的 feature 組成，沒有任何專屬 token。
+
+    舊任務每個 cue 都有自己的判別 token，於是「這條邊 > 0」就等於 top-1 正確，命中率只剩
+    1.0 與 0 兩種值。這裡 cue 的每個 token 都對多個 target 有邊，正確答案要靠多數證據勝出，
+    所以中段才可能存在。``index`` 決定抽取哪些 feature，``target`` 決定支持證據。
+    """
+    feats = int(task["features"])  # type: ignore[arg-type]
+    width = int(task.get("cue_tokens") or 3)
+    support = int(task.get("support") or 1)
+    tid = int(target[1:])
+    cue = [f"f{(tid * 3 + j) % feats}" for j in range(support)]
+    for k in range(width - support):
+        cue.append(f"f{(index * 7 + k * 5) % feats}")
+    return cue
+
+
 def _pairs(task: Dict[str, object]) -> List[Tuple[List[str], str]]:
     """每個 cue 有自己的 token，加噪聲位；難版讓所有 cue 共用一個 ``shared`` 位。"""
     count = int(task["pairs"])  # type: ignore[arg-type]
+    if task.get("features"):
+        bits_group = int(task.get("target_group") or 8)
+        conflict: List[Tuple[List[str], str]] = []
+        for i in range(count):
+            target = f"t{i % bits_group:02d}"
+            conflict.append((_conflict_cue(task, i, target), target))
+        return conflict
     bits = int(task["noise_bits"])  # type: ignore[arg-type]
     group = int(task.get("target_group") or count)
     pairs: List[Tuple[List[str], str]] = []
@@ -166,6 +202,23 @@ def _heldout_pairs(
     """
     train = _pairs(task)
     total = int(task["pairs"])  # type: ignore[arg-type]
+    if task.get("features"):
+        # 同一批 feature、沒出現過的**組合**：偏移量與訓練不同，所以 cue 不重複，但每個
+        # feature 都學過。這才是「用學到的關聯去組合新證據」。
+        group = int(task.get("target_group") or 8)
+        held_conflict: List[Tuple[List[str], str]] = []
+        for i in range(count if count is not None else total):
+            j = total + i
+            target = f"t{j % group:02d}"
+            tid = int(target[1:])
+            feats = int(task["features"])  # type: ignore[arg-type]
+            width = int(task.get("cue_tokens") or 3)
+            support = int(task.get("support") or 1)
+            cue = [f"f{(tid * 3 + m) % feats}" for m in range(support)]
+            for k in range(width - support):
+                cue.append(f"f{(j * 11 + k * 7) % feats}")
+            held_conflict.append((cue, target))
+        return held_conflict
     width = count if count is not None else total
     bits = int(task["noise_bits"])  # type: ignore[arg-type]
     group = int(task.get("target_group") or total)

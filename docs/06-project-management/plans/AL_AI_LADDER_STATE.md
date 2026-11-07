@@ -667,3 +667,22 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - 下一個根問題：任務只有「唯一 token」一種證據，所以只有 1.0/0 兩種值；要有多個衝突證據才有中段。`many_to_one`
   的中段是共用噪聲 token 撐出來的。
 - 檢查：協定單檔 36 passed、flake8=0。
+
+### 2026-11-07 續二十七 — 衝突證據：中段＋遷移，答案仍是沒有差別
+
+- 新增 `conflict` 族：cue 沒有專屬 token，只由跨 target 共用的 feature 組成（8
+  target、12 feature、每 cue 5
+  token＝2 支持＋3 抽樣，每個 feature 至少對 2 個 target 有邊）。
+- 校準 lr 0.01：中性臂 ep1/3/5 = 0.375／0.483／0.497，held-out（新組合）=
+  0.347／0.486／0.500，亂猜 0.125 → 中段與遷移同時成立（第一次）。
+- 結果（`--readout direct`）：conflict ep1 phase 0.431 vs 0.375/0.375（P>N
+  8/12、P>S 8/12）、ep3 0.486 vs 0.483/0.469（4/12、2/12）、ep5 0.500 vs
+  0.497/0.490（1/12、2/12）→ 三格皆 `no-downstream-difference`。
+- `many_to_one` 仍 ep1/ep3
+  `phase-loses-to-matched-mean`（0/12、0/12），ep5 降級；`hard`／`structured` 仍
+  `ladder-exhausted`（唯一 token → 任何 lr 都 1.000）。
+- 判讀：相位調制在「有學習、有遷移」的任務上沒有好處；在背誦型任務上早期有害。兩者分開陳述，整體
+  `no-mechanism-benefit-consistent`。
+- 量具現況：`direct` 讀出＋`conflict`
+  任務＋held-out 同步＋種子穩健性／符號檢定，已是能分辨差別的儀器。
+- 檢查：協定單檔 40 passed、flake8=0。

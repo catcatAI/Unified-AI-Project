@@ -92,7 +92,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v12"
+PROTOCOL_VERSION = "al-downstream-v14"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -121,6 +121,40 @@ FAMILIES: Dict[str, List[Dict[str, object]]] = {
         {"pairs": 72, "noise_bits": 2, "shared": True},
         {"pairs": 96, "noise_bits": 2, "shared": True},
         {"pairs": 144, "noise_bits": 1, "shared": True},
+    ],
+    # 衝突證據的任務族：cue 沒有專屬 token，每個 feature 都對多個 target 有邊。實測
+    # 96 pair／12 feature／5 token／2 個支持證據／8 個 target／lr 0.01 時，中性臂在
+    # ep1/3/5 是 0.361／0.486／0.500，held-out 是 0.347／0.486／0.500（亂猜 0.125）——
+    # 中段存在，而且遷移與訓練同步，不是背誦。
+    "conflict": [
+        {
+            "pairs": 96,
+            "features": 12,
+            "cue_tokens": 5,
+            "support": 2,
+            "target_group": 8,
+        },
+        {
+            "pairs": 96,
+            "features": 16,
+            "cue_tokens": 5,
+            "support": 2,
+            "target_group": 8,
+        },
+        {
+            "pairs": 96,
+            "features": 12,
+            "cue_tokens": 4,
+            "support": 1,
+            "target_group": 8,
+        },
+        {
+            "pairs": 192,
+            "features": 16,
+            "cue_tokens": 5,
+            "support": 1,
+            "target_group": 8,
+        },
     ],
     # 共用判別特徵的任務族：每個 target 一個 feature token，訓練與 held-out 的 cue 都帶。
     # 這一族存在的目的是讓 held-out 有意義；實測它在 ep1 就能完全遷移（train 與 held-out

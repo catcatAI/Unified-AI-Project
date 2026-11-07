@@ -315,3 +315,52 @@ class TestReadoutIsWhereTheCollapseLives:
         out = downstream._readouts._forward(core, {k: 1.0 for k in pairs[0][0]}, "direct")
         ranked = sorted(((out[label], label) for label in targets), reverse=True)
         assert ranked[0][1] == pairs[0][1]
+
+
+class TestConflictTaskHasAMiddleBand:
+    """舊任務只有唯一 token，命中率只能 1.0 或 0；衝突證據才有中段。"""
+
+    @pytest.fixture(scope="class")
+    def downstream(self):
+        import importlib.util
+
+        script = REPO_ROOT / "scripts" / "al_c_learn_downstream.py"
+        spec = importlib.util.spec_from_file_location("al_downstream_conflict_test", script)
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["al_downstream_conflict_test"] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def test_no_cue_token_belongs_to_a_single_target(self, downstream):
+        task = downstream.TASKS["conflict"]
+        owners = {}
+        for cue, target in downstream._pairs(task):
+            for token in cue:
+                owners.setdefault(token, set()).add(target)
+        assert min(len(targets) for targets in owners.values()) >= 2
+
+    def test_conflict_heldout_combines_seen_features(self, downstream):
+        task = downstream.TASKS["conflict"]
+        train = {tuple(cue) for cue, _ in downstream._pairs(task)}
+        held = downstream._heldout_pairs(task)
+        assert train.isdisjoint({tuple(cue) for cue, _ in held})
+        seen = {token for cue, _ in downstream._pairs(task) for token in cue}
+        assert all(token in seen for cue, _ in held for token in cue)
+
+    def test_conflict_lands_in_the_middle_band(self, downstream):
+        task = downstream.TASKS["conflict"]
+        core = downstream._train([1.0] * 96, 11, task, 1)
+        hit = downstream._evaluate(core, task, readout="direct")["hit_rate"]
+        assert 0.2 < hit < 0.8, hit
+
+    def test_conflict_transfers_to_unseen_combinations(self, downstream):
+        task = downstream.TASKS["conflict"]
+        core = downstream._train([1.0] * 96 * 5, 11, task, 5)
+        on_train = downstream._evaluate(core, task, readout="direct")["hit_rate"]
+        off_train = downstream._evaluate(
+            core, task, downstream._heldout_pairs(task), readout="direct"
+        )["hit_rate"]
+        assert on_train > 0.3
+        # held-out 與訓練集同步，差距不超過 0.2——這是組合證據，不是背誦。
+        assert abs(on_train - off_train) < 0.2
