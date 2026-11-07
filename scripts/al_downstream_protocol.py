@@ -19,7 +19,9 @@ v2 只跑兩個 regime、一個任務族，結論是 `regime-dependent-no-claim`
    v7 起**每族只校準一次**，且候選組合必須讓 ``EPOCHS_MATRIX`` 裡**每一個** regime 的中性臂
    都落在 [0.30, 0.70]；某格若仍跑出範圍就標 ``neutral-out-of-range``，而不是換一個更簡單
    的任務重校（見下）；
-4. **種子**：12 個固定；校準另用 3 個、**與評估種子互斥**（v5 起）；
+4. **種子**：12 個固定；校準掃描用 3 個、選中的候選再用 8 個確認（v10 起），三組**兩兩互斥**
+   （v5 起互斥評估種子）。只有 3 個種子的掃描值會系統性偏樂觀（實測 +0.055），足以把貼邊的
+   候選誤標成有餘裕；
 5. **控制組**：``shuffled``——**同一組增益**打亂順序，分離「平均增益」與「時序」；
 6. **判詞**：margin **與** top-1 必須同向；只升 margin 不算贏；
 7. **種子穩健性**（v8 起）：``phase-beats-matched-mean``／``phase-loses-to-matched-mean``
@@ -34,6 +36,12 @@ v7 修的是**混淆**：v6 及以前，難度階梯是逐格校準的，於是 
 不是「只多訓練幾輪」。v7 每族只校準一次，候選組合必須讓**每個** regime 的中性臂都在
 [0.30, 0.70]（只在校準那一格看是不夠的：在 ep1 校準出來的任務到了 ep5 會飽和到 1.0），
 之後 step 與 lr 都固定，``epochs`` 只改訓練量；跑出範圍的格標成不可下結論，而不是換題。
+
+v9 修的是**校準貼邊**：沿著單調的難度軸「第一個合格就採用」，必然停在界內第一點——實測
+``many_to_one`` 停在 0.306（餘裕 0.006）、``hard`` 停在 0.333（餘裕 0.033），兩族都是換一批
+種子就會跨出界外的距離。v9 優先選每個 regime 都離上下界至少 ``HIT_MARGIN``=0.05 的候選，
+找不到才退回第一個合格者並標 ``centred: False``。這條規則同樣是看到 v8 的 0.299 之後才寫
+的，而且它會改變「用哪一題」，所以結果必須整個重跑重報，不能只拿它去救那一格。
 
 v8 是**在看到 v7 的數字之後**才加的規則，必須這樣標記：v7 修好混淆後，``hard`` ep5 出現
 ``phase-beats-matched-mean``（top-1 0.701 vs shuffled 0.653 vs neutral 0.573），但逐種子
@@ -73,15 +81,25 @@ from typing import Dict, List, Sequence, Tuple
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v8"
+PROTOCOL_VERSION = "al-downstream-v10"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
 HIT_RANGE = (0.30, 0.70)
+# 校準沿著單調的難度軸「第一個合格就採用」，數學上必然停在邊界上：實測 ``many_to_one``
+# 停在 0.306、``hard`` 停在 0.333，兩族都只有 0.006／0.033 的餘裕，比種子噪音還小，換一批
+# 種子就掉出範圍（0.299）。所以校準改為優先選「每個 regime 都離上下界至少 0.05」的候選，
+# 找不到才退回第一個合格者並標 ``centred: False``。這條餘裕規則是在看到 v8 的 0.299 之後
+# 才加的——它會改變「用哪一題」，所以必須寫出來。
+HIT_MARGIN = 0.05
 SEEDS = (11, 23, 37, 41, 53, 67, 79, 83, 97, 101, 113, 127)
 # 校準種子必須與評估種子**互斥**：共用種子等於先看答案再出題，被校準到 [0.30, 0.70]
 # 的中性臂會在評估時被同一批種子稍微優待（v4 及以前就是這樣）。
 CALIBRATION_SEEDS = (211, 223, 241)
+# 掃描用 3 個種子太省：實測同一題目在掃描種子上是 0.361，在評估種子上是 0.306——系統性
+# 偏樂觀 0.055，剛好把「貼邊」誤標成「有餘裕」。所以選中的候選要再用一組較大的、與前兩組
+# 都互斥的種子確認一次；``centred`` 與報告裡的校準命中率都用確認值，不用掃描值。
+CONFIRMATION_SEEDS = (307, 311, 313, 317, 331, 337, 347, 349)
 
 # 難度階梯：每個任務族由易到難，第一個校準得動的就採用。
 FAMILIES: Dict[str, List[Dict[str, object]]] = {
@@ -97,6 +115,9 @@ FAMILIES: Dict[str, List[Dict[str, object]]] = {
         {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 24},
         {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 18},
         {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 12},
+        # 72p/group 12 是同一組目標配對、只是資料量多一級（實測 ep1 0.361 vs 0.306）。沒有
+        # 這一級，group 12 只剩 0.306 這種貼著下界的候選，換一批種子就掉到 0.299。
+        {"pairs": 72, "noise_bits": 3, "shared": True, "target_group": 12},
         {"pairs": 96, "noise_bits": 2, "shared": True, "target_group": 24},
     ],
 }
@@ -127,6 +148,32 @@ def _task(family: str, step: Dict[str, object], lr: float) -> Dict[str, object]:
     return base
 
 
+def _measure(task: Dict[str, object], seeds) -> Dict[int, float]:
+    """每個 regime 的中性臂命中率；中途跑出 [0.30, 0.70] 就停止（後面的格沒量到）。"""
+    pairs = int(task["pairs"])  # type: ignore[arg-type]
+    hits_by_epoch: Dict[int, float] = {}
+    for epochs in EPOCHS_MATRIX:
+        hits = []
+        for seed in seeds:
+            core = _downstream._train([1.0] * (pairs * epochs), seed, task, epochs)
+            hits.append(_downstream._evaluate(core, task)["hit_rate"])
+        mean_hit = statistics.fmean(hits)
+        hits_by_epoch[epochs] = round(mean_hit, 3)
+        if not HIT_RANGE[0] <= mean_hit <= HIT_RANGE[1]:
+            break
+    return hits_by_epoch
+
+
+def _is_centred(hits_by_epoch: Dict[int, float]) -> bool:
+    """每個 regime 都離上下界至少 ``HIT_MARGIN``（且每一格都量過）。"""
+    if len(hits_by_epoch) != len(EPOCHS_MATRIX):
+        return False
+    return all(
+        HIT_RANGE[0] + HIT_MARGIN <= hit <= HIT_RANGE[1] - HIT_MARGIN
+        for hit in hits_by_epoch.values()
+    )
+
+
 def calibrate_family(family: str) -> Dict[str, object]:
     """挑一個在**所有** regime 都讓中性臂落在中段的 step 與 lr。
 
@@ -134,37 +181,41 @@ def calibrate_family(family: str) -> Dict[str, object]:
     但固定在校準訓練量上也不夠：在 ep1 校準出來的任務，到了 ep5 常常已經飽和（實測中性臂
     top-1 0.986／1.0），於是這條軸只剩一格能用。所以候選組合必須**每一個** regime 都落在
     [0.30, 0.70]；找不到就整族標 ``uninformative``——寧可承認這族測不出東西，也不要換題。
+
+    另外優先選「離邊界至少 ``HIT_MARGIN``」的候選：第一個合格者總是貼著邊界（實測 0.306／
+    0.333），而校準只有 ``CALIBRATION_SEEDS`` 三個種子，估出來的餘裕和噪音同量級。找不到有
+    餘裕的候選才退回第一個合格者（``centred: False``），不因為沒餘裕就宣稱這族測不出東西。
     """
     trials: List[Dict[str, object]] = []
+    fallback: Dict[str, object] | None = None
     for step in FAMILIES[family]:
         for lr in LR_GRID:
             task = _task(family, step, lr)
-            pairs = int(task["pairs"])  # type: ignore[arg-type]
-            hits_by_epoch: Dict[int, float] = {}
-            in_range = True
-            for epochs in EPOCHS_MATRIX:
-                hits = []
-                for seed in CALIBRATION_SEEDS:
-                    core = _downstream._train([1.0] * (pairs * epochs), seed, task, epochs)
-                    hits.append(_downstream._evaluate(core, task)["hit_rate"])
-                mean_hit = statistics.fmean(hits)
-                hits_by_epoch[epochs] = round(mean_hit, 3)
-                if not HIT_RANGE[0] <= mean_hit <= HIT_RANGE[1]:
-                    in_range = False
-                    break
+            hits_by_epoch = _measure(task, CALIBRATION_SEEDS)
+            in_range = len(hits_by_epoch) == len(EPOCHS_MATRIX) and all(
+                HIT_RANGE[0] <= hit <= HIT_RANGE[1] for hit in hits_by_epoch.values()
+            )
             entry = dict(step)
             entry.update(lr=lr, neutral_hit_by_epoch=hits_by_epoch, in_range_everywhere=in_range)
             trials.append(entry)
-            if in_range:
-                return {
-                    "informative": True,
-                    "step": dict(step),
-                    "lr": lr,
-                    "neutral_hit_by_epoch": {
-                        str(epoch): hit for epoch, hit in hits_by_epoch.items()
-                    },
-                    "trials": trials,
-                }
+            if not in_range:
+                continue
+            confirmed = _measure(task, CONFIRMATION_SEEDS)
+            candidate: Dict[str, object] = {
+                "informative": True,
+                "step": dict(step),
+                "lr": lr,
+                "neutral_hit_by_epoch": {str(epoch): hit for epoch, hit in confirmed.items()},
+                "scan_hit_by_epoch": {str(epoch): hit for epoch, hit in hits_by_epoch.items()},
+                "centred": _is_centred(confirmed),
+                "trials": trials,
+            }
+            if candidate["centred"]:
+                return candidate
+            if fallback is None:
+                fallback = candidate
+    if fallback is not None:
+        return fallback
     return {"informative": False, "trials": trials}
 
 
@@ -263,6 +314,15 @@ def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> D
             name: {
                 "margin_mean": round(statistics.fmean(r["margin"] for r in rows[name]), 5),
                 "hit_rate_mean": round(statistics.fmean(r["hit_rate"] for r in rows[name]), 3),
+                # 逐種子離散度：同一題目的中性臂在 12 個評估種子上 0.299、在 8 個確認種子上
+                # 0.406、在 3 個掃描種子上 0.306——不同種子組的均值差到 0.107。沒有這個數字，
+                # 就分不出「這格真的有差」和「這一組種子剛好偏」。
+                "hit_rate_sd": round(statistics.stdev(r["hit_rate"] for r in rows[name]), 3),
+                "hit_rate_se": round(
+                    statistics.stdev(r["hit_rate"] for r in rows[name]) / len(rows[name]) ** 0.5, 3
+                ),
+                "hit_rate_min": round(min(r["hit_rate"] for r in rows[name]), 3),
+                "hit_rate_max": round(max(r["hit_rate"] for r in rows[name]), 3),
                 "gain_mean": round(gains[name], 4),
             }
             for name in rows
@@ -319,6 +379,7 @@ def run() -> Dict[str, object]:
             cell = evaluate_cell(family, calibration, epochs)
             neutral_hit = float(cell["arms"]["neutral"]["hit_rate_mean"])  # type: ignore[index]
             in_range = HIT_RANGE[0] <= neutral_hit <= HIT_RANGE[1]
+            margin = min(neutral_hit - HIT_RANGE[0], HIT_RANGE[1] - neutral_hit)
             cells.append(
                 {
                     "family": family,
@@ -327,6 +388,8 @@ def run() -> Dict[str, object]:
                     "reason": None if in_range else "neutral-out-of-range",
                     "calibration": calibration,
                     "cell": cell,
+                    "neutral_margin": round(margin, 3),
+                    "thin_margin": in_range and margin < HIT_MARGIN,
                 }
             )
 

@@ -150,3 +150,40 @@ class TestCalibrationDoesNotRetunePerEpoch:
         # 只有最易與最難兩級時，找不到「ep1 不低於 0.30、ep5 不高於 0.70」的組合。
         for family, steps in protocol.FAMILIES.items():
             assert len(steps) >= 3, family
+
+
+class TestCalibrationMargin:
+    """第一個合格的候選永遠貼著邊界，而三個校準種子的餘裕和噪音同量級。"""
+
+    def test_margin_is_five_points(self, protocol):
+        assert protocol.HIT_MARGIN == 0.05
+
+    def test_centred_needs_headroom_on_every_epoch(self, protocol):
+        assert protocol._is_centred({1: 0.36, 3: 0.45, 5: 0.60}) is True
+
+    def test_boundary_adjacent_candidate_is_not_centred(self, protocol):
+        # 就是 v8 選中的 0.306／0.333。
+        assert protocol._is_centred({1: 0.306, 3: 0.361, 5: 0.583}) is False
+        assert protocol._is_centred({1: 0.333, 3: 0.384, 5: 0.63}) is False
+
+    def test_partial_measurement_is_not_centred(self, protocol):
+        # 校準在中途爆掉就 break，剩下沒量到的格不能當成合格。
+        assert protocol._is_centred({1: 0.5}) is False
+
+    def test_many_to_one_ladder_has_a_centred_rung(self, protocol):
+        rungs = protocol.FAMILIES["many_to_one"]
+        assert any(rung.get("pairs") == 72 and rung.get("target_group") == 12 for rung in rungs)
+
+
+class TestConfirmationSeeds:
+    def test_three_seed_sets_are_pairwise_disjoint(self, protocol):
+        scan = set(protocol.CALIBRATION_SEEDS)
+        confirm = set(protocol.CONFIRMATION_SEEDS)
+        evaluate = set(protocol.SEEDS)
+        assert scan.isdisjoint(evaluate)
+        assert confirm.isdisjoint(evaluate)
+        assert confirm.isdisjoint(scan)
+
+    def test_confirmation_uses_more_seeds_than_the_scan(self, protocol):
+        # 掃描值偏樂觀 0.055 就是因為只有三個種子；確認要明顯更寬。
+        assert len(protocol.CONFIRMATION_SEEDS) >= 2 * len(protocol.CALIBRATION_SEEDS)
