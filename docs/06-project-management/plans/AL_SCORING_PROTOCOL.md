@@ -710,3 +710,72 @@ v17 改成驗真正會壞的地方：
    在唯一隔離時序的比較裡，三輪都沒有贏過隨機順序。
 
 判詞與 v16 相同（`no-mechanism-benefit-consistent`），但理由更乾淨：不是「與中性臂沒有差別」，而是「與同散佈的隨機順序相比，相位順序沒有任何好處，在背誦型任務上還更差」。
+
+## v18：兩個不會失敗的檢查，與一個被 margin 擋掉的 top-1 效果
+
+### 1. `_heldout_pairs` 的洩漏檢查是空的
+
+原本是：
+
+```python
+assert not set(id(pair) for pair in held) & set(id(pair) for pair in train)
+```
+
+`held` 與 `train` 是不同時間建立的物件，`id()`
+永遠不會相等，所以這道斷言**不可能失敗**。它看起來像在防洩漏，實際上什麼都沒檢查。改成比**內容**（cue 的 tuple 集合），並把
+`conflict` 這條走 `features` 分支、原本直接
+`return`（根本沒經過斷言）的路徑也接上檢查。
+
+實測五族皆 0 條重疊（easy/hard 16、48 條；conflict/structured/many_to_one
+48–96 條），所以**沒有洩漏**——但這現在是被檢查過的，不是被假設的。
+
+### 2. held-out「在亂猜」的門檻沒有來源
+
+原本
+`heldout_at_chance = 所有臂 heldout ≤ 2 / len(targets)`：係數 2 沒有出處，也不看 held-out 有幾條。改成二項散佈上界
+`p + 2·√(p(1−p)/m)`（m = held-out pair 數）：
+
+| 族          | 亂猜 p | 舊門檻 2p | 新上界    | neutral / phase / shuffled |
+| ----------- | ------ | --------- | --------- | -------------------------- |
+| conflict    | 0.125  | 0.250     | **0.193** | 0.361 / 0.420 / 0.333      |
+| many_to_one | 0.042  | 0.083     | **0.099** | 0.056 / 0.118 / 0.125      |
+
+結論沒變（held-out 到處都高於亂猜），但有一件事現在看得出來：`many_to_one` 的
+**neutral臂在亂猜**（0.056 ≤
+0.099），而 phase 與 shuffled 是亂猜的 2.8 倍。兩臂差別只在「增益有沒有大小」，所以這個遷移來自**變動的增益**，不是時序。這是一個觀察，不是判詞。
+
+### 3. margin 不動時，top-1 的移動被寫成「沒有差別」
+
+`_verdict` 的主閘門是 margin 對 `pstdev(neutral margin)`。在 `many_to_one`
+上 margin 幾乎是平的（ep5 差 −0.0002），但 top-1 從 0.528 跳到 0.689。舊判詞把這格寫成
+`no-downstream-difference`——一個 12/12 種子同向、+16 點的 top-1 效果被記成「沒差」。
+
+補上對稱於 `margin-gain-without-hit-gain` 的判詞：
+
+| 判詞                           | 條件                                               | 算不算機制好處                     |
+| ------------------------------ | -------------------------------------------------- | ---------------------------------- |
+| `hit-gain-without-margin-gain` | top-1 在 ≥ 二項門檻的種子上變好，但贏不過 shuffled | 不算（好處來自增益散佈）           |
+| `hit-gain-over-both-arms`      | top-1 贏過兩個臂但 margin 沒過門檻                 | **未定**：詞彙裡沒這格，不自動歸類 |
+
+門檻用
+`_sign_test_minimum(n)`，不是「多數」：8/12 是多數，但 P(X≥8|12,0.5)=0.19。這一點當場改變了一個格：`conflict`
+ep1 的 top-1 是 8/12，用多數會變成 `hit-gain-over-both-arms` （→ 整體
+`regime-dependent-no-claim`），用二項門檻（12 個種子需 10）則維持
+`no-downstream-difference`。
+
+### v18 重跑結果
+
+判詞：**`no-mechanism-benefit-consistent`**（與 v17 相同）。一格換了標籤：
+
+| 族          | ep  | N / P / S top-1           | P>N   | P>S  | 判詞                             |
+| ----------- | --- | ------------------------- | ----- | ---- | -------------------------------- |
+| conflict    | 1   | 0.375 / 0.431 / 0.375     | 8/12  | 8/12 | no-downstream-difference         |
+| conflict    | 3   | 0.483 / 0.486 / 0.469     | 4/12  | 2/12 | no-downstream-difference         |
+| conflict    | 5   | 0.497 / 0.500 / 0.490     | 1/12  | 2/12 | no-downstream-difference         |
+| many_to_one | 1   | 0.408 / **0.184** / 0.274 | 0/12  | 0/12 | phase-loses-to-matched-mean      |
+| many_to_one | 3   | 0.535 / **0.399** / 0.464 | 0/12  | 0/12 | phase-loses-to-matched-mean      |
+| many_to_one | 5   | 0.528 / **0.689** / 0.672 | 12/12 | 5/12 | **hit-gain-without-margin-gain** |
+
+讀法：`many_to_one`
+上相位調制**有效果，但不是時序的功勞**。ep1/ep3 大幅變差（0/12 贏），ep5 大幅變好（12/12 贏），而 ep5 只贏 shuffled
+5/12——所以變好的那部分來自「每步增益有大有小」，把它們打亂順序並沒有更好。這也解釋了為什麼「有沒有用」在這個族上不能只報一個數字：同一族的符號隨訓練量翻轉。

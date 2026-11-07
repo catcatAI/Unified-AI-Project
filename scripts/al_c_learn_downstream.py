@@ -192,6 +192,23 @@ def _schedule(period: float, n: int, step_per_period: Optional[int] = None) -> L
     return gains
 
 
+def _assert_disjoint(
+    train: Sequence[Tuple[List[str], str]], held: Sequence[Tuple[List[str], str]]
+) -> None:
+    """held-out 的 cue 必須與訓練 cue **內容**不相交。
+
+    原本這道檢查寫成 ``set(id(pair) for pair in held) & set(id(pair) for pair in train)``：
+    兩邊是不同時間建立的不同物件，``id()`` 永遠不會相等，所以這個斷言**不可能失敗**——
+    它只是看起來像在防洩漏。真正會洩漏的是內容相同（同一個 cue 被訓練過又被當成
+    held-out），那才會讓「沒學過的 cue」變成「背過的 cue」。
+    """
+    taught = {tuple(cue) for cue, _ in train}
+    fresh = {tuple(cue) for cue, _ in held}
+    leaked = taught & fresh
+    if leaked:
+        raise AssertionError(f"held-out cue 與訓練 cue 重疊 {len(leaked)} 條：{sorted(leaked)[:3]}")
+
+
 def _heldout_pairs(
     task: Dict[str, object], count: Optional[int] = None
 ) -> List[Tuple[List[str], str]]:
@@ -218,6 +235,7 @@ def _heldout_pairs(
             for k in range(width - support):
                 cue.append(f"f{(j * 11 + k * 7) % feats}")
             held_conflict.append((cue, target))
+        _assert_disjoint(train, held_conflict)
         return held_conflict
     width = count if count is not None else total
     bits = int(task["noise_bits"])  # type: ignore[arg-type]
@@ -234,7 +252,7 @@ def _heldout_pairs(
         if task.get("feature_token"):
             cue.append(f"feat{target}")
         held.append((cue, target))
-    assert not set(id(pair) for pair in held) & set(id(pair) for pair in train)
+    _assert_disjoint(train, held)
     return held
 
 
@@ -302,8 +320,13 @@ def _evaluate(
     return {"hit_rate": hits / len(pairs), "margin": statistics.fmean(margins)}
 
 
-def _verdict(rows: Dict[str, List[Dict[str, float]]]) -> str:
-    """兩個指標都要看：margin 上升但 top-1 下降不是「贏」。"""
+def _verdict(rows: Dict[str, List[Dict[str, float]]], need: Optional[int] = None) -> str:
+    """兩個指標都要看：margin 上升但 top-1 下降不是「贏」。
+
+    ``need`` 是「多數種子同向」的門檻：12 個種子的多數是 7，但 P(X>=7|12,0.5)=0.39，
+    那不是證據。呼叫端應傳入由種子數導出的單尾二項門檻（12 個種子為 10）；沒傳時
+    退回嚴格多數，僅供單獨跑這支腳本時使用。
+    """
     phase = [row["margin"] for row in rows["phase"]]
     neutral = [row["margin"] for row in rows["neutral"]]
     shuffled = [row["margin"] for row in rows["shuffled"]]
@@ -312,6 +335,7 @@ def _verdict(rows: Dict[str, List[Dict[str, float]]]) -> str:
     beats_shuffled = statistics.fmean(phase) - statistics.fmean(shuffled)
     hit_phase = statistics.fmean(row["hit_rate"] for row in rows["phase"])
     hit_neutral = statistics.fmean(row["hit_rate"] for row in rows["neutral"])
+    hit_shuffled_stats = statistics.fmean(row["hit_rate"] for row in rows["shuffled"])
     beats_both = sum(1 for p, n, s in zip(phase, neutral, shuffled) if p > n and p > s)
 
     if margin_gain <= spread:
@@ -325,6 +349,25 @@ def _verdict(rows: Dict[str, List[Dict[str, float]]]) -> str:
             and losers > len(phase) / 2
         ):
             return "phase-loses-to-matched-mean"
+        # margin 幾乎不動時，top-1 仍可能大幅移動：``many_to_one`` ep5 的 margin 差是
+        # -0.0002，hit_rate 是 +0.1615 且 12/12 種子同向。只用 margin 判詞會把「打中的
+        # 變多」寫成「沒有差別」。對稱於上面的 ``margin-gain-without-hit-gain``。
+        hit_wins = sum(
+            1 for p_, n_ in zip(rows["phase"], rows["neutral"]) if p_["hit_rate"] > n_["hit_rate"]
+        )
+        hit_shuffled_wins = sum(
+            1 for p_, s_ in zip(rows["phase"], rows["shuffled"]) if p_["hit_rate"] > s_["hit_rate"]
+        )
+        hit_gain = hit_phase - hit_neutral
+        hit_gain_over_shuffled = hit_phase - hit_shuffled_stats
+        # 門檻用二項檢定，不用「多數」：8/12 是多數，但 P(X>=8|12,0.5)=0.19。
+        need_wins = need if need is not None else len(phase) // 2 + 1
+        if hit_gain > 0 and hit_wins >= need_wins:
+            if hit_gain_over_shuffled > 0 and hit_shuffled_wins >= need_wins:
+                # 兩個臂都贏、但 margin 沒過散布門檻：目前的判詞詞彙沒有這一格，不能硬塞
+                # 進「有效」或「沒差」，獨立成一個需要人看的標籤。
+                return "hit-gain-over-both-arms"
+            return "hit-gain-without-margin-gain"
         return "no-downstream-difference"
     if hit_phase < hit_neutral:
         # margin 變好但打中的變少：方向相反，不能算贏

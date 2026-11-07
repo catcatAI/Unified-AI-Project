@@ -9,6 +9,7 @@ keep the arms gain-matched.
 from __future__ import annotations
 
 import importlib.util
+import math
 import sys
 from pathlib import Path
 
@@ -471,3 +472,22 @@ class TestGainMatchingHasPower:
         gains = [0.4, 1.0, 1.6]
         match = protocol._gains_matched(gains, [0.4, 1.0, 1.0])
         assert match["multiset_match"] is False
+
+
+class TestHeldoutChanceBoundIsDerivedFromCount:
+    """``2 / len(targets)`` 的係數 2 沒有來源，也不看 held-out 有幾條。"""
+
+    def test_the_bound_tightens_as_heldout_grows(self):
+        def bound(chance, pairs):
+            return chance + 2 * math.sqrt(chance * (1 - chance) / pairs)
+
+        assert bound(0.042, 96) < bound(0.042, 48)
+        # 舊的平準門檻 0.0833 對 24 條 held-out 而言太嚴、對 400 條而言太鬆。
+        assert bound(0.042, 24) > 2 * 0.042
+        assert bound(0.042, 400) < 2 * 0.042
+
+    def test_the_point_gain_of_a_top1_only_case_is_not_hidden(self, protocol):
+        # hit-gain-without-margin-gain 算「機制沒有好處」，但 top-1 的移動要看得到。
+        assert "hit-gain-without-margin-gain" in protocol.NO_BENEFIT
+        # top-1 同時贏過兩個臂是詞彙裡沒有的格，不能自動歸進「沒好處」。
+        assert "hit-gain-over-both-arms" not in protocol.NO_BENEFIT

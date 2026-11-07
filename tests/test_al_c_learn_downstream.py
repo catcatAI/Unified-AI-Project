@@ -149,3 +149,85 @@ class TestScoring:
         report = gate._evaluate(None, task)
         assert report["hit_rate"] == 1.0
         assert report["margin"] == pytest.approx(1.0)
+
+
+class TestHeldoutIsCheckedByContent:
+    """舊檢查用 ``id()``，兩邊是不同物件，永遠不會相等——那道斷言不可能失敗。"""
+
+    def test_a_reused_cue_is_caught(self, gate):
+        train = [(["cue00", "n1"], "t00"), (["cue01", "n2"], "t01")]
+        held = [(["cue01", "n2"], "t01")]
+        with pytest.raises(AssertionError, match="重疊"):
+            gate._assert_disjoint(train, held)
+
+    def test_the_old_id_check_would_have_passed_here(self, gate):
+        # 同一個「內容」但是新物件：id() 不同，內容相同。這正是原斷言漏掉的情形。
+        train = [(["cue00"], "t00")]
+        held = [(["cue00"], "t00")]
+        assert not (set(id(p) for p in held) & set(id(p) for p in train))
+        with pytest.raises(AssertionError):
+            gate._assert_disjoint(train, held)
+
+    def test_disjoint_cues_pass(self, gate):
+        gate._assert_disjoint([(["cue00"], "t00")], [(["cue01"], "t00")])
+
+    @pytest.mark.parametrize("family", ["easy", "hard", "conflict", "structured", "many_to_one"])
+    def test_every_real_family_passes_the_check(self, gate, family):
+        task = gate.TASKS[family]
+        gate._assert_disjoint(gate._pairs(task), gate._heldout_pairs(task))
+
+
+class TestTop1GainWithoutMarginGain:
+    """margin 幾乎不動時，top-1 仍可能大幅移動——只判 margin 會寫成「沒有差別」。"""
+
+    def test_top1_gain_alone_is_not_called_no_difference(self, gate):
+        rows = {
+            "phase": [{"margin": 0.100, "hit_rate": 0.70}] * 5,
+            "neutral": [{"margin": 0.101, "hit_rate": 0.52}] * 5,
+            # shuffled 更高：好處贏得過 neutral，但贏不過同散佈的隨機順序。
+            "shuffled": [{"margin": 0.102, "hit_rate": 0.75}] * 5,
+        }
+        assert gate._verdict(rows) == "hit-gain-without-margin-gain"
+
+    def test_top1_gain_over_both_arms_is_flagged_for_a_human(self, gate):
+        rows = {
+            "phase": [{"margin": 0.100, "hit_rate": 0.70}] * 5,
+            "neutral": [{"margin": 0.101, "hit_rate": 0.52}] * 5,
+            "shuffled": [{"margin": 0.102, "hit_rate": 0.60}] * 5,
+        }
+        assert gate._verdict(rows) == "hit-gain-over-both-arms"
+
+    def test_a_minority_of_seeds_gaining_is_not_enough(self, gate):
+        rows = {
+            "phase": [
+                {"margin": 0.100, "hit_rate": 0.90},
+                {"margin": 0.100, "hit_rate": 0.30},
+                {"margin": 0.100, "hit_rate": 0.30},
+            ],
+            "neutral": [{"margin": 0.101, "hit_rate": 0.50}] * 3,
+            "shuffled": [{"margin": 0.102, "hit_rate": 0.62}] * 3,
+        }
+        assert gate._verdict(rows) == "no-downstream-difference"
+
+
+class TestHitGainUsesTheBinomialThreshold:
+    """「多數」不是證據：8/12 的單尾機率是 0.19。"""
+
+    @staticmethod
+    def _rows(wins: int, n: int = 12):
+        phase, neutral, shuffled = [], [], []
+        for i in range(n):
+            phase.append({"margin": 0.100, "hit_rate": 0.70 if i < wins else 0.52})
+            neutral.append({"margin": 0.101, "hit_rate": 0.52})
+            shuffled.append({"margin": 0.102, "hit_rate": 0.75})
+        return {"phase": phase, "neutral": neutral, "shuffled": shuffled}
+
+    def test_eight_of_twelve_is_not_enough_at_the_binomial_threshold(self, gate):
+        assert gate._verdict(self._rows(8), need=10) == "no-downstream-difference"
+
+    def test_ten_of_twelve_is_enough(self, gate):
+        assert gate._verdict(self._rows(10), need=10) == "hit-gain-without-margin-gain"
+
+    def test_the_default_is_a_strict_majority_not_a_coin_flip(self, gate):
+        # 沒有傳門檻時（單獨跑腳本）只要求嚴格多數，但文件已寫明那不是檢定。
+        assert gate._verdict(self._rows(7)) == "hit-gain-without-margin-gain"

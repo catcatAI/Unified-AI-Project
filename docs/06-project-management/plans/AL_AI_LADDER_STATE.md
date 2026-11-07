@@ -746,3 +746,23 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - 判詞不變
   `no-mechanism-benefit-consistent`，理由更硬：與同散佈隨機順序相比，相位順序沒有好處、在背誦型任務上更差。
 - 檢查：協定單檔 53 passed、flake8=0。
+
+### 2026-11-07 續三十二 — 又兩個不會失敗的檢查
+
+- **`_heldout_pairs` 洩漏斷言是空的**：比
+  `id()`，兩邊永遠不同物件 → 不可能失敗；且 `conflict` 分支在斷言前就
+  `return`。改比 cue 內容、兩支都接。實測五族 0 重疊（無洩漏，但現在有檢查）。
+- **held-out 亂猜門檻 `2/len(targets)` 無來源**：改二項上界
+  `p+2√(p(1−p)/m)`；conflict 0.250→0.193、m2o
+  0.083→0.099。結論不變；新觀察：m2o 的 neutral 在亂猜（0.056），phase/shuffled 是 2.8×
+  → 遷移來自變動增益。
+- **margin 閘門擋掉 top-1 效果**：m2o ep5 margin 差 −0.0002、top-1
+  +0.1615（12/12），舊判詞寫 `no-downstream-difference`。新增
+  `hit-gain-without-margin-gain`（算機制沒好處）與
+  `hit-gain-over-both-arms`（未定，不入 NO_BENEFIT）。
+- 門檻改用 `_sign_test_minimum(n)`：8/12 是多數但 P=0.19；此舉讓 conflict
+  ep1 維持 `no-downstream-difference`（否則整體會變
+  `regime-dependent-no-claim`）。
+- v18 重跑：`no-mechanism-benefit-consistent`；m2o ep1/ep3
+  phase-loses（0/12 贏）、ep5 換標籤 → 相位調制在該族**有效果但不是時序**，符號隨訓練量翻轉。
+- 檢查：協定+下游 80 passed、flake8=0。

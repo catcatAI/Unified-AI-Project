@@ -501,6 +501,10 @@ def evaluate_cell(
         paired[f"phase_vs_{other}_margin"] = _paired_stats(rows, "phase", other, "margin")
     # 這台量具在這個格子上能分辨多小的差：σ 來自配對差的散佈。
     mde = _min_detectable_delta(paired["phase_vs_neutral_hit"]["sd"], len(seeds), need)
+    # 「held-out 在亂猜」原本用 ``2 / len(targets)``：係數 2 沒有來源，也不看 held-out 有幾條。
+    # 改成二項散佈上界 ``p + 2·√(p(1−p)/m)``（m = held-out pair 數）：m 越大，允許的超出越小。
+    chance = 1 / len(targets)
+    chance_upper = chance + 2 * math.sqrt(chance * (1 - chance) / len(held))
 
     # 增益匹配：均值容差不可能失敗（排程恰好走完整週期），所以真正有力量的是分佈與順序。
     match = _gains_matched(phase_gains, shuffled)
@@ -509,7 +513,7 @@ def evaluate_cell(
         and bool(match["order_differs"])
         and abs(float(match["mean_delta"])) <= GAIN_MATCH_TOL
     )
-    raw_verdict = _downstream._verdict(rows) if matched else "gain-not-matched"
+    raw_verdict = _downstream._verdict(rows, need=need) if matched else "gain-not-matched"
     verdict, downgrade = _seed_robust(raw_verdict, seed_wins)
 
     return {
@@ -535,10 +539,15 @@ def evaluate_cell(
             }
             for name in rows
         },
-        "heldout_chance": round(1 / len(targets), 3),
+        "heldout_chance": round(chance, 3),
+        "heldout_chance_upper": round(chance_upper, 3),
+        "heldout_pairs": len(held),
         "heldout_at_chance": all(
-            statistics.fmean(heldout[name]) <= 2 / len(targets) for name in heldout
+            statistics.fmean(heldout[name]) <= chance_upper for name in heldout
         ),
+        "heldout_at_chance_by_arm": {
+            name: statistics.fmean(heldout[name]) <= chance_upper for name in heldout
+        },
         "gain_matched": bool(matched),
         "gain_match": match,
         "seed_wins": seed_wins,
@@ -553,6 +562,9 @@ def evaluate_cell(
 NO_BENEFIT = (
     "no-downstream-difference",
     "margin-gain-without-hit-gain",
+    # top-1 變好但 margin 沒過散布門檻，且贏不過同散佈的 shuffled：好處來自「增益有大有小」，
+    # 不是時機。算「機制（時機）沒有好處」。
+    "hit-gain-without-margin-gain",
     "timing-does-not-matter-only-gain",
     "phase-loses-to-matched-mean",
 )

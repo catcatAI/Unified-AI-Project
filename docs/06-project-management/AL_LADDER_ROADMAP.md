@@ -1351,3 +1351,27 @@ ep1 的均值有 [0.013,
 結論因此更硬：`many_to_one`
 的傷害**不是散佈造成的**（打亂臂散佈相同仍 12/12 贏），壞的是順序； `conflict`
 上沒有任何時序效果。也就是說，相位順序不但沒好處，在背誦型任務上比隨機順序更差。
+
+## 42. 兩個不會失敗的檢查，與被 margin 擋掉的 top-1 效果
+
+**洩漏檢查是空的。**
+`assert not set(id(pair) for pair in held) & set(id(pair) for pair in train)`
+——兩邊永遠是不同的物件，`id()` 永遠不相等，斷言不可能失敗；而且 `conflict` 走的
+`features` 分支根本在斷言之前就 `return`
+了。改成比 cue 的內容，兩支都接上。實測五族 0 條重疊，所以沒有洩漏，但現在是被檢查過的。
+
+**held-out 亂猜門檻沒有來源。** 原本
+`2 / len(targets)`，係數 2 沒出處、也不看 held-out 條數。改成二項上界
+`p + 2√(p(1−p)/m)`：conflict 0.250 → **0.193**、many_to_one 0.083 →
+**0.099**。結論沒變，但多看到一件事：`many_to_one`
+的 neutral 臂 held-out 是亂猜（0.056 ≤
+0.099），phase/shuffled 是亂猜的 2.8 倍——遷移來自**變動的增益**，不是時序。
+
+**margin 不動 ≠ 沒有差別。** `many_to_one` ep5 的 margin 差 −0.0002，但 top-1
+0.528 → 0.689（12/12 種子）。舊判詞把這寫成 `no-downstream-difference`。補上
+`hit-gain-without-margin-gain` （算「機制沒好處」，因為贏不過 shuffled 5/12）與
+`hit-gain-over-both-arms`（未定，不自動歸類）。門檻用 `_sign_test_minimum(n)`
+而非多數——這一條當場改變了 `conflict` ep1 的標籤（8/12 是多數但 P=0.19）。
+
+重跑判詞仍是 `no-mechanism-benefit-consistent`。新增的讀法是：`many_to_one`
+上相位調制**有效果但不是時序的**——ep1/ep3 大幅變差、ep5 大幅變好，符號隨訓練量翻轉，而 ep5 贏 shuffled 只有 5/12。
