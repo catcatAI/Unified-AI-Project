@@ -13,8 +13,14 @@
 ``shuffled`` 是關鍵控制組：如果 ``phase`` 只是贏在平均增益，打亂後也會贏；只有
 「時機」真的有意義時，``phase`` 才該贏過 ``shuffled``。
 
-量的是 held-out 名次：給 cue，``potential`` 讀出下正確 target 的**分數差**
-（margin，連續值，不受脈衝量化影響）與 top-1 命中率。
+量的是訓練集上的名次：給 cue，``potential`` 讀出下正確 target 的**分數差**（margin，
+連續值，不受脈衝量化影響）與 top-1 命中率。
+
+**這不是 held-out 分數**（v3 的 docstring 曾這樣寫，是錯的）。``_train`` 與 ``_evaluate``
+用的是同一批 ``_pairs(task)``：實測中性臂在訓練 pair 上 ep1 0.52 → ep3 0.96 → ep5 1.00，
+而同一批權重在同規則、**沒訓練過的 cue**（``_heldout_pairs``）上，所有種子、所有 epoch
+都是 0.062（3/48，等於亂猜）——這個 token 層模型沒有共用特徵，新 cue 的判別 token 從未
+出現過，學不到。所以這裡量到的「比較好」只能是**記得比較快**，不是學會與遷移。
 
 判詞
 
@@ -127,6 +133,32 @@ def _schedule(period: float, n: int, step_per_period: Optional[int] = None) -> L
     return gains
 
 
+def _heldout_pairs(
+    task: Dict[str, object], count: Optional[int] = None
+) -> List[Tuple[List[str], str]]:
+    """同規則、但 cue 索引接在訓練 cue 之後的新 pair（判別 token 從未出現過）。
+
+    target 仍取自訓練任務的 label 集，所以候選集不變；差別只在 cue 本身沒被訓練過。
+    量它等於量「能不能唸出沒背過的 cue」，而這個模型做不到——見模組 docstring。
+    """
+    train = _pairs(task)
+    total = int(task["pairs"])  # type: ignore[arg-type]
+    width = count if count is not None else total
+    bits = int(task["noise_bits"])  # type: ignore[arg-type]
+    group = int(task.get("target_group") or total)
+    held: List[Tuple[List[str], str]] = []
+    for i in range(width):
+        j = total + i
+        cue = [f"cue{j:02d}"]
+        if task["shared"]:
+            cue += [f"n{j % bits}", "shared"]
+        else:
+            cue += [f"n{(j * 7 + k) % bits}" for k in range(bits)]
+        held.append((cue, f"t{j % group:02d}"))
+    assert not set(id(pair) for pair in held) & set(id(pair) for pair in train)
+    return held
+
+
 def _train(
     gains: Sequence[float], seed: int, task: Dict[str, object], epochs: int = EPOCHS
 ) -> TensorSNNCore:
@@ -173,10 +205,14 @@ def _score(out: Dict[str, float], targets: Sequence[str], target: str) -> Tuple[
     return correct - best, correct > best
 
 
-def _evaluate(core: TensorSNNCore, task: Dict[str, object]) -> Dict[str, float]:
+def _evaluate(
+    core: TensorSNNCore,
+    task: Dict[str, object],
+    pairs: Optional[Sequence[Tuple[List[str], str]]] = None,
+) -> Dict[str, float]:
     hits, margins = 0, []
-    pairs = _pairs(task)
-    targets = _candidate_targets(pairs)
+    pairs = list(pairs) if pairs is not None else _pairs(task)
+    targets = _candidate_targets(_pairs(task))
     for inputs, target in pairs:
         out = _readouts._forward(core, {key: 1.0 for key in inputs}, "potential")
         margin, hit = _score(out, targets, target)

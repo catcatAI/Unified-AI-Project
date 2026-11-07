@@ -328,7 +328,7 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   **0.0**；同相位重跑 **0.0**。
 - 控制組修正：原本用「沒有 tracker」，失敗（ΔW 0.052）——`get_rhythm_tracker()`
   是單例，永遠會建一個，所以那不是真實狀態。改量「源壞掉」。
-- **仍未量**：下游品質（held-out 任務）、長期線上效果。
+- **仍未量**：下游品質（真正的 held-out 任務——v11 量到現有任務的 held-out 對所有臂都是亂猜，見續二十四）、長期線上效果。
 
 **六項現況**：C-param ✓、C-logit ✓、C-state ✓、C-learn
 ✓（模型層）、C-learn 生產接線 ✓、黑箱 hidden-state 調制 ✗。
@@ -603,3 +603,22 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - 另修：`nohup … &`
   在此環境會被工具清理殺掉，導致第一次 v10 根本沒跑（log 空檔）；改用受管背景進程並用
   `ps` 而非 `pgrep -f` 判斷存活（`pgrep -f` 會 match 到自己的 bash 命令列）。
+
+### 2026-11-07 續二十四 — 根：訓練與評估是同一批 pair
+
+- 往上追一層才看到地基：`_train` 用 `_pairs(task)`，`_evaluate` 也用
+  `_pairs(task)`。報告裡的 `hit_rate` 一直是**訓練集**命中率。
+- 實測（neutral，hard 48 pair）：訓練集 ep1 0.52 → ep3 0.96 → ep5
+  1.00；同規則、沒訓練過的 cue（新增
+  `_heldout_pairs`）在所有 epoch、所有種子都是 0.062 = 3/48 = 亂猜。
+- 原因：這個 token 層模型沒有共用特徵，新 cue 的判別 token 從未出現過。它只會背，不會遷移。
+- v11 把 held-out 寫進協定（`heldout_hit_rate_mean/sd`、`heldout_chance`、`heldout_at_chance`）：hard 三臂 held-out 全 0.028（亂猜 0.014）；m2o
+  0.18–0.25（亂猜 0.083）高於亂猜，但那是共用噪聲 token `n0`–`n2`
+  的偽遷移，且 phase 在該處是最差的臂（0.181–0.243）。
+- 需要降級：§22–§33 與 `AL_SCORING_PROTOCOL`
+  的所有「比較好／比較差」只成立於「記得比較快」。v3
+  docstring 的「量的是 held-out 名次」是錯的，已改；§22「量 held-out 檢索」、§23「held-out
+  margin」、§31「仍未量下游品質」三處一併更正。
+- 根修方向：任務改成每個 target 有共用 feature
+  token（訓練與 held-out 的 cue 都帶），才有真正的 held-out 與學習曲線；在那之前調門檻只是量背誦速度差。
+- 檢查：協定單檔 30 passed、flake8=0。

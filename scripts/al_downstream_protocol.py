@@ -37,6 +37,12 @@ v7 修的是**混淆**：v6 及以前，難度階梯是逐格校準的，於是 
 [0.30, 0.70]（只在校準那一格看是不夠的：在 ep1 校準出來的任務到了 ep5 會飽和到 1.0），
 之後 step 與 lr 都固定，``epochs`` 只改訓練量；跑出範圍的格標成不可下結論，而不是換題。
 
+v11 修的是**根**：``_train`` 與 ``_evaluate`` 用的是同一批 pair，所以報告裡的 ``hit_rate`` 一直是
+訓練集命中率，不是 held-out。實測中性臂 ep1 0.52 → ep3 0.96 → ep5 1.00，而同一批權重在同規則、
+沒訓練過的 cue 上，所有種子、所有 epoch 都是 0.062（3/48，等於亂猜）。也就是說：下游量到的差別
+只能是「記得多快」，這個模型根本沒有遷移可言。v11 把 ``heldout_hit_rate_mean`` 與
+``heldout_at_chance`` 寫進每一格，讓這件事每次重跑都會自己現形。
+
 v9 修的是**校準貼邊**：沿著單調的難度軸「第一個合格就採用」，必然停在界內第一點——實測
 ``many_to_one`` 停在 0.306（餘裕 0.006）、``hard`` 停在 0.333（餘裕 0.033），兩族都是換一批
 種子就會跨出界外的距離。v9 優先選每個 regime 都離上下界至少 ``HIT_MARGIN``=0.05 的候選，
@@ -81,7 +87,7 @@ from typing import Dict, List, Sequence, Tuple
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v10"
+PROTOCOL_VERSION = "al-downstream-v11"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -273,7 +279,13 @@ def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> D
     # 「訓練量」與「調制頻率」是同一個開關，兩種解釋分不開。
     phase_gains = _downstream._schedule(period, pairs * epochs, step_per_period=pairs)
 
+    # 沒訓練過的 cue：這是「學會」與「記得」的分界。訓練與評估原本共用同一批 pair，
+    # 所以這裡的 hit_rate 只說明背得多快；沒訓練過的 cue 上還剩下多少，才是遷移。
+    held = _downstream._heldout_pairs(task)
+    targets = _downstream._candidate_targets(_downstream._pairs(task))
+
     rows: Dict[str, List[Dict[str, float]]] = {"neutral": [], "phase": [], "shuffled": []}
+    heldout: Dict[str, List[float]] = {"neutral": [], "phase": [], "shuffled": []}
     for seed in SEEDS:
         shuffled = phase_gains[:]
         random.Random(seed * 7919).shuffle(shuffled)
@@ -281,6 +293,7 @@ def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> D
         for name, gains in arms.items():
             core = _downstream._train(gains, seed, task, epochs)
             rows[name].append(_downstream._evaluate(core, task))
+            heldout[name].append(_downstream._evaluate(core, task, held)["hit_rate"])
 
     gains = {
         "neutral": 1.0,
@@ -323,10 +336,16 @@ def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> D
                 ),
                 "hit_rate_min": round(min(r["hit_rate"] for r in rows[name]), 3),
                 "hit_rate_max": round(max(r["hit_rate"] for r in rows[name]), 3),
+                "heldout_hit_rate_mean": round(statistics.fmean(heldout[name]), 3),
+                "heldout_hit_rate_sd": round(statistics.stdev(heldout[name]), 3),
                 "gain_mean": round(gains[name], 4),
             }
             for name in rows
         },
+        "heldout_chance": round(1 / len(targets), 3),
+        "heldout_at_chance": all(
+            statistics.fmean(heldout[name]) <= 2 / len(targets) for name in heldout
+        ),
         "gain_matched": bool(matched),
         "seed_wins": seed_wins,
         "raw_verdict": raw_verdict,

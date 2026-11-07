@@ -187,3 +187,47 @@ class TestConfirmationSeeds:
     def test_confirmation_uses_more_seeds_than_the_scan(self, protocol):
         # 掃描值偏樂觀 0.055 就是因為只有三個種子；確認要明顯更寬。
         assert len(protocol.CONFIRMATION_SEEDS) >= 2 * len(protocol.CALIBRATION_SEEDS)
+
+
+class TestHeldOutIsNotTrainingData:
+    """根問題：`_train` 與 `_evaluate` 共用同一批 pair，所以分數是「記得快」不是「學會」。"""
+
+    @pytest.fixture(scope="class")
+    def downstream(self):
+        return self._module()
+
+    def _module(self):
+        import importlib.util
+
+        script = REPO_ROOT / "scripts" / "al_c_learn_downstream.py"
+        spec = importlib.util.spec_from_file_location("al_downstream_test", script)
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["al_downstream_test"] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def test_heldout_cues_are_all_new(self, downstream):
+        task = {"pairs": 48, "noise_bits": 3, "shared": True, "lr": 0.03, "threshold": 0.25}
+        train = {tuple(cue) for cue, _ in downstream._pairs(task)}
+        held = {tuple(cue) for cue, _ in downstream._heldout_pairs(task)}
+        assert len(held) == 48
+        assert train.isdisjoint(held)
+
+    def test_heldout_keeps_the_label_set(self, downstream):
+        task = {"pairs": 48, "noise_bits": 3, "shared": True, "lr": 0.03, "threshold": 0.25}
+        train_targets = set(downstream._candidate_targets(downstream._pairs(task)))
+        held_targets = {target for _, target in downstream._heldout_pairs(task)}
+        assert held_targets <= train_targets
+
+    def test_heldout_is_at_chance_for_a_trained_core(self, downstream):
+        """釘住根缺陷本身：訓練到訓練集 1.0，沒訓過的 cue 仍是亂猜。
+
+        這條測試不是在慶祝能力，是在防止有人把「訓練集命中率」講成「學會了」。
+        """
+        task = {"pairs": 48, "noise_bits": 3, "shared": True, "lr": 0.03, "threshold": 0.25}
+        core = downstream._train([1.0] * 48, 11, task, 3)
+        on_train = downstream._evaluate(core, task)["hit_rate"]
+        off_train = downstream._evaluate(core, task, downstream._heldout_pairs(task))["hit_rate"]
+        assert on_train > 0.9
+        assert off_train <= 0.10
