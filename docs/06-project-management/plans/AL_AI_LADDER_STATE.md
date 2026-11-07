@@ -642,3 +642,28 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - v12 整體判詞仍
   `no-mechanism-benefit-consistent`（hard 與 m2o 的格未變）；協定單檔 33
   passed、flake8=0。
+
+### 2026-11-07 續二十六 — 壓平在讀出端，換讀出後 phase 12/12 輸
+
+- 追「ep3 起 margin 恰 0」：權重沒塌（ep5 `featt00→t00` 0.157 vs `shared→`
+  各 target 0.13，結構還在）。塌的是 `potential`
+  讀出——16 個時間步的膜電位累積 = 無向圖上的擴散，權重一強就填平整個連通分量。
+- 同一批權重換成一步讀出 `direct`（`W·a`）：`structured`
+  ep1/3/5 的 train 與 held-out 全部 1.000；`potential`
+  在 ep3/5 是 0.000（ep3 正確 label 0.955
+  vs 最強對手 0.945，排不進前三，`direct` 是 0.334 vs 0.201）。
+- 實作：`garden_readout_variants._direct`；`al_c_learn_downstream.READOUT` 與
+  `_evaluate(readout=)`；協定 `--readout {potential,direct}`，讀出參數串進
+  `_measure`／`calibrate_family`／`evaluate_cell`。預設仍 `potential`
+  以保留舊報告可重現。
+- `--readout direct` 重新基線：`hard`／`structured` 皆
+  `ladder-exhausted`（線性讀出下 cue 自身 token 有非零邊就贏，任何 lr 都 1.000）；`many_to_one`
+  校準到 48p/3b/group 24/lr 0.005（neutral 0.408／0.535／0.528）。
+- `many_to_one` ep1／ep3：**`phase-loses-to-matched-mean`，P>N 0/12、P>S
+  0/12**（top-1 0.184 vs 0.408/0.274；0.399 vs
+  0.535/0.464）——AL 線第一個種子穩健的負結果。ep5 phase 0.689、P>N 12/12 但 P>S
+  5/12，降級為 `no-downstream-difference`。整體
+  `no-mechanism-benefit-consistent`。
+- 下一個根問題：任務只有「唯一 token」一種證據，所以只有 1.0/0 兩種值；要有多個衝突證據才有中段。`many_to_one`
+  的中段是共用噪聲 token 撐出來的。
+- 檢查：協定單檔 36 passed、flake8=0。

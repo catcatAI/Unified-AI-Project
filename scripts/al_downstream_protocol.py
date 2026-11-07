@@ -87,7 +87,7 @@ import random
 import statistics
 import sys
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
@@ -167,7 +167,7 @@ def _task(family: str, step: Dict[str, object], lr: float) -> Dict[str, object]:
     return base
 
 
-def _measure(task: Dict[str, object], seeds) -> Dict[int, float]:
+def _measure(task: Dict[str, object], seeds, readout: Optional[str] = None) -> Dict[int, float]:
     """每個 regime 的中性臂命中率；中途跑出 [0.30, 0.70] 就停止（後面的格沒量到）。"""
     pairs = int(task["pairs"])  # type: ignore[arg-type]
     hits_by_epoch: Dict[int, float] = {}
@@ -175,7 +175,7 @@ def _measure(task: Dict[str, object], seeds) -> Dict[int, float]:
         hits = []
         for seed in seeds:
             core = _downstream._train([1.0] * (pairs * epochs), seed, task, epochs)
-            hits.append(_downstream._evaluate(core, task)["hit_rate"])
+            hits.append(_downstream._evaluate(core, task, readout=readout)["hit_rate"])
         mean_hit = statistics.fmean(hits)
         hits_by_epoch[epochs] = round(mean_hit, 3)
         if not HIT_RANGE[0] <= mean_hit <= HIT_RANGE[1]:
@@ -193,7 +193,7 @@ def _is_centred(hits_by_epoch: Dict[int, float]) -> bool:
     )
 
 
-def calibrate_family(family: str) -> Dict[str, object]:
+def calibrate_family(family: str, readout: Optional[str] = None) -> Dict[str, object]:
     """挑一個在**所有** regime 都讓中性臂落在中段的 step 與 lr。
 
     逐格校準會讓難度階梯隨 ``epochs`` 移動，把「多訓練幾輪」變成「換一題更簡單的」。
@@ -210,7 +210,7 @@ def calibrate_family(family: str) -> Dict[str, object]:
     for step in FAMILIES[family]:
         for lr in LR_GRID:
             task = _task(family, step, lr)
-            hits_by_epoch = _measure(task, CALIBRATION_SEEDS)
+            hits_by_epoch = _measure(task, CALIBRATION_SEEDS, readout=readout)
             in_range = len(hits_by_epoch) == len(EPOCHS_MATRIX) and all(
                 HIT_RANGE[0] <= hit <= HIT_RANGE[1] for hit in hits_by_epoch.values()
             )
@@ -219,7 +219,7 @@ def calibrate_family(family: str) -> Dict[str, object]:
             trials.append(entry)
             if not in_range:
                 continue
-            confirmed = _measure(task, CONFIRMATION_SEEDS)
+            confirmed = _measure(task, CONFIRMATION_SEEDS, readout=readout)
             candidate: Dict[str, object] = {
                 "informative": True,
                 "step": dict(step),
@@ -284,7 +284,9 @@ def _seed_robust(verdict: str, seed_wins: Dict[str, int]) -> Tuple[str, str | No
     return verdict, None
 
 
-def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> Dict[str, object]:
+def evaluate_cell(
+    family: str, calibration: Dict[str, object], epochs: int, readout: Optional[str] = None
+) -> Dict[str, object]:
     task = _task(family, calibration["step"], float(calibration["lr"]))  # type: ignore[arg-type]
     pairs = int(task["pairs"])  # type: ignore[arg-type]
     period = _downstream.natural_period()
@@ -305,8 +307,10 @@ def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> D
         arms = {"neutral": [1.0] * (pairs * epochs), "phase": phase_gains, "shuffled": shuffled}
         for name, gains in arms.items():
             core = _downstream._train(gains, seed, task, epochs)
-            rows[name].append(_downstream._evaluate(core, task))
-            heldout[name].append(_downstream._evaluate(core, task, held)["hit_rate"])
+            rows[name].append(_downstream._evaluate(core, task, readout=readout))
+            heldout[name].append(
+                _downstream._evaluate(core, task, held, readout=readout)["hit_rate"]
+            )
 
     gains = {
         "neutral": 1.0,
@@ -391,11 +395,11 @@ def overall_verdict(cells: Sequence[Dict[str, object]]) -> str:
     return "regime-dependent-no-claim"
 
 
-def run() -> Dict[str, object]:
+def run(readout: Optional[str] = None) -> Dict[str, object]:
     cells: List[Dict[str, object]] = []
     for family in FAMILIES:
         # 每族只校準一次：step 與 lr 固定，epochs 這條軸才只改訓練量。
-        calibration = calibrate_family(family)
+        calibration = calibrate_family(family, readout=readout)
         for epochs in EPOCHS_MATRIX:
             if not calibration["informative"]:
                 cells.append(
@@ -408,7 +412,7 @@ def run() -> Dict[str, object]:
                     }
                 )
                 continue
-            cell = evaluate_cell(family, calibration, epochs)
+            cell = evaluate_cell(family, calibration, epochs, readout=readout)
             neutral_hit = float(cell["arms"]["neutral"]["hit_rate_mean"])  # type: ignore[index]
             in_range = HIT_RANGE[0] <= neutral_hit <= HIT_RANGE[1]
             margin = min(neutral_hit - HIT_RANGE[0], HIT_RANGE[1] - neutral_hit)
@@ -427,7 +431,7 @@ def run() -> Dict[str, object]:
 
     return {
         "protocol": PROTOCOL_VERSION,
-        "readout": READOUT,
+        "readout": readout or READOUT,
         "epochs_matrix": list(EPOCHS_MATRIX),
         "lr_grid": list(LR_GRID),
         "hit_range": list(HIT_RANGE),
@@ -441,9 +445,12 @@ def run() -> Dict[str, object]:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--json", type=Path)
+    # 讀出：預設仍是 ``potential``（16 步擴散，既有報告要能重現）。``direct`` 是一步
+    # ``W · a``，不會被擴散壓平；切過去等於重新基線，所有格子都要重跑重報。
+    ap.add_argument("--readout", choices=("potential", "direct"), default=READOUT)
     args = ap.parse_args(argv)
 
-    result = run()
+    result = run(readout=args.readout)
     print(f"protocol: {result['protocol']}  readout {result['readout']}")
     for cell in result["cells"]:  # type: ignore[union-attr]
         cal = cell["calibration"]

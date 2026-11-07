@@ -273,3 +273,45 @@ class TestStructuredTaskOffersRealHeldOut:
         three = downstream._train([1.0] * 48 * 3, 11, task, 3)
         assert downstream._evaluate(one, task)["hit_rate"] > 0.9
         assert downstream._evaluate(three, task)["hit_rate"] <= 0.1
+
+
+class TestReadoutIsWhereTheCollapseLives:
+    """權重沒塌，是 16 步膜電位擴散把整個連通分量填平。"""
+
+    @pytest.fixture(scope="class")
+    def downstream(self):
+        import importlib.util
+
+        script = REPO_ROOT / "scripts" / "al_c_learn_downstream.py"
+        spec = importlib.util.spec_from_file_location("al_downstream_readout_test", script)
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["al_downstream_readout_test"] = module
+        spec.loader.exec_module(module)
+        return module
+
+    def test_direct_readout_survives_training_that_flattens_potential(self, downstream):
+        task = downstream.TASKS["structured"]
+        core = downstream._train([1.0] * 48 * 3, 11, task, 3)
+        potential = downstream._evaluate(core, task)["hit_rate"]
+        direct = downstream._evaluate(core, task, readout="direct")["hit_rate"]
+        assert potential <= 0.1
+        assert direct > 0.9
+
+    def test_direct_readout_also_holds_on_unseen_cues(self, downstream):
+        task = downstream.TASKS["structured"]
+        core = downstream._train([1.0] * 48 * 5, 11, task, 5)
+        held = downstream._heldout_pairs(task)
+        potential = downstream._evaluate(core, task, held)["hit_rate"]
+        direct = downstream._evaluate(core, task, held, readout="direct")["hit_rate"]
+        assert potential <= 0.1
+        assert direct > 0.9
+
+    def test_direct_readout_ranks_the_target_from_direct_edges(self, downstream):
+        task = downstream.TASKS["structured"]
+        pairs = downstream._pairs(task)
+        targets = downstream._candidate_targets(pairs)
+        core = downstream._train([1.0] * 48 * 3, 11, task, 3)
+        out = downstream._readouts._forward(core, {k: 1.0 for k in pairs[0][0]}, "direct")
+        ranked = sorted(((out[label], label) for label in targets), reverse=True)
+        assert ranked[0][1] == pairs[0][1]

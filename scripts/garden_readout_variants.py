@@ -75,8 +75,33 @@ def _train(threshold: float) -> TensorSNNCore:
     return core
 
 
+def _direct(core: TensorSNNCore, input_keys: Dict[str, float]) -> Dict[str, float]:
+    """一步讀出：``W · a``，完全不做脈衝動力學。
+
+    ``potential`` 讀出是 16 個時間步的膜電位累積，等於在無向權重圖上做擴散：權重一強，
+    幾個時間步之後整個連通分量都被填到同一個值，所有 target 的電位相等，top-1 一律判
+    miss。實測 structured 任務 ep1 是 1.000，ep3 起變 0.000，而**同一批權重**用一步讀出
+    在 ep1/3/5 都是 1.000——所以塌的是讀出，不是權重。
+    """
+    V = core.vocab_size
+    if not input_keys or core._W is None or V == 0:
+        return {}
+    W = core._W[:V, :V]
+    a = core._init_activations(input_keys, None)
+    if float(a.sum()) == 0.0:
+        return {}
+    values = W @ a if W.ndim == 2 else a * W
+    result: Dict[str, float] = {}
+    for idx in snn_core._nonzero_indices(values).tolist():
+        key = core._idx_to_key[idx] if isinstance(core._idx_to_key, list) else core._idx_to_key[idx]
+        result[key] = float(values[idx])
+    return result
+
+
 def _forward(core: TensorSNNCore, input_keys: Dict[str, float], readout: str) -> Dict[str, float]:
     """與 `forward` 同一個 LIF 迴圈，只換最後的讀出（候選，不動生產程式碼）。"""
+    if readout == "direct":
+        return _direct(core, input_keys)
     V = core.vocab_size
     if not input_keys or core._W is None or V == 0:
         return {}

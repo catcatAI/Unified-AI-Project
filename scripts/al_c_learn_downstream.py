@@ -62,6 +62,12 @@ from core.life.al_oscillator import Oscillator, natural_period  # noqa: E402
 
 READOUT_SCRIPT = Path(__file__).with_name("garden_readout_variants.py")
 
+# 讀出：``potential`` 是 16 個時間步的膜電位累積，等於在無向權重圖上做擴散；權重一強，
+# 整個連通分量被填平，所有 target 電位相等。``direct`` 是 ``W · a`` 一步讀出，只看直接關聯。
+# 實測 structured 任務 ep3：potential 的 top-1 是 0.000（正確 label 連前三都排不進），
+# direct 是 1.000，而兩者用的是同一批權重——塌的是讀出，不是學到的東西。
+READOUT = "potential"
+
 
 def _load_readouts():
     spec = importlib.util.spec_from_file_location("garden_readout_variants", READOUT_SCRIPT)
@@ -229,12 +235,14 @@ def _evaluate(
     core: TensorSNNCore,
     task: Dict[str, object],
     pairs: Optional[Sequence[Tuple[List[str], str]]] = None,
+    readout: Optional[str] = None,
 ) -> Dict[str, float]:
     hits, margins = 0, []
     pairs = list(pairs) if pairs is not None else _pairs(task)
     targets = _candidate_targets(_pairs(task))
+    readout = readout or READOUT
     for inputs, target in pairs:
-        out = _readouts._forward(core, {key: 1.0 for key in inputs}, "potential")
+        out = _readouts._forward(core, {key: 1.0 for key in inputs}, readout)
         margin, hit = _score(out, targets, target)
         margins.append(margin)
         hits += int(hit)
