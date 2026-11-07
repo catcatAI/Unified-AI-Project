@@ -364,3 +364,32 @@ class TestConflictTaskHasAMiddleBand:
         assert on_train > 0.3
         # held-out 與訓練集同步，差距不超過 0.2——這是組合證據，不是背誦。
         assert abs(on_train - off_train) < 0.2
+
+
+class TestDetectableEffectSize:
+    """「沒有差別」要說得出解析度：符號門檻在 12 個種子上能偵測到的最小差。"""
+
+    def test_paired_stats_only_count_direction(self, protocol):
+        rows = {
+            "a": [{"h": 0.5}, {"h": 0.4}, {"h": 0.6}],
+            "b": [{"h": 0.4}, {"h": 0.4}, {"h": 0.2}],
+        }
+        stats = protocol._paired_stats(rows, "a", "b", "h")
+        assert stats["wins"] == 2
+        assert stats["n"] == 3
+        assert abs(stats["mean"] - 0.16667) < 1e-4
+
+    def test_minimum_detectable_delta_matches_the_sign_gate(self, protocol):
+        # σ=0.10、12 個種子、門檻 10/12：80% 檢定力需要 δ≈0.11。
+        mde = protocol._min_detectable_delta(0.10, 12, protocol.SIGN_TEST_MIN)
+        assert mde is not None
+        assert 0.09 < mde < 0.14
+
+    def test_more_seeds_can_detect_smaller_effects(self, protocol):
+        few = protocol._min_detectable_delta(0.10, 12, protocol._sign_test_minimum(12))
+        many = protocol._min_detectable_delta(0.10, 40, protocol._sign_test_minimum(40))
+        assert few is not None and many is not None
+        assert many < few / 2
+
+    def test_no_spread_means_no_estimate(self, protocol):
+        assert protocol._min_detectable_delta(0.0, 12, 10) is None

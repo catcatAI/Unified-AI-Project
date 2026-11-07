@@ -83,6 +83,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import math
 import random
 import statistics
 import sys
@@ -289,6 +290,50 @@ def _sign_test_minimum(seeds: int, alpha: float = 0.05) -> int:
 SIGN_TEST_MIN = _sign_test_minimum(len(SEEDS))
 
 
+def _paired_stats(
+    rows: Dict[str, List[Dict[str, float]]], a: str, b: str, key: str
+) -> Dict[str, float]:
+    """配對差：同一個種子上的 a − b。只有配對才看得出「差多少」，逐種子勝負只看方向。"""
+    diffs = [x[key] - y[key] for x, y in zip(rows[a], rows[b])]
+    mean = statistics.fmean(diffs)
+    sd = statistics.stdev(diffs) if len(diffs) > 1 else 0.0
+    se = sd / len(diffs) ** 0.5 if diffs else 0.0
+    return {
+        "mean": round(mean, 5),
+        "sd": round(sd, 5),
+        "se": round(se, 5),
+        "ci95_half_width": round(1.96 * se, 5),
+        "wins": sum(1 for d in diffs if d > 0),
+        "n": len(diffs),
+    }
+
+
+def _min_detectable_delta(sigma: float, n: int, need: int, power: float = 0.8) -> float | None:
+    """符號檢定在 n 個種子、σ 這個散佈下，能偵測到的最小差（power 0.8）。
+
+    「沒有差別」不等於「差別是 0」：``SIGN_TEST_MIN`` 要求 n 個種子裡至少 ``need`` 個同向，
+    而每個種子「同向」的機率是 Φ(δ/σ)。所以要在觀測到的 σ 上算出這個門檻能達到的最小 δ——
+    低於它的效果本來就偵測不到，判詞不該假裝分辨得出來。
+    """
+    if sigma <= 0 or n <= 0:
+        return None
+
+    def hit_prob(mu: float) -> float:
+        p = 0.5 * (1.0 + math.erf((mu / sigma) / math.sqrt(2.0)))
+        return sum(math.comb(n, k) * p**k * (1 - p) ** (n - k) for k in range(need, n + 1))
+
+    lo, hi = 0.0, 4.0 * sigma
+    if hit_prob(hi) < power:
+        return None
+    for _ in range(60):
+        mid = (lo + hi) / 2.0
+        if hit_prob(mid) < power:
+            lo = mid
+        else:
+            hi = mid
+    return round(hi, 3)
+
+
 def _seed_robust(verdict: str, seed_wins: Dict[str, int]) -> Tuple[str, str | None]:
     """平均差要在種子上站得住，才算機制有效（或有害）。
 
@@ -363,6 +408,15 @@ def evaluate_cell(
         "phase_over_shuffled_margin": wins("phase", "shuffled", "margin"),
         "phase_over_shuffled_hit": wins("phase", "shuffled", "hit_rate"),
     }
+    paired = {
+        f"phase_vs_{other}_hit": _paired_stats(rows, "phase", other, "hit_rate")
+        for other in ("neutral", "shuffled")
+    }
+    for other in ("neutral", "shuffled"):
+        paired[f"phase_vs_{other}_margin"] = _paired_stats(rows, "phase", other, "margin")
+    # 這台量具在這個格子上能分辨多小的差：σ 來自配對差的散佈。
+    mde = _min_detectable_delta(paired["phase_vs_neutral_hit"]["sd"], len(SEEDS), SIGN_TEST_MIN)
+
     raw_verdict = (
         _downstream._verdict(rows)
         if abs(gains["phase"] - gains["neutral"]) <= 0.05
@@ -399,6 +453,8 @@ def evaluate_cell(
         ),
         "gain_matched": bool(matched),
         "seed_wins": seed_wins,
+        "paired": paired,
+        "detectable_hit_delta": mde,
         "raw_verdict": raw_verdict,
         "downgrade": downgrade,
         "verdict": verdict,
@@ -512,6 +568,7 @@ def main(argv=None) -> int:
             f"N {arms['neutral']['margin_mean']:+.5f}/{arms['neutral']['hit_rate_mean']}  "
             f"P {arms['phase']['margin_mean']:+.5f}/{arms['phase']['hit_rate_mean']}  "
             f"S {arms['shuffled']['margin_mean']:+.5f}/{arms['shuffled']['hit_rate_mean']}  "
+            f"| MDE {body['detectable_hit_delta']} "
             f"| P>N {body['seed_wins']['phase_over_neutral_hit']}/{body['seed_wins']['seeds']} "
             f"P>S {body['seed_wins']['phase_over_shuffled_hit']}/{body['seed_wins']['seeds']}  "
             f"-> {body['verdict']}"

@@ -686,3 +686,19 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - 量具現況：`direct` 讀出＋`conflict`
   任務＋held-out 同步＋種子穩健性／符號檢定，已是能分辨差別的儀器。
 - 檢查：協定單檔 40 passed、flake8=0。
+
+### 2026-11-07 續二十八 — 檢定力與配對差
+
+- 新增 `paired`（同種子 `phase − neutral`／`phase − shuffled`
+  的均值、sd、se、95% 半寬、勝場）與 `detectable_hit_delta`（MDE）。
+- MDE 定義：符號門檻需 ≥`SIGN_TEST_MIN`
+  個種子同向，單種子同向機率 Φ(δ/σ)，反解 power
+  0.8 的最小 δ。實測 σ=0.10 時 n=12 需 δ≥0.112、n=40 需 0.052；σ=0.05 時 n=12 需 0.056。
+- **結論之一：12 個種子偵測不到 <0.11 的差**，之前對 0.05 餘裕的爭論都在檢定力以下。
+- v15 結果（direct 讀出）：conflict ep1 +0.0556（95% 半寬 0.043，CI
+  [0.013,0.099] 不含 0）、margin −0.00136、MDE 0.085 → 協定仍判
+  `no-downstream-difference`（兩指標未同向）；ep3/ep5 +0.0035。m2o ep1
+  −0.2240、ep3 −0.1354（12/12 同向、遠超 MDE）`phase-loses-to-matched-mean`；ep5
+  +0.1615 但 margin −0.0002 → 降級。
+- 讀法：命中率上升而 margin 不動 = 平手被打破，不是表徵變好。相位調制沒有時序優勢。
+- 檢查：協定單檔 44 passed、flake8=0。
