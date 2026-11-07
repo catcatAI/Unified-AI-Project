@@ -77,3 +77,37 @@ class TestArms:
     def test_every_arm_produces_a_margin_per_seed(self, report):
         for name in ("neutral", "phase", "shuffled"):
             assert len(report["per_seed_margin"][name]) == len(report["seeds"])
+
+
+class TestScoring:
+    """候選集必須由目標 label 決定；用 pair 索引拼字串會把命中率截半。"""
+
+    def test_a_label_is_never_its_own_rival(self, gate):
+        margin, hit = gate._score({"t00": 0.5, "t01": 0.1}, ["t00", "t01"], "t00")
+        assert hit is True
+        assert margin == pytest.approx(0.4)
+
+    def test_missing_labels_are_not_rivals(self, gate):
+        # 沒學到的 label 不在 out 裡，不該被當成 0 分的對手而讓 margin 虛胖。
+        margin, hit = gate._score({"t00": 0.5}, ["t00", "t01"], "t00")
+        assert hit is False
+        assert margin == 0.0
+
+    def test_many_to_one_can_score_every_pair(self, gate, monkeypatch):
+        # 24 個 label、48 個 pair：舊寫法讓索引 >= 24 的 pair rivals 全空，
+        # 命中率被硬性截在 0.5；正確的評分要能在同樣權重上拿到 1.0。
+        task = dict(gate.TASKS["many_to_one"])
+        pairs = gate._pairs(task)
+        targets = gate._candidate_targets(pairs)
+        assert len(pairs) == 48 and len(targets) == 24
+        wanted = {tuple(inputs): target for inputs, target in pairs}
+
+        def perfect(core, inputs, readout):
+            assert readout == "potential"
+            target = wanted[tuple(inputs)]
+            return {label: 1.0 for label in targets} | {target: 2.0}
+
+        monkeypatch.setattr(gate._readouts, "_forward", perfect)
+        report = gate._evaluate(None, task)
+        assert report["hit_rate"] == 1.0
+        assert report["margin"] == pytest.approx(1.0)

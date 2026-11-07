@@ -79,13 +79,12 @@ def _train_logged(
 
 
 def _margins(core, pairs) -> List[float]:
+    """與正式評分共用 ``_score``，免得診斷腳本自己算一套（曾因索引拼 label 而截半）。"""
+    targets = _downstream._candidate_targets(pairs)
     margins: List[float] = []
-    for i, (inputs, target) in enumerate(pairs):
+    for inputs, target in pairs:
         out = _readouts._forward(core, {key: 1.0 for key in inputs}, "potential")
-        correct = out.get(target)
-        rivals = [out.get(f"t{j:02d}") for j in range(len(pairs)) if j != i]
-        rivals = [value for value in rivals if value is not None]
-        margins.append(0.0 if correct is None or not rivals else correct - max(rivals))
+        margins.append(_downstream._score(out, targets, target)[0])
     return margins
 
 

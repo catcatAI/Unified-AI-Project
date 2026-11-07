@@ -140,21 +140,41 @@ def _train(
     return core
 
 
+def _candidate_targets(pairs: Sequence[Tuple[List[str], str]]) -> List[str]:
+    """任務的目標 label 集（去重、保序）。"""
+    seen: List[str] = []
+    for _, target in pairs:
+        if target not in seen:
+            seen.append(target)
+    return seen
+
+
+def _score(out: Dict[str, float], targets: Sequence[str], target: str) -> Tuple[float, bool]:
+    """正確 target 對「其他候選 label」最佳值的差，以及是否 top-1。
+
+    候選集必須由**目標 label** 決定，不能由 pair 索引拼字串。多對一任務裡一個
+    label 對應多個 pair：用索引拼 ``t{i:02d}`` 時，索引超過 label 數的 pair 抓到的
+    全是 ``None``（rivals 空 → 直接判 miss，命中率被硬性截在半數），而 label 相同
+    的另一個 pair 從來沒被排除，真要比到也會同分。兩者都會讓「學得好不好」看起來
+    比實際差。
+    """
+    correct = out.get(target)
+    rivals = [out[label] for label in targets if label != target and label in out]
+    if correct is None or not rivals:
+        return 0.0, False
+    best = max(rivals)
+    return correct - best, correct > best
+
+
 def _evaluate(core: TensorSNNCore, task: Dict[str, object]) -> Dict[str, float]:
     hits, margins = 0, []
     pairs = _pairs(task)
-    for i, (inputs, target) in enumerate(pairs):
+    targets = _candidate_targets(pairs)
+    for inputs, target in pairs:
         out = _readouts._forward(core, {key: 1.0 for key in inputs}, "potential")
-        correct = out.get(target)
-        rivals = [out.get(f"t{j:02d}") for j in range(len(pairs)) if j != i]
-        rivals = [value for value in rivals if value is not None]
-        if correct is None or not rivals:
-            margins.append(0.0)
-            continue
-        best = max(rivals)
-        margins.append(correct - best)
-        if correct > best:
-            hits += 1
+        margin, hit = _score(out, targets, target)
+        margins.append(margin)
+        hits += int(hit)
     return {"hit_rate": hits / len(pairs), "margin": statistics.fmean(margins)}
 
 

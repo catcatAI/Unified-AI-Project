@@ -446,3 +446,17 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   `regime-dependent-no-claim`（規則要求全同向），但**方向隨訓練量單調、且跨任務族一致**：1
   epoch 有害、3/5 epochs 有益。
 - 被否決的兩個任務族（區塊干擾、重疊 cue）都因飽和到 1.000 而不可用，理由寫進協定文件。
+
+### 2026-11-07 續十五 — 修評分 bug，many_to_one 結論翻轉
+
+- 找到並修掉評分 bug（`al_c_learn_downstream._evaluate`）：對手集合由 pair 索引拼 label，多對一任務下半數 pair 直接判 miss、命中率截在 0.5。改由目標 label 集決定；`al_c_learn_trace._margins`
+  改共用 `_score`。
+- 對照驗證：`hard` 族 v4 數字與 v3 完全相同（一對一不受影響）；`many_to_one`
+  中性臂 0.486 → 0.972。
+- 協定 v4 重跑：hard ep1 有害、ep3 **+0.2172/1.000**、ep5
+  **+0.3455/1.000**；many_to_one ep1 校準不到（`uninformative`），ep3
+  −0.0865/0.194、ep5 −0.1177/0.266（phase **最差**）。
+- 整體仍
+  `regime-dependent-no-claim`，但結論改寫：**方向取決於干擾結構，不是訓練量**。
+- 新增回歸測試 3 個（同 label 不當對手、缺失 label 不當對手、多對一可得分 1.0）。
+- 已知未修：校準種子與評估種子重疊 3 個（v5 處理）。

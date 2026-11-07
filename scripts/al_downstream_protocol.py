@@ -19,6 +19,11 @@ v2 只跑兩個 regime、一個任務族，結論是 `regime-dependent-no-claim`
 4. **控制組**：``shuffled``——**同一組增益**打亂順序，分離「平均增益」與「時序」；
 5. **判詞**：margin **與** top-1 必須同向；只升 margin 不算贏。
 
+v4 只是**修儀器**：候選 label 由 pair 索引拼字串改成由任務的目標 label 集決定。
+多對一任務裡一個 label 對應多個 pair，索引拼法會讓半數 pair 的 rivals 全空
+（直接判 miss，命中率硬性截在 0.5），另一半把自己的 label 當對手。v3 的
+``many_to_one`` 全部數字因此作廢，必須重跑。
+
 整體判詞
 
 * ``insufficient-informative-regimes``：可下結論的格 < 2；
@@ -45,7 +50,7 @@ from typing import Dict, List, Sequence
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v3"
+PROTOCOL_VERSION = "al-downstream-v4"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -141,7 +146,7 @@ def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> D
     matched = abs(gains["phase"] - gains["neutral"]) <= 0.05
     return {
         "family": family,
-        "task": {key: task[key] for key in ("pairs", "noise_bits", "lr") if key in task},
+        "task": {key: value for key, value in task.items() if key != "threshold"},
         "epochs": epochs,
         "arms": {
             name: {
