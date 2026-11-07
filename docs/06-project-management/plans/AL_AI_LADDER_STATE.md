@@ -399,3 +399,22 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   `margin-gain-without-hit-gain`；測試 +1（7）。
 
 **現況**：機制八層綠；下游兩幕一致的負結果（easy 天花板、hard 掉到五成）。
+
+### 2026-11-07 續十二 — 追到生產 bug（剪枝吃掉單步學習）；結論隨訓練量反轉
+
+- **Bug**：`TensorSNNCore.hebbian_update`
+  在同一次呼叫內先寫權重再剪枝（<0.01），`lr 0.03 × plasticity<1`
+  的單步增量 0.0105·g 直接歸零 → 該樣本永遠學不到。已修（保護本次寫入的格子），`tests/test_al_c_learn_trace.py`
+  9 個測試（含「衰減仍會剪舊權重」）。
+- **修好後 §21/§22 反轉**（12 種子、ep1）：easy neutral +0.0811/hit 1.000 vs
+  phase −0.1069/0.438；hard neutral +0.0243/0.502 vs phase
+  −0.0338/0.481。先前「phase 只差一點」是缺陷假象。
+- **換訓練量再反轉**（hard、6 種子、ep5）：neutral +0.1329/1.000、phase
+  **+0.3568/1.000**、shuffled +0.0688/**0.708** →
+  `phase-beats-matched-mean`（唯一一次時機看起來有用）。easy 在 ep5 全部飽和 → 無鑑別力。
+- `al_c_learn_downstream.py` 新增
+  `--epochs`；`al_c_learn_trace.py`（新）追 cue 層級增益與列權重。
+- **不能**宣告機制有效或無效：讀出、剪枝門檻、訓練量三者都會翻轉結論。下一步先固定評分協定。
+
+**現況**：機制八層綠；下游結論 =
+**條件相依，尚無定論**（且已抓到並修掉一個真實訓練 bug）。

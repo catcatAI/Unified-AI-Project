@@ -936,14 +936,30 @@ class TensorSNNCore:
         for j in tgt_idx:
             self._touch(j)
 
+        # Entries this call just wrote must not be pruned below. A single step of
+        # ``lr * plasticity * target_strength`` is often under the prune floor
+        # (lr 0.03 -> 0.0105 against 0.01; any plasticity < 1 puts it under), so
+        # pruning in the same call erased the sample's very first increment. The
+        # next visit rebuilt the same tiny value and pruned it again, so such
+        # samples could never accumulate any weight at all.
+        protected: Dict[int, set] = {}
+        for i in src_idx:
+            protected.setdefault(i, set()).update(tgt_idx)
+        for j in tgt_idx:
+            protected.setdefault(j, set()).update(src_idx)
+
         # Targeted decay: only decay rows that were touched (O(nnz_per_row))
         if weight_decay > 0:
             for row in touched_rows:
                 row_data = self._W[row, :]
                 mask = row_data > 0.0
                 row_data[mask] = row_data[mask] * (1.0 - weight_decay)
-                # Prune near-zero in this row only
+                # Prune near-zero in this row only, keeping what this call wrote.
                 prune = row_data < 0.01
+                keep = protected.get(row)
+                if keep:
+                    for col in keep:
+                        prune[col] = False
                 row_data[prune] = 0.0
 
         self.total_hebbian_updates += 1

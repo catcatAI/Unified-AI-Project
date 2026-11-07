@@ -107,11 +107,13 @@ def _schedule(period: float, n: int) -> List[float]:
     return gains
 
 
-def _train(gains: Sequence[float], seed: int, task: Dict[str, object]) -> TensorSNNCore:
+def _train(
+    gains: Sequence[float], seed: int, task: Dict[str, object], epochs: int = EPOCHS
+) -> TensorSNNCore:
     core = TensorSNNCore(threshold=float(task["threshold"]), timesteps=_readouts.TIMESTEPS)  # type: ignore[arg-type]
     rng = random.Random(seed)
     pairs = _pairs(task)
-    for _ in range(EPOCHS):
+    for _ in range(epochs):
         order = pairs[:]
         rng.shuffle(order)
         for (inputs, target), gain in zip(order, gains):
@@ -167,10 +169,12 @@ def _verdict(rows: Dict[str, List[Dict[str, float]]]) -> str:
     return "no-downstream-difference"
 
 
-def run(seeds: Sequence[int] = SEEDS, task_name: str = DEFAULT_TASK) -> Dict[str, object]:
+def run(
+    seeds: Sequence[int] = SEEDS, task_name: str = DEFAULT_TASK, epochs: int = EPOCHS
+) -> Dict[str, object]:
     task = TASKS[task_name]
     period = natural_period()
-    n_samples = int(task["pairs"]) * EPOCHS  # type: ignore[arg-type]
+    n_samples = int(task["pairs"]) * epochs  # type: ignore[arg-type]
     phase_gains = _schedule(period, n_samples)
 
     rows: Dict[str, List[Dict[str, float]]] = {"neutral": [], "phase": [], "shuffled": []}
@@ -180,7 +184,7 @@ def run(seeds: Sequence[int] = SEEDS, task_name: str = DEFAULT_TASK) -> Dict[str
         random.Random(seed * 7919).shuffle(shuffled)
         arms = {"neutral": [1.0] * n_samples, "phase": phase_gains, "shuffled": shuffled}
         for name, gains in arms.items():
-            rows[name].append(_evaluate(_train(gains, seed, task), task))
+            rows[name].append(_evaluate(_train(gains, seed, task, epochs), task))
             gain_means.setdefault(name, statistics.fmean(gains))
 
     summary = {
@@ -197,7 +201,7 @@ def run(seeds: Sequence[int] = SEEDS, task_name: str = DEFAULT_TASK) -> Dict[str
         "task": task_name,
         "task_params": dict(task),
         "period_s": round(period, 3),
-        "epochs": EPOCHS,
+        "epochs": epochs,
         "seeds": list(seeds),
         "arms": summary,
         "gain_matched": bool(matched),
@@ -210,10 +214,16 @@ def run(seeds: Sequence[int] = SEEDS, task_name: str = DEFAULT_TASK) -> Dict[str
 def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--task", choices=sorted(TASKS), default=DEFAULT_TASK)
+    ap.add_argument(
+        "--epochs",
+        type=int,
+        default=EPOCHS,
+        help="訓練輪數：1 是一次性學習，5 以上會讓權重飽和到 Oja 上限",
+    )
     ap.add_argument("--json", type=Path)
     args = ap.parse_args(argv)
 
-    result = run(task_name=args.task)
+    result = run(task_name=args.task, epochs=args.epochs)
     print(f"task: {args.task} {result['task_params']}")
     for name, arm in result["arms"].items():  # type: ignore[union-attr]
         print(

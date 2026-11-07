@@ -67,6 +67,11 @@
       "referenced": true,
       "purpose": "下游問題（第三版）：**這樣學有比較好嗎？**——用連續讀出，三臂增益匹配"
     },
+    "al_c_learn_trace.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "診斷：相位調制的 margin 升、top-1 降，是被誰拉下來的？"
+    },
     "al_c_learn_wired.py": {
       "category": "tool",
       "referenced": true,
