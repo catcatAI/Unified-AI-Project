@@ -15,7 +15,7 @@ v2 只跑兩個 regime、一個任務族，結論是 `regime-dependent-no-claim`
 2. **難度校準**：每個（任務族 × regime）沿固定階梯 × lr 格點，取第一個讓**中性臂**
    top-1 落在 [0.30, 0.70] 的組合；校準不到就標 ``uninformative``（天花板與地板都
    不算證據）；
-3. **種子**：12 個固定；校準另用 3 個；
+3. **種子**：12 個固定；校準另用 3 個、**與評估種子互斥**（v5 起）；
 4. **控制組**：``shuffled``——**同一組增益**打亂順序，分離「平均增益」與「時序」；
 5. **判詞**：margin **與** top-1 必須同向；只升 margin 不算贏。
 
@@ -51,13 +51,15 @@ from typing import Dict, List, Sequence
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v4"
+PROTOCOL_VERSION = "al-downstream-v5"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
 HIT_RANGE = (0.30, 0.70)
 SEEDS = (11, 23, 37, 41, 53, 67, 79, 83, 97, 101, 113, 127)
-CALIBRATION_SEEDS = (11, 23, 37)
+# 校準種子必須與評估種子**互斥**：共用種子等於先看答案再出題，被校準到 [0.30, 0.70]
+# 的中性臂會在評估時被同一批種子稍微優待（v4 及以前就是這樣）。
+CALIBRATION_SEEDS = (211, 223, 241)
 
 # 難度階梯：每個任務族由易到難，第一個校準得動的就採用。
 FAMILIES: Dict[str, List[Dict[str, object]]] = {
@@ -89,6 +91,7 @@ def _load(name: str, path: Path):
 _downstream = _load("al_c_learn_downstream", DOWNSTREAM_SCRIPT)
 
 assert READOUT == "potential", "the protocol fixes the readout; change it here deliberately"
+assert not set(CALIBRATION_SEEDS) & set(SEEDS), "calibration seeds must not leak into evaluation"
 
 
 def _task(family: str, step: Dict[str, object], lr: float) -> Dict[str, object]:

@@ -63,6 +63,11 @@ class TestProtocolConstants:
     def test_readout_is_the_one_that_can_rank(self, protocol):
         assert protocol.READOUT == "potential"
 
+    def test_calibration_seeds_do_not_leak_into_evaluation(self, protocol):
+        # 共用種子等於先看答案再出題：難度校準會優待評估用的那幾個種子。
+        assert set(protocol.CALIBRATION_SEEDS).isdisjoint(protocol.SEEDS)
+        assert len(protocol.CALIBRATION_SEEDS) >= 3
+
     def test_regime_matrix_is_not_a_single_regime(self, protocol):
         assert len(protocol.EPOCHS_MATRIX) >= 2
 
