@@ -360,3 +360,13 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - 結論：**「這樣學比較好」仍未量**，卡在 `forward` 的排序解析度，不是實驗設計。
 
 **現況**：機制八層全綠（`all-rungs-admissible`）；下游效果 ✗（阻塞原因已定位）。
+
+### 2026-11-07 續九 — 讀出量化診斷（`readout-quantised-no-headroom`）
+
+- `scripts/garden_readout_probe.py`：9 個閾值掃描，正確率只有 0/1（`intermediate_thresholds=[]`），輸出只有
+  `timesteps+1 = 17` 種值；`confidence 1.0 vs 0.1` 輸出逐位相同（幅度被丟）。
+- 試過 `magnitude_weighted`（`Σ confidence·W[i]`）：輸出最大差
+  **0.625**（幅度回來了），但排名**仍全同分**
+  → 量化來自脈衝次數讀出，不是幅度。**旗標未留在生產程式碼**（已還原）。
+- 判詞是負結果，**不進總閘門**（避免把綠燈變成假議題）。
+- 下一步選項：換讀出（膜電位／脈衝時間差／連續值）或換不需要排序的任務；兩者都會改 GARDEN 輸出，各自要一輪量測。

@@ -802,3 +802,47 @@ get_rhythm_tracker().activation_preview() → learning_gain() → 增益
 `forward` 的幅度傳播（那會改動所有 GARDEN 輸出，必須自己一輪量測）。
 
 **誠實狀態**：C-learn 的機制 ✓、機制接上生產 ✓；**「這樣學比較好」仍未量測**，且現在知道卡在模型的排序能力，不是卡在實驗設計。
+
+---
+
+## 19. 為什麼下游量不到：讀出被量化（儀器診斷，改生產前先量）
+
+§18.2 的下游實驗失敗在「候選之間 100% 同分」。這一節不是再試一次，而是把失敗的
+**原因**變成可重跑的量測：`scripts/garden_readout_probe.py`。
+
+### 兩個假設，分開量
+
+1. **幅度被丟掉**：`forward` 的稀疏路徑對整個 weight row 求和，`confidence`
+   的幅度不縮放電流。同一組鍵、周邊鍵 `1.0` vs `0.1` → 輸出**逐位相同**（實測
+   `True`）。
+2. **讀出被量化**：輸出是「脈衝次數 ÷ timesteps」，只有 `timesteps + 1 = 17`
+   種可能值。掃 9 個閾值（0.03–0.25），正確率只出現
+   **0 或 1**，`intermediate_thresholds = []`。
+
+```
+threshold 0.03 hit 0.0  tie 1.0
+threshold 0.05 hit 0.0  tie 1.0
+threshold 0.08 hit 1.0  tie 0.0
+threshold 0.10 hit 1.0  tie 0.0
+threshold 0.12 hit 1.0  tie 0.0
+threshold 0.15 hit 1.0  tie 0.0
+threshold 0.18 hit 0.0  tie 1.0
+threshold 0.20 hit 0.0  tie 1.0
+threshold 0.25 hit 0.0  tie 1.0
+```
+
+判詞 **`readout-quantised-no-headroom`**。
+
+### 我試過的東西（也寫下來）
+
+我實作了 `magnitude_weighted`（`Σ confidence · W[i]`）並量過：同一組鍵 `1.0` vs
+`0.1`
+的輸出**差 0.625**——幅度確實回來了。但排名**仍然全部同分**，因為量化不是來自幅度，是來自「脈衝次數」這個讀出：候選之間差一點權重時，它們要嘛一起發火、要嘛一起不發火。既然它沒有解決 §18.2 的問題，這個旗標
+**沒有留在生產程式碼裡**（改動會被誤認為已修好，而且沒人用）。
+
+### 誠實描述
+
+- 這支探針**不進總閘門**：它的判詞是負結果，不是「AL 機制成立」的一層。硬塞進
+  `all-rungs-admissible` 會讓綠燈變成假議題。
+- 要量下游，選項是換讀出（連續值／脈衝時間差／膜電位）或換任務（不需要候選間排序的那種）。兩者都會改動 GARDEN 輸出，必須各自一輪量測。
+- 這告訴我們的不是「相位沒用」，而是**目前這支模型問不出那個問題**。

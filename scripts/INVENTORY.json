@@ -627,6 +627,11 @@
       "referenced": false,
       "purpose": "Fix mismatches"
     },
+    "garden_readout_probe.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "GARDEN 讀出端的解析度：**為什麼下游實驗量不出名次**（儀器診斷）"
+    },
     "gen_project_map.py": {
       "category": "generation",
       "referenced": true,
