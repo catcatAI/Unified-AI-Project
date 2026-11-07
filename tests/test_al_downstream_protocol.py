@@ -98,3 +98,55 @@ class TestCell:
             "hard", {"step": {"pairs": 48, "noise_bits": 3, "shared": True}, "lr": 0.03}, epochs=1
         )
         assert set(cell["arms"]) == {"neutral", "phase", "shuffled"}
+
+
+class TestSeedRobustness:
+    """平均差要站得住：7/12 的「贏」是擲硬幣，不是機制。"""
+
+    def test_sign_test_minimum_for_twelve_seeds(self, protocol):
+        assert protocol.SIGN_TEST_MIN == 10
+
+    def _wins(self, over_neutral, over_shuffled, seeds=12):
+        return {
+            "seeds": seeds,
+            "phase_over_neutral_hit": over_neutral,
+            "phase_over_shuffled_hit": over_shuffled,
+        }
+
+    def test_strong_claim_survives(self, protocol):
+        verdict, downgrade = protocol._seed_robust("phase-beats-matched-mean", self._wins(11, 10))
+        assert verdict == "phase-beats-matched-mean"
+        assert downgrade is None
+
+    def test_claim_on_a_coin_flip_is_downgraded(self, protocol):
+        # 這就是 v7 hard ep5 的形狀：對 neutral 11/12，對 shuffled 7/12。
+        verdict, downgrade = protocol._seed_robust("phase-beats-matched-mean", self._wins(11, 7))
+        assert verdict == "timing-does-not-matter-only-gain"
+        assert "7/12" in downgrade
+
+    def test_weak_harm_is_not_called_harm(self, protocol):
+        verdict, downgrade = protocol._seed_robust(protocol.HARM, self._wins(2, 5))
+        assert verdict == "no-downstream-difference"
+        assert "harm not seed-robust" in downgrade
+
+    def test_consistent_harm_survives(self, protocol):
+        verdict, _ = protocol._seed_robust(protocol.HARM, self._wins(1, 2))
+        assert verdict == protocol.HARM
+
+
+class TestCalibrationDoesNotRetunePerEpoch:
+    def test_families_share_one_step_across_the_epochs_axis(self, protocol):
+        """v6 的混淆：逐格校準讓 ep1 與 ep5 落在不同難度，epochs 軸就不只改訓練量。
+
+        現在校正只回傳單一 step，矩陣套用它；測試釘住「校準函式不再吃 epochs 參數」。
+        """
+        import inspect
+
+        params = inspect.signature(protocol.calibrate_family).parameters
+        assert "epochs" not in params
+        assert "epochs" not in params or "step" in params
+
+    def test_each_ladder_has_a_rung_between_the_extremes(self, protocol):
+        # 只有最易與最難兩級時，找不到「ep1 不低於 0.30、ep5 不高於 0.70」的組合。
+        for family, steps in protocol.FAMILIES.items():
+            assert len(steps) >= 3, family

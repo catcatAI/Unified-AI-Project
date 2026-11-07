@@ -553,3 +553,31 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - 附註：seed 11 的 ep5 phase margin 均值 +0.054、neutral
   +0.128，單一 seed 上 phase 仍較差；協定的 ep5「phase 贏」是 12 個種子的平均，兩者不衝突，但足以說明單 seed 追蹤只能談機制、不能談效果。
 - 新增 4 個測試（長度不符要拋錯、每輪吃自己那批增益、報告要帶累積量、門檻可傳入）。
+
+### 2026-11-07 續二十二 — `epochs` 軸的混淆，與「7/12 不算贏」
+
+- 缺陷：難度階梯是**逐格**校準的。`hard` 的 ep1 落在 48
+  pair／3 噪聲位，ep3/ep5 落在 96 pair／2 噪聲位；`many_to_one` 的 ep1 用
+  `target_group`
+  12，ep3/ep5 用 24。所以 v6 裡所有跨 epoch 的句子（不只「後期受益」）都同時混了訓練量、題目大小與干擾強度。
+- 修法（v7）：每族只校準一次，候選組合必須讓 `EPOCHS_MATRIX`
+  每個 regime 的中性臂都在 [0.30, 0.70]；跑出範圍就標
+  `neutral-out-of-range`，不換題。
+- 第一次跑 v7 時 `hard`
+  整族不可判讀：同一題目的中性命中率隨 epoch 單調上升，而階梯 48/3 →
+  96/2 太粗（前者 ep5 飽和 1.0，後者 ep1 只有 0.24）。補一級 72/2 後窗口出現（0.333
+  / 0.384 / 0.63）。
+- v7 隔離後 `hard` ep5 看似正結果（phase 0.701 vs shuffled 0.653 vs neutral
+  0.573），但逐種子 phase>neutral 11/12、phase>shuffled **7/12**。
+- 修法（v8）：方向性判詞要求在兩個比較上至少 10/12 個種子同向（單尾二項 p≈0.019；9/12 是 0.073）。此規則**只會撤掉判詞**，且是看到 v7 數字後才加的，文件裡照實標記。
+- v8 結果：`hard` ep1/ep3 `no-downstream-difference`、ep5
+  `timing-does-not-matter-only-gain`（被降級）；`many_to_one` ep1
+  `neutral-out-of-range`（0.299，差 0.001）、ep3/ep5
+  `no-downstream-difference`；整體 `no-mechanism-benefit-consistent`。
+- 讀法：`hard` ep1 的 phase
+  top-1 是 12/12 個種子贏 neutral、卻只有 1/12 贏 shuffled
+  → 起伏有用、順序沒用；`many_to_one`
+  上 phase 在兩個 regime 都更差（1–2/12），但未達穩健性門檻，所以記成「沒差別」而不是「有害」。
+- 一併修掉兩個自己引入的錯：階梯順序沒遞增（`test_each_family_ladder_starts_easy`
+  抓到）、`_sign_test_minimum` 從上界往下找所以回傳 12 而非 10（新測試抓到）。
+- 新增 7 個測試（種子門檻、強證據存活、擲硬幣降級、弱傷害不叫傷害、校準不吃 epochs、階梯至少三級）。

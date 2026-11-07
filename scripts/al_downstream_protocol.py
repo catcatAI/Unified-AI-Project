@@ -14,12 +14,32 @@ v2 只跑兩個 regime、一個任務族，結論是 `regime-dependent-no-claim`
 1. **讀出**：膜電位（§20：脈衝次數在同權重下無鑑別力）；
 2. **調制頻率**：每個 epoch 走完一個振盪週期（v6 起）；``epochs`` 只改變訓練量，
    不改變每樣本拿到的相位速度；
-3. **難度校準**：每個（任務族 × regime）沿固定階梯 × lr 格點，取第一個讓**中性臂**
-   top-1 落在 [0.30, 0.70] 的組合；校準不到就標 ``uninformative``（天花板與地板都
-   不算證據）；
+3. **難度校準**：每個任務族沿固定階梯 × lr 格點，取第一個讓**中性臂** top-1 落在
+   [0.30, 0.70] 的組合；校準不到就整族標 ``uninformative``（天花板與地板都不算證據）。
+   v7 起**每族只校準一次**，且候選組合必須讓 ``EPOCHS_MATRIX`` 裡**每一個** regime 的中性臂
+   都落在 [0.30, 0.70]；某格若仍跑出範圍就標 ``neutral-out-of-range``，而不是換一個更簡單
+   的任務重校（見下）；
 4. **種子**：12 個固定；校準另用 3 個、**與評估種子互斥**（v5 起）；
 5. **控制組**：``shuffled``——**同一組增益**打亂順序，分離「平均增益」與「時序」；
-6. **判詞**：margin **與** top-1 必須同向；只升 margin 不算贏。
+6. **判詞**：margin **與** top-1 必須同向；只升 margin 不算贏；
+7. **種子穩健性**（v8 起）：``phase-beats-matched-mean``／``phase-loses-to-matched-mean``
+   還要在**兩個比較**（對 neutral、對 shuffled）上至少 ``SIGN_TEST_MIN`` 個種子同向
+   （12 個種子下是 10 個，單尾二項 p≈0.019），否則降級成
+   ``timing-does-not-matter-only-gain``／``no-downstream-difference``。均值差 0.05 可能
+   來自 12:0，也可能是 7:5，只看均值會把擲硬幣當成機制。
+
+v7 修的是**混淆**：v6 及以前，難度階梯是逐格校準的，於是 ``epochs`` 這一軸同時換掉了
+任務難度與任務大小——實測 ``hard`` 的 ep1 落在 48 pair／3 噪聲位，ep3/ep5 落在 96 pair／
+2 噪聲位；``many_to_one`` 的 ep1 用 target_group 12，ep3/ep5 用 24。跨 epoch 的比較因此
+不是「只多訓練幾輪」。v7 每族只校準一次，候選組合必須讓**每個** regime 的中性臂都在
+[0.30, 0.70]（只在校準那一格看是不夠的：在 ep1 校準出來的任務到了 ep5 會飽和到 1.0），
+之後 step 與 lr 都固定，``epochs`` 只改訓練量；跑出範圍的格標成不可下結論，而不是換題。
+
+v8 是**在看到 v7 的數字之後**才加的規則，必須這樣標記：v7 修好混淆後，``hard`` ep5 出現
+``phase-beats-matched-mean``（top-1 0.701 vs shuffled 0.653 vs neutral 0.573），但逐種子
+看是 phase>neutral 11/12、phase>shuffled **7/12**——對 shuffled 的優勢是擲硬幣。v8 因此
+要求兩個比較都至少 10/12 同向（單尾二項 p≈0.019）才給出方向性判詞，否則降級。這條規則
+只會**撤掉**判詞、不會生出判詞，所以即使它是事後加入的，偏誤方向是保守的。
 
 v4 只是**修儀器**：候選 label 由 pair 索引拼字串改成由任務的目標 label 集決定。
 多對一任務裡一個 label 對應多個 pair，索引拼法會讓半數 pair 的 rivals 全空
@@ -48,12 +68,12 @@ import random
 import statistics
 import sys
 from pathlib import Path
-from typing import Dict, List, Sequence
+from typing import Dict, List, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v6"
+PROTOCOL_VERSION = "al-downstream-v8"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -67,11 +87,15 @@ CALIBRATION_SEEDS = (211, 223, 241)
 FAMILIES: Dict[str, List[Dict[str, object]]] = {
     "hard": [
         {"pairs": 48, "noise_bits": 3, "shared": True},
+        # 72/2 是為了讓「同一題目在 ep1 不低於 0.30、ep5 不高於 0.70」有機會成立而加的
+        # 一級。原本 48/3 到 96/2 跳太大：前者 ep5 飽和到 1.0，後者 ep1 只有 0.24。
+        {"pairs": 72, "noise_bits": 2, "shared": True},
         {"pairs": 96, "noise_bits": 2, "shared": True},
         {"pairs": 144, "noise_bits": 1, "shared": True},
     ],
     "many_to_one": [
         {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 24},
+        {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 18},
         {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 12},
         {"pairs": 96, "noise_bits": 2, "shared": True, "target_group": 24},
     ],
@@ -103,30 +127,91 @@ def _task(family: str, step: Dict[str, object], lr: float) -> Dict[str, object]:
     return base
 
 
-def calibrate(family: str, epochs: int) -> Dict[str, object]:
-    """沿該任務族的固定階梯 × lr 格點，找第一個讓中性臂落在中段的組合。"""
+def calibrate_family(family: str) -> Dict[str, object]:
+    """挑一個在**所有** regime 都讓中性臂落在中段的 step 與 lr。
+
+    逐格校準會讓難度階梯隨 ``epochs`` 移動，把「多訓練幾輪」變成「換一題更簡單的」。
+    但固定在校準訓練量上也不夠：在 ep1 校準出來的任務，到了 ep5 常常已經飽和（實測中性臂
+    top-1 0.986／1.0），於是這條軸只剩一格能用。所以候選組合必須**每一個** regime 都落在
+    [0.30, 0.70]；找不到就整族標 ``uninformative``——寧可承認這族測不出東西，也不要換題。
+    """
     trials: List[Dict[str, object]] = []
     for step in FAMILIES[family]:
         for lr in LR_GRID:
             task = _task(family, step, lr)
             pairs = int(task["pairs"])  # type: ignore[arg-type]
-            hits = []
-            for seed in CALIBRATION_SEEDS:
-                core = _downstream._train([1.0] * (pairs * epochs), seed, task, epochs)
-                hits.append(_downstream._evaluate(core, task)["hit_rate"])
-            mean_hit = statistics.fmean(hits)
+            hits_by_epoch: Dict[int, float] = {}
+            in_range = True
+            for epochs in EPOCHS_MATRIX:
+                hits = []
+                for seed in CALIBRATION_SEEDS:
+                    core = _downstream._train([1.0] * (pairs * epochs), seed, task, epochs)
+                    hits.append(_downstream._evaluate(core, task)["hit_rate"])
+                mean_hit = statistics.fmean(hits)
+                hits_by_epoch[epochs] = round(mean_hit, 3)
+                if not HIT_RANGE[0] <= mean_hit <= HIT_RANGE[1]:
+                    in_range = False
+                    break
             entry = dict(step)
-            entry.update(lr=lr, neutral_hit_rate=round(mean_hit, 3))
+            entry.update(lr=lr, neutral_hit_by_epoch=hits_by_epoch, in_range_everywhere=in_range)
             trials.append(entry)
-            if HIT_RANGE[0] <= mean_hit <= HIT_RANGE[1]:
+            if in_range:
                 return {
                     "informative": True,
                     "step": dict(step),
                     "lr": lr,
-                    "neutral_hit_rate": round(mean_hit, 3),
+                    "neutral_hit_by_epoch": {
+                        str(epoch): hit for epoch, hit in hits_by_epoch.items()
+                    },
                     "trials": trials,
                 }
     return {"informative": False, "trials": trials}
+
+
+def _sign_test_minimum(seeds: int, alpha: float = 0.05) -> int:
+    """單尾二項檢定：12 個種子至少要幾個同向，才算不是擲硬幣。
+
+    P(X>=9|12,0.5)=0.073，P(X>=10|12,0.5)=0.019，所以 12 個種子的門檻是 10。
+    """
+    from math import comb
+
+    for need in range(seeds // 2, seeds + 1):
+        tail = sum(comb(seeds, k) for k in range(need, seeds + 1)) / 2**seeds
+        if tail <= alpha:
+            return need
+    return seeds
+
+
+SIGN_TEST_MIN = _sign_test_minimum(len(SEEDS))
+
+
+def _seed_robust(verdict: str, seed_wins: Dict[str, int]) -> Tuple[str, str | None]:
+    """平均差要在種子上站得住，才算機制有效（或有害）。
+
+    均值差 0.05 可能來自 12:0，也可能是 7:5；後者不是「時序有用」，只是擲硬幣。
+    所以 ``phase-beats-matched-mean`` 與 ``phase-loses-to-matched-mean`` 都要求在
+    兩個比較上至少 ``SIGN_TEST_MIN`` 個種子同向，否則降級。
+    """
+    seeds = seed_wins["seeds"]
+    over_neutral = seed_wins["phase_over_neutral_hit"]
+    over_shuffled = seed_wins["phase_over_shuffled_hit"]
+    if verdict == "phase-beats-matched-mean":
+        if min(over_neutral, over_shuffled) >= SIGN_TEST_MIN:
+            return verdict, None
+        return "timing-does-not-matter-only-gain", (
+            f"seed-robustness failed: phase>neutral {over_neutral}/{seeds}, "
+            f"phase>shuffled {over_shuffled}/{seeds}, need {SIGN_TEST_MIN}/{seeds}"
+        )
+    if verdict == HARM:
+        under_neutral = seeds - over_neutral
+        under_shuffled = seeds - over_shuffled
+        if min(under_neutral, under_shuffled) >= SIGN_TEST_MIN:
+            return verdict, None
+        return "no-downstream-difference", (
+            f"harm not seed-robust: phase<neutral {under_neutral}/{seeds}, "
+            f"phase<shuffled {under_shuffled}/{seeds}, need {SIGN_TEST_MIN}/{seeds}"
+        )
+    return verdict, None
 
 
 def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> Dict[str, object]:
@@ -151,6 +236,24 @@ def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> D
         "phase": statistics.fmean(phase_gains),
         "shuffled": statistics.fmean(phase_gains),
     }
+
+    # 逐種子勝負：12 個種子的平均差可能是 7:5 也可能是 12:0，判詞本身看不出來。
+    def wins(a: str, b: str, key: str) -> int:
+        return sum(1 for x, y in zip(rows[a], rows[b]) if x[key] > y[key])
+
+    seed_wins = {
+        "seeds": len(SEEDS),
+        "phase_over_neutral_margin": wins("phase", "neutral", "margin"),
+        "phase_over_neutral_hit": wins("phase", "neutral", "hit_rate"),
+        "phase_over_shuffled_margin": wins("phase", "shuffled", "margin"),
+        "phase_over_shuffled_hit": wins("phase", "shuffled", "hit_rate"),
+    }
+    raw_verdict = (
+        _downstream._verdict(rows)
+        if abs(gains["phase"] - gains["neutral"]) <= 0.05
+        else "gain-not-matched"
+    )
+    verdict, downgrade = _seed_robust(raw_verdict, seed_wins)
     matched = abs(gains["phase"] - gains["neutral"]) <= 0.05
     return {
         "family": family,
@@ -165,7 +268,10 @@ def evaluate_cell(family: str, calibration: Dict[str, object], epochs: int) -> D
             for name in rows
         },
         "gain_matched": bool(matched),
-        "verdict": _downstream._verdict(rows) if matched else "gain-not-matched",
+        "seed_wins": seed_wins,
+        "raw_verdict": raw_verdict,
+        "downgrade": downgrade,
+        "verdict": verdict,
     }
 
 
@@ -196,24 +302,29 @@ def overall_verdict(cells: Sequence[Dict[str, object]]) -> str:
 def run() -> Dict[str, object]:
     cells: List[Dict[str, object]] = []
     for family in FAMILIES:
+        # 每族只校準一次：step 與 lr 固定，epochs 這條軸才只改訓練量。
+        calibration = calibrate_family(family)
         for epochs in EPOCHS_MATRIX:
-            calibration = calibrate(family, epochs)
             if not calibration["informative"]:
                 cells.append(
                     {
                         "family": family,
                         "epochs": epochs,
                         "informative": False,
+                        "reason": "ladder-exhausted",
                         "calibration": calibration,
                     }
                 )
                 continue
             cell = evaluate_cell(family, calibration, epochs)
+            neutral_hit = float(cell["arms"]["neutral"]["hit_rate_mean"])  # type: ignore[index]
+            in_range = HIT_RANGE[0] <= neutral_hit <= HIT_RANGE[1]
             cells.append(
                 {
                     "family": family,
                     "epochs": epochs,
-                    "informative": True,
+                    "informative": in_range,
+                    "reason": None if in_range else "neutral-out-of-range",
                     "calibration": calibration,
                     "cell": cell,
                 }
@@ -242,8 +353,17 @@ def main(argv=None) -> int:
     for cell in result["cells"]:  # type: ignore[union-attr]
         cal = cell["calibration"]
         if not cell["informative"]:
+            if cell.get("reason") == "neutral-out-of-range":
+                arms = cell["cell"]["arms"]  # type: ignore[index]
+                print(
+                    f"{cell['family']:<12} ep{cell['epochs']}: OUT OF RANGE "
+                    f"(neutral top-1 {arms['neutral']['hit_rate_mean']}, "
+                    f"step {cal['step']}, lr {cal['lr']})"
+                )
+                continue
             tops = ", ".join(
-                f"{t.get('pairs')}@{t['lr']}: {t['neutral_hit_rate']}"
+                f"{t.get('pairs')}p/{t.get('noise_bits')}b@{t['lr']}: "
+                f"{t.get('neutral_hit_by_epoch')}"
                 for t in cal["trials"][-3:]  # type: ignore[index]
             )
             print(f"{cell['family']:<12} ep{cell['epochs']}: UNINFORMATIVE (…{tops})")
@@ -252,10 +372,12 @@ def main(argv=None) -> int:
         arms = body["arms"]
         print(
             f"{cell['family']:<12} ep{cell['epochs']}: lr {body['task'].get('lr')} "
-            f"neutral top-1 {cal['neutral_hit_rate']}  "
+            f"neutral top-1 {cal['neutral_hit_by_epoch'].get(str(cell['epochs']))}  "
             f"N {arms['neutral']['margin_mean']:+.5f}/{arms['neutral']['hit_rate_mean']}  "
             f"P {arms['phase']['margin_mean']:+.5f}/{arms['phase']['hit_rate_mean']}  "
             f"S {arms['shuffled']['margin_mean']:+.5f}/{arms['shuffled']['hit_rate_mean']}  "
+            f"| P>N {body['seed_wins']['phase_over_neutral_hit']}/{body['seed_wins']['seeds']} "
+            f"P>S {body['seed_wins']['phase_over_shuffled_hit']}/{body['seed_wins']['seeds']}  "
             f"-> {body['verdict']}"
         )
     print(f"verdict: {result['verdict']}")
