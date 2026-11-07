@@ -111,6 +111,42 @@ class TestVerdict:
         assert trace._verdict(rows, []) == "no-flips"
 
 
+class TestMultiEpochTrace:
+    """多輪追蹤：舊版把 epoch 數寫死，多輪時既不換增益、長度不符還會靜默截斷。"""
+
+    def test_gain_length_must_match_epochs(self, trace):
+        task = trace._downstream.TASKS[trace._downstream.DEFAULT_TASK]
+        n = len(trace._downstream._pairs(task))
+        with pytest.raises(ValueError, match="expected"):
+            trace._train_logged([1.0] * n, 11, task, epochs=2)
+
+    def test_each_epoch_gets_its_own_gain_chunk(self, trace):
+        task = trace._downstream.TASKS[trace._downstream.DEFAULT_TASK]
+        n = len(trace._downstream._pairs(task))
+        # 第二輪全部給 0.5、第一輪全 1.0：最後記錄到的每對增益必須是第二輪那批。
+        seen = []
+        trace._train_logged(
+            [1.0] * n + [0.5] * n, 11, task, epochs=2, on_epoch=lambda e, c, g: seen.append(g)
+        )
+        assert len(seen) == 2
+        assert set(seen[0]) == {1.0}
+        assert set(seen[1]) == {0.5}
+
+    def test_report_carries_cumulative_gain(self, trace):
+        report = trace.run(seed=11, epochs=2)
+        assert report["epochs"] == 2
+        assert [row["epoch"] for row in report["per_epoch"]] == [1, 2]
+        # margin 是累積的，所以判讀必須同時給出「累積增益」的相關性與判詞。
+        assert report["cumulative_correlation"] is not None
+        assert report["cumulative_below_neutral"] is not None
+
+    def test_verdict_takes_the_threshold_it_is_given(self, trace):
+        rows = [{"gain": 3.0, "margin_delta": -0.1}, {"gain": 4.8, "margin_delta": 0.1}]
+        assert trace._verdict(rows, [0], low_gain=4.0) == "low-gain-samples-are-the-losers"
+        # 同一個門檻用在累積量上就會失效，所以門檻必須跟著量綱走。
+        assert trace._verdict(rows, [0], low_gain=0.8) == "flips-not-explained-by-gain"
+
+
 class TestTraceReport:
     def test_no_target_row_is_left_at_zero(self, trace):
         # 這一條就是那個缺陷的回歸測試：修好之後，沒有任何 cue 的目標列是空的。
