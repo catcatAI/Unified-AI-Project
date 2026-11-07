@@ -97,6 +97,11 @@
       "referenced": true,
       "purpose": "Where does AL state reach generation, and how much of it survives the trip?"
     },
+    "al_downstream_protocol.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "固定評分協定：相位調制到底有沒有用？（唯一可用的判準）"
+    },
     "al_evidence_gate.py": {
       "category": "tool",
       "referenced": true,

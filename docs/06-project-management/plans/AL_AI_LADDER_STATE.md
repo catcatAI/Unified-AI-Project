@@ -418,3 +418,18 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 
 **現況**：機制八層綠；下游結論 =
 **條件相依，尚無定論**（且已抓到並修掉一個真實訓練 bug）。
+
+### 2026-11-07 續十三 — 固定評分協定（v2）；結論 = regime-dependent
+
+- 新增 `scripts/al_downstream_protocol.py`（常數寫死）+
+  `tests/test_al_downstream_protocol.py`（9）+ `plans/AL_SCORING_PROTOCOL.md`。
+- 協定：讀出膜電位、任務族 hard、regime {1,5} epochs 全報、難度階梯
+  `(48,3)(96,3)(96,2)(144,2)(144,1)` × lr 格點校準到中性 top-1 ∈
+  [0.30,0.70]、12 種子、`shuffled` 控制組、margin 與 top-1 必須同向。
+- v1 只校準 lr 失敗（ep5 在任何 lr 都 0.979）→
+  v2 把難度也納入校準，並把校準不到的 regime 標 `uninformative`。
+- 結果：ep1（48/3, lr .03）neutral +0.0243/0.502、phase −0.0338/0.481 →
+  `no-downstream-difference`；ep5（96/2, lr .03）neutral +0.0102/0.443、phase
+  **+0.3455/1.000**、shuffled +0.0571/0.668 → `phase-beats-matched-mean`。
+- 整體 **`regime-dependent-no-claim`**：方向相反，不能宣告有效或無效。
+- 協定是事後訂的（誠實標籤已寫入文件），價值在往後固定、不再挑 regime。
