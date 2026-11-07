@@ -52,3 +52,54 @@ def test_the_phase_explains_the_parameter(result):
     assert result["phase_explained"] > 0.9
     assert result["permutation"]["phase_explained"] < 0.2
     assert result["clock_forgery_reproducible"] is False
+
+
+class TestBrokenSources:
+    """壞掉的狀態源要退成原值，不能拋例外、也不能被當成谷底。"""
+
+    class _Raising:
+        @property
+        def rhythm(self):
+            raise RuntimeError("state store unavailable")
+
+    class _Snap:
+        def __init__(self, activation):
+            self.rhythm = {"activation": activation}
+
+    @pytest.mark.parametrize(
+        "snapshot_factory",
+        [
+            lambda: None,
+            lambda: TestBrokenSources._Snap(float("nan")),
+            lambda: TestBrokenSources._Snap(float("inf")),
+            lambda: TestBrokenSources._Snap(True),
+            lambda: TestBrokenSources._Snap("high"),
+            lambda: TestBrokenSources._Raising(),
+            lambda: object(),
+        ],
+    )
+    def test_every_broken_source_leaves_the_request_alone(self, snapshot_factory):
+        from core.life.al_generation_params import modulate
+
+        params = modulate(0.7, 512, snapshot_factory())
+        assert (params.temperature, params.max_tokens) == (0.7, 512)
+        assert params.applied == {} and params.source is None
+
+    def test_an_observed_trough_is_not_the_same_as_no_observation(self):
+        from core.life.al_generation_params import modulate
+
+        trough = modulate(0.7, 512, self._Snap(0.0))
+        missing = modulate(0.7, 512, None)
+        assert trough.temperature < missing.temperature
+        assert trough.max_tokens < missing.max_tokens
+
+
+class TestControlsAreReported:
+    def test_the_gate_reports_more_than_one_control(self, result):
+        controls = [name for name in result["checks"] if name.startswith("control_")]
+        assert len(controls) >= 5
+        assert all(result["checks"][name] for name in controls)
+
+    def test_broken_source_outcomes_are_visible_in_the_report(self, result):
+        assert result["broken_sources"] == {"missing": True, "nan": True, "raising": True}
+        assert result["frozen_phase_repeatable"] is True

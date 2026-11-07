@@ -24,9 +24,12 @@
 
 from __future__ import annotations
 
+import logging
 import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 # 相位拉滿時的擺幅。刻意小：43 s 的緩慢調制不該蓋過路由/提示詞的決定。
 TEMPERATURE_SWING = 0.15
@@ -64,7 +67,11 @@ def _activation(snapshot: Any) -> Optional[float]:
     ``activation=0.0`` 是「在谷底」的**觀測**，與「沒量到」不同：前者要把
     temperature 壓低，後者什麼都不做。
     """
-    rhythm = getattr(snapshot, "rhythm", None)
+    try:
+        rhythm = getattr(snapshot, "rhythm", None)
+    except Exception:  # noqa: BLE001 - 狀態來源壞掉不該把例外帶進生成路徑
+        logger.debug("AL rhythm unavailable on snapshot; leaving params untouched", exc_info=True)
+        return None
     if not isinstance(rhythm, dict):
         return None
     value = rhythm.get("activation")

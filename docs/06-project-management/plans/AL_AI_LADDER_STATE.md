@@ -346,3 +346,17 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 
 **七項現況**：rhythm ✓、power-cycle ✓、phase→decision ✓、C-param ✓、C-logit
 ✓、C-state ✓、C-learn ✓（模型層＋生產接線）；黑箱 hidden-state 調制 ✗。
+
+### 2026-11-07 續八 — c-param 控制組 1→6；下游實驗失敗（儀器）
+
+- `c-param` 控制組：缺 `rhythm`／`NaN`／**拋錯源**
+  → 逐位原值；固定 activation 連呼 8 次 → 單一結果；置換 → 解釋力 0.008；wall-clock 偽造 → 不可重現。總閘門顯示
+  `controls=6`（原 1）。
+- 新控制組抓到真洞：`_activation()` 的 `getattr` 會讓「狀態源拋錯」穿進
+  `generate_text`。已收斂為 `None` + debug log；7 種壞源有單元測試。
+- 下游品質實驗（neutral／phase／shuffled 三臂、增益匹配）**兩輪都失敗於儀器**：預設閾值下
+  `forward` 回空；壓低後三臂全在天花板（recall
+  1.0）；加干擾鍵後候選全 tie——稀疏路徑對整列求和、不縮放幅度（已知簡化）。**未留下腳本**，避免一支永遠回負結果的探針被誤讀。
+- 結論：**「這樣學比較好」仍未量**，卡在 `forward` 的排序解析度，不是實驗設計。
+
+**現況**：機制八層全綠（`all-rungs-admissible`）；下游效果 ✗（阻塞原因已定位）。

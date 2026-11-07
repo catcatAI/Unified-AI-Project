@@ -755,3 +755,50 @@ get_rhythm_tracker().activation_preview() → learning_gain() → 增益
   state。
 - `c-param`
   只有 1 個控制組，是這張表裡最薄的一層（其餘 2–4 個）。薄就標出來，不平均掉。
+
+---
+
+## 18. 把最薄的一層補厚，並量一次「這樣學有比較好嗎」（2026-11-07 續）
+
+### 18.1 C-param 從 1 個控制組變成 6 個
+
+§17 的表裡 `c-param` 只有 1 個控制組——別人 2–4 個。補上之後：
+
+| 控制組                                   | 內容                                                |
+| ---------------------------------------- | --------------------------------------------------- |
+| `control_without_rhythm_is_original`     | 快照沒有 `rhythm` → 請求逐位等於原值                |
+| `control_nan_is_original`                | `activation = NaN` → 逐位等於原值（不是被當成谷底） |
+| `control_broken_source_is_original`      | 讀 `rhythm` 屬性的來源**拋錯** → 逐位等於原值       |
+| `control_frozen_phase_is_repeatable`     | 同一個 activation 連呼 8 次 → 只有一種結果          |
+| `control_permutation_kills_explanation`  | 置換 activation → 相位解釋力 0.008（真值 0.965）    |
+| `control_clock_forgery_not_reproducible` | wall-clock 正弦 → 同一「相位」兩次不同              |
+
+**新控制組抓到一個真的洞**：`al_generation_params._activation()` 用
+`getattr(snapshot, "rhythm", None)`，來源屬性拋錯時例外會**直接穿進生成路徑**
+（`modulate` 是 `generate_text` 呼叫的）。現在收斂成
+`None`（並記 debug），壞源的行為與「沒量到」一致。7 個壞源（`None`／`NaN`／`inf`／`bool`／字串／拋錯物件／無
+`rhythm` 的物件）都有單元測試，全部逐位回原值。
+
+同時把 `explained_perm < 0.2` 從 `phase_explains_params` 裡拆出來、時鐘偽造從
+`admissible`
+的隱含條件升成獨立檢查——控制組要能被單獨看見，才不會被藏在別的判準裡。
+
+### 18.2 下游品質：**這一輪失敗了，原因是儀器**
+
+問「這樣學有比較好嗎」需要一個學習任務，三段式：neutral（固定增益 1.0）、phase（真振盪器走一整個週期的增益）、shuffled（**同一組增益**打亂順序，用來分離「時機」與「總量」）。量 held-out 檢索。
+
+試了兩輪，兩輪都是**儀器解析度不足**，不是結論：
+
+1. 16 對一對一關聯、預設閾值 0.3 → `forward()`
+   回空字典（沒有脈衝）。壓低閾值後 recall = 1.000、margin =
+   +0.5，**三臂全部在天花板**——分不出差別。
+2. 加入共享雜訊鍵製造干擾 → 正確 target 與所有對手**全部同分**（tie
+   100%）。原因是已知的簡化（`forward` 明確記載）：稀疏傳播路徑對整個 weight
+   row 求和，
+   **confidence 的幅度不縮放輸入電流**，所以多鍵輸入下候選全部飽和成同樣的脈衝數。
+
+所以這一支**沒有留下腳本**：一支永遠回 `no-downstream-advantage`
+的探針會被誤讀成「相位沒有用」，但實際是「這支 forward 排不出名次」。要量下游，先得處理
+`forward` 的幅度傳播（那會改動所有 GARDEN 輸出，必須自己一輪量測）。
+
+**誠實狀態**：C-learn 的機制 ✓、機制接上生產 ✓；**「這樣學比較好」仍未量測**，且現在知道卡在模型的排序能力，不是卡在實驗設計。

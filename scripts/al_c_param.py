@@ -37,7 +37,7 @@ import math
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
@@ -106,6 +106,14 @@ def _live_call(activation: float) -> Dict[str, float]:
     return captured
 
 
+class _RaisingSnapshot:
+    """狀態源掛掉的替身：讀 `rhythm` 直接拋錯（生產路徑必須退成原值）。"""
+
+    @property
+    def rhythm(self) -> None:
+        raise RuntimeError("AL state store unavailable")
+
+
 class _Snap:
     """最小快照替身：只有 ``rhythm``，`modulate` 也只讀它。"""
 
@@ -146,12 +154,27 @@ def run() -> Dict[str, object]:
     tokens = [int(p.get("max_tokens", -1)) for p in live]
     spread = (max(temps) - min(temps)) / BASE_TEMPERATURE
 
-    # 控制組：快照沒有 rhythm → 必須逐位等於原值。
+    # 控制組 1：快照沒有 rhythm → 必須逐位等於原值。
     control = _live_call(None)
     control_still = (
         float(control.get("temperature", -1.0)) == BASE_TEMPERATURE
         and int(control.get("max_tokens", -1)) == BASE_TOKENS
     )
+
+    # 控制組 2–4：壞快照（NaN / 拋錯）也是「沒量到」，要逐位等於原值——生成
+    # 路徑不能因為狀態源壞掉就拋例外，也不能把它當成谷底。
+    def _params(snapshot: Any) -> tuple:
+        probe = modulate(BASE_TEMPERATURE, BASE_TOKENS, snapshot)
+        return (probe.temperature, probe.max_tokens)
+
+    baseline = (BASE_TEMPERATURE, BASE_TOKENS)
+    nan_is_original = _params(_Snap(float("nan"))) == baseline
+    broken_is_original = _params(_RaisingSnapshot()) == baseline
+
+    # 控制組 5：同一個 activation 連呼 8 次 → 逐位相同。若這項不成立，
+    # 上面的參數擺幅就不能歸因給相位，只能歸因給呼叫次序或雜訊。
+    frozen = {_params(_Snap(0.83)) for _ in range(8)}
+    frozen_repeatable = len(frozen) == 1
 
     # 逐樣本：相位對溫度的解釋力（同相位 → 同溫度，是真的函數關係）。
     osc = Oscillator()
@@ -190,10 +213,15 @@ def run() -> Dict[str, object]:
     checks = {
         "reaches_the_request": bool(all(t == t for t in temps) and len(set(tokens)) > 1),
         "effect_is_visible": bool(spread >= 0.10 and (max(temps) - min(temps)) >= 0.10),
-        "control_is_still": bool(control_still),
-        "phase_explains_params": bool(explained > 0.9 and explained_perm < 0.2),
+        "control_without_rhythm_is_original": bool(control_still),
+        "control_nan_is_original": bool(nan_is_original),
+        "control_broken_source_is_original": bool(broken_is_original),
+        "control_frozen_phase_is_repeatable": bool(frozen_repeatable),
+        "control_permutation_kills_explanation": bool(explained_perm < 0.2),
+        "control_clock_forgery_not_reproducible": bool(not clock_reproducible),
+        "phase_explains_params": bool(explained > 0.9),
     }
-    admissible = all(checks.values()) and not clock_reproducible
+    admissible = all(checks.values())
 
     return {
         "period_s": round(period, 3),
@@ -206,6 +234,12 @@ def run() -> Dict[str, object]:
             "temperature": control.get("temperature"),
             "max_tokens": control.get("max_tokens"),
         },
+        "broken_sources": {
+            "missing": bool(control_still),
+            "nan": bool(nan_is_original),
+            "raising": bool(broken_is_original),
+        },
+        "frozen_phase_repeatable": bool(frozen_repeatable),
         "phase_explained": round(explained, 6),
         "permutation": {
             "phase_explained": round(explained_perm, 6),
