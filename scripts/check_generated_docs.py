@@ -63,12 +63,21 @@ class Generated:
 
 
 TARGETS: list[Generated] = [
+    # 比對的是「產生出來的 MD」與「提交的 MD」，不是 ``check``（那只驗 YAML 宣稱）。
+    # 先前這道門寫著「與產生器輸出一致」，實際上跑的是 check——訊息在說謊，正是本門禁
+    # 要消滅的那種。
     Generated(
         output="docs/STATUS_MATRIX.md",
         generator="scripts/gen_status_matrix.py",
         source="docs/status_matrix.yaml",
         regenerate=[f"{PY}", "scripts/gen_status_matrix.py"],
-        check_command=[f"{PY}", "scripts/gen_status_matrix.py", "check"],
+        check_command=[
+            f"{PY}",
+            "scripts/gen_status_matrix.py",
+            "generate",
+            "--output",
+            "<tmp>",
+        ],
     ),
     Generated(
         output="docs/PROJECT_MAP_GENERATED.md",
