@@ -56,8 +56,32 @@ and this project adheres to
   `unregistered_unmeasured`，`overall_verdict` 遇到「量不到但沒登記」的族一律回
   `unmeasured-unregistered`——不再讓缺口安靜地從判詞裡消失；
   `scripts/al_unmeasured_budget.txt`（=2）是棘輪。v22 重跑 12 格與 v21 逐格相同，整體仍
-  `no-mechanism-benefit-consistent`，未登記清單為空。順帶把 `AGENTS.md`
+  `no-mechanism-benefit-consistent`，未登記清單為空。（⚠️ 這句後來被推翻：同一份程式重跑，
+  `many_to_one` ep1 是 `OUT OF RANGE`、判詞是
+  `unmeasured-unregistered`；更正見本節上一條。）順帶把 `AGENTS.md`
   的「單一檢查入口」補上這兩道新門與三條棘輪登記，免得規則只剩下文件裡的一句話。
+
+- **AL 判詞的解析度不夠，而「量不到」的登記簿只有一個方向（2026-11-09）**：`scripts/al_downstream_protocol.py`
+  走到 v23。ROADMAP
+  §33 自己寫著「12 個種子的均值只能定位到 ±0.03，而判詞要分辨 0.05 的餘裕」，所以這一版只改 n：評估種子 12
+  → 40 個固定質數，`SIGN_TEST_MIN` 由 n 導出（40 →
+  26/40，單尾 p≈0.040），門檻、任務階梯、讀出全部不動。結果三件事：①
+  `many_to_one`
+  ep1 的中性臂從 0.299（掉出 0.30 地板、被當成不可下結論）回到 0.406；②
+  `conflict` ep1 成為第一格**同時**贏過 neutral 與 shuffled 的 top-1（phase
+  0.453 vs
+  0.357／0.361，30/40 與 29/40 都過門檻），但 margin 沒過散布門檻，判詞只給
+  `hit-gain-over-both-arms`；③ `hard`
+  ep5 在 n=12 看起來贏過兩個控制組，多跑 28 個種子後 phase>shuffled 只有 23/40
+  → 降級成 `timing-does-not-matter-only-gain`。整體判詞由
+  `no-mechanism-benefit-consistent` 變成
+  `regime-dependent-no-claim`；「機制好處」（margin 與 top-1 同向）仍然零格。另外修掉兩件會讓下一輪白跑的事：**v22 文件寫錯了**——拿同一份已提交的程式重跑，`many_to_one`
+  ep1 是 `OUT OF RANGE`（0.299），判詞其實是
+  `unmeasured-unregistered`，不是「12 格都可下結論、未登記清單為空」（12 個種子的逐格數字與 v23 前 12 個種子完全相同，所以不是雜訊）；以及登記簿**只擋一個方向**——新增
+  `_stale_registrations()`，登記為「量不到」卻每一格都量到就印
+  `STALE REGISTRATION` 並讓官方跑法 exit 1，v23 立刻抓到 `hard`（12 個種子下 ep1
+  `sd=0` 看起來像天花板），已除名、預算 `scripts/al_unmeasured_budget.txt` 2 →
+  1。
 
 - **`scripts/` 一直是 CI
   lint 的盲區（2026-11-09）**：pre-commit 的 black／isort／flake8 掃全檔，但 CI 的 lint 步驟只掃

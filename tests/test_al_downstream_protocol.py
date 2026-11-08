@@ -104,8 +104,13 @@ class TestCell:
 class TestSeedRobustness:
     """平均差要站得住：7/12 的「贏」是擲硬幣，不是機制。"""
 
-    def test_sign_test_minimum_for_twelve_seeds(self, protocol):
-        assert protocol.SIGN_TEST_MIN == 10
+    def test_sign_test_minimum_follows_the_seed_count(self, protocol):
+        # 門檻由 n 導出：12 → 10（p≈0.019）、40 → 26（p≈0.040）。寫死任一個都會讓
+        # 「加種子」悄悄放寬判詞。
+        assert len(protocol.SEEDS) == 40
+        assert protocol.SIGN_TEST_MIN == 26
+        assert protocol._sign_test_minimum(12) == 10
+        assert protocol.SIGN_TEST_MIN == protocol._sign_test_minimum(len(protocol.SEEDS))
 
     def _wins(self, over_neutral, over_shuffled, seeds=12):
         return {
@@ -381,8 +386,9 @@ class TestDetectableEffectSize:
         assert abs(stats["mean"] - 0.16667) < 1e-4
 
     def test_minimum_detectable_delta_matches_the_sign_gate(self, protocol):
-        # σ=0.10、12 個種子、門檻 10/12：80% 檢定力需要 δ≈0.11。
-        mde = protocol._min_detectable_delta(0.10, 12, protocol.SIGN_TEST_MIN)
+        # σ=0.10、12 個種子、門檻 10/12：80% 檢定力需要 δ≈0.11。門檻要和 n 一起取——
+        # 用 module 常數（現在是 26/40）配 n=12 是「要求 12 個種子裡 26 個同向」，必然 None。
+        mde = protocol._min_detectable_delta(0.10, 12, protocol._sign_test_minimum(12))
         assert mde is not None
         assert 0.09 < mde < 0.14
 
@@ -570,9 +576,28 @@ class TestUnmeasuredFamiliesAreNamed:
             "_label_shuffle_baseline",
             lambda *a, **k: {"train": 0.02, "heldout": 0.02, "chance": 0.02},
         )
-        report = protocol.run(families=("hard", "conflict"))
+        report = protocol.run(families=("structured", "conflict"))
 
-        assert report["unmeasured"]["hard"].startswith("每 cue 有專屬 token")
+        assert report["unmeasured"]["structured"].startswith("ep1 完全遷移")
         # conflict 沒登記，卻量不到 → 不得假裝整體有結論
         assert report["unregistered_unmeasured"] == ["conflict"]
         assert report["verdict"] == "unmeasured-unregistered"
+        # 兩族都量不到 → 沒有「登記了卻量到」的過期項。
+        assert report["stale_unmeasured"] == []
+
+    def test_a_registered_family_that_is_measured_is_stale(self, protocol):
+        """反方向也要響：登記為量不到、但每一格都量到了＝登記簿過期。
+
+        v23 就是這樣抓到 `hard` 的：12 個種子下它看起來量不到（ep1 neutral 0.333、sd 0），
+        40 個種子下三格全部可下結論。只擋一個方向的登記簿會一直長大，然後冒充「未知」。
+        """
+        cells = [_cell("no-downstream-difference") for _ in range(3)]
+        for cell in cells:
+            cell["family"] = "hard"
+        assert protocol._stale_registrations(cells, {"hard": "x"}) == ["hard"]
+        # 只要還有一格量不到，就不是過期——那是真的量不到。
+        cells[1]["informative"] = False
+        cells[1]["reason"] = "task-at-ceiling"
+        assert protocol._stale_registrations(cells, {"hard": "x"}) == []
+        # 沒跑到的族（沒有 cell）不算過期，也不算漏登記：這次沒量它。
+        assert protocol._stale_registrations(cells[:0], {"hard": "x"}) == []

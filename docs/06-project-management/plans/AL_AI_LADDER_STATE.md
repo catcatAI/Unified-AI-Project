@@ -817,7 +817,61 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   `unmeasured-unregistered`，不再讓缺口從判詞裡消失。
 - 棘輪 `scripts/al_unmeasured_budget.txt` = 2：登記數只能減不能增。
 - v22 重跑：12 格與 v21 逐格相同、整體仍
-  `no-mechanism-benefit-consistent`、未登記清單為空。
+  `no-mechanism-benefit-consistent`、未登記清單為空。⚠️
+  **這句是錯的，續三十六有更正**：用同一份提交的程式重跑，`many_to_one`
+  ep1 的中性臂落在 0.299（地板 0.30 之外）→ 那一格不可下結論，判詞實際是
+  `unmeasured-unregistered`，未登記清單也不是空的。
 - 專案層面另補三道「規則會自己跳出來」的門：生成檔手改（`check_generated_docs.py`，CI＋pre-commit）、定義多重釋義棘輪（`scripts/ambiguity_budget.txt`，11）、以及上面那條量不到棘輪。
 - 檢查：協定+下游 99 passed、生成檔門 5 passed、歧義棘輪 4 passed、fact gates
   ALL PASS。
+
+## 續三十六（2026-11-09）：檢定力 12 → 40，以及登記簿的反方向
+
+- 動機不是「想再跑一次」，是 ROADMAP
+  §33 的結尾自己寫的：**12 個種子的均值只能定位到 ±0.03，而判詞要分辨 0.05 的餘裕**——之前的爭論都在量具解析度以下。v23 只改一項：評估種子 12
+  → 40。門檻、任務階梯、讀出、題目全部不動。
+- 種子改成 40 個**固定質數**（跳過 211–241 與 307–349，那是校準與確認的區間，三組必須兩兩互斥）；`SIGN_TEST_MIN`
+  一律由 n 導出，40 →
+  **26/40**（單尾二項 p≈0.040），所以「多跑種子」不會讓判詞悄悄變鬆。
+- v22（n=12）與 v23（n=40）逐格對照（同讀出 `potential`、同任務、同控制組）：
+
+  | 族／regime          | n=12（v22 程式實測）               | n=40（v23）                                          |
+  | ------------------- | ---------------------------------- | ---------------------------------------------------- |
+  | `hard` ep1          | `hit-gain-without-margin-gain`     | 同（P>N 40/40、P>S 4/40）                            |
+  | `hard` ep3          | 同                                 | 同（P>N 37/40、P>S 23/40）                           |
+  | `hard` ep5          | `timing-does-not-matter-only-gain` | 同（P>N 37/40、P>S 23/40）                           |
+  | `conflict` ep1      | `no-downstream-difference`         | **`hit-gain-over-both-arms`**（30/40、29/40）        |
+  | `conflict` ep3/5    | `no-downstream-difference`         | 同                                                   |
+  | `structured`        | 三格皆不可下結論                   | 同（`ladder-exhausted`）                             |
+  | `many_to_one` ep1   | **OUT OF RANGE**（中性臂 0.299）   | 可下結論（中性臂 0.406）→ `no-downstream-difference` |
+  | `many_to_one` ep3/5 | `no-downstream-difference`         | 同                                                   |
+  | 整體                | `unmeasured-unregistered`          | **`regime-dependent-no-claim`**                      |
+
+- 三個實質變化：① `many_to_one`
+  ep1 的中性臂從 0.299 回到 0.406——12 個種子時那一格是「在地板外被丟掉」，不是「沒差」；②
+  `conflict` ep1 是**第一格同時贏過兩個控制組的 top-1** （phase 0.453 vs neutral
+  0.357、shuffled
+  0.361，30/40 與 29/40 都過 26 的門檻），但 margin 沒過散布門檻 → 判詞刻意只給
+  `hit-gain-over-both-arms`，不是「機制有效」；③ `hard`
+  三格在 40 個種子下全部可下結論，所以它不該再留在「量不到」登記簿裡。
+- 「機制好處」（margin 與 top-1 必須同向）仍然是**零格**：ep5 的 `hard`
+  在 n=12 看起來贏過兩個控制組（0.701 vs 0.653 vs
+  0.573），多跑 28 個種子後 phase>shuffled 只有 23/40（門檻 26）降級成
+  `timing-does-not-matter-only-gain`。這正是「種子不夠會把擲硬幣讀成機制」。
+- 限制照實記：`hard` ep1 的中性臂 40 個種子全部 0.333（`sd=0`），所以那格的
+  `detectable_hit_delta`
+  算不出來（`MDE None`）——它能說「phase 的 top-1 高於兩個控制組」，不能說任何關於解析度的話。
+- **更正續三十五**：那裡寫「v22 重跑：12 格與 v21 逐格相同、整體仍
+  `no-mechanism-benefit-consistent`、未登記清單為空」。我拿**同一份已提交的程式**
+  （`git show HEAD:scripts/al_downstream_protocol.py`）重跑，得到
+  `many_to_one ep1 OUT OF RANGE（中性臂 0.299 < 0.30）`，因此判詞是
+  `unmeasured-unregistered`、未登記族是
+  `many_to_one`。v22 的 12 個種子逐格數字與 v23 的前 12 個種子完全相同（11/12/…/127 沒變），所以不是雜訊或執行環境差異，是那句話寫錯：它把「印出 12 行」讀成「12 格都可下結論」。
+- 新增**反向**的門：`_stale_registrations()`——登記為「量不到」、但這次每一格都可下結論＝登記簿過期。報告帶
+  `stale_unmeasured`、印 `STALE REGISTRATION`、官方跑法 **exit
+  1**。上一版只擋「量不到卻沒登記」，於是登記簿只會長不會消；v23 用它抓到
+  `hard`（12 個種子下 ep1 中性臂 0.333、`sd=0`，看起來像天花板；40 個種子下三格全部可下結論），已除名，預算
+  `scripts/al_unmeasured_budget.txt` **2 → 1**。
+- 檢查：`tests/test_al_downstream_protocol.py` **67
+  passed**（含新的簽章門檻測試與過期登記測試）、`check_fact_gates.py` ALL
+  PASS、flake8=0。

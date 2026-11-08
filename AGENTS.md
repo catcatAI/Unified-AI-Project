@@ -87,10 +87,10 @@ pre-commit run --all-files
 
 > 📌 **NOTE CHAIN IS A HISTORICAL CHANGELOG**: Every test count embedded below
 > (5,085 / 4,717 / 4,734 / … / 5,432 / …) is a dated milestone at the time of
-> that NOTE. The current authoritative count is **9,273 collected (tests/), 0
+> that NOTE. The current authoritative count is **9,274 collected (tests/), 0
 > errors** (re-verified 2026-11-09; full testpaths
-> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,035
-> collected / 9,932 passed / 112 skipped**, 0 failed).
+> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,036
+> collected / 9,933 passed / 112 skipped**, 0 failed).
 
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun
 > 25–29). Includes §X #34-#54: save_visual_decoder_weights,
@@ -1597,5 +1597,6 @@ tests/
 
 > 📏 **棘輪（只減不增）**：`scripts/type_ignore_budget.txt`（`# type: ignore`
 > 數）、 `scripts/ambiguity_budget.txt`（定義多重釋義數，11）、
-> `scripts/al_unmeasured_budget.txt`（AL 下游「結構上量不到」的族數，2：`hard`、
-> `structured`）。要讓數字上升，必須在同一個 commit 裡改預算檔並寫出理由；定義歧義與量不到的族，都不得只是「看看而已」。
+> `scripts/al_unmeasured_budget.txt`（AL 下游「結構上量不到」的族數，1：
+> `structured`；`hard`
+> 在 v23 的 40 個種子下三格全部可下結論，已除名）。要讓數字上升，必須在同一個 commit 裡改預算檔並寫出理由；定義歧義與量不到的族，都不得只是「看看而已」。

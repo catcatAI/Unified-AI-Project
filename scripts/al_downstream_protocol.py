@@ -19,14 +19,14 @@ v2 只跑兩個 regime、一個任務族，結論是 `regime-dependent-no-claim`
    v7 起**每族只校準一次**，且候選組合必須讓 ``EPOCHS_MATRIX`` 裡**每一個** regime 的中性臂
    都落在 [0.30, 0.70]；某格若仍跑出範圍就標 ``neutral-out-of-range``，而不是換一個更簡單
    的任務重校（見下）；
-4. **種子**：12 個固定；校準掃描用 3 個、選中的候選再用 8 個確認（v10 起），三組**兩兩互斥**
-   （v5 起互斥評估種子）。只有 3 個種子的掃描值會系統性偏樂觀（實測 +0.055），足以把貼邊的
-   候選誤標成有餘裕；
+4. **種子**：40 個固定（v23 起；v16–v22 是 12 個）；校準掃描用 3 個、選中的候選再用 8 個
+   確認（v10 起），三組**兩兩互斥**（v5 起互斥評估種子）。只有 3 個種子的掃描值會系統性偏樂觀
+   （實測 +0.055），足以把貼邊的候選誤標成有餘裕；
 5. **控制組**：``shuffled``——**同一組增益**打亂順序，分離「平均增益」與「時序」；
 6. **判詞**：margin **與** top-1 必須同向；只升 margin 不算贏；
 7. **種子穩健性**（v8 起）：``phase-beats-matched-mean``／``phase-loses-to-matched-mean``
    還要在**兩個比較**（對 neutral、對 shuffled）上至少 ``SIGN_TEST_MIN`` 個種子同向
-   （12 個種子下是 10 個，單尾二項 p≈0.019），否則降級成
+   （40 個種子下是 26 個，單尾二項 p≈0.040），否則降級成
    ``timing-does-not-matter-only-gain``／``no-downstream-difference``。均值差 0.05 可能
    來自 12:0，也可能是 7:5，只看均值會把擲硬幣當成機制。
 
@@ -95,7 +95,12 @@ sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
 # 版本字串必須跟著量具改：v17 到 v20 的報告在自己的 JSON 裡都寫 v16（檔名是 v17…v20），
 # 於是報告說不出自己是哪一版量具產生的。v21 起每次改量具都要同步這一條。
-PROTOCOL_VERSION = "al-downstream-v22"
+# v23 只改**解析度**，不改門檻：評估種子 12 → 40。理由在 ROADMAP §33 的結尾——12 個種子的
+# `se` ≈ 0.03，而判詞要分辨 0.05 的餘裕，這個量具本來就分不出 0.299 與 0.30；逐種子 `sd`
+# 0.08–0.12 正是「先調門檻再量」會繞不出去的迴圈。v23 不動 HIT_MARGIN、不動判詞門檻、不動
+# 問題，只把同一批量測多跑 28 個種子（同一組固定質數，不是 1000+ 的流水號）。門檻
+# `SIGN_TEST_MIN` 由 n 導出（40 → 26，單尾 p≈0.040），所以「多跑種子」不會悄悄放寬判詞。
+PROTOCOL_VERSION = "al-downstream-v23"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -109,7 +114,50 @@ HIT_MARGIN = 0.05
 # 相位臂均值與中性臂（1.0）的差：實測 3.7e-5，由「每 epoch 走完整週期」決定。這個容差不是控制，
 # 只是防止排程被改壞；真正的匹配檢查是同一組增益與不同順序。
 GAIN_MATCH_TOL = 0.01
-SEEDS = (11, 23, 37, 41, 53, 67, 79, 83, 97, 101, 113, 127)
+# 40 個固定質數（v23）。刻意跳過 211–241 與 307–349：那是 CALIBRATION_SEEDS 與
+# CONFIRMATION_SEEDS 的區間，三組必須兩兩互斥（下面的 assert 會擋）。
+SEEDS = (
+    11,
+    23,
+    37,
+    41,
+    53,
+    67,
+    79,
+    83,
+    97,
+    101,
+    113,
+    127,
+    131,
+    137,
+    139,
+    149,
+    151,
+    157,
+    163,
+    167,
+    173,
+    179,
+    181,
+    191,
+    193,
+    197,
+    199,
+    251,
+    257,
+    263,
+    269,
+    271,
+    277,
+    281,
+    283,
+    293,
+    401,
+    409,
+    419,
+    421,
+)
 # 校準種子必須與評估種子**互斥**：共用種子等於先看答案再出題，被校準到 [0.30, 0.70]
 # 的中性臂會在評估時被同一批種子稍微優待（v4 及以前就是這樣）。
 CALIBRATION_SEEDS = (211, 223, 241)
@@ -358,9 +406,10 @@ def _exhaustion_reason(trials: Sequence[Dict[str, object]]) -> str:
 
 
 def _sign_test_minimum(seeds: int, alpha: float = 0.05) -> int:
-    """單尾二項檢定：12 個種子至少要幾個同向，才算不是擲硬幣。
+    """單尾二項檢定：n 個種子至少要幾個同向，才算不是擲硬幣。
 
-    P(X>=9|12,0.5)=0.073，P(X>=10|12,0.5)=0.019，所以 12 個種子的門檻是 10。
+    門檻一律由 n 導出，不寫死：P(X>=9|12,0.5)=0.073、P(X>=10|12,0.5)=0.019，所以 n=12 是 10；
+    P(X>=25|40,0.5)=0.077、P(X>=26|40,0.5)=0.040，所以 n=40 是 26。加種子而門檻不動，判詞會變鬆。
     """
     from math import comb
 
@@ -514,7 +563,7 @@ def evaluate_cell(
         "shuffled": statistics.fmean(phase_gains),
     }
 
-    # 逐種子勝負：12 個種子的平均差可能是 7:5 也可能是 12:0，判詞本身看不出來。
+    # 逐種子勝負：均值差可能是 7:5 也可能是 12:0，判詞本身看不出來。
     def wins(a: str, b: str, key: str) -> int:
         return sum(1 for x, y in zip(rows[a], rows[b]) if x[key] > y[key])
 
@@ -632,8 +681,10 @@ HARM = "phase-loses-to-matched-mean"
 # 不可能有中段」：每 cue 一個專屬 token ⇒ ep1 就是 1.000，跨 epoch 沒有可比較的區間。
 # 它們不是被偷偷丟掉，而是具名列出：報告會帶 ``unmeasured`` 欄位，判詞也會擋住
 # 「新增一族、它量不到、但整體判詞照樣下結論」這種情況（見 overall_verdict）。
+# v23 除名 `hard`：40 個種子下它在 ep1/3/5 三格全部可下結論（12 個種子時 ep1 的 neutral
+# 是 0.333 且 sd=0，看起來像「ep1 即天花板」其實是解析度不足）。登記簿必須兩邊都會響——
+# 量不到沒登記會擋判詞，登記了卻量到就是過期，`_stale_registrations()` 會讓官方跑法 exit 1。
 UNMEASURED_FAMILIES: Dict[str, str] = {
-    "hard": "每 cue 有專屬 token → ep1 即 1.000；中段只存在於已廢棄的 potential 讀出",
     "structured": "ep1 完全遷移、ep3 起電位壓成同分（margin=0）→ 讀出崩成 0，沒有中段",
 }
 # 棘輪：量不到的族數只能減不能增（要新增必須同時上調預算並寫出結構原因）。
@@ -646,6 +697,30 @@ def _unmeasured_budget() -> int:
         return int(UNMEASURED_BUDGET_FILE.read_text(encoding="utf-8").strip())
     except (OSError, ValueError):
         return 0
+
+
+def _stale_registrations(
+    cells: Sequence[Dict[str, object]], registered: Optional[Dict[str, str]] = None
+) -> List[str]:
+    """登記為「量不到」、但這次每一格都量到的族＝登記簿過期。
+
+    方向很重要：上一版的門只擋「量不到卻沒登記」，於是登記簿只會長、不會消——`hard` 在
+    12 個種子下看起來量不到，40 個種子下三格全部可下結論，登記卻會繼續留著冒充「未知」。
+    過期登記比漏登記安全（偏保守），但它同樣是「文件說的話與量測不一致」，所以同樣要響。
+    """
+    registered = UNMEASURED_FAMILIES if registered is None else registered
+    totals: Dict[str, List[int]] = {}
+    for cell in cells:
+        family = str(cell["family"])
+        bucket = totals.setdefault(family, [0, 0])
+        bucket[1] += 1
+        if cell["informative"]:
+            bucket[0] += 1
+    return sorted(
+        name
+        for name in registered
+        if name in totals and totals[name][1] > 0 and totals[name][0] == totals[name][1]
+    )
 
 
 def overall_verdict(cells: Sequence[Dict[str, object]], unregistered: Sequence[str] = ()) -> str:
@@ -717,6 +792,12 @@ def run(
         for name in unmeasured
     }
     unregistered = [name for name in unmeasured if name not in UNMEASURED_FAMILIES]
+    stale = _stale_registrations(cells)
+    for name in stale:
+        print(
+            f"STALE REGISTRATION: {name} 登記為量不到，但這次每一格都可下結論 "
+            f"→ 從 UNMEASURED_FAMILIES 除名並下調 scripts/al_unmeasured_budget.txt"
+        )
 
     # 量具本身的控制：同一批輸入、打亂的標籤。若這段也拿到中段，跨臂比較量的是輸入結構。
     controls = {
@@ -741,6 +822,7 @@ def run(
         "sign_test_min": _sign_test_minimum(len(use_seeds)),
         "unmeasured": unmeasured_reasons,
         "unregistered_unmeasured": unregistered,
+        "stale_unmeasured": stale,
         "cells": cells,
         "verdict": overall_verdict(cells, unregistered),
     }
@@ -804,6 +886,15 @@ def main(argv=None) -> int:
             json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
         print(f"report: {args.json}")
+    # 登記簿過期就 exit 1：報告照寫（證據不能丟），但這一輪不算通過——否則「量得到卻
+    # 仍登記為量不到」會跟「量不到卻沒登記」一樣，安安靜靜地活過每一次重跑。
+    if result["stale_unmeasured"]:
+        print(
+            "registry is stale: "
+            + ", ".join(result["stale_unmeasured"])
+            + " —— 除名後重跑（登記數只能降，見 scripts/al_unmeasured_budget.txt）"
+        )
+        return 1
     return 0
 
 
