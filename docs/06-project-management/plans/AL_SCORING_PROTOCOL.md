@@ -892,3 +892,26 @@ v19/v20 把 15 格裡 9 格沒有 `cell` 的事寫成
 v21 重跑（`--readout direct`，12 個種子）：六格判詞與 v19/v20 逐格相同，整體仍
 `no-mechanism-benefit-consistent`；差別只有 `hard` 的 `reason` 從
 `ladder-exhausted` 變成 `task-at-ceiling`，以及報告裡的版本字串終於對得上。
+
+### v22：量不到的族要具名，不能只是「沒有 cell」
+
+v21 的報告裡，`hard`／`structured` 的狀態是「這一格沒有
+`cell`」——在 JSON上看起來跟「量過、沒差」一模一樣，只有去讀 `reason`
+才分得出來。這種差別靠人記住就會忘記，於是 v22 把它變成資料結構：
+
+- `UNMEASURED_FAMILIES`：具名登記「結構上量不到中段」的族與原因。目前兩條——
+  `hard`（每 cue 有專屬 token，ep1 即 1.000；中段只存在於已廢棄的 `potential`
+  讀出）、 `structured`（ep1 完全遷移、ep3 起電位壓成同分 → 讀出崩成 0）。
+- 報告新增 `unmeasured`（族 → 原因）與
+  `unregistered_unmeasured`（有量不到、但沒登記的族）。
+- `overall_verdict` 先看
+  `unregistered`：只要有**沒登記**的族量不到，整體判詞一律是
+  `unmeasured-unregistered`，不得給出「沒有機制好處」這種結論。理由很直接——少一族的證據卻照樣下結論，就是拿沒量到的東西冒充量到的。
+- `scripts/al_unmeasured_budget.txt`
+  是棘輪：登記數只能減不能增（目前 2）。要新增一族又量不到，必須同時上調預算並寫出結構原因，`tests/test_al_downstream_protocol.py`
+  會釘住兩者相等。
+
+v22 重跑（`--readout direct`，12 個種子）：12 格逐格與 v21 相同（`informative`
+與判詞全等），整體仍
+`no-mechanism-benefit-consistent`，`unregistered_unmeasured`
+為空。也就是說這一輪改的是「量不到有沒有被說出來」，不是判詞。

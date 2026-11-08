@@ -52,7 +52,7 @@ tests/core/test_fact_interpreter.py）：
               CNS 事件、GLOSSARY 數值宣稱、influence_map、get_parameter、
               ResponseCategory — 未定義=0、三源分歧=0、死鍵=0、錯軸=0
               為 must_pass；孤兒事件 21 為棘輪（只減不增，新增即擋門）；
-              多重釋義（定義差）記 INFO（記錄，不是缺陷）
+              多重釋義（定義差）為棘輪（scripts/ambiguity_budget.txt，只減不增）
 
 `--write-definitions-audit [PATH]`：用同一次掃描寫出定義稽核 MD 四桶報告
 （預設 docs/06-project-management/fixes/DEFINITIONS_AUDIT_2026-10-14.md；
@@ -82,6 +82,20 @@ SRC = REPO / "apps/backend/src"
 TESTS = REPO / "tests"
 AXES = ("alpha", "beta", "gamma", "delta", "epsilon", "theta", "zeta")
 MEASURED_AT = "2026-10-13"
+AMBIGUITY_BUDGET = REPO / "scripts" / "ambiguity_budget.txt"
+
+
+def _ambiguity_budget() -> int:
+    """多重釋義的棘輪上限（scripts/ambiguity_budget.txt，單一整數）。
+
+    檔案缺失時回 0：寧可紅一次、逼人把預算寫回來，也不要因為讀不到就默默放行。
+    """
+    try:
+        return int(AMBIGUITY_BUDGET.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return 0
+
+
 DEFS_AUDIT_MD = "docs/06-project-management/fixes/DEFINITIONS_AUDIT_2026-10-14.md"
 
 
@@ -2075,16 +2089,19 @@ def _defs_facts(scan: Dict[str, Any]) -> List[Any]:
                 f"(used={len(magic['used'])}, inline_only={len(magic['inline_only'])})"
             ),
         ),
-        # INFO：多重釋義是視角記錄，不是缺陷（決策保留，詳見 MD 報告「定義差」桶）
+        # 棘輪：多重釋義本身可以是「同對象、多視角」的決策保留，但「新增一條」必須是
+        # 有意識的動作——先前它是 INFO，於是每一輪都在長（11 條），而沒有任何門會
+        # 因此變紅。預算在 scripts/ambiguity_budget.txt：只減不增，要加就同時上調並
+        # 在 commit 說明理由（與 type_ignore / orphan_events 同一套棘輪語意）。
         Fact(
-            "defs.multi_interpretations",
+            "defs.multi_interpretations_ratchet",
             float(multi),
-            0.0,
-            "ge",
+            float(_ambiguity_budget()),
+            "le",
             "records",
             "dup_slots+terms+js_axes",
-            f"dup={sorted(slots['dup_slots'])} terms={len(terms)} js_extra={slots['js_extra_axes']}",
-            must_pass=False,
+            f"dup={sorted(slots['dup_slots'])} terms={len(terms)} "
+            f"js_extra={slots['js_extra_axes']} budget={_ambiguity_budget()}",
         ),
         Fact(
             "defs.explicit_markers",

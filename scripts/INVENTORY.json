@@ -307,6 +307,11 @@
       "referenced": false,
       "purpose": "check final（無說明：原始碼未附 docstring）"
     },
+    "check_generated_docs.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "生成檔新鮮度門：手改生成物 → 紅燈，指名該跑哪個產生器。"
+    },
     "check_intelligence_definition.py": {
       "category": "diagnostics",
       "referenced": true,

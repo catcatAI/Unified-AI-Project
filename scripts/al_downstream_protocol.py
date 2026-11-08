@@ -95,7 +95,7 @@ sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
 # 版本字串必須跟著量具改：v17 到 v20 的報告在自己的 JSON 裡都寫 v16（檔名是 v17…v20），
 # 於是報告說不出自己是哪一版量具產生的。v21 起每次改量具都要同步這一條。
-PROTOCOL_VERSION = "al-downstream-v21"
+PROTOCOL_VERSION = "al-downstream-v22"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -628,7 +628,31 @@ NO_BENEFIT = (
 HARM = "phase-loses-to-matched-mean"
 
 
-def overall_verdict(cells: Sequence[Dict[str, object]]) -> str:
+# 結構上量不到中段的族。這裡的「量不到」不是「沒差」，而是「這一族的設計讓 top-1 讀出
+# 不可能有中段」：每 cue 一個專屬 token ⇒ ep1 就是 1.000，跨 epoch 沒有可比較的區間。
+# 它們不是被偷偷丟掉，而是具名列出：報告會帶 ``unmeasured`` 欄位，判詞也會擋住
+# 「新增一族、它量不到、但整體判詞照樣下結論」這種情況（見 overall_verdict）。
+UNMEASURED_FAMILIES: Dict[str, str] = {
+    "hard": "每 cue 有專屬 token → ep1 即 1.000；中段只存在於已廢棄的 potential 讀出",
+    "structured": "ep1 完全遷移、ep3 起電位壓成同分（margin=0）→ 讀出崩成 0，沒有中段",
+}
+# 棘輪：量不到的族數只能減不能增（要新增必須同時上調預算並寫出結構原因）。
+UNMEASURED_BUDGET_FILE = Path(__file__).with_name("al_unmeasured_budget.txt")
+
+
+def _unmeasured_budget() -> int:
+    """允許「結構上量不到」的族數；讀不到檔案時回 0（fail-closed）。"""
+    try:
+        return int(UNMEASURED_BUDGET_FILE.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return 0
+
+
+def overall_verdict(cells: Sequence[Dict[str, object]], unregistered: Sequence[str] = ()) -> str:
+    # 先擋「有一族量不到，而它不在登記簿裡」：那時任何整體判詞都是在拿沒有證據的格子
+    # 冒充結論（未爆彈就是這樣留下來的）。
+    if unregistered:
+        return "unmeasured-unregistered"
     informative = [cell for cell in cells if cell["informative"]]
     if len(informative) < 2:
         return "insufficient-informative-regimes"
@@ -685,6 +709,15 @@ def run(
                 }
             )
 
+    # 哪些族沒有產出可下結論的格、以及為什麼；未登記的族會讓整體判詞變成
+    # ``unmeasured-unregistered``，不再讓它們安靜地從判詞裡消失。
+    unmeasured = sorted({str(cell["family"]) for cell in cells if not cell["informative"]})
+    unmeasured_reasons = {
+        name: UNMEASURED_FAMILIES.get(name, "unregistered（新族量不到就必須登記）")
+        for name in unmeasured
+    }
+    unregistered = [name for name in unmeasured if name not in UNMEASURED_FAMILIES]
+
     # 量具本身的控制：同一批輸入、打亂的標籤。若這段也拿到中段，跨臂比較量的是輸入結構。
     controls = {
         family: _label_shuffle_baseline(family, CALIBRATION_SEEDS, readout=readout)
@@ -706,8 +739,10 @@ def run(
         "families": {name: steps for name, steps in FAMILIES.items() if name in use_families},
         "seeds": list(use_seeds),
         "sign_test_min": _sign_test_minimum(len(use_seeds)),
+        "unmeasured": unmeasured_reasons,
+        "unregistered_unmeasured": unregistered,
         "cells": cells,
-        "verdict": overall_verdict(cells),
+        "verdict": overall_verdict(cells, unregistered),
     }
 
 

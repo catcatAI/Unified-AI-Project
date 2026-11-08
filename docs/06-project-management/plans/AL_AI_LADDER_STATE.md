@@ -807,3 +807,17 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - v21 重跑：六格判詞與 v19/v20 逐格相同，整體仍
   `no-mechanism-benefit-consistent`。
 - 檢查：協定 61 passed、下游+協定+trace 108 passed、flake8=0。
+
+## 續三十五（2026-11-09）：量不到要具名，歧義要有棘輪
+
+- 協定升到 `al-downstream-v22`：`UNMEASURED_FAMILIES` 具名登記
+  `hard`（每 cue 專屬 token，ep1 即 1.000）與
+  `structured`（ep3 起壓成同分）；報告新增 `unmeasured` /
+  `unregistered_unmeasured`；`overall_verdict` 遇到「量不到但沒登記」的族一律回
+  `unmeasured-unregistered`，不再讓缺口從判詞裡消失。
+- 棘輪 `scripts/al_unmeasured_budget.txt` = 2：登記數只能減不能增。
+- v22 重跑：12 格與 v21 逐格相同、整體仍
+  `no-mechanism-benefit-consistent`、未登記清單為空。
+- 專案層面另補三道「規則會自己跳出來」的門：生成檔手改（`check_generated_docs.py`，CI＋pre-commit）、定義多重釋義棘輪（`scripts/ambiguity_budget.txt`，11）、以及上面那條量不到棘輪。
+- 檢查：協定+下游 99 passed、生成檔門 5 passed、歧義棘輪 4 passed、fact gates
+  ALL PASS。

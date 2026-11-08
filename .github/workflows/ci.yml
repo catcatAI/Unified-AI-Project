@@ -191,6 +191,11 @@ jobs:
           python scripts/gen_status_matrix.py
           git diff --exit-code docs/STATUS_MATRIX.md
           echo "✅ Project map within 10000-line budget (over = project smell)"
+      - name: Generated docs freshness (no hand edits to generated files)
+        # 三個生成物收成單一入口：STATUS_MATRIX 有 check，專案地圖只被量行數
+        # （手改完全看不出來），INVENTORY.json 的 --check 從沒接上 CI。
+        # 規則不會自己跳出來，就沒有人（或 AI）會遵循。
+        run: python scripts/check_generated_docs.py
 
   secrets_scan:
     runs-on: ubuntu-latest

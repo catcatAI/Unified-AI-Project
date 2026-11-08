@@ -1584,3 +1584,15 @@ tests/
 
 > 🔎 **單一檢查入口**：所有「非編譯器」檢查集中在
 > `scripts/check_fact_gates.py`（edge/al/audit/chat/cluster/config/version/docs/modules/gates/hygiene/intelligence/benchmarks/layers/placement/definitions）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。定義稽核 MD 報告：`python3 scripts/check_fact_gates.py --write-definitions-audit`。
+
+> 🔒 **生成檔不准手改（會紅）**：`docs/STATUS_MATRIX.md`、
+> `docs/PROJECT_MAP_GENERATED.md`、`scripts/INVENTORY.json`
+> 由程式產生。改來源檔再跑產生器，或一次修完
+> `python3 scripts/check_generated_docs.py --fix`。門禁在 CI（`check_generated_docs.py`）與 pre-commit
+> hook 上，手改一律 exit
+> 1，並印出「第一行不同的地方」。行數／日期／檔案大小不列入比對——那些是快照刻度。
+
+> 📏 **棘輪（只減不增）**：`scripts/type_ignore_budget.txt`（`# type: ignore`
+> 數）、 `scripts/ambiguity_budget.txt`（定義多重釋義數，11）、
+> `scripts/al_unmeasured_budget.txt`（AL 下游「結構上量不到」的族數，2：`hard`、
+> `structured`）。要讓數字上升，必須在同一個 commit 裡改預算檔並寫出理由；定義歧義與量不到的族，都不得只是「看看而已」。

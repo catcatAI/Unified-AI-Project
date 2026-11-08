@@ -534,3 +534,45 @@ class TestCalibrationFailureSaysWhichFailure:
         assert {cell["reason"] for cell in cells} == {"task-at-ceiling"}
         # 沒有可下結論的格 → 整體不能給判詞。
         assert protocol.overall_verdict(cells) == "insufficient-informative-regimes"
+
+
+class TestUnmeasuredFamiliesAreNamed:
+    """量不到的族必須具名登記，並且只能變少。
+
+    WHY：v21 之前，`hard`／`easy`／`structured` 三族從未產出可下結論的格，它們就只是
+    「沒有 cell」——報告上看起來跟「量過、沒差」一樣。未爆彈是這樣留下來的：訓練後
+    才發現某一族其實從頭到尾沒被量到。
+    """
+
+    def test_every_registered_family_exists(self, protocol):
+        assert set(protocol.UNMEASURED_FAMILIES) <= set(protocol.FAMILIES)
+
+    def test_registry_is_a_ratchet(self, protocol):
+        # 預算在 scripts/al_unmeasured_budget.txt：只能往下（族真的被量到了就下調）。
+        assert len(protocol.UNMEASURED_FAMILIES) == protocol._unmeasured_budget()
+
+    def test_each_registered_family_says_why(self, protocol):
+        for reason in protocol.UNMEASURED_FAMILIES.values():
+            assert len(reason) > 20, "「量不到」必須寫出結構原因，不能只寫『測不出來』"
+
+    def test_an_unregistered_unmeasurable_family_blocks_the_verdict(self, protocol):
+        cells = [_cell("phase-beats-matched-mean") for _ in range(3)]
+        assert protocol.overall_verdict(cells, ["brand-new-family"]) == "unmeasured-unregistered"
+
+    def test_the_report_names_each_unmeasured_family(self, protocol, monkeypatch):
+        monkeypatch.setattr(
+            protocol,
+            "calibrate_family",
+            lambda family, readout=None: {"informative": False, "reason": "task-at-ceiling"},
+        )
+        monkeypatch.setattr(
+            protocol,
+            "_label_shuffle_baseline",
+            lambda *a, **k: {"train": 0.02, "heldout": 0.02, "chance": 0.02},
+        )
+        report = protocol.run(families=("hard", "conflict"))
+
+        assert report["unmeasured"]["hard"].startswith("每 cue 有專屬 token")
+        # conflict 沒登記，卻量不到 → 不得假裝整體有結論
+        assert report["unregistered_unmeasured"] == ["conflict"]
+        assert report["verdict"] == "unmeasured-unregistered"

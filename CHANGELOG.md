@@ -32,6 +32,27 @@ and this project adheres to
 
 ### Changed
 
+- **三種「寫在文件裡但沒有門」的規則，現在會紅（2026-11-09）**：(1)
+  **手改生成檔**—— `docs/STATUS_MATRIX.md` 本來就有 freshness 門，但
+  `docs/PROJECT_MAP_GENERATED.md`
+  只被量行數（手改完全看不出來），`scripts/INVENTORY.json` 的 `--check`
+  寫好了卻從沒接上 CI／pre-commit。新增 `scripts/check_generated_docs.py`
+  收成單一入口（CI 的 `map-budget` job＋pre-commit hook），不一致就 exit
+  1 並印出「第一行不同的地方」與該跑的產生器；日期／檔案大小／輪轉次數不列入比對（那些是快照刻度，比對它們等於要求每次改檔都重跑地圖）。**首次跑就抓到兩個真的過期**：專案地圖停在 2026-11-08（差 2 個檔）、`INVENTORY.json`
+  不認得新腳本。(2) **定義歧義沒有棘輪**——`defs.multi_interpretations`
+  一直是 INFO，所以它從 0 長到 11 都沒有東西變紅。改成
+  `defs.multi_interpretations_ratchet`（`le`，預算在
+  `scripts/ambiguity_budget.txt` =
+  11），只減不增；要加就同時上調預算並寫理由。(3) **量不到 ≠ 沒差**——AL 協定升到
+  `al-downstream-v22`：`UNMEASURED_FAMILIES` 具名登記
+  `hard`（每 cue 專屬 token，ep1 即 1.000）與
+  `structured`（ep3 起電位壓成同分），報告新增 `unmeasured` 與
+  `unregistered_unmeasured`，`overall_verdict` 遇到「量不到但沒登記」的族一律回
+  `unmeasured-unregistered`——不再讓缺口安靜地從判詞裡消失；
+  `scripts/al_unmeasured_budget.txt`（=2）是棘輪。v22 重跑 12 格與 v21 逐格相同，整體仍
+  `no-mechanism-benefit-consistent`，未登記清單為空。順帶把 `AGENTS.md`
+  的「單一檢查入口」補上這兩道新門與三條棘輪登記，免得規則只剩下文件裡的一句話。
+
 - **相位調制（AL）下游判詞：沒有機制好處，而且三族根本沒量到（2026-11-09）**：`scripts/al_downstream_protocol.py`
   走到 v21，把「相位調制到底有沒有用」壓成可重跑、可推翻的三臂協定（`neutral`
   常數增益／`phase` 真振盪器／`shuffled`

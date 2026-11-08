@@ -1423,3 +1423,27 @@ SE 的雜訊差剛好越過線」不是理論上的擔心。這個量測現在�
 `ladder-exhausted`），才不會把「這一族沒有中段」記成「階梯再加一級就好」。順手修掉一個把
 `hard` 誤標成 `ladder-exhausted` 的鍵型別落差（int 鍵 vs
 JSON 字串鍵），以及一個從 v16 之後就沒再更新的報告版本字串。
+
+## §45 量不到的族、定義歧義、手改生成檔：三種「不會跳出來的規則」
+
+這一輪不是 AL 的科學問題，是三條「寫在文件裡但沒有門」的規則：
+
+1. **量不到 ≠ 沒差**。v21 之前，量不到的族在報告裡只是「沒有
+   `cell`」。現在具名登記（`UNMEASURED_FAMILIES`），並由
+   `al_unmeasured_budget.txt` 棘輪（只能減）；未登記就量不到時，整體判詞強制變成
+   `unmeasured-unregistered`。未爆彈的形式是「訓練完才發現某一族從沒被量到」，這道門讓它在量測當下就講出來。
+2. **定義歧義沒有棘輪**。事實門裡 `defs.multi_interpretations`
+   是 INFO，所以它從 0 長到 11 都沒有東西變紅。改成棘輪
+   `defs.multi_interpretations_ratchet`，預算在
+   `scripts/ambiguity_budget.txt`（11），只減不增。
+3. **手改生成檔不會報錯**。`STATUS_MATRIX.md` 有 freshness 門，但
+   `PROJECT_MAP_GENERATED.md` 只被量行數、`scripts/INVENTORY.json` 的 `--check`
+   從沒接上CI。現在收成單一入口
+   `scripts/check_generated_docs.py`（CI＋pre-commit），錯誤訊息直接指出第一行不同的地方與該跑的產生器；日期、檔案大小、輪轉次數不列入比對。
+
+順帶修的：`scripts/check_test_count.py`
+的正則原本釘死換行，prettier（`proseWrap: always`）一重排就再也對不上，而
+`--update`
+仍印 ✅——四個檔案因此各停在不同的日期。現在換行不影響比對、`tests/README.md`
+也納入同步、對不上就 exit
+1，並實際重跑把基線從 8,143/8,906 更新到 9,253/10,015。

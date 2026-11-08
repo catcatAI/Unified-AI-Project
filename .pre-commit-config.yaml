@@ -108,6 +108,15 @@ repos:
         entry: python3 scripts/check_fact_gates.py
         language: system
         pass_filenames: false
+      - id: generated-docs-freshness
+        # 生成檔（STATUS_MATRIX / PROJECT_MAP_GENERATED / INVENTORY.json）
+        # 不准手改：手改的內容下一次重跑就消失。先前只有 STATUS_MATRIX 真的
+        # 被擋，另外兩個「有規則、沒有門」，所以規則等於不存在。
+        name: generated docs freshness (no hand edits)
+        entry: python3 scripts/check_generated_docs.py
+        language: system
+        pass_filenames: false
+        files: ^(docs/(STATUS_MATRIX|PROJECT_MAP_GENERATED)\.md|scripts/(INVENTORY\.json|ACTIVE_SCRIPTS\.md)|scripts/gen_(status_matrix|project_map|script_inventory)\.py|docs/status_matrix\.yaml)$
 
 ci:
   autofix_commit_msg: |
