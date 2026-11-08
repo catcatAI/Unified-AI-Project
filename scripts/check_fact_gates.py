@@ -863,6 +863,55 @@ def _config_hygiene_facts():
     ]
 
 
+MATRIX_BUDGET = REPO / "scripts" / "matrix_annotation_budget.txt"
+MATRIX_SCOPES = ("apps/backend/src", "scripts")
+
+
+def _matrix_annotation_budget() -> int:
+    """未標註 ANGELA-MATRIX 的檔數上限（scripts/matrix_annotation_budget.txt）。
+
+    讀不到檔案時回 0：檔數不可能為 0，所以這個值一定讓門變虹——寧可虹一次逼人把
+    預算寫回來，也不要因為讀不到就默默放行。
+    """
+    try:
+        return int(MATRIX_BUDGET.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return 0
+
+
+def _matrix_annotation_facts():
+    """AGENTS.md 說「所有新程式碼必須有 ANGELA-MATRIX 標註」，但沒有東西會因此變虹。
+
+    現況約一半的檔有標註（歷史包袱）。把「未標註檔數」做成棘輪：只能減不能增。
+    新增一個沒標註的檔案就會把總數推上去——這就是「讓規則自己跳出來」：不必靠人
+    記得讀 AGENTS.md，也不必靠 AI 自己發現。
+    """
+    from core.facts import Fact
+
+    untagged: List[str] = []
+    total = 0
+    for scope in MATRIX_SCOPES:
+        for path in (REPO / scope).rglob("*.py"):
+            total += 1
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            if "ANGELA-MATRIX" not in text:
+                untagged.append(str(path.relative_to(REPO)))
+
+    budget = _matrix_annotation_budget()
+    return [
+        Fact(
+            "hygiene.matrix_annotation_ratchet",
+            float(len(untagged)),
+            float(budget),
+            "le",
+            "files",
+            "apps/backend/src + scripts 的 ANGELA-MATRIX 標註",
+            f"untagged={len(untagged)} of {total} (budget {budget})",
+            measured_at=MEASURED_AT,
+        ),
+    ]
+
+
 def _modules_facts():
     """模組系統現實：scanner 對缺目錄必須安全（must_pass）；目錄存在與
     發現數記 INFO（休眠是事實，不是失敗——lifespan 從未啟動 ModuleManager，
@@ -2190,6 +2239,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         + _docs_facts()
         + _modules_facts()
         + _config_hygiene_facts()
+        + _matrix_annotation_facts()
         + _gates_facts()
         + _intelligence_facts()
         + _paraphrase_facts()
