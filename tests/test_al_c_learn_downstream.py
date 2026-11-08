@@ -231,3 +231,45 @@ class TestHitGainUsesTheBinomialThreshold:
     def test_the_default_is_a_strict_majority_not_a_coin_flip(self, gate):
         # 沒有傳門檻時（單獨跑腳本）只要求嚴格多數，但文件已寫明那不是檢定。
         assert gate._verdict(self._rows(7)) == "hit-gain-without-margin-gain"
+
+
+class TestMarginGainNeedsPairedEvidence:
+    """門檻本身是「差距 > 中性臂逐種子散佈」，那條線可以落在 1 SE 上——雜訊就能越過。"""
+
+    def test_paired_se_is_none_without_spread_or_samples(self, gate):
+        assert gate._paired_se([0.1, 0.1, 0.1], [0.1, 0.1, 0.1]) is None
+        assert gate._paired_se([0.1], [0.2]) is None
+
+    @staticmethod
+    def _rows(gain, wobble):
+        # 三臂的 hit_rate 完全相同，只留 margin 在動：這樣判詞一定走到 margin 那一支，
+        # 不會被 top-1 的差別接管。中性臂散佈 0.025、兩臂差值 ±wobble。
+        neutral = [{"margin": 0.10 + 0.05 * (i % 2), "hit_rate": 0.50} for i in range(6)]
+        phase = [
+            {"margin": row["margin"] + gain + wobble * (1 if i % 2 else -1), "hit_rate": 0.50}
+            for i, row in enumerate(neutral)
+        ]
+        shuffled = [{"margin": row["margin"], "hit_rate": 0.50} for row in neutral]
+        return {"phase": phase, "neutral": neutral, "shuffled": shuffled}
+
+    def test_a_gain_below_the_spread_is_not_a_win(self, gate):
+        # 舊規則只看 spread(0.025)，gain 0.004 本來就不會過。
+        assert gate._verdict(self._rows(0.004, 0.001)) == "no-downstream-difference"
+
+    def test_a_gain_that_the_old_rule_would_take_but_is_one_se_is_rejected(self, gate):
+        # gain 0.10 > spread 0.025（舊規則會判贏），但差值 ±0.20 → SE≈0.09、2SE≈0.18，
+        # 差距只有 1.1 SE：配對證據不足。這一條就是新增下限唯一會擋下的情況。
+        rows = self._rows(0.10, 0.20)
+        assert abs(0.10) < 2 * gate._paired_se(
+            [r["margin"] for r in rows["phase"]], [r["margin"] for r in rows["neutral"]]
+        )
+        assert gate._verdict(rows) == "no-downstream-difference"
+
+    def test_a_wide_but_consistent_gain_still_wins(self, gate):
+        rows = self._rows(0.30, 0.001)
+        assert gate._verdict(rows) == "phase-beats-matched-mean"
+
+    def test_the_floor_only_tightens(self, gate):
+        # 同樣的差距 0.10：差值很穩時判贏，差值很吵時判不出來——只會變嚴，不會變鬆。
+        assert gate._verdict(self._rows(0.10, 0.001)) == "phase-beats-matched-mean"
+        assert gate._verdict(self._rows(0.10, 0.20)) == "no-downstream-difference"

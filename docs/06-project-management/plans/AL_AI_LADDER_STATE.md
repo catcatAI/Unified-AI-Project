@@ -766,3 +766,22 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
 - v18 重跑：`no-mechanism-benefit-consistent`；m2o ep1/ep3
   phase-loses（0/12 贏）、ep5 換標籤 → 相位調制在該族**有效果但不是時序**，符號隨訓練量翻轉。
 - 檢查：協定+下游 80 passed、flake8=0。
+
+### 2026-11-08 續三十三 — 門檻的尺度量出來，與兩個沒量到的族
+
+- 動手前的假設：margin 閘門 `gain > pstdev(neutral)` 約等於十幾個配對 SE。
+  **量完被推翻**：`yardstick/se` 只有 conflict 2.29/2.32/2.20、m2o
+  2.00/3.34/2.08。線寬與 SE 同量級，雜訊越過線是現實可能，不是理論擔心。
+- `evaluate_cell()` 新增
+  `cell.margin_gate`（`yardstick`/`gain`/`paired_sd`/`paired_se`/
+  `gain_over_se`/`yardstick_over_se`），判詞尺度可重算。
+- 新增**只收緊**的證據下限
+  `MIN_GAIN_OVER_SE = 2.0`（`_paired_se()`；無散佈/樣本不足不套用）。它只能把「有差」推向「沒差」，不可能生出新的正向判詞。
+- v19 → v20 重跑：**六格判詞逐格相同**，整體仍
+  `no-mechanism-benefit-consistent`。測試同時驗兩個方向：gain
+  0.10 且配對差穩定 → 判贏；同樣 gain 但差值 ±0.20（SE≈0.09）→ 判
+  `no-downstream-difference`（這格舊規則會判贏，下限唯一擋下的就是它）。
+- 另一個負結果：15 格只有 6 格有 `cell`；`hard`（`DEFAULT_TASK`）與 `structured`
+  三輪全是 `informative: False` / `ladder-exhausted` ——
+  **沒量到**，不是「沒差」，不可計入多數。
+- 檢查：下游 33 passed、協定 55 passed、flake8=0。

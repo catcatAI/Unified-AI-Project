@@ -501,6 +501,29 @@ def evaluate_cell(
         paired[f"phase_vs_{other}_margin"] = _paired_stats(rows, "phase", other, "margin")
     # 這台量具在這個格子上能分辨多小的差：σ 來自配對差的散佈。
     mde = _min_detectable_delta(paired["phase_vs_neutral_hit"]["sd"], len(seeds), need)
+    # 判詞的 margin 尺度：``gain`` 對 ``pstdev(neutral margins)``。這個尺度把「種子難度」也
+    # 算進雜訊（未配對），而且沒有除以 √n，所以它比配對差的標準誤大很多倍——差多少倍會隨
+    # 族而變（conflict 的種子難度變異大、m2o 幾乎沒有），於是「同一個門檻」在不同格上其實
+    # 鬆緊不同。把兩個尺度都寫出來，讓判詞可以被重算。
+    neutral_margins = [row["margin"] for row in rows["neutral"]]
+    paired_margin = paired["phase_vs_neutral_margin"]
+    margin_gate = {
+        "yardstick": round(statistics.pstdev(neutral_margins), 6),
+        "gain": round(paired_margin["mean"], 6),
+        "paired_sd": paired_margin["sd"],
+        "paired_se": paired_margin["se"],
+        "gain_over_se": (
+            round(abs(paired_margin["mean"]) / paired_margin["se"], 2)
+            if paired_margin["se"]
+            else None
+        ),
+        # 門檻要求 |gain| > yardstick；換成「幾個配對標準誤」才看得出它多嚴。
+        "yardstick_over_se": (
+            round(statistics.pstdev(neutral_margins) / paired_margin["se"], 2)
+            if paired_margin["se"]
+            else None
+        ),
+    }
     # 「held-out 在亂猜」原本用 ``2 / len(targets)``：係數 2 沒有來源，也不看 held-out 有幾條。
     # 改成二項散佈上界 ``p + 2·√(p(1−p)/m)``（m = held-out pair 數）：m 越大，允許的超出越小。
     chance = 1 / len(targets)
@@ -550,6 +573,7 @@ def evaluate_cell(
         },
         "gain_matched": bool(matched),
         "gain_match": match,
+        "margin_gate": margin_gate,
         "seed_wins": seed_wins,
         "paired": paired,
         "detectable_hit_delta": mde,

@@ -320,6 +320,23 @@ def _evaluate(
     return {"hit_rate": hits / len(pairs), "margin": statistics.fmean(margins)}
 
 
+# 判詞的 margin 門檻是「差距 > 中性臂逐種子散佈」。實測那個尺度是**配對**標準誤的 2.0–3.3 倍
+# （conflict 2.2–2.3、m2o 2.0–3.3），所以它剛好落在合理的 ≈2σ 附近——但那是巧合：兩臂在同一個
+# 種子上的差值散佈可以比單臂散佈更大（實測 m2o sd_diff 0.0007 > sd_neutral 0.0004），也可以更小。
+# 若某族 sd_diff ≪ sd_neutral，門檻會**低於** 2 SE，於是一個 1 SE 的雜訊差就能判成有效。
+# 這個下限只收緊、不放寬，所以不會製造新的「有效」判詞。
+MIN_GAIN_OVER_SE = 2.0
+
+
+def _paired_se(values: Sequence[float], other: Sequence[float]) -> Optional[float]:
+    """配對差的標準誤；樣本不足或完全沒有散佈時回 ``None``（不套用下限）。"""
+    if len(values) != len(other) or len(values) < 2:
+        return None
+    diffs = [float(a) - float(b) for a, b in zip(values, other)]
+    sd = statistics.stdev(diffs)
+    return sd / len(diffs) ** 0.5 if sd > 0 else None
+
+
 def _verdict(rows: Dict[str, List[Dict[str, float]]], need: Optional[int] = None) -> str:
     """兩個指標都要看：margin 上升但 top-1 下降不是「贏」。
 
@@ -337,13 +354,16 @@ def _verdict(rows: Dict[str, List[Dict[str, float]]], need: Optional[int] = None
     hit_neutral = statistics.fmean(row["hit_rate"] for row in rows["neutral"])
     hit_shuffled_stats = statistics.fmean(row["hit_rate"] for row in rows["shuffled"])
     beats_both = sum(1 for p, n, s in zip(phase, neutral, shuffled) if p > n and p > s)
+    margin_se = _paired_se(phase, neutral)
+    clear_margin = margin_se is None or abs(margin_gain) >= MIN_GAIN_OVER_SE * margin_se
 
-    if margin_gain <= spread:
+    if margin_gain <= spread or not clear_margin:
         # 「沒有好處」與「明顯有害」是兩件事。原本一律回報 no-downstream-difference，
         # 等於把一個可信的負結果寫成「沒差」——那會讓後面的結論少掉一個反例。
         losers = sum(1 for p, n, s in zip(phase, neutral, shuffled) if p < n and p < s)
         if (
             margin_gain < -spread
+            and clear_margin
             and hit_phase < hit_neutral
             and beats_shuffled < -spread
             and losers > len(phase) / 2

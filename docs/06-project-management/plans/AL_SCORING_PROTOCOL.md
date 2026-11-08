@@ -779,3 +779,60 @@ ep1 的 top-1 是 8/12，用多數會變成 `hit-gain-over-both-arms` （→ 整
 讀法：`many_to_one`
 上相位調制**有效果，但不是時序的功勞**。ep1/ep3 大幅變差（0/12 贏），ep5 大幅變好（12/12 贏），而 ep5 只贏 shuffled
 5/12——所以變好的那部分來自「每步增益有大有小」，把它們打亂順序並沒有更好。這也解釋了為什麼「有沒有用」在這個族上不能只報一個數字：同一族的符號隨訓練量翻轉。
+
+## v19：margin 閘門的尺度量出來，然後假設被推翻
+
+v18 之後剩下的問題是：`margin_gain > pstdev(neutral margin)`
+這條線到底有多嚴？我在動手前先寫下一個假設——**這條線大概落在十幾個配對標準誤上，所以幾乎不可能靠雜訊越過**。量完之後這個假設是錯的，而且錯得剛好相反：**線只落在 2.0–3.3 個配對 SE**。
+
+為了讓判詞可以被重算（不是只能相信 `_verdict` 的說法），`evaluate_cell()`
+現在把閘門的兩個尺度都寫進 `cell.margin_gate`：
+
+| 欄位                | 意思                                                |
+| ------------------- | --------------------------------------------------- |
+| `yardstick`         | `pstdev(neutral 逐種子 margin)`——判詞實際比的那條線 |
+| `gain`              | `mean(phase − neutral)` 逐種子配對差                |
+| `paired_sd` / `se`  | 配對差的散佈與標準誤（`sd/√n`）                     |
+| `gain_over_se`      | `gain / se`——這個差距有幾個 SE 的證據               |
+| `yardstick_over_se` | `yardstick / se`——**線本身**有幾個 SE 寬            |
+
+v19 重跑（`--readout direct`，12 個種子，2026-11-08）：
+
+| 族          | ep  | yardstick | gain    | se     | gain/se   | yardstick/se | 判詞                         |
+| ----------- | --- | --------- | ------- | ------ | --------- | ------------ | ---------------------------- |
+| conflict    | 1   | 0.0034    | −0.0014 | 0.0015 | **0.91**  | **2.29**     | no-downstream-difference     |
+| conflict    | 3   | 0.0064    | +0.0014 | 0.0028 | **0.50**  | **2.32**     | no-downstream-difference     |
+| conflict    | 5   | 0.0038    | +0.0008 | 0.0017 | **0.48**  | **2.20**     | no-downstream-difference     |
+| many_to_one | 1   | 0.0004    | −0.0024 | 0.0002 | **11.24** | **2.00**     | phase-loses-to-matched-mean  |
+| many_to_one | 3   | 0.0005    | −0.0021 | 0.0001 | **14.64** | **3.34**     | phase-loses-to-matched-mean  |
+| many_to_one | 5   | 0.0004    | −0.0002 | 0.0002 | **1.20**  | **2.08**     | hit-gain-without-margin-gain |
+
+三個讀法：
+
+1. **門檻是 ~2–3 SE，不是十幾個。** 12 個種子下 `pstdev(neutral)`
+   只有幾個毫點的 margin 散佈，而配對 SE 更小（0.0001–0.0028）。線寬與 SE 同一個量級，所以「雜訊剛好越過線」是可能的，不是理論上的擔心。
+2. **`gain/se` 與判詞方向不一致的地方是資訊，不是雜訊。** `many_to_one` ep5 的
+   `gain/se = 1.20` 但
+   `yardstick/se = 2.08`——差距一個多 SE、線兩個 SE，所以判詞走到
+   `hit-gain-without-margin-gain`（top-1 好、margin 沒贏）。ep1/ep3 是 11–15
+   SE 的**負向**差距。
+3. **線的寬度隨族變**（conflict 0.0034–0.0064、m2o
+   0.0004–0.0005），所以「同一個門檻」在不同族上其實鬆緊不同。這一點在 v19 之前只是懷疑，現在有數字。
+
+### 只收緊的下限：`MIN_GAIN_OVER_SE = 2.0`
+
+既然線可以落在 1 SE 上，`_verdict` 現在除了「贏過散佈」之外還要求
+`|margin_gain| ≥ MIN_GAIN_OVER_SE · paired_se`（沒有散佈或樣本不足時不套用）。這條規則**只可能把判詞從「有差」推向「沒差」**，不可能製造新的正向判詞——所以不需要重跑就能保證它不會憑空生出好處，實測也確實沒有改變任何一格：
+
+- v20 重跑（同樣 12 種子）：**六格判詞與 v19 逐格相同**，整體仍是
+  `no-mechanism-benefit-consistent`。
+- 兩個方向的測試都寫了：同樣的 gain 0.10，配對差很穩時判
+  `phase-beats-matched-mean`，配對差 ±0.20（SE≈0.09）時判
+  `no-downstream-difference`——而這格正是**舊規則會判贏**的情況（0.10 > 散佈 0.025）。下限唯一會擋下的就是這種格。
+
+### 另一個負結果：`hard` 與 `structured` 兩族產生 0 格
+
+協定跑完 15 格只有 6 格有 `cell`；`hard`（`DEFAULT_TASK`）與 `structured`
+三輪全是
+`informative: False`、`reason: ladder-exhausted`。原因是這些族在 5 個 epoch 內階梯就已收斂完，沒有可比較的中段/遷移。這不是判詞「沒差」，而是**這兩個族在這組排程下沒有量到東西**——把它們算進「多數」會讓結論看起來比實際更有根據。真正被量到的只有
+`conflict` 與 `many_to_one`。

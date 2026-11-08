@@ -1375,3 +1375,27 @@ ep1 的均值有 [0.013,
 
 重跑判詞仍是 `no-mechanism-benefit-consistent`。新增的讀法是：`many_to_one`
 上相位調制**有效果但不是時序的**——ep1/ep3 大幅變差、ep5 大幅變好，符號隨訓練量翻轉，而 ep5 贏 shuffled 只有 5/12。
+
+## 43. margin 門檻只有 2–3 個 SE，而且有兩個族根本沒量到
+
+我先猜「`margin_gain > pstdev(neutral)`
+這條線大概等於十幾個配對 SE，所以雜訊不可能越過」。量完是錯的：
+
+| 族          | ep    | gain/se              | yardstick/se       |
+| ----------- | ----- | -------------------- | ------------------ |
+| conflict    | 1/3/5 | 0.91 / 0.50 / 0.48   | 2.29 / 2.32 / 2.20 |
+| many_to_one | 1/3/5 | 11.24 / 14.64 / 1.20 | 2.00 / 3.34 / 2.08 |
+
+線寬（`pstdev(neutral)` =
+0.0004–0.0064）與配對 SE（0.0001–0.0028）是同一個量級，所以「一個 1
+SE 的雜訊差剛好越過線」不是理論上的擔心。這個量測現在寫進
+`cell.margin_gate`（`yardstick` / `gain` / `paired_sd` / `paired_se` /
+`gain_over_se` / `yardstick_over_se`），判詞不再只能靠相信 `_verdict` 的摘要。
+
+因此加了一道**只收緊**的下限 `MIN_GAIN_OVER_SE = 2.0`：`|gain| ≥ 2·SE`
+才算有差。它不可能製造新的正向判詞，實測（v20，同樣 12 種子）也**逐格沒有改變任何判詞**。
+
+順帶把一個一直在稀釋結論的東西寫清楚：15 格裡只有 6 格有
+`cell`。`hard`（`DEFAULT_TASK`）與 `structured` 三輪全是
+`informative: False`、`reason: ladder-exhausted`——5 個 epoch 內階梯就收斂完，沒有中段與遷移可量。它們不是「沒差」，是**沒量到**；把它們算進多數會讓結論比實際更有根據。真正量到東西的只有
+`conflict` 與 `many_to_one`。
