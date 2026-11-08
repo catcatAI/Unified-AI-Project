@@ -392,9 +392,7 @@ def rung_clock_attack(tmp: Path) -> Dict[str, Optional[float]]:
         "detect_forward": float(forward_flag.suspicion) if forward_flag else 0.0,
         "false_alarm": honest / honest_total if honest_total else 0.0,
         "rollback_freeze": abs(rolled - before_rollback),
-        "forward_jump": abs(
-            jumped - ar.advance(ar.AffectState(BASELINE, level, 0.0), 1e6).arousal
-        ),
+        "forward_jump": abs(jumped - ar.advance(ar.AffectState(BASELINE, level, 0.0), 1e6).arousal),
     }
 
 

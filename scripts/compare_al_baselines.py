@@ -60,10 +60,10 @@ for extra in (ROOT / "apps" / "backend" / "src", ROOT / "scripts"):
 import probe_emergence_boundary as probemod  # noqa: E402  (needs the path above)
 from ai.ed3n.token_snn import (  # noqa: E402
     AL_OUT_MARK,
+    CharVocab,
     TokenConfig,
     TokenSNN,
     TokenVocab,
-    CharVocab,
     resolve_device,
 )
 
@@ -241,9 +241,7 @@ class BaselineLM:
                 if tail_weight == 1.0 and p_ss == 0.0:
                     loss = self.loss(ids, mask)
                 elif p_ss > 0.0:
-                    loss = self.loss(
-                        self._ss_inputs(ids, mask, p_ss), mask, weights, targets=ids
-                    )
+                    loss = self.loss(self._ss_inputs(ids, mask, p_ss), mask, weights, targets=ids)
                 else:
                     loss = self.loss(ids, mask, weights)
                 loss.backward()
@@ -330,13 +328,18 @@ class BaselineLM:
 
     def save(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        self.torch.save({"state": self.net.state_dict(), "config": self.config.to_dict()}, str(path))
+        self.torch.save(
+            {"state": self.net.state_dict(), "config": self.config.to_dict()}, str(path)
+        )
 
 
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--checkpoint", default=str(ROOT / "data" / "checkpoints" / "ai_al_round8.pt"),
-                    help="SNN checkpoint: source of the tokenizer, max_len and the SNN reading")
+    ap.add_argument(
+        "--checkpoint",
+        default=str(ROOT / "data" / "checkpoints" / "ai_al_round8.pt"),
+        help="SNN checkpoint: source of the tokenizer, max_len and the SNN reading",
+    )
     ap.add_argument("--train", default=str(DEFAULT_TRAIN))
     ap.add_argument("--val", default=str(DEFAULT_VAL))
     ap.add_argument("--epochs", type=int, default=100)
@@ -400,7 +403,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     n_params = sum(p.numel() for p in model.net.parameters())
     snn_params = sum(p.numel() for p in model.encoder.net.parameters())
-    print(f"device={model.device} transformer_params={n_params:,} snn_params={snn_params:,}", flush=True)
+    print(
+        f"device={model.device} transformer_params={n_params:,} snn_params={snn_params:,}",
+        flush=True,
+    )
 
     def log(row: Dict[str, float]) -> None:
         if (row["epoch"] + 1) % 5 == 0 or row["epoch"] == 0:
@@ -468,9 +474,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             "copy_accuracy": transformer.get("copy_accuracy"),
             "input_output_correlation": transformer.get("input_output_correlation"),
             "output_diversity": {
-                k: v
-                for k, v in (transformer.get("output_diversity") or {}).items()
-                if k != "modal"
+                k: v for k, v in (transformer.get("output_diversity") or {}).items() if k != "modal"
             },
             "report": str(args.report),
         },
@@ -485,9 +489,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             train_report = REPORTS / "ai_al_round8.json"
             snn_tf = None
             if train_report.is_file():
-                snn_tf = json.loads(train_report.read_text(encoding="utf-8")).get(
-                    "eval_tf_split"
-                )
+                snn_tf = json.loads(train_report.read_text(encoding="utf-8")).get("eval_tf_split")
             summary["snn"] = {
                 "checkpoint": str(ckpt),
                 "params": snn_params,
@@ -499,9 +501,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "copy_accuracy": old.get("copy_accuracy"),
                 "input_output_correlation": old.get("input_output_correlation"),
                 "output_diversity": {
-                    k: v
-                    for k, v in (old.get("output_diversity") or {}).items()
-                    if k != "modal"
+                    k: v for k, v in (old.get("output_diversity") or {}).items() if k != "modal"
                 },
                 "report": str(snn_report),
             }
@@ -520,7 +520,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         return f"{h.get('family_hits', '?')}/{h.get('n', '?')}"
 
     print("\narchitecture comparison (identical data, tokenizer, objective, grading)")
-    print(f"  gate holdout   snn={_gate(summary['snn'])}  transformer={_gate(summary['transformer'])}")
+    print(
+        f"  gate holdout   snn={_gate(summary['snn'])}  transformer={_gate(summary['transformer'])}"
+    )
     for key in ("format_ok", "marker_ok"):
         print(
             f"  {key:<14} snn={str((summary['snn'] or {}).get(key, 'n/a')):<6} "

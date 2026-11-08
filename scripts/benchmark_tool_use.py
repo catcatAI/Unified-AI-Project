@@ -63,7 +63,7 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
     return 0
 

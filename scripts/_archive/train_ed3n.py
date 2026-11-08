@@ -78,7 +78,7 @@ def test(engine, queries, label=""):
     for q, expected in queries:
         r = engine.process(q)
         ok = "OK" if (expected and expected in r) else "?"
-        print(f"  [{ok}] {q:35s} -> {r[:60] if r and len(r)>60 else r}")
+        print(f"  [{ok}] {q:35s} -> {r[:60] if r and len(r) > 60 else r}")
 
 
 def main():

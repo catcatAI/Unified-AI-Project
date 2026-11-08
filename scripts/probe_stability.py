@@ -247,7 +247,6 @@ def main() -> int:
     args = ap.parse_args()
 
     import torch
-
     from ai.ed3n.token_snn import TokenConfig, TokenSNN, TokenVocab
 
     train, val = load_pairs(args.data)

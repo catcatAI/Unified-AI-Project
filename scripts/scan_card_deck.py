@@ -77,7 +77,7 @@ for card in sorted(cards):
     )
 
 # Print summary
-print(f"=== Card Deck Summary ===")
+print("=== Card Deck Summary ===")
 print(f"Total .gdoc files: {len(cards)}")
 print()
 

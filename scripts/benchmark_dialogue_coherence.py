@@ -64,7 +64,7 @@ def main():
 
     recall = ok / total
     print(f"\n5輪一致性: {ok}/{total} = {recall:.0%}（硬件自適應 batch 1 輪/次，sleep 0.02s）")
-    print(f"  目標 L2-1 ≥80% 人設不漂移 + 指代 ≥70% → {'✅ 實測達標' if recall>=0.8 else '❌'}")
+    print(f"  目標 L2-1 ≥80% 人設不漂移 + 指代 ≥70% → {'✅ 實測達標' if recall >= 0.8 else '❌'}")
     # 硬件無關驗證
     hw_same = {
         "gpu": "Intel Arc B570",
@@ -74,7 +74,7 @@ def main():
         "gpu_vendor": "intel",
     }
     tier_same = HardwareProfile.get_tier(hw_same)
-    print(f"  筆電同規格 tier {tier_same} → {'✅ chassis-agnostic' if tier_same==tier else '❌'}")
+    print(f"  筆電同規格 tier {tier_same} → {'✅ chassis-agnostic' if tier_same == tier else '❌'}")
     return 0
 
 

@@ -111,7 +111,7 @@ def main():
     real = HardwareProfile.detect()
     real_tier = HardwareProfile.get_tier(real)
     print(f"\n  真實當前: {real['gpu']} RAM {real['ram_gb']:.1f} → {real_tier} ✅")
-    print(f"  6 檔中 {ok}/6 達標 + 真實 1 檔 → {'✅ 全檔位 chassis-agnostic' if ok==6 else '❌'}")
+    print(f"  6 檔中 {ok}/6 達標 + 真實 1 檔 → {'✅ 全檔位 chassis-agnostic' if ok == 6 else '❌'}")
     # 也驗 system/config 層
     p = SHw()
     print(

@@ -23,7 +23,7 @@ def main():
     hw = HardwareProfile.detect()
     tier = HardwareProfile.get_tier(hw)
     adaptive = HardwareProfile.get_adaptive_compute(hw)
-    print(f"硬件規格自適應（L1-6 對比訓練）:")
+    print("硬件規格自適應（L1-6 對比訓練）:")
     print(f"  GPU={hw['gpu']} VRAM={hw['gpu_memory_gb']}GB RAM={hw['ram_gb']:.1f}GB tier={tier}")
     print(
         f"  adaptive: vocab={adaptive['garden_max_vocab']} batch×{adaptive['ed3n_batch_multiplier']} slots={adaptive['unified_slots']} tl_batch={adaptive['three_layer_batch']}"
@@ -49,9 +49,7 @@ def main():
     print(
         f"  估算 vocab 矩陣 {adaptive['garden_max_vocab']}²×4B = {vram_est:.2f}GB (usable {adaptive['usable_ram_gb']}GB)"
     )
-    print(
-        f"  策略: 每 100 樣本 checkpoint + sleep 0.1s，批間 check RAM>85% 暫停，確保不 OOM/不佔滿"
-    )
+    print("  策略: 每 100 樣本 checkpoint + sleep 0.1s，批間 check RAM>85% 暫停，確保不 OOM/不佔滿")
     # 驗證 chassis-agnostic
     hw_laptop_same = {
         "gpu": "Intel Arc B570",
@@ -63,7 +61,7 @@ def main():
     }
     adaptive_laptop = HardwareProfile.get_adaptive_compute(hw_laptop_same)
     print(
-        f"  驗證筆電同規格: vocab {adaptive_laptop['garden_max_vocab']} batch {adaptive_laptop['three_layer_batch']} → {'✅ chassis-agnostic' if adaptive_laptop['garden_max_vocab']==adaptive['garden_max_vocab'] else '❌'}"
+        f"  驗證筆電同規格: vocab {adaptive_laptop['garden_max_vocab']} batch {adaptive_laptop['three_layer_batch']} → {'✅ chassis-agnostic' if adaptive_laptop['garden_max_vocab'] == adaptive['garden_max_vocab'] else '❌'}"
     )
     print(f"\n  現狀 loss 0.195 (300) → 目標 <0.1 (3000) 需 {batches} 批，硬件自適應已就緒")
     return 0

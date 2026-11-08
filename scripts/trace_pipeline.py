@@ -34,7 +34,7 @@ def trace(label, text):
     # Step 3: SNN forward
     snn_out = e.snn.forward(input_keys)
     sorted_out = sorted(snn_out.items(), key=lambda x: x[1], reverse=True)[:10]
-    print(f"\n[3] snn.forward() -> top10 output keys:")
+    print("\n[3] snn.forward() -> top10 output keys:")
     for k, v in sorted_out:
         entry = e.dictionary.entries.get(k)
         sf = "???"

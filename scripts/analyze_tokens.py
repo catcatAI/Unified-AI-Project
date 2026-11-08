@@ -131,18 +131,18 @@ with open(r"D:\Projects\Unified-AI-Project\data\token_analysis.json", "w", encod
 # Print summary
 print("=== TOKEN ANALYSIS ===")
 print(f"Total cards: {len(cards)}")
-print(f"\nBy type:")
+print("\nBy type:")
 for t, c in sorted(type_counts.items()):
     print(f"  {t}: {c}")
-print(f"\nBy world line:")
+print("\nBy world line:")
 for wl, c in sorted(world_line_counts.items()):
     print(f"  {wl}: {c}")
-print(f"\nTokens found:")
+print("\nTokens found:")
 for cat, items in found_tokens.items():
     unique = set(v for _, v in items)
     print(f"  {cat}: {len(unique)} unique — {', '.join(sorted(unique)[:5])}")
-print(f"\nTop cards by field count:")
+print("\nTop cards by field count:")
 for item in output["cards_with_most_fields"][:5]:
     print(f"  {item['card_id']:12s} | {item['name']:45s} | {item['fields']} fields")
 
-print(f"\nSaved to: D:\\Projects\\Unified-AI-Project\\data\\token_analysis.json")
+print("\nSaved to: D:\\Projects\\Unified-AI-Project\\data\\token_analysis.json")

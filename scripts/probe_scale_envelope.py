@@ -116,7 +116,6 @@ def _sync(torch: Any, kind: str) -> None:
 def _measure(cfg: Dict[str, int], pairs: List[Tuple[str, str]], device: str, steps: int):
     """One warmup + ``steps`` real training steps at the target shape."""
     import torch
-
     from ai.ed3n.token_snn import TokenConfig, TokenSNN, TokenVocab, resolve_device
 
     torch.manual_seed(0)

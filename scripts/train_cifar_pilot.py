@@ -41,13 +41,13 @@ def main():
             loader = CIFAR10Loader(data_dir=data_dir)
             print(f"  真實 CIFAR 加載試點（500 圖，batch {adaptive['three_layer_batch']}）")
             time.sleep(0.1)
-            print(f"  MSE 0.271 → 預計 0.18（500 真實圖，硬件自適應）")
+            print("  MSE 0.271 → 預計 0.18（500 真實圖，硬件自適應）")
         except Exception as e:
             print(f"  真實 CIFAR 加載失敗（fallback 合成）: {e}")
             has_real = False
 
     if not has_real:
-        print(f"  真實 CIFAR-10 不存在（需 scripts/download_datasets.py cifar10，~60K 圖）")
+        print("  真實 CIFAR-10 不存在（需 scripts/download_datasets.py cifar10，~60K 圖）")
         print(f"  合成試點 500 圖 × 64 維，batch {adaptive['three_layer_batch']}，<3s")
         # 合成：64 維隨機，模擬對比訓練
         import numpy as np
@@ -69,7 +69,7 @@ def main():
             time.sleep(0.05)
         print(f"  合成試點完成 500 圖 {time.time()-t0:.1f}s，無 OOM")
         print(
-            f"  提示：真實 MSE <0.05 需下載 CIFAR-10（`python scripts/download_datasets.py --cifar10`）後重跑"
+            "  提示：真實 MSE <0.05 需下載 CIFAR-10（`python scripts/download_datasets.py --cifar10`）後重跑"
         )
 
     print(

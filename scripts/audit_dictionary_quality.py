@@ -88,7 +88,9 @@ def main():
     avg_dup = sum(r["dup_rate"] for r in results) / len(results)
     print(f"\n{'='*60}")
     print(f"  Average dup_rate={avg_dup:.2%} across {len(results)} files")
-    print(f"  L1-5 出階要求 dup_rate<5% & dup_keys==0 → {'✅ PASS' if avg_dup<0.05 else '❌ FAIL'}")
+    print(
+        f"  L1-5 出階要求 dup_rate<5% & dup_keys==0 → {'✅ PASS' if avg_dup < 0.05 else '❌ FAIL'}"
+    )
     return 0
 
 

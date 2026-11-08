@@ -33,13 +33,19 @@ and this project adheres to
 ### Changed
 
 - **三種「寫在文件裡但沒有門」的規則，現在會紅（2026-11-09）**：(1)
-  **手改生成檔**—— `docs/STATUS_MATRIX.md` 本來就有 freshness 門，但
-  `docs/PROJECT_MAP_GENERATED.md`
-  只被量行數（手改完全看不出來），`scripts/INVENTORY.json` 的 `--check`
-  寫好了卻從沒接上 CI／pre-commit。新增 `scripts/check_generated_docs.py`
-  收成單一入口（CI 的 `map-budget` job＋pre-commit hook），不一致就 exit
-  1 並印出「第一行不同的地方」與該跑的產生器；日期／檔案大小／輪轉次數不列入比對（那些是快照刻度，比對它們等於要求每次改檔都重跑地圖）。**首次跑就抓到兩個真的過期**：專案地圖停在 2026-11-08（差 2 個檔）、`INVENTORY.json`
-  不認得新腳本。(2) **定義歧義沒有棘輪**——`defs.multi_interpretations`
+  **手改生成檔**——`scripts/INVENTORY.json` 的 `--check`
+  寫好了卻從沒接上 CI／pre-commit；`scripts/ACTIVE_SCRIPTS.md`
+  引用三個「由清單推導」的數字（總數／被引用／未被引用）卻沒有任何東西會改它——它寫下219 支時，`scripts/`
+  已經有 274 支。新增 `scripts/check_generated_docs.py` 收成單一入口（CI 的
+  `map-budget` job＋pre-commit hook），不一致就 exit
+  1 並印出「第一行不同的地方」與該跑的產生器；日期／檔案大小／輪轉次數不列入比對（那些是快照刻度，比對它們等於要求每次改檔都重跑地圖）。**首次跑就抓到三個真的過期**：`ACTIVE_SCRIPTS.md`
+  的 219／156／63（實際 274／210／64）、`INVENTORY.json`
+  不認得新腳本、專案地圖停在 2026-11-08。順帶修掉兩個會讓門禁自己說謊的地方：`docs/PROJECT_MAP_GENERATED.md`
+  被 `.gitignore` 的 `PROJECT_*.md`
+  排除（本地產物、根本不在版控），把它當成「被手改的版控檔」比對會讓乾淨 clone 的 CI 永遠紅，現在對未追蹤的生成物明講「跳過」；`STATUS_MATRIX`
+  那格原本跑的是
+  `check`（只驗 YAML 宣稱）卻印「與產生器輸出一致」，改成真的產生到暫存檔再逐行比對，手改一段就紅。(2)
+  **定義歧義沒有棘輪**——`defs.multi_interpretations`
   一直是 INFO，所以它從 0 長到 11 都沒有東西變紅。改成
   `defs.multi_interpretations_ratchet`（`le`，預算在
   `scripts/ambiguity_budget.txt` =
@@ -52,6 +58,12 @@ and this project adheres to
   `scripts/al_unmeasured_budget.txt`（=2）是棘輪。v22 重跑 12 格與 v21 逐格相同，整體仍
   `no-mechanism-benefit-consistent`，未登記清單為空。順帶把 `AGENTS.md`
   的「單一檢查入口」補上這兩道新門與三條棘輪登記，免得規則只剩下文件裡的一句話。
+
+- **`scripts/` 一直是 CI
+  lint 的盲區（2026-11-09）**：pre-commit 的 black／isort／flake8 掃全檔，但 CI 的 lint 步驟只掃
+  `apps/backend/src`、`apps/backend/tests`、`tests/`——所以 `scripts/`
+  裡躺著 74 個 flake8 告警（39 個沒有佔位符卻帶 `f`
+  的字串、35 個 f-string 內運算子沒空白）與 4 支沒格式化的檔，CI 還是綠的。範圍改成與 hook 一致，並把那 74 處與格式修掉（純機械、無邏輯變更，scripts 全部可編譯）。這是同一類問題的第二例：「本地會檢查」不等於「有門」，沒裝 pre-commit 的人照樣能推進去。
 
 - **相位調制（AL）下游判詞：沒有機制好處，而且三族根本沒量到（2026-11-09）**：`scripts/al_downstream_protocol.py`
   走到 v21，把「相位調制到底有沒有用」壓成可重跑、可推翻的三臂協定（`neutral`

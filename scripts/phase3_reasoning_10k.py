@@ -125,7 +125,7 @@ def main():
             pass
         time.sleep(0.005)
     print(
-        f"  純神經 10K 未見: {hits}/100 = {hits}%（目標 ≥75%） {'✅ 達標' if hits>=75 else '❌ 未達，誠實記錄'}"
+        f"  純神經 10K 未見: {hits}/100 = {hits}%（目標 ≥75%） {'✅ 達標' if hits >= 75 else '❌ 未達，誠實記錄'}"
     )
     hw_same = {
         "gpu": "Intel Arc B570",
@@ -135,7 +135,7 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
     return 0
 

@@ -70,9 +70,13 @@ jobs:
           # audit recorded it as a known blind spot ("56 E541 級既有 flake8
           # 告警…CI 的 lint 範圍不含 apps/backend/tests/"). The warnings are
           # fixed and the scope now covers the tree CI actually runs.
-          black --check apps/backend/src apps/backend/tests tests/
-          isort --check-only apps/backend/src apps/backend/tests tests/
-          flake8 apps/backend/src apps/backend/tests tests/
+          # 2026-11-09: scripts/ was the same blind spot one level out — the
+          # pre-commit hooks lint every file but this step did not, so 74 flake8
+          # findings (39 F541 + 35 E225) and 4 unformatted files sat in scripts/
+          # while CI stayed green. Scope now matches the hooks.
+          black --check apps/backend/src apps/backend/tests tests/ scripts/
+          isort --check-only apps/backend/src apps/backend/tests tests/ scripts/
+          flake8 apps/backend/src apps/backend/tests tests/ scripts/
           python scripts/mypy_budget_gate.py
           python scripts/complexity_budget_gate.py
           python scripts/type_ignore_budget_gate.py

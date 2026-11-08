@@ -167,7 +167,7 @@ cards_list.sort(key=lambda c: c["card_id"])
 total_fields = sum(len(c["fields"]) for c in cards_list)
 structured = [c for c in cards_list if len(c["fields"]) >= 2]
 
-print(f"\n=== FINAL RESULTS ===")
+print("\n=== FINAL RESULTS ===")
 print(f"Total cards: {len(cards_list)}")
 print(f"Structured (2+ fields): {len(structured)}")
 print(f"Total fields: {total_fields}")
@@ -191,10 +191,10 @@ if missing:
     print(f"Missing ({len(missing)}): {sorted(missing)[:30]}")
 
 fc = Counter(len(c["fields"]) for c in cards_list)
-print(f"\nField distribution:")
+print("\nField distribution:")
 for k in sorted(fc.keys()):
     print(f"  {k} fields: {fc[k]} cards")
 
-print(f"\nTop cards:")
+print("\nTop cards:")
 for c in sorted(cards_list, key=lambda c: len(c["fields"]), reverse=True)[:20]:
     print(f"  {c['card_id']}: {len(c['fields'])} fields - {c.get('name','?')[:45]}")

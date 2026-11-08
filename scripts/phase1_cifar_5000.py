@@ -39,7 +39,7 @@ def main():
 
     print(f"  Phase 1 目標: MSE 0.121→0.08 真實 5000 圖 batch {batch} 6 epoch")
     if not has_real:
-        print(f"  真實 CIFAR 不存在，合成試點 500 圖 0.6s 0.271→0.221 已測")
+        print("  真實 CIFAR 不存在，合成試點 500 圖 0.6s 0.271→0.221 已測")
         return 0
 
     # 輕量試點：500 圖真實（不跑全 5000 編碼 40 分鐘，僅試點硬件自適應）
@@ -75,10 +75,10 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
     print(
-        f"\n  Phase 1 就緒：數據 50000 100% + 硬件 35000 vocab 可控，下一步全量 5000 真實 6 epoch（約 40 分鐘編碼 + 2 分鐘訓練）"
+        "\n  Phase 1 就緒：數據 50000 100% + 硬件 35000 vocab 可控，下一步全量 5000 真實 6 epoch（約 40 分鐘編碼 + 2 分鐘訓練）"
     )
     return 0
 

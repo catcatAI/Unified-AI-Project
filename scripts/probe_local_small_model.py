@@ -50,7 +50,7 @@ def main():
     }
     print(f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → ✅ chassis-agnostic")
     print(
-        f"  結論: 當前 15.5GB+Arc 10GB → Qwen2-0.5B ✅ 作為 L2-5 備選（本地可用兜底，不算 LLM 層）"
+        "  結論: 當前 15.5GB+Arc 10GB → Qwen2-0.5B ✅ 作為 L2-5 備選（本地可用兜底，不算 LLM 層）"
     )
     return 0
 

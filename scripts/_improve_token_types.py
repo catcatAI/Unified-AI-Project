@@ -153,7 +153,7 @@ pct = remaining_general / total * 100 if total > 0 else 0
 print("=== IMPROVED TOKEN TYPE REPORT ===")
 print(f"Tokens improved from 'general': {sum(changes.values())}")
 print(f"Remaining 'general': {remaining_general}/{total} ({pct:.1f}%)")
-print(f"Target: <20%")
+print("Target: <20%")
 print(f"Result: {'✅ PASS' if pct < 20 else '❌ FAIL'}")
 print()
 print("New type distribution (excluding general):")

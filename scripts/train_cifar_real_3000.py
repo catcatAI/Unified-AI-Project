@@ -54,7 +54,7 @@ def main():
             print(f"  真實 CIFAR 檢查失敗 {e}，fallback 合成")
             has_real = False
     else:
-        print(f"  真實 CIFAR 不存在，合成 3000 圖試點（需 data/multimodal/cifar10）")
+        print("  真實 CIFAR 不存在，合成 3000 圖試點（需 data/multimodal/cifar10）")
 
     # 模擬真實訓練：3000 圖對比，loss 0.271→0.12 (3000 真實) → 需 10000 才 <0.05
     # 若為合成則 0.271→0.09（合成易學）
@@ -97,11 +97,11 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
     # 誠實：重複巡檢反思
     print(
-        f"\n  反思：前 8 輪 final_verification 7/7 100% 重複巡檢已達邊際，應轉向實質 3000 真實訓練（本試點）"
+        "\n  反思：前 8 輪 final_verification 7/7 100% 重複巡檢已達邊際，應轉向實質 3000 真實訓練（本試點）"
     )
     return 0
 

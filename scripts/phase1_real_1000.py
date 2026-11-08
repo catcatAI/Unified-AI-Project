@@ -29,13 +29,13 @@ def main():
 
     data_root = os.path.join(os.path.dirname(__file__), "..", "data/multimodal/cifar10")
     if not os.path.exists(os.path.join(data_root, "index.json")):
-        print(f"  真實 CIFAR 不存在，合成 1000 試點")
+        print("  真實 CIFAR 不存在，合成 1000 試點")
         total = 1000
         batch = 64 if tier in ("high_performance_desktop", "server_cloud") else 32
         t0 = time.time()
         for bi in range(0, total, batch):
             time.sleep(0.02)
-        print(f"  合成 1000 圖 0.4s 無 OOM")
+        print("  合成 1000 圖 0.4s 無 OOM")
         return 0
 
     # 真實 1000：抽 1000 文件（10 類各 100）
@@ -89,9 +89,9 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
-    print(f"  Phase 1 就緒：5000 真實需 6 epoch 約 40 分鐘編碼 + 2 分鐘訓練，硬件自適應可控")
+    print("  Phase 1 就緒：5000 真實需 6 epoch 約 40 分鐘編碼 + 2 分鐘訓練，硬件自適應可控")
     return 0
 
 

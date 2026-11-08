@@ -188,9 +188,9 @@ def main():
         f"\n  20 真實工具: 成功 {results['success']} 阻擋 {results['blocked']} 拒絕 {results['reject']} 崩潰 {crash} 正確處理 {handled}/{total}={handled/total:.0%} ({elapsed:.2f}s batch {batch})"
     )
     print(
-        f"  目標 L3-2 ≥85% 正確處理(成功+阻擋) 0 崩潰 → {'✅ 達標' if handled/total>=0.85 and crash==0 else '⚠️ 需調閘門/沙箱'}"
+        f"  目標 L3-2 ≥85% 正確處理(成功+阻擋) 0 崩潰 → {'✅ 達標' if handled/total >= 0.85 and crash == 0 else '⚠️ 需調閘門/沙箱'}"
     )
-    print(f"  註：阻擋是沙箱/白名單正確工作（getattr/import/cat/env 被阻擋為✅），非失敗")
+    print("  註：阻擋是沙箱/白名單正確工作（getattr/import/cat/env 被阻擋為✅），非失敗")
     hw_same = {
         "gpu": "Intel Arc B570",
         "gpu_memory_gb": 10,
@@ -199,7 +199,7 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
     return 0 if crash == 0 else 1
 

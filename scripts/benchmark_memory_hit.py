@@ -47,8 +47,8 @@ def main():
     print(
         f"  字典 {total_mems} 條目，100 問 top-5: {hits}/100 = {hit_rate:.0%} ({elapsed:.2f}s, batch {batch})"
     )
-    print(f"  目標 L2-2 ≥60% → {'✅ 達標（框架模擬）' if hit_rate>=0.6 else '❌'}")
-    print(f"  真實向量召回需 VectorStore 100 問 benchmark，待 HAM 460K 數據接入後重測")
+    print(f"  目標 L2-2 ≥60% → {'✅ 達標（框架模擬）' if hit_rate >= 0.6 else '❌'}")
+    print("  真實向量召回需 VectorStore 100 問 benchmark，待 HAM 460K 數據接入後重測")
     # 硬件無關
     hw_same = {
         "gpu": "Intel Arc B570",
@@ -60,7 +60,7 @@ def main():
     }
     adaptive_same = HardwareProfile.get_adaptive_compute(hw_same)
     print(
-        f"  筆電同規格 batch {adaptive_same['three_layer_batch']} → {'✅ chassis-agnostic' if adaptive_same['usable_ram_gb']==adaptive['usable_ram_gb'] else '❌'}"
+        f"  筆電同規格 batch {adaptive_same['three_layer_batch']} → {'✅ chassis-agnostic' if adaptive_same['usable_ram_gb'] == adaptive['usable_ram_gb'] else '❌'}"
     )
     return 0
 

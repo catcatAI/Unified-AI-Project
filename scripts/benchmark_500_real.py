@@ -29,7 +29,7 @@ def main():
         os.path.dirname(__file__), "..", "apps/backend/data/benchmark_500.json"
     )
     if not os.path.exists(bench_path):
-        print(f"  500 題文件不存在，先生成")
+        print("  500 題文件不存在，先生成")
         import subprocess
 
         subprocess.check_call([sys.executable, "scripts/generate_benchmark_500.py"], timeout=10)
@@ -88,9 +88,9 @@ def main():
 
     # SNN-ONLY 100 抽檢（FixedSizeCore 5K 已訓 60%）
     snn_hits = 60  # 來自 train_fixedcore 60%
-    print(f"  SNN-ONLY 100 抽檢: 60/100 = 60%（來自 FixedSizeCore 5K 60%，目標 ≥30%）")
+    print("  SNN-ONLY 100 抽檢: 60/100 = 60%（來自 FixedSizeCore 5K 60%，目標 ≥30%）")
     print(
-        f"  綜合: HYBRID {hybrid_rate:.0%} / SNN-ONLY 60% → {'✅ 達標' if hybrid_rate>=0.6 and 0.6>=0.3 else '⚠️'}"
+        f"  綜合: HYBRID {hybrid_rate:.0%} / SNN-ONLY 60% → {'✅ 達標' if hybrid_rate >= 0.6 and 0.6 >= 0.3 else '⚠️'}"
     )
 
     hw_same = {
@@ -101,7 +101,7 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
     return 0
 

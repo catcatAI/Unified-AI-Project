@@ -36,7 +36,7 @@ def main():
     # 依 adaptive 的 batch_mult 調整
     batch = int(batch * adaptive["ed3n_batch_multiplier"])
     batches = (total + batch - 1) // batch
-    print(f"硬件規格自適應（L2-6 500 題框架）:")
+    print("硬件規格自適應（L2-6 500 題框架）:")
     print(f"  GPU={hw['gpu']} VRAM={hw['gpu_memory_gb']}GB RAM={hw['ram_gb']:.1f} tier={tier}")
     print(
         f"  adaptive batch×{adaptive['ed3n_batch_multiplier']} → batch {batch} × {batches} 批 = 500 題"
@@ -52,7 +52,7 @@ def main():
     }
     tier_same = HardwareProfile.get_tier(hw_same)
     print(
-        f"  驗證同規格筆電 tier {tier_same} → {'✅ chassis-agnostic' if tier_same==tier else '❌'}"
+        f"  驗證同規格筆電 tier {tier_same} → {'✅ chassis-agnostic' if tier_same == tier else '❌'}"
     )
     # 現狀 20 題輕量驗證
     import subprocess
@@ -69,7 +69,7 @@ def main():
     print(
         f"  預估 500 題: {elapsed*25:.1f}s 確定性 / 需分批 SNN 則 {batches} 批×sleep 0.05s = +{batches*0.05:.1f}s"
     )
-    print(f"  目標: HYBRID ≥60% SNN-ONLY ≥30% (L2-6 出階)")
+    print("  目標: HYBRID ≥60% SNN-ONLY ≥30% (L2-6 出階)")
     return 0
 
 

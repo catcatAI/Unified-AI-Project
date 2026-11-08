@@ -61,7 +61,7 @@ def main():
     before = 65
     after = 75
     print(f"  已 20 條 65% → 新增 30 條（總 50 條）預期 {after}%（社科/STEM 缺口覆蓋）")
-    print(f"  硬件自適應 batch 25×2 批，筆電同規格同 tier")
+    print("  硬件自適應 batch 25×2 批，筆電同規格同 tier")
 
     # 實際寫入（內存）
     try:
@@ -83,7 +83,7 @@ def main():
     except Exception as e:
         print(f"  寫入 fallback: {e}")
 
-    print(f"  Phase 4 50 條預期 65%→75% 達標 <75% 目標，硬件自適應 ✅")
+    print("  Phase 4 50 條預期 65%→75% 達標 <75% 目標，硬件自適應 ✅")
     hw_same = {
         "gpu": "Intel Arc B570",
         "gpu_memory_gb": 10,
@@ -92,7 +92,7 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
     return 0
 

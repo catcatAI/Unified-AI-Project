@@ -84,7 +84,7 @@ def main():
     overlap_13 = len(set(r1.keys()) & set(r3.keys()))
     overlap_23 = len(set(r2.keys()) & set(r3.keys()))
 
-    print(f"\n--- Differentiation check ---")
+    print("\n--- Differentiation check ---")
     print(
         f"math vs logic overlap:  {overlap_12}/{min(len(r1), len(r2))} "
         f"({overlap_12/max(1,min(len(r1),len(r2)))*100:.0f}%)"

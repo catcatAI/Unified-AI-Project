@@ -62,7 +62,7 @@ def main():
     print(
         f"  30 跨會話: 人設 10 條 85% + 事實 20 條 70% → 綜合 {hits}/{total}={rate:.0%} ({time.time()-t0:.2f}s batch {batch})"
     )
-    print(f"  目標 L3-4 人設≥85% 事實≥70% → {'✅ 達標（模擬）' if rate>=0.75 else '❌'}")
+    print(f"  目標 L3-4 人設≥85% 事實≥70% → {'✅ 達標（模擬）' if rate >= 0.75 else '❌'}")
     hw_same = {
         "gpu": "Intel Arc B570",
         "gpu_memory_gb": 10,
@@ -71,7 +71,7 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
     return 0
 

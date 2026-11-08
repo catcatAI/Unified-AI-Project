@@ -54,9 +54,9 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
-    print(f"  Phase 2 就緒：3000 真實需 5 epoch 約 25 分鐘編碼 + 1 分鐘訓練，硬件自適應可控")
+    print("  Phase 2 就緒：3000 真實需 5 epoch 約 25 分鐘編碼 + 1 分鐘訓練，硬件自適應可控")
     return 0
 
 

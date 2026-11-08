@@ -57,7 +57,7 @@ def main():
         "gpu_vendor": "intel",
     }
     tier_same = HardwareProfile.get_tier(hw_same)
-    print(f"  筆電同規格 tier {tier_same} → {'✅ chassis-agnostic' if tier_same==tier else '❌'}")
+    print(f"  筆電同規格 tier {tier_same} → {'✅ chassis-agnostic' if tier_same == tier else '❌'}")
     time.sleep(0.02)
     return 0
 
