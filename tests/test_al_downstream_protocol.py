@@ -491,3 +491,46 @@ class TestHeldoutChanceBoundIsDerivedFromCount:
         assert "hit-gain-without-margin-gain" in protocol.NO_BENEFIT
         # top-1 同時贏過兩個臂是詞彙裡沒有的格，不能自動歸進「沒好處」。
         assert "hit-gain-over-both-arms" not in protocol.NO_BENEFIT
+
+
+class TestCalibrationFailureSaysWhichFailure:
+    """``ladder-exhausted`` 同時蓋住「階梯不夠長」與「這一族沒有中段」兩件不同的事。"""
+
+    @staticmethod
+    def _trial(hits):
+        return {"neutral_hit_by_epoch": {str(epoch): hit for epoch, hit in hits.items()}}
+
+    def test_every_rung_on_the_ceiling_is_not_a_ladder_problem(self, protocol):
+        trials = [self._trial({1: 1.0}), self._trial({1: 1.0})]
+        assert protocol._exhaustion_reason(trials) == "task-at-ceiling"
+
+    def test_the_reason_reads_int_keys_as_well_as_json_string_keys(self, protocol):
+        # `calibrate_family` 回傳的是 int 鍵，存成 JSON 後變成字串。只認一種就會把
+        # 天花板誤報成 ladder-exhausted（v21 第一次重跑就是這樣）。
+        int_keys = [{"neutral_hit_by_epoch": {1: 1.0}}, {"neutral_hit_by_epoch": {1: 1.0}}]
+        assert protocol._exhaustion_reason(int_keys) == "task-at-ceiling"
+
+    def test_every_rung_on_the_floor_is_not_a_ladder_problem_either(self, protocol):
+        trials = [self._trial({1: 0.0}), self._trial({1: 0.042})]
+        assert protocol._exhaustion_reason(trials) == "task-at-floor"
+
+    def test_a_rung_that_centres_then_saturates_is_a_ladder_problem(self, protocol):
+        # structured 的 lr 0.01：ep1/ep3 都在中段，ep5 升到 0.806 → 換一個更長的階梯有意義。
+        trials = [self._trial({1: 1.0}), self._trial({1: 0.583, 3: 0.583, 5: 0.806})]
+        assert protocol._exhaustion_reason(trials) == "ladder-exhausted"
+
+    def test_no_measurements_at_all_is_not_a_ceiling_claim(self, protocol):
+        assert protocol._exhaustion_reason([]) == "ladder-exhausted"
+
+    def test_the_reason_reaches_the_report(self, protocol, monkeypatch):
+        monkeypatch.setattr(
+            protocol,
+            "calibrate_family",
+            lambda family, readout=None: {"informative": False, "reason": "task-at-ceiling"},
+        )
+        control = {"train": 0.02, "heldout": 0.02, "chance": 0.02}
+        monkeypatch.setattr(protocol, "_label_shuffle_baseline", lambda *a, **k: dict(control))
+        cells = protocol.run(families=("hard",))["cells"]
+        assert {cell["reason"] for cell in cells} == {"task-at-ceiling"}
+        # 沒有可下結論的格 → 整體不能給判詞。
+        assert protocol.overall_verdict(cells) == "insufficient-informative-regimes"

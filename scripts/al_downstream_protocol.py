@@ -93,7 +93,9 @@ from typing import Dict, List, Optional, Sequence, Tuple
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
-PROTOCOL_VERSION = "al-downstream-v16"
+# 版本字串必須跟著量具改：v17 到 v20 的報告在自己的 JSON 裡都寫 v16（檔名是 v17…v20），
+# 於是報告說不出自己是哪一版量具產生的。v21 起每次改量具都要同步這一條。
+PROTOCOL_VERSION = "al-downstream-v21"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -321,7 +323,38 @@ def calibrate_family(family: str, readout: Optional[str] = None) -> Dict[str, ob
                 fallback = candidate
     if fallback is not None:
         return fallback
-    return {"informative": False, "trials": trials}
+    return {"informative": False, "reason": _exhaustion_reason(trials), "trials": trials}
+
+
+def _exhaustion_reason(trials: Sequence[Dict[str, object]]) -> str:
+    """校準找不到候選時，說清楚是「階梯不夠長」還是「這一族根本沒有中段」。
+
+    原本一律寫 ``ladder-exhausted``，但這把兩件事混在一起：
+
+    * ``task-at-ceiling``／``task-at-floor``：**每一級**在 ep1 就頂到 1.0（或塌到 0.0），
+      再加階梯也沒用。``hard``／``easy`` 就是這種——每個 cue 都有專屬 token，一次 Hebbian
+      就背起來，所以不存在中段。
+    * ``ladder-exhausted``：至少有一級在 ep1 落在中段，但撐不到 ep3/ep5（``structured``
+      的 lr 0.01 是 ep1/ep3 都 0.583、ep5 升到 0.806）。這種才是可以靠加級數處理的。
+
+    判定只看**第一個量到的 epoch**：``_measure`` 一旦跑出範圍就停，後面的格本來就沒量。
+
+    鍵在記憶體裡是 int、在 JSON 裡是 str（第一次改完就是這樣把 ``hard`` 誤報成
+    ``ladder-exhausted``：拿字串鍵去讀 int 鍵，讀不到就退回預設理由）。兩者都接受。
+    """
+    first_epoch = EPOCHS_MATRIX[0]
+    first_hits = [
+        float(hits[first_epoch] if first_epoch in hits else hits[str(first_epoch)])  # type: ignore[index]
+        for hits in (t["neutral_hit_by_epoch"] for t in trials)  # type: ignore[union-attr]
+        if first_epoch in hits or str(first_epoch) in hits
+    ]
+    if not first_hits:
+        return "ladder-exhausted"
+    if all(hit >= HIT_RANGE[1] for hit in first_hits):
+        return "task-at-ceiling"
+    if all(hit <= HIT_RANGE[0] for hit in first_hits):
+        return "task-at-floor"
+    return "ladder-exhausted"
 
 
 def _sign_test_minimum(seeds: int, alpha: float = 0.05) -> int:
@@ -630,7 +663,7 @@ def run(
                         "family": family,
                         "epochs": epochs,
                         "informative": False,
-                        "reason": "ladder-exhausted",
+                        "reason": calibration.get("reason", "ladder-exhausted"),
                         "calibration": calibration,
                     }
                 )

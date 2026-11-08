@@ -785,3 +785,25 @@ decision，不是「同一個模型」。生成參數與 logits 沒有被碰。�
   三輪全是 `informative: False` / `ladder-exhausted` ——
   **沒量到**，不是「沒差」，不可計入多數。
 - 檢查：下游 33 passed、協定 55 passed、flake8=0。
+
+### 2026-11-08 續三十四 — `hard` 的中段是讀出的產物
+
+- 追 9 格「沒有 cell」：不是階梯不夠長，是那幾族沒有中段。同一個 `hard`
+  任務換讀出量 ep1： `direct` 在 48/144 對、lr 0.005/0.05
+  **全部 1.000**；`potential` 是 0.042/1.000/0.000/1.000
+  ——中段只存在於很窄的 lr 窗口。v7/v8 的 `hard` 中段（0.573/0.701/0.653）就是
+  `potential` 的產物，而 `potential` 正是後來因為「把答案擴散掉」被換掉的讀出。
+- 結構原因：`_pairs` 給每個 cue 專屬 token，48 對 = 48 個互斥 target
+  → 一次 Hebbian 全記住。加階梯（48→144 對、3→1 噪聲位）加的是更多互斥 cue，不是更多干擾，所以調不動。
+- 結論收窄：**可下結論的只有 `conflict` 與 `many_to_one`
+  兩族**；`easy`/`hard`（頂端）與
+  `structured`（ep5 飽和 0.806）都是「沒量到」，不可計入多數。
+- 校準失敗理由分三種：`task-at-ceiling` / `task-at-floor` /
+  `ladder-exhausted`（看第一個量到的epoch）。第一次接上去 `hard` 仍被誤標
+  `ladder-exhausted`——拿字串鍵讀 int 鍵，測試用字串鍵所以沒抓到；已修並補 int 鍵測試。
+- `PROTOCOL_VERSION` 從 v16 之後沒再改，v17–v20 的報告 JSON 全部自稱
+  `v16`（檔名與內容不一致）；改為
+  `al-downstream-v21`，並把「改量具要同步版本」寫在常數旁。
+- v21 重跑：六格判詞與 v19/v20 逐格相同，整體仍
+  `no-mechanism-benefit-consistent`。
+- 檢查：協定 61 passed、下游+協定+trace 108 passed、flake8=0。
