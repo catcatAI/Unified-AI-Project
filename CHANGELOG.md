@@ -32,6 +32,25 @@ and this project adheres to
 
 ### Changed
 
+- **相位調制（AL）下游判詞：沒有機制好處，而且三族根本沒量到（2026-11-09）**：`scripts/al_downstream_protocol.py`
+  走到 v21，把「相位調制到底有沒有用」壓成可重跑、可推翻的三臂協定（`neutral`
+  常數增益／`phase` 真振盪器／`shuffled`
+  同增益打亂順序），判詞只認「控制組失敗＋偽造品失敗＋抜掉機制就崩」。本輪修掉四個
+  **不會失敗或說錯話**的檢查：① `margin_gain > pstdev(neutral)` 這條線實測只有
+  **2.0–3.3 個配對 SE**
+  （先前假設「十幾個 SE」被自己的量測推翻），所以加一道**只收緊**的下限
+  `|gain| ≥ 2·SE`——它只能把「有差」推向「沒差」，v20 重跑逐格判詞不變；② 校準失敗理由分成
+  `task-at-ceiling`／`task-at-floor`／
+  `ladder-exhausted`，不再把「這一族沒有中段」記成「階梯不夠長」；③
+  `_exhaustion_reason` 曾用字串鍵讀 `calibrate_family` 的 int 鍵，把 `hard`
+  誤標（已修並補 int 鍵測試）；④ `PROTOCOL_VERSION`
+  自 v16 後未同步，v17–v20 的報告 JSON 全部自稱
+  `v16`（檔名與內容不一致，已改 v21）。判詞：**`no-mechanism-benefit-consistent`**
+  ——可量的六格在 12 個種子、二項門檻下都沒有機制好處；`many_to_one`
+  的傷害來自**順序**（同散佈打亂仍 12/12 贏）。限制照實記：15 格只有 6 格可量，`hard`（每個 cue 有專屬 token，ep1 就 1.0；它的「中段」只存在於已廢棄的
+  `potential`
+  讀出）、`easy`、`structured`（ep5 飽和）都是**沒量到**，不是「沒差」。
+
 - **表現層稽核＋防洩漏加固＋wiki 評分修復（2026-10-24）**：三件事，都以「分數必須可證非洩漏」為目標。(1)
   **順序/優先級稽核**：manifest 依序為tier0 確定性快徑（pipeline_math→math_backup→clock→solution_rules）→
   tier1（神經檢索/ModelBus/教學確認/對話回憶**先於**模板→ensemble→knowledge→
