@@ -38,6 +38,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = ROOT / "scripts"
 INVENTORY = SCRIPTS_DIR / "INVENTORY.json"
+# ACTIVE_SCRIPTS.md 不是產生檔，但它引用了三個「由清單算出來」的數字（總數／被引用／
+# 未被引用）。那三個數字原本要靠人記得同步：寫下 219 支時，scripts/ 已經有 275 支。
+# 所以這兩個數字跟 INVENTORY 同一個機制寫入、同一個 --check 驗證。
+ACTIVE = SCRIPTS_DIR / "ACTIVE_SCRIPTS.md"
+COUNT_PATTERNS: tuple[tuple[re.Pattern[str], int], ...] = (
+    (re.compile(r"(?<=目前有 )\d+(?= 支腳本)"), 0),
+    (re.compile(r"(?<=指向它）：)\d+(?= 支)"), 1),
+    (re.compile(r"(?<=作為紀錄）：)\d+(?= 支)"), 2),
+)
 
 # Category rules: the first matching prefix wins.
 CATEGORY_RULES: list[tuple[str, str]] = [
@@ -177,6 +186,21 @@ def build_inventory() -> dict:
     return inventory
 
 
+def _counts(inventory: dict) -> tuple[int, int, int]:
+    total = len(inventory)
+    referenced = sum(1 for v in inventory.values() if v["referenced"])
+    return total, referenced, total - referenced
+
+
+def sync_active_scripts_counts(text: str, inventory: dict) -> str:
+    """把 ACTIVE_SCRIPTS.md 裡三個可推導的數字改成實際值。"""
+    numbers = _counts(inventory)
+    for pattern, index in COUNT_PATTERNS:
+        # lookaround 只圈住數字，前後關鍵字原封不動（所以不用 group）。
+        text = pattern.sub(str(numbers[index]), text)
+    return text
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="verify only")
@@ -213,11 +237,25 @@ def main() -> int:
             if changed:
                 print(f"   changed entries: {sorted(changed)}")
             return 1
+        if ACTIVE.exists():
+            text = ACTIVE.read_text(encoding="utf-8")
+            expected = sync_active_scripts_counts(text, inventory)
+            if text != expected:
+                total, referenced, unreferenced = _counts(inventory)
+                print("❌ ACTIVE_SCRIPTS.md 的計數過期（它引用了由清單推導的數字）")
+                print(
+                    f"   實際：{total} 支腳本，{referenced} 被引用，"
+                    f"{unreferenced} 未被引用——跑 `python3 scripts/gen_script_inventory.py` 同步"
+                )
+                return 1
         print(f"✅ inventory current ({len(inventory)} scripts)")
         return 0
 
     INVENTORY.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     orphans = [n for n, v in inventory.items() if not v["referenced"]]
+    if ACTIVE.exists():
+        text = ACTIVE.read_text(encoding="utf-8")
+        ACTIVE.write_text(sync_active_scripts_counts(text, inventory), encoding="utf-8")
     print(f"✅ wrote {INVENTORY} ({len(inventory)} scripts, {len(orphans)} unreferenced)")
     return 0
 

@@ -93,6 +93,15 @@ TARGETS: list[Generated] = [
         check_command=[f"{PY}", "scripts/gen_script_inventory.py", "--check"],
         normalise_dates=True,
     ),
+    # ACTIVE_SCRIPTS.md 本體是手寫的，但裡面三個「由清單推導」的數字（總數／被引用／
+    # 未被引用）由同一支產生器寫入——它寫下 219 支時 scripts/ 已經有 274 支了。
+    Generated(
+        output="scripts/ACTIVE_SCRIPTS.md",
+        generator="scripts/gen_script_inventory.py",
+        source="scripts/*.py 的實際數量（計數由清單推導）",
+        regenerate=[f"{PY}", "scripts/gen_script_inventory.py"],
+        check_command=[f"{PY}", "scripts/gen_script_inventory.py", "--check"],
+    ),
 ]
 
 
@@ -137,11 +146,33 @@ def _normalise(text: str, with_dates: bool) -> str:
     return text.rstrip("\n")
 
 
+def _tracked(rel: str) -> bool:
+    """這個生成物是否在版本控制裡。
+
+    這一條是給「生成檔」看的：`docs/PROJECT_MAP_GENERATED.md` 是 gitignore 的（每次
+    產生都含日期與檔案大小，進版控只會制造噪音）。未追蹤的文件在乾淨 clone 的 CI 上
+    不存在，如果把它當成「手改」，門禁在 CI 上就永遠紅——那是門禁自己在說謔。
+    """
+    proc = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", rel],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode not in (0, 1):
+        # git 不可用（或不在 repo 裡）：不確定就當作有追蹤，寧可嚴格。
+        return True
+    return proc.returncode == 0
+
+
 def _fresh(target: Generated) -> tuple[bool, str]:
     """(is_fresh, detail) for one generated artifact."""
+    if not _tracked(target.output):
+        return True, "（未納入版本控制：不在版控的生成物無從手改，跳過）"
     out_path = REPO_ROOT / target.output
     if not out_path.exists():
-        return False, f"{target.output} 不存在（先跑 `{target.generator}`）"
+        return False, f"{target.output} 不存在（已追蹤、但檔案不見了——先跑 `{target.generator}`）"
     committed = out_path.read_text(encoding="utf-8", errors="replace")
 
     if target.check_command is None:

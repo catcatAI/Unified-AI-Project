@@ -27,6 +27,17 @@ def _load(name: str):
     return module
 
 
+def test_active_scripts_counts_are_rewritten_by_the_generator():
+    inventory = _load("gen_script_inventory")
+    text = "`scripts/` 目前有 219 支腳本。\n- 被引用（程式指向它）：156 支\n- 未被引用（作為紀錄）：63 支\n"
+    fake = {f"s{i}.py": {"referenced": i < 2} for i in range(5)}
+
+    synced = inventory.sync_active_scripts_counts(text, fake)
+    assert "目前有 5 支腳本" in synced
+    assert "指向它）：2 支" in synced
+    assert "作為紀錄）：3 支" in synced
+
+
 def test_every_generated_artifact_is_registered():
     gate = _load("check_generated_docs")
     outputs = {t.output for t in gate.TARGETS}
@@ -35,6 +46,8 @@ def test_every_generated_artifact_is_registered():
         "docs/STATUS_MATRIX.md",
         "docs/PROJECT_MAP_GENERATED.md",
         "scripts/INVENTORY.json",
+        # 本體手寫，但裡面三個計數由產生器寫入（曾經停在 219，實際 274）。
+        "scripts/ACTIVE_SCRIPTS.md",
     }
     for target in gate.TARGETS:
         assert target.generator.startswith("scripts/")

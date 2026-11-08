@@ -87,10 +87,10 @@ pre-commit run --all-files
 
 > 📌 **NOTE CHAIN IS A HISTORICAL CHANGELOG**: Every test count embedded below
 > (5,085 / 4,717 / 4,734 / … / 5,432 / …) is a dated milestone at the time of
-> that NOTE. The current authoritative count is **9,267 collected (tests/), 0
+> that NOTE. The current authoritative count is **9,272 collected (tests/), 0
 > errors** (re-verified 2026-11-09; full testpaths
-> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,029
-> collected / 9,925 passed / 112 skipped**, 0 failed).
+> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,034
+> collected / 9,930 passed / 112 skipped**, 0 failed).
 
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun
 > 25–29). Includes §X #34-#54: save_visual_decoder_weights,
@@ -1585,12 +1585,15 @@ tests/
 > 🔎 **單一檢查入口**：所有「非編譯器」檢查集中在
 > `scripts/check_fact_gates.py`（edge/al/audit/chat/cluster/config/version/docs/modules/gates/hygiene/intelligence/benchmarks/layers/placement/definitions）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。定義稽核 MD 報告：`python3 scripts/check_fact_gates.py --write-definitions-audit`。
 
-> 🔒 **生成檔不准手改（會紅）**：`docs/STATUS_MATRIX.md`、
-> `docs/PROJECT_MAP_GENERATED.md`、`scripts/INVENTORY.json`
-> 由程式產生。改來源檔再跑產生器，或一次修完
+> 🔒 🔒
+> **生成檔不准手改（會紅）**：`docs/STATUS_MATRIX.md`、`scripts/INVENTORY.json`、
+> `scripts/ACTIVE_SCRIPTS.md`
+> 的三個計數由程式產生。改來源檔再跑產生器，或一次修完
 > `python3 scripts/check_generated_docs.py --fix`。門禁在 CI（`check_generated_docs.py`）與 pre-commit
 > hook 上，手改一律 exit
-> 1，並印出「第一行不同的地方」。行數／日期／檔案大小不列入比對——那些是快照刻度。
+> 1 並印出「第一行不同的地方」；行數／日期／檔案大小不列入比對（那些是快照刻度）。`docs/PROJECT_MAP_GENERATED.md`
+> 被 `.gitignore` 的 `PROJECT_*.md`
+> 排除（本地產物、不在版控），所以門禁對它只印「跳過」——不要把它當成有版控的檔案去比對，否則乾淨 clone 的 CI 會永遠紅。
 
 > 📏 **棘輪（只減不增）**：`scripts/type_ignore_budget.txt`（`# type: ignore`
 > 數）、 `scripts/ambiguity_budget.txt`（定義多重釋義數，11）、
