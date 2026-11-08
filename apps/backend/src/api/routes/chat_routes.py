@@ -2408,6 +2408,82 @@ async def _gate_math(
     return None
 
 
+def _ctx_al_essence(context: Dict[str, Any]) -> None:
+    """LifeEssence tendencies (``stage="context"``, best-effort)."""
+    try:
+        from core.life.life_essence import get_life_essence
+
+        le = get_life_essence()
+        if le:
+            summary = le.get_essence_summary()
+            context["life_essence"] = {
+                "tendencies": le.get_all_blended_tendencies(),
+                "generation": le.generation,
+                "total_traces": summary.get("total_traces", 0),
+                "ancestral_cores": summary.get("ancestral_cores", 0),
+            }
+            logger.debug("LifeEssence tendencies injected into chat context")
+    except Exception as e:
+        logger.warning(f"LifeEssence injection unavailable: {e}", exc_info=True)
+
+
+def _ctx_al_lifecycle(context: Dict[str, Any]) -> None:
+    """Lifecycle routing advice (best-effort)."""
+    try:
+        lc = _get_lifecycle()
+        if lc:
+            lc_adj = lc.get_behavioral_adjustment()
+            context["lifecycle_behavior"] = lc_adj
+            logger.debug(
+                f"Lifecycle behavioral adj: {lc_adj.get('routing_mode')} / "
+                f"{lc_adj.get('response_style')} "
+                f"(phase={lc_adj.get('phase')}, decision={lc_adj.get('decision_type')})"
+            )
+    except Exception as e:
+        logger.warning(f"lifecycle_behavior unavailable: {e}", exc_info=True)
+
+
+def _ctx_al_intent(context: Dict[str, Any]) -> None:
+    """Intent-model routing advice (best-effort)."""
+    try:
+        im = _get_intent_manager()
+        if im:
+            intent_adj = im.get_intent_routing_adjustment()
+            if intent_adj.get("routing_mode"):
+                context["intent_routing"] = intent_adj
+                logger.debug(
+                    f"Intent routing adjustment: mode={intent_adj['routing_mode']}, "
+                    f"style={intent_adj['response_style']}, "
+                    f"strength={intent_adj['intent_strength']}"
+                )
+    except Exception as e:
+        logger.warning(f"intent_routing unavailable: {e}", exc_info=True)
+
+
+def _ctx_al_modality(context: Dict[str, Any]) -> None:
+    """Active/inactive modality summary (best-effort)."""
+    try:
+        mg = _get_modality_gateway()
+        if mg:
+            context["modality_state"] = mg.get_modality_summary()
+            logger.debug(
+                f"Modality state: {len(context['modality_state'].get('active', []))} active / "
+                f"{len(context['modality_state'].get('inactive', []))} inactive"
+            )
+    except Exception as e:
+        logger.warning(f"modality_state unavailable: {e}", exc_info=True)
+
+
+def _ctx_al_awareness(context: Dict[str, Any]) -> None:
+    """Digital-life awareness injection (best-effort)."""
+    try:
+        dli = get_digital_life()
+        if dli:
+            context["awareness_injection"] = dli.get_awareness_injection()
+    except Exception as e:
+        logger.warning(f"awareness_injection unavailable: {e}", exc_info=True)
+
+
 def _ctx_al_state(context: Dict[str, Any], *, stage: str = "context") -> None:
     """Sole AI-side reader of AL state (Phase 3 item 2: converged).
 
@@ -2425,72 +2501,21 @@ def _ctx_al_state(context: Dict[str, Any], *, stage: str = "context") -> None:
     router's ``_inject_al_state`` and never read here. This reader
     reaches the AL-side *sources* (ALC/DLI/LifeEssence) for their advice
     dicts, and those reads are why AL readers converge into this one
-    function — audit this, not the whole route module.
+    call site — the segment helpers live directly above, so audit this
+    block, not the whole route module.
 
     Every segment stays best-effort-isolated: one broken AL source must
     never block the others or the reply.
     """
     if stage == "context":
-        try:
-            from core.life.life_essence import get_life_essence
-
-            le = get_life_essence()
-            if le:
-                summary = le.get_essence_summary()
-                context["life_essence"] = {
-                    "tendencies": le.get_all_blended_tendencies(),
-                    "generation": le.generation,
-                    "total_traces": summary.get("total_traces", 0),
-                    "ancestral_cores": summary.get("ancestral_cores", 0),
-                }
-                logger.debug("LifeEssence tendencies injected into chat context")
-        except Exception as e:
-            logger.warning(f"LifeEssence injection unavailable: {e}", exc_info=True)
+        _ctx_al_essence(context)
         return
     if stage != "behavioral":
         raise ValueError(f"unknown _ctx_al_state stage: {stage!r}")
-
-    try:
-        lc = _get_lifecycle()
-        if lc:
-            lc_adj = lc.get_behavioral_adjustment()
-            context["lifecycle_behavior"] = lc_adj
-            logger.debug(
-                f"Lifecycle behavioral adj: {lc_adj.get('routing_mode')} / "
-                f"{lc_adj.get('response_style')} "
-                f"(phase={lc_adj.get('phase')}, decision={lc_adj.get('decision_type')})"
-            )
-    except Exception as e:
-        logger.warning(f"lifecycle_behavior unavailable: {e}", exc_info=True)
-    try:
-        im = _get_intent_manager()
-        if im:
-            intent_adj = im.get_intent_routing_adjustment()
-            if intent_adj.get("routing_mode"):
-                context["intent_routing"] = intent_adj
-                logger.debug(
-                    f"Intent routing adjustment: mode={intent_adj['routing_mode']}, "
-                    f"style={intent_adj['response_style']}, "
-                    f"strength={intent_adj['intent_strength']}"
-                )
-    except Exception as e:
-        logger.warning(f"intent_routing unavailable: {e}", exc_info=True)
-    try:
-        mg = _get_modality_gateway()
-        if mg:
-            context["modality_state"] = mg.get_modality_summary()
-            logger.debug(
-                f"Modality state: {len(context['modality_state'].get('active', []))} active / "
-                f"{len(context['modality_state'].get('inactive', []))} inactive"
-            )
-    except Exception as e:
-        logger.warning(f"modality_state unavailable: {e}", exc_info=True)
-    try:
-        dli = get_digital_life()
-        if dli:
-            context["awareness_injection"] = dli.get_awareness_injection()
-    except Exception as e:
-        logger.warning(f"awareness_injection unavailable: {e}", exc_info=True)
+    _ctx_al_lifecycle(context)
+    _ctx_al_intent(context)
+    _ctx_al_modality(context)
+    _ctx_al_awareness(context)
 
 
 async def _inject_behavioral_context(

@@ -56,12 +56,20 @@ def _child(mode: str, path: Path) -> Dict[str, object]:
         }
 
     started = time.time()
-    tracker = ar.AffectTracker(path=path, clock=time.time, monotonic=time.monotonic)
+    # ``now`` is pinned and used as the tracker's clock so the continuation is
+    # evaluated at a known instant. With ``clock=time.time`` the value is
+    # computed at some microsecond after this line while the parent's reference
+    # timestamp is taken *after* ``arousal()`` returns, so ``truth`` ran ahead
+    # of the reading by ~rate x (a few us) — 2-3e-6 at tau ~1.4 s, which is a
+    # timestamp artefact, not a continuity error. The gap itself still comes
+    # from this real clock reading; only the sampling instant is pinned.
+    now = time.time()
+    tracker = ar.AffectTracker(path=path, clock=lambda: now, monotonic=time.monotonic)
     value = tracker.arousal()
     verdict = tracker.clock_status()
     return {
         "arousal": value,
-        "read_at": time.time(),
+        "read_at": now,
         "process_started_at": started,
         "clock_status": None if verdict is None else verdict.reason,
     }

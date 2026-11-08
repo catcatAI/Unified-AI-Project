@@ -9,7 +9,6 @@ scores (a subtle way to make a measurement lie).
 from __future__ import annotations
 
 import pytest
-
 from core.life.al_logit_bias import DEFAULT_STRENGTH, apply_to, phase_bias
 
 ENERGY = (11, 12)

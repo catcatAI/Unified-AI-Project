@@ -37,7 +37,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from core.life.al_arousal import AROUSAL_BASELINE
 from core.life.al_state import ALSnapshot
@@ -80,7 +80,7 @@ class RetentionPolicy:
     retention_seconds: float
     weight: float
     consolidate: bool
-    source: Dict[str, str]
+    source: Dict[str, Optional[str]]
 
     def as_dict(self) -> Dict[str, Any]:
         return {

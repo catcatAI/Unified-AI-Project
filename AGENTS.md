@@ -87,10 +87,11 @@ pre-commit run --all-files
 
 > 📌 **NOTE CHAIN IS A HISTORICAL CHANGELOG**: Every test count embedded below
 > (5,085 / 4,717 / 4,734 / … / 5,432 / …) is a dated milestone at the time of
-> that NOTE. The current authoritative count is **7,963 collected (tests/), 0
-> errors** (re-verified 2026-10-20; full testpaths
-> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **8,726
-> collected / 8,623 passed / 112 skipped**, 0 failed).
+> that NOTE. The current authoritative count is **9,242 collected (tests/), 0
+> errors** (re-verified 2026-11-08; full testpaths
+> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,004
+> collected**, and `pytest tests/ apps/backend/tests/` = **9,561 passed / 107
+> skipped / 0 failed**).
 
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun
 > 25–29). Includes §X #34-#54: save_visual_decoder_weights,
@@ -1216,156 +1217,144 @@ collected — 0 errors**).
 > JS 語法 ✓、electron 語法 ✓。全部實測重跑（bench＋census＋report
 > --from-cache），pytest 全量過。
 
-> ✅ **NOTE (Updated 2026-11-01, 改述泛化過線)**: **§X #278**: 改述（L1
-> 唯一缺口）由 **50% → 75%**（42/56，過 70% 外部及格線），**系統階梯 L0 → L2**。方法是修一個**實作
-> bug**，不是調門檻、不是在 held-out 上調參。失敗的 28 題
-> **100%** 集中在兩個說法（`outranks`／`is outshone by`），極性錯誤完全一致 → 系統性方向判斷錯。根因：既有的被動反轉反的是
-> **編碼器的猜測**，而編碼器對 `outshone` 本來就讀成
-> lesser（反轉後變 greater＝雙重否定）、對 `beaten` 讀成 greater（反轉才剛好對）——同一個構句的對錯取決於編碼器猜哪一邊。修法：**被動語態由文法決定方向**（`A is <verb> by B` → A <
-> B），編碼器不投票；課程對齊過的被動片語（`is exceeded by`／`is
-> outclassed by`）仍保留教過的方向。移除 `len(bare_phrase.split()) <= 1`
+> ✅ **NOTE (Updated 2026-11-01, 改述泛化過線)**: **§X
+> #278**: 改述（L1 唯一缺口）由 **50% →
+> 75%**（42/56，過 70% 外部及格線），**系統階梯 L0 →
+> L2**。方法是修一個**實作bug**，不是調門檻、不是在 held-out 上調參。失敗的 28 題
+> **100%**
+> 集中在兩個說法（`outranks`／`is outshone by`），極性錯誤完全一致 → 系統性方向判斷錯。根因：既有的被動反轉反的是
+> **編碼器的猜測**，而編碼器對 `outshone`
+> 本來就讀成lesser（反轉後變 greater＝雙重否定）、對 `beaten`
+> 讀成 greater（反轉才剛好對）——同一個構句的對錯取決於編碼器猜哪一邊。修法：**被動語態由文法決定方向**（`A is <verb> by B`
+> → A <
+> B），編碼器不投票；課程對齊過的被動片語（`is exceeded by`／`is outclassed by`）仍保留教過的方向。移除
+> `len(bare_phrase.split()) <= 1`
 > 限制（原意是保護片語式被動，但片語式被動本來就有獨立處理）。實測：`heldout_final`
 > 50%→**75%**、`unseen_surfaces` 81%→**88%**、`heldout_dimensions`
 > 89%→**100%**、`test` 維持 100%（無迴歸）。**殘留照實記**：14 題
 > `outranks`（主動語態的未知動詞，編碼器把 lesser 0.657／greater
 > 0.655 讀成幾乎並列，沒有文法線索）仍失敗；`tools`
 > 仍 0（原生後端無代碼生成，`run_benchmarks.py` 對 code 直接回
-> `""`，是設計上的誠實失敗）→ 系統階梯卡在 L2，未到
-> L3。**核心分仍 0.00/10、核心階梯仍 L0**（改述是編碼器＋確定性組合，不計核心）。系統分
+> `""`，是設計上的誠實失敗）→ 系統階梯卡在 L2，未到 L3。**核心分仍 0.00/10、核心階梯仍 L0**（改述是編碼器＋確定性組合，不計核心）。系統分
 > **5.86 → 6.25**（同時因重跑把先前落後的 wiki 評分修正一併帶入：knowledge
-> 7→8/15、knowledge_mc 40/40、facts 4.7→5.3）。測試：`tests/ai/test_neural_bridge.py`
-> +6（5 個 parametrize＋1 個「每個被動邊都是 lesser」的機制測試），該檔
-> 38 passed；`tests/ai/`＋`tests/core/`＋`tests/test_run_benchmarks.py` 共
-> 5,363 passed；全量 `pytest tests/ apps/backend/tests/` = **9,065 passed / 107
+> 7→8/15、knowledge_mc 40/40、facts
+> 4.7→5.3）。測試：`tests/ai/test_neural_bridge.py`
+> +6（5 個 parametrize＋1 個「每個被動邊都是 lesser」的機制測試），該檔 38
+> passed；`tests/ai/`＋`tests/core/`＋`tests/test_run_benchmarks.py` 共5,363
+> passed；全量 `pytest tests/ apps/backend/tests/` = **9,065 passed / 107
 > skipped / 0 failed**；`check_fact_gates.py` **ALL PASS**（含
 > `benchmarks.paraphrase_benchmark_wellformed`）；black／isort／flake8 乾淨。文件同步：`INTELLIGENCE_ASSESSMENT.md`、`INTELLIGENCE_PASS_CRITERIA.md`、`MEASUREMENT_MAP.md`、`AI_CAPABILITY_LADDER.md`、`NATIVE_BASE_MODEL_MAP.md`、`intelligence_report.json`。
 
 > ✅ **NOTE (Updated 2026-11-02, 純本地對話：不再覆述、記憶題不被模板接手)**:
-> **§X #279**: 同一輪純本地量測（1096 題凍結標準集、不註冊任何外部 LLM）暴露的
-> 是同一個形狀——**把使用者的句子原樣端回去，或拿不相關的罐頭句假裝聽懂了**。
-> 四處修正：① `taught_facts.lookup` 只回答**問句**（陳述句是使用者正在告訴我們的
-> 事，不是要我們回答的問題；舊版回「你教過我：我的生日是 九月十號。」＝鸚鵡）；
-> ② `QueryClassifier` 的 TASK 關鍵詞（工作／待辦／行程）全是名詞——名詞出現在
-> 陳述句只表示使用者在說自己的事（「我在圖書館工作」「這週工作好忙」），要有
-> 請求／動作詞（建立、提醒、列表、幫我…）或整句只有任務名詞才判 TASK，否則閘門
-> 會建立一個任務、再把整句覆述回去，而句子真的被寫進任務檔；③ 記憶題（「我剛才
-> 說我在哪裡工作？」）跳過所有模板層：記憶層沒有答案就誠實棄權，不是用「工作」
-> 匹配罐頭回「工作辛苦了！你真的很棒！」；④ 第三人稱事實（「Zorblax 的首都是
-> Quuxville。」）先前被記憶層存好、卻由天氣模板回答——現在由記憶層確認
-> （「記住囉，Quuxville！」），且**只有這一回合真的學到東西**才確認
-> （`TaughtFacts.learned_from`），沒學到的不背書（假裝記住了是另一種說謊）。
-> `audit_placement` 把 `memory-teaching` 宣告為記憶層（值來自使用者的句子），
-> 7/7 回覆的宣告與生產者一致。
-> 量測（nd5 → nd9，同一份標準集、同一條評分）：人話標準通過率 **0.6131 →
+> **§X
+> #279**: 同一輪純本地量測（1096 題凍結標準集、不註冊任何外部 LLM）暴露的是同一個形狀——**把使用者的句子原樣端回去，或拿不相關的罐頭句假裝聽懂了**。四處修正：①
+> `taught_facts.lookup`
+> 只回答**問句**（陳述句是使用者正在告訴我們的事，不是要我們回答的問題；舊版回「你教過我：我的生日是 九月十號。」＝鸚鵡）；②
+> `QueryClassifier`
+> 的 TASK 關鍵詞（工作／待辦／行程）全是名詞——名詞出現在陳述句只表示使用者在說自己的事（「我在圖書館工作」「這週工作好忙」），要有請求／動作詞（建立、提醒、列表、幫我…）或整句只有任務名詞才判 TASK，否則閘門會建立一個任務、再把整句覆述回去，而句子真的被寫進任務檔；③ 記憶題（「我剛才說我在哪裡工作？」）跳過所有模板層：記憶層沒有答案就誠實棄權，不是用「工作」匹配罐頭回「工作辛苦了！你真的很棒！」；④ 第三人稱事實（「Zorblax 的首都是 Quuxville。」）先前被記憶層存好、卻由天氣模板回答——現在由記憶層確認（「記住囉，Quuxville！」），且**只有這一回合真的學到東西**才確認（`TaughtFacts.learned_from`），沒學到的不背書（假裝記住了是另一種說謊）。
+> `audit_placement` 把 `memory-teaching`
+> 宣告為記憶層（值來自使用者的句子），7/7 回覆的宣告與生產者一致。量測（nd5 →
+> nd9，同一份標準集、同一條評分）：人話標準通過率 **0.6131 →
 > 0.6487**（711/1096）、對話 **49/100 → 94/100**（鸚鵡不再出現）、多重事實
-> **59/72 → 53/72**（teach turn 要求回覆含該值；有 8 條事實的值藏在動詞後
-> 「我喜歡喝拿鐵」，取不到就只確認、不覆述——照實記為限制）、問答 468/492、
-> 斷言 96/108、**邊界題 0/324**（知識缺口）、學習效應 0.4818、神經層 22.45%、
+> **59/72 → 53/72**（teach
+> turn 要求回覆含該值；有 8 條事實的值藏在動詞後「我喜歡喝拿鐵」，取不到就只確認、不覆述——照實記為限制）、問答 468/492、斷言 96/108、**邊界題 0/324**（知識缺口）、學習效應 0.4818、神經層 22.45%、
 > **核心 0.00/10**（不變；`neural_share` 不是核心）。官方系統分 **6.25 →
-> 6.41**（`report_intelligence.py --from-cache`，dialogue 維度 7.8 → 8.8；核心分
-> 仍是 0.00，系統階梯仍 L2、核心階梯仍 L0）。
+> 6.41**（`report_intelligence.py --from-cache`，dialogue 維度 7.8 →
+> 8.8；核心分仍是 0.00，系統階梯仍 L2、核心階梯仍 L0）。
 > **門禁現況（照實寫）**：拆除條件是 `pass_rate ≥ 0.90`、`state ≥ 0.50`、
-> `multi ≥ 0.80`、`progress ≥ +0.60`；`state` 仍 0/324（刻意不把標準集主題種進
-> 斷言庫＝不自己教自己），所以 pass_rate 的**上限**＝772/1096 ≈ **0.704**——
-> 在邊界題真的會答之前，這道門禁不可能拆，也不該拆。
-> 量測衛生（同一輪一起修，因為它讓上一輪的數字不能用）：探針的任務寫入改到
-> 沙盒——先前幾次探針在使用者真實的 `~/.angela/tasks/tasks.json` 留下 **371
-> 筆**標準集句子（已備份 `tasks.json.probe-artifacts-backup-20261102` 後清除）；
-> 探針加**單一實例鎖**（沙盒只有一份，同時跑兩個會把彼此的向量庫清掉——nd8
-> 因此作廢、整份丟棄，不採用壞掉的量測）。
-> 測試：`tests/ai/test_taught_facts.py`（16）、
+> `multi ≥ 0.80`、`progress ≥ +0.60`；`state`
+> 仍 0/324（刻意不把標準集主題種進斷言庫＝不自己教自己），所以 pass_rate 的**上限**＝772/1096
+> ≈
+> **0.704**——在邊界題真的會答之前，這道門禁不可能拆，也不該拆。量測衛生（同一輪一起修，因為它讓上一輪的數字不能用）：探針的任務寫入改到沙盒——先前幾次探針在使用者真實的
+> `~/.angela/tasks/tasks.json` 留下 **371筆**標準集句子（已備份
+> `tasks.json.probe-artifacts-backup-20261102`
+> 後清除）；探針加**單一實例鎖**（沙盒只有一份，同時跑兩個會把彼此的向量庫清掉——nd8因此作廢、整份丟棄，不採用壞掉的量測）。測試：`tests/ai/test_taught_facts.py`（16）、
 > `tests/services/test_conversation_recall.py`（47）、
 > `tests/unit/test_query_classifier.py`（59）、
-> `tests/services/test_offline_speak.py`（10）；全量 `pytest tests/
-> apps/backend/tests/` = **9,121 passed / 107 skipped / 0 failed**；
-> `check_fact_gates.py` **ALL PASS**。
+> `tests/services/test_offline_speak.py`（10）；全量
+> `pytest tests/ apps/backend/tests/` = **9,121 passed / 107 skipped / 0
+> failed**； `check_fact_gates.py` **ALL PASS**。
 
 > ✅ **NOTE (Updated 2026-11-04, 表層不得代替核心：稽核與交棒)**: **§X
-> #280**: 使用者要求確認「模板／記憶不得直接輸出、該交給能生成答案的層再
-> 處理」是否仍成立，並全專案找問題。**判準只有一份**：
+> #280**: 使用者要求確認「模板／記憶不得直接輸出、該交給能生成答案的層再處理」是否仍成立，並全專案找問題。**判準只有一份**：
 > `services/llm/generation_gate.py`（`GENERATIVE_BACKENDS`＝openai/deepseek/
-> anthropic/google/ollama/`llamacpp`/`llamacpp-qwen`/`llamacpp-gemma`；unified／
-> ED3N／GARDEN **不算**，它們不能吃提示改寫）。**修掉 5 條真跑偏**：①
-> `try_memory_retrieval` 的 `memory-template`；② `try_conversation_recall`；
-> ③ `router._recall_user_fact`；④ `chat_routes._taught_fact_turn`（回
+> anthropic/google/ollama/`llamacpp`/`llamacpp-qwen`/`llamacpp-gemma`；unified／ED3N／GARDEN
+> **不算**，它們不能吃提示改寫）。**修掉 5 條真跑偏**：① `try_memory_retrieval`
+> 的 `memory-template`；② `try_conversation_recall`；③
+> `router._recall_user_fact`；④ `chat_routes._taught_fact_turn`（回
 > `(native_reply, evidence)` 恰一）；⑤ **本輪新發現**——`_try_neural_retrieval`
-> 把教過的對話對用編碼器找回後**原句重播**（標 `hit_source="neural"`）：相似度
-> 是神經的、內容是記憶，有生成後端時改成發布 `taught_facts` 證據；這類答案
-> 也**不再進回應快取**（教過的東西會增長，快取重播會讓更正失效）。順手修
+> 把教過的對話對用編碼器找回後**原句重播**（標
+> `hit_source="neural"`）：相似度是神經的、內容是記憶，有生成後端時改成發布
+> `taught_facts`
+> 證據；這類答案也**不再進回應快取**（教過的東西會增長，快取重播會讓更正失效）。順手修
 > `llama_cpp` vs `llamacpp` 命名 bug（llama.cpp 三個 slot 先前對記憶層隱形）、
-> `generation_available()` 的**首回合盲點**（module global 尚未指派時退回讀
-> service registry）、`_format_chat_response` 對 dict 生產者遺失
-> `model/confidence/hit_score/hit_source`、以及 `STATUS_MATRIX.md` 被手改
-> （改回由 `docs/status_matrix.yaml` 生成）。知識層的**因果問句**在有生成後端
-> 時也讓位（「為什麼天空是藍的？」不能拿屬性值 `blue` 當解釋；native 保留
-> offline 契約）。證據契約＝`services/llm/memory_evidence.py`＋
+> `generation_available()` 的**首回合盲點**（module
+> global 尚未指派時退回讀 service registry）、`_format_chat_response`
+> 對 dict 生產者遺失 `model/confidence/hit_score/hit_source`、以及
+> `STATUS_MATRIX.md` 被手改（改回由 `docs/status_matrix.yaml`
+> 生成）。知識層的**因果問句**在有生成後端時也讓位（「為什麼天空是藍的？」不能拿屬性值
+> `blue`
+> 當解釋；native 保留 offline 契約）。證據契約＝`services/llm/memory_evidence.py`＋
 > `prompt_builder._append_memory_evidence`（中英 locale）。
-> **量測（不是引用舊值）**：全量 `pytest tests/ apps/backend/tests/` =
-> **9,207 passed / 107 skipped / 0 failed**（8:11）；純本地對話 1096 題**逐項
-> 與 nd9 相同**（711/1096＝64.9%、學習效應 +0.4818、神經層 22.45%），因為交棒
-> 只在有生成後端時生效；`census --check` 預存命中 0、**核心 0.00/10**、系統分
-> **6.41**（不變）、placement **7/7**、`check_fact_gates.py` **ALL PASS**。
-> 報告：`docs/AUDIT_REPORT_2026-11-04.md`（已修／需注意／查過沒問題三類）；
-> 需注意的三項照實寫：`state` 0/324（知識缺口，pass_rate 上限 0.704）、
-> `semantic-qa` 仍被 `classify_source` 算 neural（改標籤會改量測定義，需單獨
-> 一輪）、`generation_available()` 看不到未註冊的自建 service 實例。
+> **量測（不是引用舊值）**：全量 `pytest tests/ apps/backend/tests/` = **9,207
+> passed / 107 skipped / 0
+> failed**（8:11）；純本地對話 1096 題**逐項與 nd9 相同**（711/1096＝64.9%、學習效應 +0.4818、神經層 22.45%），因為交棒只在有生成後端時生效；`census --check`
+> 預存命中 0、**核心 0.00/10**、系統分 **6.41**（不變）、placement
+> **7/7**、`check_fact_gates.py` **ALL
+> PASS**。報告：`docs/AUDIT_REPORT_2026-11-04.md`（已修／需注意／查過沒問題三類）；需注意的三項照實寫：`state`
+> 0/324（知識缺口，pass_rate 上限 0.704）、 `semantic-qa` 仍被 `classify_source`
+> 算 neural（改標籤會改量測定義，需單獨一輪）、`generation_available()`
+> 看不到未註冊的自建 service 實例。
 
-> ✅ **NOTE (Updated 2026-11-05, 裝置宣告 vs 實際使用)**: **§X #281**:
-> 「宣告用了 GPU、實際用 CPU」這一類不一致，修成**可驗證的裝置使用**，
-> 分數與門檻完全沒動。**找到的真缺陷**：(1) `TensorSNNCore.device` 只被存、
-> 從沒被用——`GardenEngine`／`VectorDictionary` 在
-> `compute_bool("garden_snn")` 開啟時把 `"cpu"` 改寫成字面值 `"cuda"`，但
-> tensor 全在 CPU 建立，等於宣告了一張不存在的卡（本機
+> ✅ **NOTE (Updated 2026-11-05, 裝置宣告 vs 實際使用)**: **§X
+> #281**:「宣告用了 GPU、實際用 CPU」這一類不一致，修成**可驗證的裝置使用**，分數與門檻完全沒動。**找到的真缺陷**：(1)
+> `TensorSNNCore.device` 只被存、從沒被用——`GardenEngine`／`VectorDictionary` 在
+> `compute_bool("garden_snn")` 開啟時把 `"cpu"` 改寫成字面值
+> `"cuda"`，但 tensor 全在 CPU 建立，等於宣告了一張不存在的卡（本機
 > `torch.cuda.is_available()` 是 `False`，GPU 走 `torch.xpu`）；(2) 同一段
-> `_compute_timestep()` 用 `np.argpartition` 處理 potential，一旦真的把 tensor
-> 放到加速器上就會拋 `can't convert xpu:0 device type tensor to numpy`
-> ——所以「把 device 接上」若沒先修這裡就是錯的修復；(3) 三個自稱 GPU 的
-> 表徵器（CLIP 文字/影像、Whisper）寫死 `torch.cuda.is_available()`，在
-> Arc 上永遠留在 CPU；(4) **實跑才發現的獨立 bug**：
-> `text_encoder.encode_batch()` 在 transformers 5.15 上對
-> `BaseModelOutputWithPooling` 呼叫 `.cpu()` → `AttributeError` → 回 `None`
-> → `encode()` 回全零向量（ED3N 文字路徑、multimodal bridge、
-> training pipeline 全都拿到零向量）。
-> **修法**：新增唯一解析器
-> `core/system/config/compute_device.py`（`resolve_torch_device`：
-> 明確可用裝置 → `xpu` > `cuda` > `cpu`，不可用就降級並記 warning；
-> `resolve_feature_device` 先讀 `compute.<feature>.mode`，`off` 就回
+> `_compute_timestep()` 用 `np.argpartition`
+> 處理 potential，一旦真的把 tensor 放到加速器上就會拋
+> `can't convert xpu:0 device type tensor to numpy`
+> ——所以「把 device 接上」若沒先修這裡就是錯的修復；(3) 三個自稱 GPU 的表徵器（CLIP 文字/影像、Whisper）寫死
+> `torch.cuda.is_available()`，在 Arc 上永遠留在 CPU；(4)
+> **實跑才發現的獨立 bug**： `text_encoder.encode_batch()` 在 transformers
+> 5.15 上對 `BaseModelOutputWithPooling` 呼叫 `.cpu()` → `AttributeError` → 回
+> `None` → `encode()` 回全零向量（ED3N 文字路徑、multimodal bridge、training
+> pipeline 全都拿到零向量）。 **修法**：新增唯一解析器
+> `core/system/config/compute_device.py`（`resolve_torch_device`：明確可用裝置 →
+> `xpu` > `cuda` > `cpu`，不可用就降級並記 warning； `resolve_feature_device`
+> 先讀 `compute.<feature>.mode`，`off` 就回
 > `cpu`——配置說「強制 CPU」時不得因為偵測到加速器就擅自使用；
-> `token_snn.resolve_device` 改為委派，簽名不變）；`TensorSNNCore` 真的把
-> 每個 tensor 建在 `self.device`（`_new_zeros`／`_as_array(device=)`／
+> `token_snn.resolve_device` 改為委派，簽名不變）；`TensorSNNCore`
+> 真的把每個 tensor 建在 `self.device`（`_new_zeros`／`_as_array(device=)`／
 > `as_tensor(device=)`），top-k 改走後端原生 `topk`；`garden_engine`／
 > `dictionary` 不再偽造 `"cuda"`；CLIP/Whisper 改走解析器並用
-> `move_batch_to_device` 一起搬輸入；`TextEncoder` 同時接受 pooled output 與
-> 舊版裸 tensor。**測試與一個 tie-break 陷阱**：top-k 換成原生 `topk` 後，
-> 平手時誰贏由後端決定（舊的 `np.argpartition` 與 `torch.topk` 會挑到不同
-> 的神經元）；`tests/ai/bridge/test_snn_neural_state_injection.py` 原本的兩條
-> 關聯權重都是 0.9，靠的就是 numpy 的平手順序，因此改成 0.95 vs 0.9，讓
-> 「注入使 r2 勝出」變成真正的因果（全量測試中唯一的失敗就是這一條，已修）。
-> **測試**：
-> `tests/core/config/test_compute_device.py`（19）＋
-> `tests/ai/garden/test_snn_device.py`（10；XPU 上真的跑 parity／eviction／
-> save-load，無硬體則 skip）＋
+> `move_batch_to_device` 一起搬輸入；`TextEncoder` 同時接受 pooled
+> output 與舊版裸 tensor。**測試與一個 tie-break 陷阱**：top-k 換成原生 `topk`
+> 後，平手時誰贏由後端決定（舊的 `np.argpartition` 與 `torch.topk`
+> 會挑到不同的神經元）；`tests/ai/bridge/test_snn_neural_state_injection.py`
+> 原本的兩條關聯權重都是 0.9，靠的就是 numpy 的平手順序，因此改成 0.95 vs
+> 0.9，讓「注入使 r2 勝出」變成真正的因果（全量測試中唯一的失敗就是這一條，已修）。
+> **測試**： `tests/core/config/test_compute_device.py`（19）＋
+> `tests/ai/garden/test_snn_device.py`（10；XPU 上真的跑 parity／eviction／save-load，無硬體則 skip）＋
 > `tests/ai/multimodal/test_text_encoder_outputs.py`（4）。
-> **照實量測（不是宣稱）**：XPU vs CPU（Arc B570）
-> forward 50 次 20k×20k → **0.83s vs 8.79s**（GPU 快 ~10x）；同樣的稀疏
-> Hebbian 200 次更新 → **1.45s vs 0.22s**（GPU 慢 ~7x）→ 因此
-> **GARDEN 預設仍是 CPU**（訓練是每樣本一次的小散寫），顯式
-> `device="xpu"` 才走加速器；CLIP 文字 64 條穩態 **0.013s vs 0.125s**、影像
-> **0.028s vs 0.165s**（首次有 ~1s 編譯暖機）；CLIP/Whisper/TextEncoder 的
-> CPU vs XPU 輸出 **max diff ≤ 4.8e-7、cosine 1.000000**；
-> `train_token_snn.py --limit 120` 實跑 **`device=xpu`** 成功、能存檔；
-> 診斷腳本（`scripts/test_gpu_direct.py`／`test_gpu_compat.py`）現在會回報
-> XPU，不再把 Arc 說成「No CUDA GPU」。**測試**：
-> `tests/core/config/test_compute_device.py`（16）＋
-> `tests/ai/garden/test_snn_device.py`（10；XPU 上真的跑 parity／eviction／
-> save-load，無硬體則 skip）＋
+> **照實量測（不是宣稱）**：XPU vs CPU（Arc B570）forward 50 次 20k×20k →
+> **0.83s vs 8.79s**（GPU 快 ~10x）；同樣的稀疏 Hebbian 200 次更新 → **1.45s vs
+> 0.22s**（GPU 慢 ~7x）→ 因此
+> **GARDEN 預設仍是 CPU**（訓練是每樣本一次的小散寫），顯式 `device="xpu"`
+> 才走加速器；CLIP 文字 64 條穩態 **0.013s vs 0.125s**、影像 **0.028s vs
+> 0.165s**（首次有 ~1s 編譯暖機）；CLIP/Whisper/TextEncoder 的 CPU vs XPU 輸出
+> **max diff ≤ 4.8e-7、cosine 1.000000**； `train_token_snn.py --limit 120` 實跑
+> **`device=xpu`**
+> 成功、能存檔；診斷腳本（`scripts/test_gpu_direct.py`／`test_gpu_compat.py`）現在會回報 XPU，不再把 Arc 說成「No
+> CUDA GPU」。**測試**： `tests/core/config/test_compute_device.py`（16）＋
+> `tests/ai/garden/test_snn_device.py`（10；XPU 上真的跑 parity／eviction／save-load，無硬體則 skip）＋
 > `tests/ai/multimodal/test_text_encoder_outputs.py`（4）。
-> **沒有改**：門檻、評測題、`held-out`、量測定義；核心分仍
-> **0.00/10**、系統分仍 **6.41**（這輪只碰裝置與一個表徵 bug）。
-> **驗收**：全量 `pytest tests/ apps/backend/tests/` =
-> **9,248 passed / 107 skipped / 0 failed**（8:27）；`check_fact_gates.py`
-> **ALL PASS**；black／isort／flake8 乾淨。報告：`docs/AUDIT_REPORT_2026-11-05.md`。
-
+> **沒有改**：門檻、評測題、`held-out`、量測定義；核心分仍 **0.00/10**、系統分仍
+> **6.41**（這輪只碰裝置與一個表徵 bug）。 **驗收**：全量
+> `pytest tests/ apps/backend/tests/` = **9,248 passed / 107 skipped / 0
+> failed**（8:27）；`check_fact_gates.py` **ALL
+> PASS**；black／isort／flake8 乾淨。報告：`docs/AUDIT_REPORT_2026-11-05.md`。
 
 ### JavaScript/TypeScript
 

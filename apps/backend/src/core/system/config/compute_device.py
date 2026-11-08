@@ -82,6 +82,21 @@ def move_batch_to_device(batch: Any, device: str) -> Any:
         return batch
 
 
+def move_model_to_device(model: Any, device: str) -> Any:
+    """Move a torch model to ``device``; returns the model (``Module.to`` is in place).
+
+    Kept next to :func:`move_batch_to_device` so model and inputs move together.
+    The indirection is not cosmetic: transformers 5.x decorates
+    ``PreTrainedModel.to`` with a ``ParamSpec`` that binds the first parameter
+    to ``PreTrainedModel``, so mypy reads the device string as that parameter
+    and reports a false ``arg-type`` error at every call site.  ``model`` is
+    ``Any`` here, so the same method is called without the bogus signature.
+    """
+    if model is None or device == "cpu":
+        return model
+    return model.to(device)
+
+
 def resolve_torch_device(wanted: str = "auto", torch_module: Optional[Any] = None) -> str:
     """Pick a torch device: explicit name when usable, else ``xpu``>``cuda``>``cpu``.
 

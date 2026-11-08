@@ -68,7 +68,10 @@ def _lazy_init_clip():
     try:
         import torch
         import transformers
-        from core.system.config.compute_device import resolve_feature_device
+        from core.system.config.compute_device import (
+            move_model_to_device,
+            resolve_feature_device,
+        )
         from transformers import CLIPModel, CLIPProcessor
 
         model_name = "openai/clip-vit-base-patch32"
@@ -84,7 +87,7 @@ def _lazy_init_clip():
         # because an accelerator exists.
         _CLIP_DEVICE = resolve_feature_device("semantic_visual", "auto", torch_module=torch)
         if _CLIP_DEVICE != "cpu":
-            _CLIP_MODEL = _CLIP_MODEL.to(_CLIP_DEVICE)
+            _CLIP_MODEL = move_model_to_device(_CLIP_MODEL, _CLIP_DEVICE)
         _CLIP_AVAILABLE = True
         logger.info("SemanticVisualEncoder: CLIP loaded (%s on %s)", model_name, _CLIP_DEVICE)
     except Exception as e:

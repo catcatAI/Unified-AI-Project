@@ -9,7 +9,6 @@ that arrive from outside the module.
 from __future__ import annotations
 
 import pytest
-
 from core.life.al_learning_gate import (
     MAX_GAIN,
     MIN_GAIN,

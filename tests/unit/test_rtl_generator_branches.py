@@ -12,7 +12,12 @@ from __future__ import annotations
 
 import pytest
 from ai.hardware.mvu_reference import MvuReferenceModel
-from ai.hardware.rtl_generator import _integer, generate_mvu_header_projection
+from ai.hardware.rtl_generator import (
+    _extract_address_ranges,
+    _extract_declared,
+    _integer,
+    generate_mvu_header_projection,
+)
 from ai.hardware.standards_catalog import search_standards
 
 
@@ -57,6 +62,20 @@ def test_header_requires_both_sections() -> None:
         generate_mvu_header_projection({"declared": {}})
     with pytest.raises(ValueError, match="sections are required"):
         generate_mvu_header_projection({"address_map": {}})
+
+
+def test_section_extractors_guard_themselves_too() -> None:
+    """The helpers are private but must not trust a caller that skipped the gate.
+
+    ``generate_mvu_header_projection`` checks both sections first, so these two
+    branches are only reachable through a direct call. They exist so a future
+    caller cannot feed ``None`` into the field readers; testing them directly
+    keeps the defense alive instead of dead code.
+    """
+    with pytest.raises(ValueError, match="sections are required"):
+        _extract_declared({})
+    with pytest.raises(ValueError, match="sections are required"):
+        _extract_address_ranges({"declared": {}})
 
 
 @pytest.mark.parametrize(

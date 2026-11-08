@@ -56,15 +56,12 @@
    維度永遠不可能被對話記憶餵高。
 2. **學習宣稱必須有刪除來源的證據**：`evidence.source_deleted` 必須是
    `true`，且探針要真的重建「只留參數」的狀態再問一次。沒有這一步的探針，測的是儲存。
-3. **有可生成後端時，記憶只發布證據、不說話**：判定只有一份
-   （`services/llm/generation_gate.py`），回憶／教學確認／使用者事實／HAM
-   記憶模板一律把原句放進 context 的 `memory_evidence` 並回 `None`，由模型
-   用自己的話回答（`services/llm/memory_evidence.py`＋
-   `prompt_builder._append_memory_evidence`）。沒有生成後端（native）時才由
-   記憶層直接回答，且標 `source=memory`。理由：罐頭句與改寫過的模型回覆在
-   畫面上長得一樣，但只有後者是「這一刻產生的」；讓前者先答，記憶分就會被
-   讀成對話能力。同樣的讓位也套用在知識層的**因果問句**（「為什麼天空是藍
-   的？」不能拿屬性值 `blue` 當解釋）。
+3. **有可生成後端時，記憶只發布證據、不說話**：判定只有一份（`services/llm/generation_gate.py`），回憶／教學確認／使用者事實／HAM 記憶模板一律把原句放進 context 的
+   `memory_evidence` 並回
+   `None`，由模型用自己的話回答（`services/llm/memory_evidence.py`＋
+   `prompt_builder._append_memory_evidence`）。沒有生成後端（native）時才由記憶層直接回答，且標
+   `source=memory`。理由：罐頭句與改寫過的模型回覆在畫面上長得一樣，但只有後者是「這一刻產生的」；讓前者先答，記憶分就會被讀成對話能力。同樣的讓位也套用在知識層的**因果問句**（「為什麼天空是藍的？」不能拿屬性值
+   `blue` 當解釋）。
 
 ## 反模式（看到就退件）
 

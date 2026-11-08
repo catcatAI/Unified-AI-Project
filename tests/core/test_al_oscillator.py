@@ -17,7 +17,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from core.life.al_oscillator import (
     DEFAULT_MU,
     MAX_CATCHUP_S,

@@ -10,7 +10,6 @@ pattern -- and that an absent or malformed modulation changes nothing.
 from __future__ import annotations
 
 import pytest
-
 from ai.garden.snn_core import TensorSNNCore
 from core.life.al_snn_modulation import MAX_MULTIPLIER, MIN_MULTIPLIER, modulate
 

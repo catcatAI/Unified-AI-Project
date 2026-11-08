@@ -45,6 +45,11 @@ from typing import Any
 
 EPS = 1e-6
 
+#: Hard stop for ``run_until_tokens``: a simulator that never finishes a token
+#: must fail loudly instead of spinning forever. Named (not a literal) so the
+#: runaway path itself can be tested without 10 million iterations.
+RUN_GUARD = 10_000_000
+
 
 # -----------------------------------------------------------------------------
 # GGUF structure reader (v3, verified: google q4_0 snapshot has NO padding
@@ -114,14 +119,6 @@ def _gguf_tile_nbytes(tensors: list[TensorInfo], data_start: int, file_size: int
     accounted = (file_size - data_start) if tensors else 0
     if tensors and sum(t.nbytes for t in tensors) != accounted:
         raise ValueError("tensor offsets do not tile the data section exactly")
-
-
-def _gguf_read_header(f, rf) -> tuple[int, int]:
-    """Read GGUF magic/version/counts; returns (n_tensors, n_kv)."""
-    magic, _version, n_tensors, n_kv = rf("IIQQ")
-    if magic != 0x46554747:
-        raise ValueError(f"not a GGUF file: magic={magic:#x}")
-    return n_tensors, n_kv
 
 
 def read_gguf_structure(path: str | Path) -> dict[str, Any]:
@@ -980,7 +977,7 @@ class Engine:
         while self.tokens_done < n_tokens:
             self.step()
             guard += 1
-            if guard > 10_000_000:
+            if guard > RUN_GUARD:
                 raise RuntimeError("runaway simulation (>10M hops without token completion)")
 
     # -- digest / report ------------------------------------------------------

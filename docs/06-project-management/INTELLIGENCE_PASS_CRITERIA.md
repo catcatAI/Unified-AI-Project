@@ -31,11 +31,11 @@
 | **tools** 工具與行動               | BFCL V4（Patil et al., ICML 2025, [leaderboard](https://gorilla.cs.berkeley.edu/leaderboard)，2026-10-22） | Overall **SOTA 77.5%**（Claude Opus 4.5）；中位數約 45%                  | R3：0.7 × 77.5% = **54.2%**                      | 0.0%       | ❌ FAIL |
 
 實測值來源：`scripts/report_intelligence.py`（快照
-`intelligence_report.json`）。**系統分 6.41/10，達成的階梯是 L2**（L1／L2
-的關鍵維度逐項過門檻：`paraphrase` 75.0% ≥ 70%、`dialogue` 87.6% ≥
-44%、`boundary` 88.9% ≥ 53.3%）；唯一未達是 `tools` 0.0% < 54.2%。**核心分仍是
-0.00/10、核心階梯仍是 L0**——上面每一列的正確答案都是查表／計算／分類器／模板產生，沒有一個是
-SNN/LLM 生成（見 `INTELLIGENCE_ASSESSMENT.md` 的 provenance 一節）。
+`intelligence_report.json`）。**系統分 6.41/10，達成的階梯是 L2**（L1／L2的關鍵維度逐項過門檻：`paraphrase`
+75.0% ≥ 70%、`dialogue` 87.6% ≥ 44%、`boundary` 88.9% ≥ 53.3%）；唯一未達是
+`tools` 0.0% <
+54.2%。**核心分仍是 0.00/10、核心階梯仍是 L0**——上面每一列的正確答案都是查表／計算／分類器／模板產生，沒有一個是SNN/LLM 生成（見
+`INTELLIGENCE_ASSESSMENT.md` 的 provenance 一節）。
 
 facts 的 53.3% 不是靠改門檻：`knowledge` 從 20% 升到 53.3%（8/15），方法是把
 **公開語料**（Simple English Wikipedia dump，CC BY-SA）索引成離線 SQLite
@@ -54,13 +54,12 @@ FTS5（`scripts/download_knowledge_corpus.py` →
 100%**（這是詞彙回想＋組合，不是泛化）， **沒教過的詞、開發診斷 =
 87.5%**（用來決定要補哪些一般同義詞，偏樂觀）。三者一起看才誠實——只報 100% 就是拿回想冒充泛化。
 
-**2026-10-31 的 50% → 75% 沒有動門檻、也沒有在 `heldout_final` 上調參**：失敗的 28 題
-100% 集中在兩個說法（`outranks`／`is outshone by`），根因是既有的被動反轉反的是
-「編碼器的猜測」——`outshone` 在編碼器裡本來就讀成 lesser，反轉後變 greater（雙重否定），
-`beaten` 讀成 greater，反轉才剛好對。同一個構句的對錯取決於編碼器猜哪一邊，是實作 bug。
-修法是被動語態由**文法**決定方向（`A is <verb> by B` → A <
-B），課程對齊過的被動片語仍保留教過的方向。剩下 14 題是 `outranks`（主動語態的未知動詞，沒有文法線索），
-照實記為失敗。
+**2026-10-31 的 50% → 75% 沒有動門檻、也沒有在 `heldout_final`
+上調參**：失敗的 28 題 100% 集中在兩個說法（`outranks`／`is outshone by`），根因是既有的被動反轉反的是「編碼器的猜測」——`outshone`
+在編碼器裡本來就讀成 lesser，反轉後變 greater（雙重否定）， `beaten`
+讀成 greater，反轉才剛好對。同一個構句的對錯取決於編碼器猜哪一邊，是實作 bug。修法是被動語態由**文法**決定方向（`A is <verb> by B`
+→ A < B），課程對齊過的被動片語仍保留教過的方向。剩下 14 題是
+`outranks`（主動語態的未知動詞，沒有文法線索），照實記為失敗。
 
 ## 三、協定等價性（必須說清楚，否則就是另一種自欺）
 

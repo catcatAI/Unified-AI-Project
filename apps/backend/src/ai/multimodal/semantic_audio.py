@@ -70,7 +70,10 @@ def _lazy_init_whisper():
     try:
         import torch
         import transformers
-        from core.system.config.compute_device import resolve_feature_device
+        from core.system.config.compute_device import (
+            move_model_to_device,
+            resolve_feature_device,
+        )
         from transformers import WhisperFeatureExtractor, WhisperModel, WhisperProcessor
 
         model_name = "openai/whisper-tiny"  # Smallest Whisper for speed
@@ -88,7 +91,7 @@ def _lazy_init_whisper():
         # configs/system/compute.default.yaml).
         _WHISPER_DEVICE = resolve_feature_device("semantic_audio", "auto", torch_module=torch)
         if _WHISPER_DEVICE != "cpu":
-            _WHISPER_MODEL = _WHISPER_MODEL.to(_WHISPER_DEVICE)
+            _WHISPER_MODEL = move_model_to_device(_WHISPER_MODEL, _WHISPER_DEVICE)
         _WHISPER_AVAILABLE = True
         logger.info("SemanticAudioEncoder: Whisper loaded (%s on %s)", model_name, _WHISPER_DEVICE)
     except Exception as e:

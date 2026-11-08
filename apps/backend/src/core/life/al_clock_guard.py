@@ -183,12 +183,13 @@ class ClockGuard:
                 rate=None,
             )
 
-        rate = observed / expected if expected > 0 else None
+        # ``expected <= 0`` returned above, so the ratio always exists here.
+        rate = observed / expected
         disagreement = observed - expected
         tolerance = max(self._abs_tol, self._rel_tol * expected)
 
         reference = self._drift if self._drift is not None else 1.0
-        deviation = abs((rate or 0.0) - reference)
+        deviation = abs(rate - reference)
         suspicious = abs(disagreement) > tolerance or deviation > self._rel_tol
 
         if suspicious:

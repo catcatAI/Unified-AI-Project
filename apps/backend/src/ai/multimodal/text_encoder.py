@@ -81,7 +81,10 @@ class TextEncoder:
             return None, None
         try:
             import torch
-            from core.system.config.compute_device import resolve_feature_device
+            from core.system.config.compute_device import (
+                move_model_to_device,
+                resolve_feature_device,
+            )
             from transformers import CLIPModel, CLIPProcessor
 
             model_name = "openai/clip-vit-base-patch32"
@@ -97,7 +100,7 @@ class TextEncoder:
             # feature switch as the visual encoder (compute.semantic_visual).
             self._device = resolve_feature_device("semantic_visual", "auto", torch_module=torch)
             if self._device != "cpu":
-                self._model = self._model.to(self._device)
+                self._model = move_model_to_device(self._model, self._device)
             self._clip_available = True
             logger.info("TextEncoder: CLIP loaded (%s on %s)", model_name, self._device)
         except Exception as e:

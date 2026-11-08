@@ -10,7 +10,6 @@ string must change nothing).
 from __future__ import annotations
 
 import pytest
-
 from core.life.al_generation_params import (
     TEMPERATURE_MAX,
     TEMPERATURE_MIN,

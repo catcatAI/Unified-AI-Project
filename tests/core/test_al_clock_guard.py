@@ -16,7 +16,6 @@ What is pinned here is the *discrimination*, not the plumbing:
 from __future__ import annotations
 
 import pytest
-
 from core.life.al_clock_guard import ClockGuard
 
 

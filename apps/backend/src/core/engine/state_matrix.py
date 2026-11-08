@@ -60,6 +60,16 @@ from .state_matrix_types import AllocateDecision, AxisSemanticAnchor, DimensionS
 # =============================================================================
 # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
 # =============================================================================
+def _observed_pairs(temporal: TemporalState, window: int) -> "set[tuple[str, str]]":
+    """Every ``(axis, field)`` pair seen in the last ``window`` snapshots."""
+    pairs: set[tuple[str, str]] = set()
+    for snapshot in temporal.history[-window:]:
+        for axis_name, values in snapshot.items():
+            if isinstance(values, dict):
+                pairs.update((axis_name, field_name) for field_name in values)
+    return pairs
+
+
 def compute_zeta_values(
     temporal: TemporalState, window: int = 50, anomaly_threshold: float = 2.0
 ) -> Dict[str, float]:
@@ -88,12 +98,7 @@ def compute_zeta_values(
     """
     if temporal.size() < 2:
         return {}
-    pairs: set[tuple[str, str]] = set()
-    for snapshot in temporal.history[-window:]:
-        for axis_name, values in snapshot.items():
-            if isinstance(values, dict):
-                for field_name in values:
-                    pairs.add((axis_name, field_name))
+    pairs = _observed_pairs(temporal, window)
     total = anomalous = stable = moving = 0
     for axis_name, field_name in sorted(pairs):
         result = temporal.trend(axis_name, field_name, window=window)

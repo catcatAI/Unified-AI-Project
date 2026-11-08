@@ -110,6 +110,12 @@ class TokenConfig:
     min_count: int = 2
     max_vocab: int = 12000
 
+    def __post_init__(self) -> None:
+        # Validate at config creation, not inside the net factory: a bad
+        # readout is a caller error and should fail before any weights exist.
+        if self.readout not in ("spike", "membrane"):
+            raise ValueError(f"readout must be 'spike' or 'membrane', got {self.readout!r}")
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
@@ -414,8 +420,6 @@ def _make_net(torch: Any, pad_id: int = 0) -> Any:
             super().__init__()
             self.cfg = cfg
             self.n_layers = max(1, int(cfg.layers))
-            if cfg.readout not in ("spike", "membrane"):
-                raise ValueError(f"readout must be 'spike' or 'membrane', got {cfg.readout!r}")
             # padding_idx must be the *real* PAD id: CharVocab/TokenVocab
             # append specials after the content tokens, so PAD is not 0 —
             # hard-coding 0 used to freeze the most frequent token's embedding
@@ -482,8 +486,10 @@ def _make_net(torch: Any, pad_id: int = 0) -> Any:
             # through the embedding and the head returns (batch, 1, vocab).
             x = self.embed(token_ids.reshape(-1))
             for _ in range(max(1, int(self.cfg.timesteps))):
+                # ``drive`` carries the previous layer's spikes so layer 0
+                # (fed by the embedding) needs no per-layer conditional.
+                drive = x
                 for layer in range(self.n_layers):
-                    drive = x if layer == 0 else spk[layer - 1]
                     skip = self.w_skip[layer](x) if layer else 0.0
                     mem[layer] = (
                         leak * mem[layer]
@@ -492,11 +498,11 @@ def _make_net(torch: Any, pad_id: int = 0) -> Any:
                         + skip
                     )
                     spk[layer] = self._spike(mem[layer] - torch.abs(self.threshold))
-            out = (
-                mem[self.n_layers - 1] if self.cfg.readout == "membrane" else spk[self.n_layers - 1]
-            )
+                    drive = spk[layer]
             if self.cfg.readout == "membrane":
-                out = self.out_norm(out)
+                out = self.out_norm(mem[self.n_layers - 1])
+            else:
+                out = spk[self.n_layers - 1]
             return out, (mem, spk)
 
         def advance(self, token_ids: Any, state: Any) -> Any:
@@ -821,13 +827,13 @@ class TokenSNN:
             captured.append((x.detach(), out.detach()))
             return out
 
-        net._spike = spy  # type: ignore[method-assign]
+        net._spike = spy
         try:
             ids, _mask, _cuts = self.make_batch(list(pairs[:n]))
             with torch.no_grad():
                 net(ids.to(self.device))
         finally:
-            net._spike = original  # type: ignore[method-assign]
+            net._spike = original
             if was_training:
                 net.train()
         layers = int(net.n_layers)
@@ -858,10 +864,10 @@ class TokenSNN:
                 }
             )
         rates = [row["spike_rate"] for row in out["per_layer"]]
-        sensitive = [row["sensitive"] for row in out["per_layer"]]
+        sensitive_fracs = [row["sensitive"] for row in out["per_layer"]]
         if min(rates) < 0.01 or max(rates) > 0.99:
             out["verdict"] = "dead-or-saturated"
-        elif min(sensitive) < 0.01:
+        elif min(sensitive_fracs) < 0.01:
             out["verdict"] = "firing-without-gradient"
         else:
             out["verdict"] = "alive"
@@ -928,6 +934,21 @@ class TokenSNN:
                         weight.mul_(gain_cap / radius)
 
     # -- training -----------------------------------------------------------
+    def _batch_loss(self, chunk: Sequence[Tuple[str, str]], tail_weight: float, p_ss: float) -> Any:
+        """Loss for one batch, weighted/scheduled-sampling only when requested.
+
+        Kept out of ``train_on`` so the epoch loop reads as one story; the
+        plain path (no tail weight, no scheduled sampling) is the common one
+        and stays the cheap one.
+        """
+        if tail_weight == 1.0 and p_ss == 0.0:
+            ids, mask, _ = self.make_batch(chunk)
+            return self.loss(ids, mask)
+        ids, mask, _, weights = self.make_batch_weighted(chunk, tail_weight)
+        if p_ss > 0.0:
+            return self.loss(self._ss_inputs(ids, mask, p_ss), mask, weights, targets=ids)
+        return self.loss(ids, mask, weights)
+
     def train_on(
         self,
         pairs: Sequence[Tuple[str, str]],
@@ -1002,17 +1023,7 @@ class TokenSNN:
             for start in range(0, len(shuffled), batch_size):
                 chunk = [pairs[i] for i in shuffled[start : start + batch_size]]
                 opt.zero_grad()
-                if tail_weight == 1.0 and p_ss == 0.0:
-                    ids, mask, _ = self.make_batch(chunk)
-                    loss = self.loss(ids, mask)
-                else:
-                    ids, mask, _, weights = self.make_batch_weighted(chunk, tail_weight)
-                    if p_ss > 0.0:
-                        loss = self.loss(
-                            self._ss_inputs(ids, mask, p_ss), mask, weights, targets=ids
-                        )
-                    else:
-                        loss = self.loss(ids, mask, weights)
+                loss = self._batch_loss(chunk, tail_weight, p_ss)
                 if not bool(torch.isfinite(loss)):
                     # one bad batch must not poison the weights for the epochs
                     # that follow: drop the step instead of stepping into NaN
@@ -1032,34 +1043,53 @@ class TokenSNN:
                 "skipped": skipped,
                 "rolled_back": False,
             }
-            loss_now = float(row["loss"])
             if guard:
-                finite = math.isfinite(loss_now)
-                runaway = (
-                    finite and math.isfinite(best_loss) and loss_now > diverge_factor * best_loss
+                best_loss, best_state, lr_scale, opt = self._guard_epoch(
+                    row, best_loss, best_state, steps, lr, lr_scale, min_lr, diverge_factor, opt
                 )
-                if not finite or runaway:
-                    row["rolled_back"] = True
-                    row["rollback_from"] = None if not finite else round(loss_now, 4)
-                    if best_state is not None:
-                        self.net.load_state_dict(best_state)
-                    # a stale Adam state would step the restored weights with the
-                    # momentum of the diverged ones, so the optimiser is rebuilt
-                    lr_scale = max(min_lr / max(1e-12, lr), lr_scale * 0.5)
-                    opt = torch.optim.Adam(self.net.parameters(), lr=max(min_lr, lr * lr_scale))
-                    row["loss"] = best_loss if math.isfinite(best_loss) else loss_now
-                else:
-                    best_loss = min(best_loss, loss_now)
-                    if steps:
-                        best_state = {
-                            k: v.detach().clone() for k, v in self.net.state_dict().items()
-                        }
             history.append(row)
             if log is not None:
                 log(row)
             if on_epoch is not None:
                 on_epoch(row)
         return history
+
+    def _guard_epoch(
+        self,
+        row: Dict[str, Any],
+        best_loss: float,
+        best_state: Optional[Dict[str, Any]],
+        steps: int,
+        lr: float,
+        lr_scale: float,
+        min_lr: float,
+        diverge_factor: float,
+        opt: Any,
+    ) -> "tuple[float, Optional[Dict[str, Any]], float, Any]":
+        """Roll back a diverged epoch; returns (best_loss, best_state, lr_scale, opt).
+
+        The stability rule in ``train_on``: an epoch may oscillate, but a
+        non-finite loss or one above ``diverge_factor`` times the best restores
+        the best finite weights, halves the learning rate and rebuilds the
+        optimiser (a stale Adam state would step the restored weights with the
+        diverged ones' momentum). The caller keeps the history row.
+        """
+        loss_now = float(row["loss"])
+        finite = math.isfinite(loss_now)
+        runaway = finite and math.isfinite(best_loss) and loss_now > diverge_factor * best_loss
+        if not finite or runaway:
+            row["rolled_back"] = True
+            row["rollback_from"] = None if not finite else round(loss_now, 4)
+            if best_state is not None:
+                self.net.load_state_dict(best_state)
+            lr_scale = max(min_lr / max(1e-12, lr), lr_scale * 0.5)
+            opt = self.torch.optim.Adam(self.net.parameters(), lr=max(min_lr, lr * lr_scale))
+            row["loss"] = best_loss if math.isfinite(best_loss) else loss_now
+            return best_loss, best_state, lr_scale, opt
+        best_loss = min(best_loss, loss_now)
+        if steps:
+            best_state = {k: v.detach().clone() for k, v in self.net.state_dict().items()}
+        return best_loss, best_state, lr_scale, opt
 
     # -- inference ----------------------------------------------------------
     def generate(

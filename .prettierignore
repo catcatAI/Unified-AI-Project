@@ -73,6 +73,11 @@ models/angela_clay/gallery.html
 # 執行期變異資料檔（runtime json.dump 擁有格式；重排後下次測試又髒）
 apps/backend/src/ai/ed3n/config/classifier_training.json
 
+# 由 scripts/report_intelligence.py 產生（單一權威總分報告）——
+# json.dump 擁有格式（陣列逐項展開），prettier 會把短陣列收成一行，
+# 每次重跑 `--from-cache` 就變髒，diff 只是排版、不是量測變化
+docs/06-project-management/intelligence_report.json
+
 # 特定格式文件
 *.min.js
 *.min.css

@@ -177,6 +177,24 @@ def _topk_indices(arr, k: int):
     return np.argpartition(arr, -k)[-k:]
 
 
+def _plasticity_lr(lr: float, plasticity: Any) -> float:
+    """Scale ``lr`` by the AL phase gain; garbage/None/bool leaves it unchanged.
+
+    Kept module-level (not inside ``hebbian_update``) so the normalisation rule
+    is stated once: a caller that forwards a missing or non-finite value must
+    behave exactly as the unwired path.
+    """
+    if plasticity is None or isinstance(plasticity, bool):
+        return lr
+    try:
+        gain = float(plasticity)
+    except (TypeError, ValueError):
+        return lr
+    if not math.isfinite(gain) or gain <= 0.0:
+        return lr
+    return lr * gain
+
+
 def _save_checkpoint(path: str, state: dict) -> None:
     """Save SNN checkpoint — handles both numpy and torch tensors.
 
@@ -863,18 +881,7 @@ class TensorSNNCore:
         if not input_keys or not target_keys:
             return 0.0
 
-        # Normalize unconditionally: None, bools and garbage all collapse to 1.0
-        # so a caller that forwards a missing value still behaves exactly as before.
-        if plasticity is None or isinstance(plasticity, bool):
-            plasticity = 1.0
-        else:
-            try:
-                gain = float(plasticity)
-            except (TypeError, ValueError):
-                gain = 1.0
-            plasticity = gain if math.isfinite(gain) and gain > 0.0 else 1.0
-        if plasticity != 1.0:
-            lr = lr * plasticity
+        lr = _plasticity_lr(lr, plasticity)
 
         # Register any unseen keys first (preserves legacy auto-registration),
         # then map to row/col indices, vectorized.
@@ -893,43 +900,9 @@ class TensorSNNCore:
 
         # _register_key guarantees _W is initialized
         assert self._W is not None
-
-        # Build the (len(src) × len(tgt)) confidence-gate matrix.
-        # gate[i, j] = conf_i * conf_j
-        xp = _zeros  # backend-agnostic helper; use numpy/torch arrays below
-        import numpy as np
-
-        is_torch = self._W.__class__.__module__.startswith("torch")
-        if is_torch:
-            xp, _ = _get_backend()
-            src_t = xp.as_tensor(src_idx, dtype=xp.int64, device=self.device)
-            tgt_t = xp.as_tensor(tgt_idx, dtype=xp.int64, device=self.device)
-            src_a = self._W.new_tensor(src_conf, dtype=self._W.dtype)
-            tgt_a = self._W.new_tensor(tgt_conf, dtype=self._W.dtype)
-            gate = src_a.unsqueeze(1) * tgt_a.unsqueeze(0)  # [S, T]
-            # index_select rows then columns: guaranteed [S, T].
-            old_patch = self._W.index_select(0, src_t).index_select(1, tgt_t)
-            delta_patch = lr * gate * (target_strength - old_patch)
-            new_patch = old_patch + delta_patch
-            new_patch = new_patch.clamp(min=0.0, max=1.0)
-            # Cartesian-pair write-back: broadcast src rows × tgt cols.
-            rr, cc = xp.meshgrid(src_t, tgt_t, indexing="ij")
-            self._W[rr, cc] = new_patch
-            self._W[cc, rr] = new_patch
-            delta_total = float(delta_patch.abs().sum())
-            touched_rows = set(src_idx) | set(tgt_idx)
-        else:
-            gate = (
-                np.asarray(src_conf, dtype=np.float32)[:, None]
-                * np.asarray(tgt_conf, dtype=np.float32)[None, :]
-            )
-            old_patch = self._W[np.ix_(src_idx, tgt_idx)]
-            delta_patch = lr * gate * (target_strength - old_patch)
-            new_patch = np.clip(old_patch + delta_patch, 0.0, 1.0)
-            self._W[np.ix_(src_idx, tgt_idx)] = new_patch
-            self._W[np.ix_(tgt_idx, src_idx)] = new_patch
-            delta_total = float(np.abs(delta_patch).sum())
-            touched_rows = set(src_idx) | set(tgt_idx)
+        delta_total, touched_rows = self._hebbian_patch(
+            src_idx, tgt_idx, src_conf, tgt_conf, lr, target_strength
+        )
 
         for i in src_idx:
             self._touch(i)
@@ -950,20 +923,80 @@ class TensorSNNCore:
 
         # Targeted decay: only decay rows that were touched (O(nnz_per_row))
         if weight_decay > 0:
-            for row in touched_rows:
-                row_data = self._W[row, :]
-                mask = row_data > 0.0
-                row_data[mask] = row_data[mask] * (1.0 - weight_decay)
-                # Prune near-zero in this row only, keeping what this call wrote.
-                prune = row_data < 0.01
-                keep = protected.get(row)
-                if keep:
-                    for col in keep:
-                        prune[col] = False
-                row_data[prune] = 0.0
+            self._decay_touched_rows(touched_rows, protected, weight_decay)
 
         self.total_hebbian_updates += 1
         return delta_total
+
+    def _hebbian_patch(
+        self,
+        src_idx: List[int],
+        tgt_idx: List[int],
+        src_conf: List[float],
+        tgt_conf: List[float],
+        lr: float,
+        target_strength: float,
+    ) -> "tuple[float, set]":
+        """Write one symmetric Oja patch over the (|src| x |tgt|) block.
+
+        Both backends compute the same confidence-gated patch; only the
+        indexing differs (``index_select``/``meshgrid`` vs ``np.ix_``).
+        Returns (total absolute delta, touched row/col ids).
+        """
+        W = self._W
+        if W is None:  # caller asserts it exists; guard keeps this helper total
+            return 0.0, set()
+        if W.__class__.__module__.startswith("torch"):
+            xp, _ = _get_backend()
+            src_t = xp.as_tensor(src_idx, dtype=xp.int64, device=self.device)
+            tgt_t = xp.as_tensor(tgt_idx, dtype=xp.int64, device=self.device)
+            src_a = W.new_tensor(src_conf, dtype=W.dtype)
+            tgt_a = W.new_tensor(tgt_conf, dtype=W.dtype)
+            gate = src_a.unsqueeze(1) * tgt_a.unsqueeze(0)  # [S, T]
+            # index_select rows then columns: guaranteed [S, T].
+            old_patch = W.index_select(0, src_t).index_select(1, tgt_t)
+            delta_patch = lr * gate * (target_strength - old_patch)
+            new_patch = old_patch + delta_patch
+            new_patch = new_patch.clamp(min=0.0, max=1.0)
+            # Cartesian-pair write-back: broadcast src rows × tgt cols.
+            rr, cc = xp.meshgrid(src_t, tgt_t, indexing="ij")
+            W[rr, cc] = new_patch
+            W[cc, rr] = new_patch
+            return float(delta_patch.abs().sum()), set(src_idx) | set(tgt_idx)
+
+        gate = (
+            np.asarray(src_conf, dtype=np.float32)[:, None]
+            * np.asarray(tgt_conf, dtype=np.float32)[None, :]
+        )
+        old_patch = W[np.ix_(src_idx, tgt_idx)]
+        delta_patch = lr * gate * (target_strength - old_patch)
+        new_patch = np.clip(old_patch + delta_patch, 0.0, 1.0)
+        W[np.ix_(src_idx, tgt_idx)] = new_patch
+        W[np.ix_(tgt_idx, src_idx)] = new_patch
+        return float(np.abs(delta_patch).sum()), set(src_idx) | set(tgt_idx)
+
+    def _decay_touched_rows(
+        self, touched_rows: set, protected: Dict[int, set], weight_decay: float
+    ) -> None:
+        """Decay only the touched rows; keep the entries this call wrote.
+
+        Pruning near-zero entries is part of the same pass (forgetting is
+        per-row here, which is what keeps it O(nnz)), but a column written by
+        the current update is exempt: see the note in ``hebbian_update``.
+        """
+        W = self._W
+        if W is None:
+            return
+        for row in touched_rows:
+            row_data = W[row, :]
+            mask = row_data > 0.0
+            row_data[mask] = row_data[mask] * (1.0 - weight_decay)
+            prune = row_data < 0.01
+            keep = protected.get(row)
+            if keep:
+                for col in keep:
+                    prune[col] = False
+            row_data[prune] = 0.0
 
     def apply_decay(self, weight_decay: float = 0.002) -> None:
         """Apply weight decay + pruning to ALL non-zero weights. O(nnz).

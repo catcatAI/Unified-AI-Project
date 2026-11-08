@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 import math
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 from services.llm.generation_gate import GENERATIVE_BACKENDS, generation_available
 from services.llm.memory_evidence import remember as remember_evidence
@@ -173,6 +173,33 @@ def _value_tokens(value: str) -> int:
     return len(re.findall(r"[A-Za-z0-9_']+|[\u4e00-\u9fff]", value or ""))
 
 
+def _first_stated_value(text: str) -> Optional[str]:
+    """The first value shape that matches ``text`` (order is the grammar's).
+
+    Each entry is ``(pattern, search_not_match, extract)``: the four copula /
+    verb shapes are anchored, the weekday and number shapes are searched
+    anywhere in the sentence. A shape that matches but yields nothing (e.g.
+    "我的名字是。") is skipped, exactly as the old if-chain did.
+    """
+    shapes: Tuple[Tuple["re.Pattern[str]", bool, Callable[["re.Match[str]"], str]], ...] = (
+        (_VALUE_COPULA, False, lambda m: m.group(1).strip().rstrip("的").strip()),
+        # "我養了一隻叫豆豆的狗" → the value is 豆豆, not 豆豆的狗.
+        (_VALUE_NAMED, False, lambda m: m.group(1).split("的", 1)[0].strip()),
+        (_VALUE_RESIDENCE, False, lambda m: m.group(1).strip()),
+        (_VALUE_WORKPLACE, False, lambda m: m.group(1).strip()),
+        (_WEEKDAY_VALUE, True, lambda m: m.group(1).strip()),
+        # The number shape has no capture group: the whole match is the value.
+        (_NUMBER_VALUE, True, lambda m: m.group(0).strip()),
+    )
+    for pattern, use_search, extract in shapes:
+        match = pattern.search(text) if use_search else pattern.match(text)
+        if match:
+            value = extract(match)
+            if value:
+                return value
+    return None
+
+
 def _statement_value(statement: str) -> Optional[str]:
     """The value a fact sentence states ("我的貓叫小花" → 小花).
 
@@ -182,31 +209,7 @@ def _statement_value(statement: str) -> Optional[str]:
     text = (statement or "").strip().rstrip("。！!?？")
     if not text:
         return None
-    value: Optional[str] = None
-    match = _VALUE_COPULA.match(text)
-    if match:
-        value = match.group(1).strip().rstrip("的").strip() or None
-    if value is None:
-        match = _VALUE_NAMED.match(text)
-        if match:
-            # "我養了一隻叫豆豆的狗" → the value is 豆豆, not 豆豆的狗.
-            value = match.group(1).split("的", 1)[0].strip() or None
-    if value is None:
-        match = _VALUE_RESIDENCE.match(text)
-        if match:
-            value = match.group(1).strip() or None
-    if value is None:
-        match = _VALUE_WORKPLACE.match(text)
-        if match:
-            value = match.group(1).strip() or None
-    if value is None:
-        match = _WEEKDAY_VALUE.search(text)
-        if match:
-            value = match.group(1).strip() or None
-    if value is None:
-        match = _NUMBER_VALUE.search(text)
-        if match:
-            value = match.group(0).strip() or None
+    value = _first_stated_value(text)
     if value is None or _value_tokens(value) > _VALUE_MAX_TOKENS:
         return None
     return value

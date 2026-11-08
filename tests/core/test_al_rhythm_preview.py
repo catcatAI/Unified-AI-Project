@@ -10,7 +10,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from core.life.al_oscillator import MAX_CATCHUP_S, Oscillator, RhythmTracker
 
 
