@@ -3,7 +3,7 @@
 ## Overview
 
 This directory contains the Unified AI Project test suite. Tests are organized
-by domain. **9,248 tests collected** (tests/; re-verified 2026-11-09).
+by domain. **9,253 tests collected** (tests/; re-verified 2026-11-09).
 
 Historical executed run (pre-cleanup, ~2026-07-14): 4,544 passed, 185 failed, 39
 errors, 85 skipped, 2 xfailed. The failures below explain the 185/39.
@@ -118,11 +118,11 @@ Key aspects to verify during testing:
 
 ## Current Test State
 
-**9,248 tests collected** (tests/; re-verified 2026-11-09 — same number as the
-header; domain breakdown below is a historical 2026-07 snapshot).
-`pytest tests/ apps/backend/tests/` = **9,567 passed / 107 skipped / 0 failed**
-(9m09s), so the increase over the previous 9,242/9,561 came from new AL protocol
-tests, not from a silently dropped file.
+**9,253 tests collected** (tests/; re-verified 2026-11-09 — same number as the
+header; domain breakdown below is a historical 2026-07 snapshot). The counts
+here and in `AGENTS.md` are written by `scripts/check_test_count.py --update`,
+not by hand — a hand-written copy is what made four files quote four different
+numbers.
 
 | Domain                       | Test Count |
 | ---------------------------- | ---------- |

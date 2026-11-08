@@ -26,6 +26,18 @@ The authoritative baseline lives in THIS file (one place, machine-readable).
 The documentation copies are kept in sync by ``--update``; a human editing
 one of them by hand is exactly the drift this tool removes.
 
+WHY the sync used to lie (fixed 2026-11-09)
+------------------------------------------
+The AGENTS.md pattern pinned the *line breaks* of the paragraph it rewrote. But
+``.prettierrc`` overrides ``*.md`` to ``proseWrap=always`` / width 80, so
+``prettier --write`` (a CI gate) rewraps that paragraph - after which the pattern
+matched nothing, ``_replace`` returned False, and ``--update`` still printed a
+tick. AGENTS.md sat at 9,242/9,561/10,004 while the tree measured
+9,248/9,567/10,010; ``tests/README.md``, ``docs/INVOCATION_MATRIX.md`` and
+``docs/status_matrix.yaml`` each froze on a different day. The pattern is now
+wrap-agnostic, ``tests/README.md`` is a target too, rewritten markdown is handed
+to prettier, and any target that fails to match exits 1 instead of passing.
+
 Usage
     python3 scripts/check_test_count.py --measure      # 量測並印出
     python3 scripts/check_test_count.py --update       # 量測＋同步基線與文件
@@ -55,9 +67,9 @@ SCOPES = {
 # Tolerance is proportional so the alarm keeps meaning "mass loss or
 # duplication" instead of "someone added a test file again".
 BASELINE = {
-    "tests": 8143,
-    "ci": 8906,
-    "full": 8906,
+    "tests": 9253,
+    "ci": 10015,
+    "full": 10015,
 }
 TOLERANCE = 0.15
 
@@ -98,16 +110,69 @@ def run_suite(scope: str) -> tuple[int, int, int]:
     )
 
 
-def _replace(path: Path, pattern: str, replacement: str) -> bool:
-    """Replace *pattern* in *path*; True when the file changed."""
+# The AGENTS.md note is prose that prettier rewraps (`.prettierrc` overrides *.md to
+# proseWrap=always / width 80). Pinning the line breaks in the pattern meant that the
+# first `prettier --write` turned every later `--update` into a silent no-op: the
+# numbers stayed at 9,242 / 9,561 / 10,004 while the tree measured 9,248 / 9,567 /
+# 10,010, and the tool still printed a tick. Match the sentence span, not the wrapping.
+AGENTS_NOTE = re.compile(
+    r"> that NOTE[.] The current authoritative count is.*?0 failed[*]{0,2}[)][.]", re.S
+)
+# tests/README.md quotes the same number twice (header + "Current Test State").
+README_COUNT = re.compile(r"\*\*[\d,]+ tests collected\*\* \(tests/; re-verified [\d-]+")
+
+
+def _replace(
+    path: Path,
+    pattern,
+    replacement: str,
+    label: str,
+    misses: list[str],
+    count: int = 1,
+) -> bool:
+    """Replace *pattern* in *path*; True when the file changed.
+
+    A target that no longer matches lands in *misses* instead of being skipped
+    silently: a miss used to look exactly like success, which is how the prose kept
+    four different counts at once. ``count=0`` replaces every occurrence.
+    """
     if not path.exists():
+        misses.append(f"{label}: {path} 不存在")
         return False
     text = path.read_text(encoding="utf-8")
-    new_text, count = re.subn(pattern, replacement, text, count=1, flags=re.S)
-    if not count or new_text == text:
+    if hasattr(pattern, "subn"):  # already compiled: it carries its own flags
+        new_text, hits = pattern.subn(replacement, text, count=count)
+    else:
+        new_text, hits = re.subn(pattern, replacement, text, count=count, flags=re.S)
+    if not hits:
+        misses.append(f"{label}: {path.name} 裡找不到要同步的句子（換行或措辭被改寫過？）")
+        return False
+    if new_text == text:
         return False
     path.write_text(new_text, encoding="utf-8")
     return True
+
+
+def _prettier_write(root: Path, paths: list[Path]) -> str:
+    """Hand the markdown wrapping back to the repo's prettier; note when it is absent.
+
+    ``prettier --check .`` is a CI gate, so prose we write must survive it. Left
+    unwrapped, the next prettier run changes the file behind the sync tool's back -
+    the loop that produced the drift in the first place.
+    """
+    md = [str(p) for p in paths if p.suffix == ".md" and p.exists()]
+    if not md:
+        return ""
+    proc = subprocess.run(
+        ["npx", "--no-install", "prettier", "--write", *md],
+        cwd=str(root),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return "⚠️  prettier 不可用：換行未重排，請自己跑 pnpm exec prettier --write <檔案>"
+    return ""
 
 
 def sync_docs(
@@ -116,28 +181,46 @@ def sync_docs(
     full_collected: int,
     passed: int,
     skipped: int,
-) -> list[str]:
-    """Write the measured numbers into every place that quotes them."""
+    root: Path | None = None,
+) -> tuple[list[str], list[str]]:
+    """Write the measured numbers into every place that quotes them.
+
+    Returns ``(changed, misses)``. A miss is a target whose sentence is gone - it is
+    reported by ``--update`` instead of passing as "nothing to change".
+    """
+    root = ROOT if root is None else root
     today = datetime.date.today().isoformat()
     changed: list[str] = []
+    misses: list[str] = []
 
     # 1. AGENTS.md — the authoritative-count note.
-    agents = ROOT / "AGENTS.md"
+    agents = root / "AGENTS.md"
     if _replace(
         agents,
-        r"> that NOTE\. The current authoritative count is \*\*[\d,]+ collected \(tests/\), 0\n"
-        r"> errors\*\* \(re-verified [\d-]+; full testpaths `pytest tests/\n"
-        r"> apps/backend/tests/ apps/game-rpg/tests/ scripts/`: \*\*[\d,]+ collected /\n"
-        r"> [\d,]+ passed / [\d,]+ skipped\*\*, 0 failed\)\.",
-        f"> that NOTE. The current authoritative count is **{tests_collected:,} collected (tests/), 0\n"
-        f"> errors** (re-verified {today}; full testpaths `pytest tests/\n"
-        f"> apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **{full_collected:,} collected /\n"
-        f"> {passed:,} passed / {skipped:,} skipped**, 0 failed).",
+        AGENTS_NOTE,
+        f"> that NOTE. The current authoritative count is **{tests_collected:,} collected"
+        f" (tests/), 0 errors** (re-verified {today}; full testpaths"
+        f" `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`:"
+        f" **{full_collected:,} collected / {passed:,} passed / {skipped:,} skipped**, 0 failed).",
+        "AGENTS.md",
+        misses,
     ):
         changed.append("AGENTS.md")
 
-    # 2. docs/status_matrix.yaml — the single source of truth for the matrix.
-    yaml_path = ROOT / "docs" / "status_matrix.yaml"
+    # 2. tests/README.md — the same number, quoted twice.
+    readme = root / "tests" / "README.md"
+    if _replace(
+        readme,
+        README_COUNT,
+        f"**{tests_collected:,} tests collected** (tests/; re-verified {today}",
+        "tests/README.md",
+        misses,
+        count=0,
+    ):
+        changed.append("tests/README.md")
+
+    # 3. docs/status_matrix.yaml — the single source of truth for the matrix.
+    yaml_path = root / "docs" / "status_matrix.yaml"
     if _replace(
         yaml_path,
         r"    evidence: [\d,]+ passed, [\d,]+ skipped, 0 failed（[^）]*）\n"
@@ -146,19 +229,23 @@ def sync_docs(
         f"（{today} 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋"
         f"apps/game-rpg/tests＋scripts）\n"
         f'    last_verified: "{today}"',
+        "docs/status_matrix.yaml",
+        misses,
     ):
         changed.append("docs/status_matrix.yaml")
 
-    # 3. docs/INVOCATION_MATRIX.md — the "run the whole suite" line.
-    inv = ROOT / "docs" / "INVOCATION_MATRIX.md"
+    # 4. docs/INVOCATION_MATRIX.md — the "run the whole suite" line.
+    inv = root / "docs" / "INVOCATION_MATRIX.md"
     if _replace(
         inv,
         r"python -m pytest tests/ -q --timeout=120          # → [\d,]+ (?:passed|collected), 0 failed",
         f"python -m pytest tests/ -q --timeout=120          # → {tests_collected:,} collected, 0 failed",
+        "docs/INVOCATION_MATRIX.md",
+        misses,
     ):
         changed.append("docs/INVOCATION_MATRIX.md")
 
-    return changed
+    return changed, misses
 
 
 def update_baseline(counts: dict[str, int]) -> None:
@@ -183,7 +270,7 @@ def main() -> int:
             print("❌ collection failed — refusing to write a bogus baseline")
             return 2
         passed, skipped, failed = run_suite("full")
-        changed = sync_docs(counts["tests"], counts["ci"], counts["full"], passed, skipped)
+        changed, misses = sync_docs(counts["tests"], counts["ci"], counts["full"], passed, skipped)
         update_baseline(counts)
         # The generated status matrix must follow the YAML it is generated
         # from — otherwise its freshness test fails and the numbers disagree
@@ -197,9 +284,19 @@ def main() -> int:
         )
         if gen.returncode == 0:
             changed.append("docs/STATUS_MATRIX.md (regenerated)")
+        prettier_note = _prettier_write(ROOT, [ROOT / name.split(" ")[0] for name in changed])
         print(f"✅ measured: {counts}")
         print(f"   full suite: {passed} passed, {skipped} skipped, {failed} failed")
         print(f"   docs synced: {changed or '（無變更）'}")
+        if prettier_note:
+            print(f"   {prettier_note}")
+        if misses:
+            # A target that no longer matches is the failure mode this tool exists to
+            # remove, so it must not exit 0: silent skips are how the docs drifted.
+            for miss in misses:
+                print(f"❌ {miss}")
+            print("   ❗ 有宣稱位置沒同步到——修好該檔案的句子，不要把手改當成同步")
+            return 1
         return 0 if failed == 0 else 1
 
     if args.measure:
