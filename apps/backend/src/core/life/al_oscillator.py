@@ -42,7 +42,7 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from core.data_config import get_data_root
 
@@ -58,6 +58,11 @@ DEFAULT_OMEGA = 0.30
 # 的步長積分，所以對外看起來「任意取樣頻率結果相同」。這條被
 # ``test_period_is_not_a_timestep_artifact`` 直接量。
 MAX_STEP_S = 0.02
+# 一次經驗事件能推多遠，以相平面速度 ``v`` 為單位（極限環的 v 約 ±2，所以 0.6
+# 是「推得動、但推不出環外」的量）。這是**推力上限**，不是隱藏時鐘：事件之間
+# 的間隔不改變推力，只改變它打在相位上的哪裡，而打在環的哪一段決定相位被推
+# 多少（PRC 不是常數，``scripts/al_rhythm_source.py`` 有量）。
+MAX_KICK = 0.6
 
 # 重啟後最多補算多少秒。超過就不假裝知道相位（stale=True），因為在
 # cpu 上積分一年既慢又沒有意義；寧可誠實標記，不要編一個相位出來。
@@ -202,6 +207,9 @@ class RhythmTracker:
             Path(path) if path is not None else get_data_root() / "life" / "al_rhythm_state.json"
         )
         self._osc = Oscillator(mu=mu, omega=omega, max_step=max_step)
+        # 尚未施加的經驗推力。**不落盤**：它是一次「在途」的脈衝，不是狀態；
+        # 重啟後損失的是那一次事件，不是相位（相位在 (x, v) 裡）。
+        self._kick = 0.0
         loaded = self._load()
         if loaded is None:
             self._osc.step(0.0)
@@ -240,7 +248,40 @@ class RhythmTracker:
         except OSError as exc:
             logger.warning("rhythm state not persisted: %s", exc)
 
+    def _apply_kick(self, osc: Oscillator) -> float:
+        """把待處理的推力當成一次速度脈衝施加，並清空。回傳施加量。"""
+        kick, self._kick = self._kick, 0.0
+        if kick:
+            # 用速度脈衝而不是持續的 drive：脈衝對數值積分是穩定的（不會因為
+            # 呼叫間隔長就變成「用力推很久」），而且它正是 PRC 量到的那種擾動。
+            osc.v += kick
+        return kick
+
     # --- 公開介面 -----------------------------------------------------------
+    def nudge(self, intensity: Any = 1.0) -> float:
+        """把一次經驗送進振盪器。回傳目前累積、尚未施加的推力。
+
+        在此之前，``RhythmTracker`` 的每一次 ``step`` 都是 ``drive=0``：輸出只是
+        時間的函數，跟一個時鐘等價（外部審查的 A1）。這個方法是那條通道的接點
+        ——事件進來推一次相位，於是「同樣的現在時刻、不同的過去事件」會給出
+        不同的狀態，測試 ``test_two_event_histories_give_two_states`` 直接量它。
+
+        壞輸入（``None``/字串/``nan``/``inf``/``bool``）靜默忽略，與
+        ``_plasticity_lr`` 同一套紀律：接不上就回到未接線的行為，不猜。
+        累積量夾在 ±``MAX_KICK``：連發事件不該一次把振盪器推出極限環。
+        """
+        if isinstance(intensity, bool) or intensity is None:
+            return self._kick
+        try:
+            value = float(intensity)
+        except (TypeError, ValueError):
+            return self._kick
+        if not math.isfinite(value):
+            return self._kick
+        with self._lock:
+            self._kick = max(-MAX_KICK, min(MAX_KICK, self._kick + value))
+            return self._kick
+
     def activation(self, now: Optional[float] = None) -> float:
         """推進到 ``now`` 並回傳 0..1 的內生驅動量。"""
         with self._lock:
@@ -253,6 +294,7 @@ class RhythmTracker:
                 dt = MAX_CATCHUP_S
                 self.stale = True
             self._last = now
+            self._apply_kick(self._osc)
             value = self._osc.step(dt)
             self._save()
             return value
@@ -285,8 +327,10 @@ class RhythmTracker:
                 omega=self._osc.omega,
                 max_step=self._osc.max_step,
                 x=self._osc.x,
-                v=self._osc.v,
+                v=self._osc.v + self._kick,
             )
+            # 待處理的推力照樣算進來（否則預覽會落後一次事件），但**不消耗**：
+            # 預覽是可丟棄的副本，真正施加留給 ``activation()``。
             return probe.step(min(dt, MAX_CATCHUP_S))
 
     def state(self) -> dict:
@@ -297,6 +341,7 @@ class RhythmTracker:
                 "at": self._last,
                 "phase": self._osc.phase,
                 "stale": self.stale,
+                "pending_kick": self._kick,
             }
 
 

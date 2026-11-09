@@ -9,7 +9,11 @@ things the measurement script relies on are pinned at the unit level:
 3. the phase is part of the persisted state, so a restart continues the cycle
    instead of restarting it;
 4. a clock that goes backwards does not rewind the oscillator, and a long gap is
-   reported as stale rather than silently inventing a phase.
+   reported as stale rather than silently inventing a phase;
+5. an experience event actually reaches the oscillator: the same clock with two
+   different event histories must produce two different states. Without that,
+   the module is only a clock (external review A1) and the AL ladder protocol
+   would be measuring a time feature while claiming to measure a state.
 """
 
 from __future__ import annotations
@@ -20,6 +24,7 @@ import pytest
 from core.life.al_oscillator import (
     DEFAULT_MU,
     MAX_CATCHUP_S,
+    MAX_KICK,
     Oscillator,
     RhythmTracker,
     get_rhythm_tracker,
@@ -159,3 +164,72 @@ class TestActivationPreview:
         first = tracker.activation_preview()
         tracker.activation(1020.0)
         assert tracker.activation_preview() != first
+
+
+class TestExperienceDrive:
+    """A1: the oscillator's drive used to be a constant 0.
+
+    Everything below is falsifiable in the way the measurement script is: change
+    the past event sequence and the present state must change with it.
+    """
+
+    def test_an_event_shifts_the_state(self, tmp_path):
+        quiet = RhythmTracker(tmp_path / "q.json", clock=lambda: 1000.0)
+        nudged = RhythmTracker(tmp_path / "n.json", clock=lambda: 1000.0)
+        nudged.nudge(0.5)
+        quiet.activation(1010.0)
+        nudged.activation(1010.0)
+        assert nudged.state()["x"] != quiet.state()["x"]
+        assert abs(nudged.state()["x"] - quiet.state()["x"]) > 1e-6
+
+    def test_two_event_histories_give_two_states(self, tmp_path):
+        """Same elapsed time, same clock, different history -> different state."""
+        one = RhythmTracker(tmp_path / "one.json", clock=lambda: 1000.0)
+        one.nudge(MAX_KICK)
+        one.activation(1010.0)
+
+        clock = [1000.0]
+        two = RhythmTracker(tmp_path / "two.json", clock=lambda: clock[0])
+        two.nudge(MAX_KICK / 2)
+        clock[0] = 1005.0
+        two.activation()
+        two.nudge(MAX_KICK / 2)
+        clock[0] = 1010.0
+        two.activation()
+
+        assert one.state()["x"] != two.state()["x"]
+
+    def test_a_kick_is_spent_once(self, tmp_path):
+        tracker = RhythmTracker(tmp_path / "r.json", clock=lambda: 1000.0)
+        assert tracker.nudge(0.4) == pytest.approx(0.4)
+        assert tracker.state()["pending_kick"] == pytest.approx(0.4)
+        tracker.activation(1010.0)
+        assert tracker.state()["pending_kick"] == 0.0
+        # A second, event-free step must not push again: compare with a twin that
+        # never received the event but did receive both steps.
+        twin = RhythmTracker(tmp_path / "t.json", clock=lambda: 1000.0)
+        twin.activation(1010.0)
+        tracker.activation(1020.0)
+        twin.activation(1020.0)
+        # The single kick moved the phase and the move persists; it is not
+        # reapplied on every later step (which would be an accelerating clock).
+        assert abs(tracker.state()["x"] - twin.state()["x"]) > 1e-6
+
+    def test_bad_input_is_ignored_and_kicks_are_clamped(self, tmp_path):
+        tracker = RhythmTracker(tmp_path / "r.json", clock=lambda: 1000.0)
+        for bad in (None, "abc", [], True, float("nan"), float("inf")):
+            assert tracker.nudge(bad) == 0.0
+        assert tracker.state()["pending_kick"] == 0.0
+        assert tracker.nudge(1e9) == pytest.approx(MAX_KICK)
+        assert tracker.nudge(-1e9) == pytest.approx(-MAX_KICK)
+
+    def test_preview_does_not_spend_the_pending_kick(self, tmp_path):
+        tracker = RhythmTracker(tmp_path / "r.json", clock=lambda: 1000.0)
+        tracker.activation(1005.0)
+        tracker.nudge(0.5)
+        first = tracker.activation_preview(1010.0)
+        second = tracker.activation_preview(1010.0)
+        assert first == pytest.approx(second)
+        assert tracker.state()["pending_kick"] == pytest.approx(0.5)
+        tracker.activation(1010.0)
+        assert tracker.state()["pending_kick"] == 0.0

@@ -383,3 +383,76 @@ class TestEventWritePath:
         assert len(recent_events()) == 3
         assert [e["payload"]["i"] for e in recent_events(limit=2)] == [1, 2]
         assert recent_events(limit=0) == []
+
+
+class TestEventDrivesRhythm:
+    """A1: §8 events must reach the oscillator, not just the buffer.
+
+    Before this, every ``RhythmTracker.step`` used ``drive=0``: the AL "state"
+    was a function of the clock alone, so a ladder experiment comparing it with
+    a time feature could not distinguish them. The contract here is one-way and
+    cheap: an event files a bounded pull, and the pull is spent exactly once.
+    """
+
+    class _Recorder:
+        def __init__(self):
+            self.kicks = []
+
+        def nudge(self, intensity=1.0):
+            self.kicks.append(float(intensity))
+            return 0.0
+
+        def activation(self, now=None):
+            return 0.5
+
+        def phase(self):
+            return 0.25
+
+    @pytest.fixture(autouse=True)
+    def _clean(self):
+        clear_events()
+        yield
+        clear_events()
+
+    def test_a_memory_event_pulls_the_rhythm(self):
+        from core.life.al_oscillator import get_rhythm_tracker, set_rhythm_tracker
+
+        rec = self._Recorder()
+        original = get_rhythm_tracker()
+        set_rhythm_tracker(rec)  # type: ignore[arg-type]
+        try:
+            submit_event(EventType.MEMORY_RESULT, {"mem_id": "exp_1", "pruned": 3})
+        finally:
+            set_rhythm_tracker(original)
+        assert len(rec.kicks) == 1
+        assert rec.kicks[0] > 0.0
+
+    def test_intensity_scales_the_pull_and_is_clamped(self):
+        from core.life.al_oscillator import get_rhythm_tracker, set_rhythm_tracker
+
+        rec = self._Recorder()
+        original = get_rhythm_tracker()
+        set_rhythm_tracker(rec)  # type: ignore[arg-type]
+        try:
+            submit_event(EventType.AFFECT_OBSERVED, {"emotion": "joy", "intensity": 0.5})
+            submit_event(EventType.AFFECT_OBSERVED, {"emotion": "joy", "intensity": 9.0})
+            submit_event(EventType.AFFECT_OBSERVED, {"emotion": "joy", "intensity": "bad"})
+        finally:
+            set_rhythm_tracker(original)
+        half, capped, full = rec.kicks
+        assert half < capped
+        assert capped == pytest.approx(full), "intensity > 1 saturates at the same pull"
+        assert full == pytest.approx(0.3)
+
+    def test_an_unknown_event_type_never_reaches_the_rhythm(self):
+        from core.life.al_oscillator import get_rhythm_tracker, set_rhythm_tracker
+
+        rec = self._Recorder()
+        original = get_rhythm_tracker()
+        set_rhythm_tracker(rec)  # type: ignore[arg-type]
+        try:
+            with pytest.raises(ALValidationError):
+                submit_event("memory_reuslt", {"typo": True})
+        finally:
+            set_rhythm_tracker(original)
+        assert rec.kicks == []

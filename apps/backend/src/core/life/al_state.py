@@ -328,7 +328,10 @@ _EVENTS: Deque[Dict[str, Any]] = deque(maxlen=_EVENT_LIMIT)
 
 
 def submit_event(event_type: Union[EventType, str], payload: Mapping[str, Any]) -> None:
-    """寫入口（§9）：記錄一筆事件 —— v1 僅落地，聚合/轉移是後續項。
+    """寫入口（§9）：記錄一筆事件，並讓它**影響狀態**（不只是落地）。
+
+    目前有兩個轉移：``AFFECT_OBSERVED`` 設喚醒度 target；每一筆事件都會推一次
+    內生節律（``al_oscillator.nudge``，審查 A1 的接點）。聚合/視窗統計仍是後續項。
 
     - 型別未知拋 :class:`ALValidationError`（打錯字靜默失效比崩潰更貴，
       與 ``register_al_source`` 同款）；收 ``EventType`` 也收它的字串值。
@@ -348,6 +351,41 @@ def submit_event(event_type: Union[EventType, str], payload: Mapping[str, Any]) 
     logger.debug("[ALEvent] %s payload=%s", resolved.value, record["payload"])
     if resolved is EventType.AFFECT_OBSERVED:
         _apply_affect_event(record["payload"])
+    _nudge_rhythm(record["payload"])
+
+
+# 一次事件對節律的推力上限（相平面速度單位；見 ``al_oscillator.MAX_KICK``）。
+# 事件本身不帶強度時用全額，帶了 ``intensity``（0..1）就依比例縮小：同樣的
+# 事件，強度不同應該把相位推到不同地方。
+_EVENT_KICK = 0.3
+
+
+def _event_kick(payload: Mapping[str, Any]) -> float:
+    """事件 → 推力大小。壞掉的 intensity 退回全額，不退回 0（不裝作沒發生）。"""
+    weight = 1.0
+    raw = payload.get("intensity")
+    if isinstance(raw, (int, float)) and not isinstance(raw, bool):
+        value = float(raw)
+        if math.isfinite(value):
+            weight = min(max(value, 0.0), 1.0)
+    return _EVENT_KICK * weight
+
+
+def _nudge_rhythm(payload: Mapping[str, Any]) -> None:
+    """§8 事件 → 內生節律的經驗輸入（審查 A1 的接點）。
+
+    在此之前振盪器的 drive 恆為 0，輸出只是時間的函數，等於一個時鐘。這一步讓
+    **過去的** 事件序列影響 **現在的** 相位：同樣的時刻、不同的事件史 → 不同的
+    activation，這是 ``test_two_event_histories_give_two_states`` 量的東西。
+
+    節律缺席／落盤失敗都不得拖垮聊天路徑（事件已經落地了），但要留下聲音。
+    """
+    try:
+        from core.life.al_oscillator import get_rhythm_tracker
+
+        get_rhythm_tracker().nudge(_event_kick(payload))
+    except Exception as exc:
+        logger.debug("[ALEvent] rhythm nudge failed: %s", exc)
 
 
 def _apply_affect_event(payload: Mapping[str, Any]) -> None:
