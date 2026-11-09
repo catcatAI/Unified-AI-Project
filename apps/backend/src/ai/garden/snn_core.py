@@ -855,13 +855,19 @@ class TensorSNNCore:
         weight_decay: float = 0.002,
         plasticity: float = 1.0,
     ) -> float:
-        """Hebbian weight update with Oja's rule + targeted row decay.
+        """Hebbian weight update with a strength-proportional target + row decay.
 
         input_keys and target_keys are Dict[str, float] from VectorDictionary.encode().
         The confidence score gates the learning rate: low-confidence matches
         contribute less to weight changes, reducing noise from fuzzy matches.
 
-        Oja's rule drives connections toward target_strength.
+        The update pulls each pair toward ``target_strength * gate`` (`gate` =
+        the two confidences' product), so the destination itself carries the
+        co-activation strength instead of being one constant for every pair
+        (2026-11-09; the old rule was labelled Oja but was a plain pull to a
+        fixed target, which made every seen pair converge to the same weight
+        and threw away the relative strength — see `_hebbian_patch`).
+        For full-confidence input (gate = 1) this is bit-identical to before.
         After updating, applies decay ONLY to rows that were modified
         (O(nnz_per_row) instead of O(V^2)).
 
@@ -937,7 +943,17 @@ class TensorSNNCore:
         lr: float,
         target_strength: float,
     ) -> "tuple[float, set]":
-        """Write one symmetric Oja patch over the (|src| x |tgt|) block.
+        """Write one symmetric, strength-proportional patch over the block.
+
+        ``delta = lr * gate * (target_strength * gate - w)``: the fixed point is
+        ``target_strength * gate``, so a co-activation of 0.8 settles higher than
+        one of 0.3 and the ordering survives many updates. The previous rule
+        used ``target_strength`` itself as the fixed point, so `gate` only
+        changed how fast a pair reached the same value and everything seen often
+        enough ended up equal — the saturation the external review flagged
+        (G1). This is *not* Oja's rule and no longer claims to be: real Oja
+        needs the post-synaptic activity (``y``) to normalise, which this
+        symmetric association matrix does not carry.
 
         Both backends compute the same confidence-gated patch; only the
         indexing differs (``index_select``/``meshgrid`` vs ``np.ix_``).
@@ -955,7 +971,9 @@ class TensorSNNCore:
             gate = src_a.unsqueeze(1) * tgt_a.unsqueeze(0)  # [S, T]
             # index_select rows then columns: guaranteed [S, T].
             old_patch = W.index_select(0, src_t).index_select(1, tgt_t)
-            delta_patch = lr * gate * (target_strength - old_patch)
+            # 定點 = target_strength * gate：強弱寫進權重，不是只寫進速度。
+            equilibrium = gate * target_strength
+            delta_patch = lr * gate * (equilibrium - old_patch)
             new_patch = old_patch + delta_patch
             new_patch = new_patch.clamp(min=0.0, max=1.0)
             # Cartesian-pair write-back: broadcast src rows × tgt cols.
@@ -969,7 +987,9 @@ class TensorSNNCore:
             * np.asarray(tgt_conf, dtype=np.float32)[None, :]
         )
         old_patch = W[np.ix_(src_idx, tgt_idx)]
-        delta_patch = lr * gate * (target_strength - old_patch)
+        # 定點 = target_strength * gate（與 torch 分支同一個式子）。
+        equilibrium = gate * target_strength
+        delta_patch = lr * gate * (equilibrium - old_patch)
         new_patch = np.clip(old_patch + delta_patch, 0.0, 1.0)
         W[np.ix_(src_idx, tgt_idx)] = new_patch
         W[np.ix_(tgt_idx, src_idx)] = new_patch

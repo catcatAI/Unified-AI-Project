@@ -357,3 +357,71 @@ class TestTensorSNNCoreStats:
         assert s["matrix_density"] > 0
         assert s["matrix_memory_bytes"] == 6 * 6 * 4
         assert "hormones" in s
+
+
+class TestStrengthProportionalWeights:
+    """G1: the Hebbian fixed point must carry the co-activation strength.
+
+    The old rule pulled every pair toward the same ``target_strength``, so the
+    confidence product only changed *how fast* a pair got there: after enough
+    updates a strength-0.4 association and a strength-1.0 association held the
+    same weight, and everything downstream that wanted to rank edges found a
+    flat matrix (external review G1; ``scripts/garden_readout_variants.py`` and
+    the AL roadmap both papered over it). The fixed point is now
+    ``target_strength * gate``.
+    """
+
+    @staticmethod
+    def _weight(core, a, b):
+        return float(core._W[core._key_to_idx[a], core._key_to_idx[b]])
+
+    def test_reference_rule_matches_the_implementation(self, snn_core: TensorSNNCore):
+        """Independent scalar recurrence — fails if the patch drifts from it."""
+        lr, target, gate = 0.1, 0.35, 0.6
+        expected = 0.0
+        for _ in range(50):
+            snn_core.hebbian_update(
+                {"a": gate}, {"b": 1.0}, lr=lr, target_strength=target, weight_decay=0.0
+            )
+            expected = min(1.0, max(0.0, expected + lr * gate * (target * gate - expected)))
+        # abs tolerance covers float32 storage in the weight matrix, nothing more.
+        assert self._weight(snn_core, "a", "b") == pytest.approx(expected, abs=1e-6)
+
+    def test_the_fixed_point_scales_with_the_gate(self, snn_core: TensorSNNCore):
+        target = 0.35
+        pairs = (("s1", "t1", 1.0), ("s2", "t2", 0.5))
+        for _ in range(120):
+            for src, tgt, gate in pairs:
+                snn_core.hebbian_update({src: gate}, {tgt: 1.0}, lr=0.1, target_strength=target)
+        strong = self._weight(snn_core, "s1", "t1")
+        weak = self._weight(snn_core, "s2", "t2")
+        assert strong > weak * 1.8, "a gate of 1.0 must not settle near a gate of 0.5"
+        assert weak > 0.0
+
+    def test_many_updates_keep_the_ordering(self, snn_core: TensorSNNCore):
+        """The regression this guards: everything converging to one constant."""
+        target = 0.35
+        gates = (("p1", "q1", 1.0), ("p2", "q2", 0.7), ("p3", "q3", 0.4))
+        for _ in range(200):
+            for src, tgt, gate in gates:
+                snn_core.hebbian_update(
+                    {src: gate},
+                    {tgt: 1.0},
+                    lr=0.1,
+                    target_strength=target,
+                    weight_decay=0.0,
+                )
+        w = [self._weight(snn_core, s, t) for s, t, _ in gates]
+        assert w[0] > w[1] > w[2], f"ordering lost after 200 updates: {w}"
+        assert min(w[0] - w[1], w[1] - w[2]) > 0.05, f"ordering too shallow: {w}"
+        for value, (_, _, gate) in zip(w, gates):
+            assert value == pytest.approx(target * gate, abs=0.01)
+
+    def test_full_confidence_behaviour_is_unchanged(self, snn_core: TensorSNNCore):
+        """gate = 1 must reproduce the old rule exactly (no retraining needed)."""
+        target, lr = 0.35, 0.1
+        snn_core.hebbian_update(
+            {"f": 1.0}, {"g": 1.0}, lr=lr, target_strength=target, weight_decay=0.0
+        )
+        old_rule = min(1.0, max(0.0, 0.0 + lr * 1.0 * (target - 0.0)))
+        assert self._weight(snn_core, "f", "g") == pytest.approx(old_rule, abs=1e-6)

@@ -61,6 +61,20 @@ and this project adheres to
   `unmeasured-unregistered`；更正見本節上一條。）順帶把 `AGENTS.md`
   的「單一檢查入口」補上這兩道新門與三條棘輪登記，免得規則只剩下文件裡的一句話。
 
+- **GARDEN 的 Hebbian 定點是一個常數，所以「強弱」從來沒進過權重（2026-11-09）**：外部審查的 G1 指出
+  `_hebbian_patch` 標為 Oja、實則是
+  `ΔW = lr·gate·(T − W)`。對：`gate`（兩個信心值的乘積）只決定**多快**到達
+  `target_strength`，定點本身人人相同，所以看夠多次的配對全部停在 0.35——關聯的相對強弱在權重裡不存在，下游任何排序都只能靠讀出層補救（這正是
+  `garden_readout_variants.py` 與 AL
+  ROADMAP 裡「目標列權重和只差 0.00056」的來源）。改成**定點隨共活化強度縮放**：`ΔW = lr·gate·(target_strength·gate − W)`——強的配對停在
+  `target_strength`，弱的停在
+  `target_strength·gate`，排序於是被寫進權重而不是只寫進速度。**相容性**：`gate = 1`（全信心的既有訓練與全部已存 checkpoint）逐位不變，不需要重訓；只有混合信心的樣本會改變落點。不再自稱 Oja：真正的 Oja 需要突觸後活動
+  `y`
+  來歸一，這張對稱關聯矩陣沒有那個量，所以只寫它實際做的事。測試（`TestStrengthProportionalWeights`）：①獨立純量遞推與實作逐位對照（防止規則漂移）；②`gate`
+  1.0 對 0.5 的定點相差 >1.8 倍；③200 輪後 1.0/0.7/0.4 三個配對仍嚴格排序且間距 >0.05（舊規則下三者都是 0.35，這支會紅）；④`gate = 1`
+  與舊式子逐位相同。**限制照實記**：`scripts/al_downstream_protocol.py` 現在只餵
+  `{key: 1.0}`，所以這個修正**不會**改變 v23 的任何數字——協定本身要能表達強弱，才有東西可以比較。
+
 - **振盪器的 drive 恆為 0，所以 AL 其實是一個時鐘（2026-11-09）**：外部審查的 A1 指出
   `RhythmTracker` 每一次 `step` 都用
   `drive=0`——輸出只是時間的函數，跟「給時間輸入的模型」無從分辨，而 AL 階梯協定正是在比較這兩者。這輪把經驗接上去：`Oscillator`

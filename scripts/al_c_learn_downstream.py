@@ -449,7 +449,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--epochs",
         type=int,
         default=EPOCHS,
-        help="訓練輪數：1 是一次性學習，5 以上會讓權重飽和到 Oja 上限",
+        help="訓練輪數：1 是一次性學習，5 以上會讓權重走到定點（學習率差異被抹掉，共活化強度差異留著）",
     )
     ap.add_argument("--json", type=Path)
     args = ap.parse_args(argv)

@@ -190,8 +190,9 @@ def run() -> Dict[str, object]:
             }
         )
         if threshold == THRESHOLDS[-1]:
-            # 權重層：Oja 的 target_strength 把每一列壓到同一個高度時，
-            # 任何讀出都沒有東西可排。記下來當解釋。
+            # 權重層：舊更新規則把每一列壓到同一個高度，任何讀出都沒有東西
+            # 可排。記下來當解釋。（2026-11-09 起定點改成 target_strength×gate，
+            # 新跑法應該看得到結構；本函式保留是為了和舊結果對照，不是現況宣稱。）
             V = core.vocab_size
             row_sums = [
                 float(core._W[idx, :V].sum())

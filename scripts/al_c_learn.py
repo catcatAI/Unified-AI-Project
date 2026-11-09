@@ -51,8 +51,10 @@ from core.life.al_oscillator import Oscillator, natural_period  # noqa: E402
 N_PHASES = 8
 N_KEYS = 24
 N_SAMPLES = 72
-# 只經歷一次：Oja 更新會收斂到 target_strength，跑多輪就抹掉增益差異
-# （第一版 3 輪量到 ΔW≈0，那不是「相位沒用」，是權重已經飽和）。
+# 只經歷一次：同一組配對在定點收斂後，多輪只剩「已經到站」的更新，
+# 增益（這裡從 lr 進來）的差異就被抹掉（第一版 3 輪量到 ΔW≈0，那不是
+# 「相位沒用」，是權重已經到定點）。注意 2026-11-09 起定點是
+# target_strength×gate：共活化**強度**的差異會留在權重上，學**習率**的差異不會。
 EPOCHS = 1
 LR = 0.5
 TARGET_STRENGTH = 0.9
