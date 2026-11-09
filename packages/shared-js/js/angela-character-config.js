@@ -5,6 +5,19 @@
 
 const ANGELA_CHARACTER_CONFIG = {
   version: '1.1.0',
+  character_id: 'angela.core',
+  character_version: '1.0.0',
+  edition_id: 'angela.personal',
+  asset_status: 'exploratory_unverified',
+  asset_provenance: 'Gemini-generated static character art; redistribution terms not verified',
+  palette: {
+    hair: '#E88DB8',
+    eyes: '#69A9E8',
+    rose: '#E88DB8',
+    ivory: '#FFF8F0',
+    teal: '#4D9A91',
+    gold: '#C9A44C',
+  },
   image_path: 'resources/angela_character_masked.png',
   live2d_config: {
     enabled: true,

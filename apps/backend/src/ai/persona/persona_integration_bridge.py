@@ -33,12 +33,8 @@ class PersonaIntegrationBridge:
         return self.angela_engine.get_persona_prompt_injection(fatigue, stress, valence)
 
     def get_special_response(self, event_type: str, **kwargs: Any) -> Optional[str]:
-        """Get specialized persona responses (e.g. commercial intro, error reaction)."""
-        if "lucifaella" in self.active_persona:
-            if event_type == "greeting":
-                return self.lucifaella_engine.get_commercial_intro()
-            elif event_type == "error":
-                return self.lucifaella_engine.react_to_error(kwargs.get("error_type", "api_limit"))
+        """Keep compatibility without replacing generated assistant replies with scripts."""
+        del event_type, kwargs
         return None
 
 

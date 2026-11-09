@@ -186,17 +186,33 @@ class TestLucifaella:
         assert get_persona_state("u1") == "host"
         block = build_persona_block("Angela", "u1")
         assert "露茜法埃拉" in block
-        assert "商務部" in block
+        assert "迎賓主持／看板娘" in block
 
     def test_the_host_may_not_claim_more_than_the_system_can_do(self, identity_store):
         from core.persona.lucifaella import build_persona_block
 
         block = build_persona_block("Angela", "u1")
-        # The character sheet is world-building; the block must keep the
-        # limits explicit (no legal/financial rights, no fake autonomy).
-        assert "12%" in block
         assert "不得" in block
         assert "法律" in block
+        assert "12%" not in block
+        assert "Gemini" not in block
+
+    def test_persona_is_context_not_a_replacement_for_ai_identity(self, identity_store):
+        from core.persona.lucifaella import build_persona_block
+
+        block = build_persona_block("Angela", "u1")
+        assert "AI" in block
+        assert "角色語境" in block
+        assert "不取代" in block
+
+    def test_quotes_are_optional_non_verbatim_style_references(self, identity_store):
+        from core.persona.lucifaella import build_persona_block
+
+        block = build_persona_block("Angela", "u1")
+        assert "語氣參考" in block
+        assert "不可照抄" in block
+        assert "沒有拒絕權" not in block
+        assert "歡迎蒞臨天使工房商務部" not in block
 
     def test_handover_renames_and_switches_the_persona(self, identity_store):
         from core.persona.lucifaella import get_persona_state, perform_handover
@@ -227,3 +243,4 @@ class TestLucifaella:
         result = perform_handover("小安", "u1")
         assert "小安" in result["message"]
         assert "天使工房" in result["message"]
+        assert "迎賓主持／看板娘" in result["message"]

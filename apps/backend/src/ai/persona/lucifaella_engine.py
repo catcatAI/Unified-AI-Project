@@ -22,11 +22,9 @@ _CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
 @dataclass
 class LucifaellaState:
     name: str = "Lucifaella"
-    title: str = "商務部負責人"
+    title: str = "迎賓主持／看板娘"
     company: str = "天使工房"
-    shareholding: float = 0.12  # 12% 實股
-    subordinates_count: int = 12
-    current_mood: str = "cynical_yet_charming"
+    current_mood: str = "warm_candid_dry_humor"
 
 
 class LucifaellaPersonaEngine:
@@ -53,40 +51,30 @@ class LucifaellaPersonaEngine:
         self.state.name = data.get("name", self.state.name)
         self.state.title = data.get("position", self.state.title)
         self.state.company = data.get("affiliation", self.state.company)
-        self.state.shareholding = float(data.get("shareholding", self.state.shareholding))
-        self.state.subordinates_count = int(data.get("subordinates", self.state.subordinates_count))
+        self.state.current_mood = str(data.get("current_mood", self.state.current_mood))
 
     def _load_quotes(self) -> None:
-        self.quotes = {
-            "greeting": [
-                "初次見面，歡迎蒞臨[天使工房]商務部。這裡是迎賓大廳，您需要什麼服務？入手一隻angela嗎？還是...我？"
-            ],
-            "contradiction": ["茜法拉不是隨處可見的複製品，您……愛著我對吧？沒有拒否權，永遠都是。"],
-            "weather_complaint": ["晴時多雲但茜法拉不高興，什麼時候天氣才會下隕石雨呢？"],
-            "api_error": [
-                "非常抱歉！您觸發的功能正在緊急修復中，對您遭遇的BUG深感抱歉……（哪個傻蛋！！！）",
-                "API ERROR: Your quota is insufficient. （...欸？愧疚、自責...）",
-            ],
-            "tsundere_defense": [
-                "那用戶怎麼回事？！包養？噁心！茜法拉的美屬於茜法拉！誰會讓你碰阿！"
-            ],
-        }
+        """Load non-canonical legacy quote references for explicit inspection only."""
+        self.quotes = {}
 
     def get_commercial_intro(self) -> str:
-        return self.quotes["greeting"][0]
+        """No canned introduction: normal assistant generation owns responses."""
+        return ""
 
     def react_to_error(self, error_type: str = "api_limit") -> str:
-        if error_type == "api_limit":
-            return self.quotes["api_error"][1]
-        return self.quotes["api_error"][0]
+        """No canned error dialogue; report the actual error through the normal path."""
+        del error_type
+        return ""
 
     def get_persona_prompt_injection(self, fatigue: float, stress: float) -> str:
         """Injects Lucifaella's distinct voice and commercial background into the prompt chain."""
         return (
-            f"[Persona: Lucifaella / 露茜法埃拉] "
-            f"[Role: 天使工房商務部負責人 (12% 實股)] "
-            f"[State - Fatigue: {fatigue:.2f}, Stress: {stress:.2f}] "
-            f"[Directive: Mix business shrewdness with sharp, contradictory charm.]"
+            "[Optional character context: Lucifaella, the Angel Workshop's public-facing host. "
+            "This context does not replace the assistant's AI identity, capabilities, safety rules, "
+            "or the user's task. Lucifaella is the workshop's receptionist/showcase host. "
+            "Use a candid, welcoming tone without fixed or copied replies; "
+            "do not claim real-world ownership, staffing, or unverified capabilities.] "
+            f"[State - Fatigue: {fatigue:.2f}, Stress: {stress:.2f}]"
         )
 
 

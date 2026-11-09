@@ -4,14 +4,24 @@
       "name": "Epsilon_free",
       "displayName": "Epsilon Free",
       "path": "models/Epsilon_free/runtime/Epsilon_free.model3.json",
-      "description": "Epsilon Free Live2D Model (expressions + full motions)",
+      "description": "Epsilon Free Live2D Model (expressions + full motions); user confirms official-site download, exact source/version pending inventory",
+      "character_id": null,
+      "edition_id": null,
+      "source": "Live2D official website download (user-confirmed); exact model page/version pending inventory",
+      "asset_status": "third_party_identity_unverified",
+      "license_status": "not_verified_do_not_redistribute_without_terms_review",
       "isDefault": true
     },
     {
       "name": "miara_pro",
       "displayName": "Miara Pro",
       "path": "models/miara_pro_en/runtime/miara_pro_t03.model3.json",
-      "description": "Miara Pro Live2D Model (English; fallback)",
+      "description": "Miara Pro Live2D Model (English; fallback); user confirms official-site download, exact source/version pending inventory",
+      "character_id": null,
+      "edition_id": null,
+      "source": "Live2D official website download (user-confirmed); exact model page/version pending inventory",
+      "asset_status": "third_party_identity_unverified",
+      "license_status": "not_verified_do_not_redistribute_without_terms_review",
       "isDefault": false
     }
   ],

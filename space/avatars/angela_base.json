@@ -1,9 +1,18 @@
 {
   "avatar_id": "angela_base",
   "display_name": "Angela",
+  "character_id": "angela.core",
+  "character_version": "1.0.0",
+  "edition_id": "angela.personal",
+  "asset_status": "exploratory_unmatched_visual",
   "model": { "type": "procedural", "path": "models/Epsilon_free", "scale": 1.0 },
   "body": { "height": 1.62, "build": 0.5 },
-  "palette": { "skin": "#f0d3b8", "hair": "#2f2430" },
+  "palette": {
+    "skin": "#f0d3b8",
+    "hair": "#2f2430",
+    "canonical_hair_reference": "#E88DB8",
+    "canonical_eye_reference": "#69A9E8"
+  },
   "wardrobe": {
     "outfit": "casual_01",
     "slots": {

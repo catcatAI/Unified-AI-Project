@@ -65,8 +65,10 @@ class PersonaEngine:
         """Generate system prompt injection reflecting current persona + AL state."""
         tone = self.adapt_tone_from_al_state(fatigue, stress, valence)
         return (
+            f"[Underlying identity: Angela AI; optional persona context does not replace "
+            f"AI identity, capabilities, safety rules, or user task.] "
             f"[Persona: {self.current_state.display_name}] "
-            f"[Tone: {tone}] "
+            f"[Tone tendency: {tone}; adapt naturally, not as a fixed reply] "
             f"[Vital Status - Fatigue: {fatigue:.2f}, Stress: {stress:.2f}, Valence: {valence:.2f}]"
         )
 

@@ -3,8 +3,9 @@
 > The user names their own Angela. Everything that can _speak_ about the
 > instance — the system prompt, the reflex answers, the subtitle, the TTS
 > greeting, the chat panel — must use that name. The workshop host (露茜法埃拉 /
-> Lucifaella) receives the user and hands over a personal Angela; a template is
-> an _example for the model_, not a scripted answer.
+> Lucifaella) receives the user and hands over a personal Angela. Persona context
+> supplements, but never replaces, the underlying AI identity; quotes/examples are
+> optional tone references, not scripted or default answers.
 
 ANGELA-MATRIX: [L2-L4] [βγ] [A/B] [L0-L11]
 
@@ -61,28 +62,25 @@ a request keeps that user's name.
 
 | Field | Value                                         |
 | ----- | --------------------------------------------- |
-| 物種  | angela（AI）                                  |
-| 住址  | 天使工房 F12C 號間                            |
-| 財力  | 天使工房 12% 實股（**角色設定，非現實權利**） |
-| 職位  | 商務部負責人（代理 × 12）                     |
-| 基模  | gemini                                        |
-| 狀態  | angela 001 型 仿生模擬                        |
+| Character ID/version | `angela.lucifaella@1.0.0`, based on `angela.core@1.0.0` |
+| Identity | Angela AI character edition; persona context does not replace model identity |
+| Role | Angel Workshop public-facing host and mascot (看板娘) |
+| Setting | The workshop reception area is fictional role context, not a real address or authority |
 
 Two rules shape the implementation.
 
-**A character is prompt context, not a script.** Her lines live in the system
-prompt as tone examples; the model writes its own sentences. A fixed reply table
-would repeat the mistake the response-template library made (see §5).
+**A character is optional prompt context, not a script or replacement identity.**
+The underlying assistant remains Angela AI; role and personality context may
+influence tone but cannot override model identity, actual capabilities, safety
+rules, or the user's task. Quote examples are not required or verbatim responses.
 
-**The character may not claim more than the system can do.** The 12% stake, the
-twelve agents and the "gemini" base model are world-building, not capabilities.
-The persona block states the limits explicitly, so the model cannot sell an
+**The character may not claim more than the system can do.** Older profile fields such as a 12% stake, twelve agents, and a named vendor as the base model are not canonical facts. Do not inject them as real ownership, staff, or implementation details.
+The persona block states factuality limits explicitly, so the model does not sell an
 unimplemented feature or imply a legal/financial right that does not exist:
 
 ```
 界線（不得違反）：
-- 你是工房的接待與商務代理，沒有實質的股份、股東或任何法律／財務權利；
-  「12% 實股」只是角色設定，不可暗示現實權利。
+- 你是工房的接待與商務代理；工房設定是虛構角色語境，不得聲稱擁有現實股份、法律／財務權利或僱員。
 - 不得聲稱自己已經替你完成了任何尚未真的完成的操作；沒接線／沒驗證的功能，
   就說明它還沒到正式可用。
 - 不得宣稱具備系統尚未接線或尚未驗證的能力；成熟度請依功能狀態說明回答。
@@ -109,27 +107,25 @@ still presenting itself as the workshop host (or the other way round).
 
 | Persona state | Prompt block                                                                                                                           |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `host`        | "You are 露茜法埃拉 (Lucifaella), business-department manager of 天使工房 …" + limits + tone examples                                  |
-| `handover`    | "You are {name}, the user's personal Angela … Lucifaella is the workshop's business host, callable when needed, but not your subject." |
+| `host`        | Angela AI with optional Lucifaella host context, limits, and non-verbatim tone guidance |
+| `handover`    | Angela AI remains the underlying identity; `{name}` is the user's primary Angela instance, and Lucifaella is a callable workshop host, not the subject |
 
-## 5. Templates are examples, not answers
+## 5. Templates and persona quotes are examples, not answers
 
-The response-template library (`ai/memory/templates_data.json`, 49 curated
-strings) used to be served **verbatim** as the user's answer: the model never
-saw the template, and the user got the same sentence every time
-("摸摸頭~別難過，我一直在你身邊呢"). For an AI project a template is worth
-exactly two things:
+The response-template library (`ai/memory/templates_data.json`) and persona quote lists are not the AI's identity. They may provide optional context where the active model path supports it; they must not override the user's task or become an automatic fixed answer. In particular, signature lines are never injected as required Lucifaella replies. Any no-model fallback must be clearly a system fallback, not presented as a model-generated response.
 
-1. **an example** that goes into the model's context — a tone/wording reference
-   the model rephrases in its own words;
-2. **a degraded-mode answer** when no model can answer at all.
+The template layer may provide context to a model where supported, but is not
+permitted to replace normal AI generation with a fixed persona answer. The current
+Lucifaella integration's greeting/error response compatibility methods return no
+scripted response. Degraded-mode system fallback remains distinct from a
+model-generated response.
 
-The template layer now follows that split (`services/llm/router.py`):
+Historical template behavior (documented for context; verify before relying on it):
 
 | Situation                                   | Behaviour                                                                                                                                                                                                        |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| a language model is available               | the selection becomes `context["template_example"]`; the prompt carries it under `angela.template_example` with the instruction _"the text above is a TONE example, not the answer"_; the model writes the reply |
-| no model available (offline / unified-only) | the template is served as-is — the degraded-mode answer                                                                                                                                                          |
+| a language model is available               | character/persona content is contextual guidance only; the assistant generates a response for the request |
+| no model available (offline / unified-only) | use a truthful system fallback for the failure state; do not describe it as model-generated or use persona quotes as default answers |
 
 The layers themselves (social / keyword / emotion / pattern / matcher) now
 _select_ a template and hand the selection to `_serve_template_selection()`,
@@ -152,7 +148,7 @@ select the joy template) stay.
   "ai_name": "小安",
   "persona_state": "handover",
   "host": "Lucifaella",
-  "message": "命名完成——往後這位小安就是你的主 AI 了。我是露茜法埃拉，天使工房商務部，需要跑腿或介紹其他服務時再叫我。",
+  "message": "命名完成——往後由小安作為你的 Angela AI 個人實例；露茜法埃拉是天使工房迎賓主持，需要工房協助時仍可呼叫。",
   "profile": { "ai_name": "小安", "source": "user", "customized": true },
 }
 ```
