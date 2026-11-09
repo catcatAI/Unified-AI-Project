@@ -77,6 +77,8 @@ function drawActor(ctx, { actor, camera, viewport }) {
   const w = 0.52 * scale
   const skin = actor.avatar.palette?.skin ?? '#f0d3b8'
   const hair = actor.avatar.palette?.hair ?? '#2f2430'
+  const eye = actor.avatar.palette?.eyes ?? '#69A9E8'
+  const signature = actor.avatar.palette?.signature ?? '#C9A44C'
 
   // shadow
   ctx.fillStyle = 'rgba(0,0,0,0.35)'
@@ -126,7 +128,14 @@ function drawActor(ctx, { actor, camera, viewport }) {
   ctx.ellipse(px + headDx, py - h * 1.04, w * 0.25, w * 0.17, 0, Math.PI, Math.PI * 2)
   ctx.fill()
 
-  drawFace(ctx, { px: px + headDx, py: py - h * 0.97, w, expression: actor.expression })
+  drawFace(ctx, { px: px + headDx, py: py - h * 0.97, w, expression: actor.expression, eye })
+
+  // Shared small gold hair ornament; the current procedural renderer can only
+  // approximate the approved star/wing mark, so it remains a color cue.
+  ctx.fillStyle = signature
+  ctx.beginPath()
+  ctx.arc(px + headDx - w * 0.19, py - h * 1.02, w * 0.035, 0, Math.PI * 2)
+  ctx.fill()
 
   // accessory (ribbon)
   ctx.fillStyle = colors.accessory
@@ -220,10 +229,10 @@ function w0(scale) {
   return 0.52 * scale
 }
 
-function drawFace(ctx, { px, py, w, expression }) {
+function drawFace(ctx, { px, py, w, expression, eye }) {
   const spec = EXPRESSIONS[expression] ?? EXPRESSIONS.neutral
-  ctx.strokeStyle = '#2a2320'
   ctx.lineWidth = Math.max(1, w * 0.02)
+  ctx.strokeStyle = eye
 
   const eyeY = py - w * 0.05
   const eyeDx = w * 0.1
@@ -251,6 +260,7 @@ function drawFace(ctx, { px, py, w, expression }) {
   }
 
   const mouthY = py + w * 0.12
+  ctx.strokeStyle = '#2a2320'
   ctx.beginPath()
   ctx.moveTo(px - w * 0.05, mouthY)
   ctx.quadraticCurveTo(px, mouthY + w * 0.09 * spec.mouth, px + w * 0.05, mouthY)

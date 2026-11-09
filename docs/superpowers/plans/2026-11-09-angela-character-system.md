@@ -50,11 +50,11 @@
 - Consumes: current `LUCIFAELLA_PROFILE`, `build_persona_block(name, user_id)`, host/handover store.
 - Produces: canonical versioned Angela/Lucifaella profile values and prompt blocks that frame role as context, preserve AI identity and prohibit verbatim/default quote emission.
 
-- [ ] Step 1: Add focused tests asserting host/handover prompt identifies AI as underlying system with persona as context, contains no signature quote text, omits coercive language, and preserves user-named primary identity after handover.
-- [ ] Step 2: Run `./.venv/bin/python -m pytest tests/core/test_identity_and_persona.py -q`; observe new assertions fail.
-- [ ] Step 3: Implement core/edition IDs and approved stable fields; remove `signature_lines` from prompt data, frame any remaining style examples as optional non-verbatim references, remove coercive copy and ensure handover/host role boundaries.
-- [ ] Step 4: Update the technical persona document to match actual architecture and explicitly state examples never become required responses and persona does not supersede model identity.
-- [ ] Step 5: Run `./.venv/bin/python -m pytest tests/core/test_identity_and_persona.py -q`; expected all tests pass.
+- [x] Step 1: Add focused tests asserting host/handover prompt identifies AI as underlying system with persona as context, contains no signature quote text, omits coercive language, and preserves user-named primary identity after handover.
+- [x] Step 2: Run `./.venv/bin/python -m pytest tests/core/test_identity_and_persona.py -q`; focused tests were run before implementation during the original execution.
+- [x] Step 3: Implement core/edition IDs and approved stable fields; remove `signature_lines` from prompt data, frame any remaining style examples as optional non-verbatim references, remove coercive copy and ensure handover/host role boundaries.
+- [x] Step 4: Update the technical persona document to match actual architecture and explicitly state examples never become required responses and persona does not supersede model identity.
+- [x] Step 5: Run `./.venv/bin/python -m pytest tests/core/test_identity_and_persona.py -q`; focused persona suite passes (43 passed, 1 warning).
 
 ### Task 2: Eliminate conflicting legacy persona path
 
@@ -67,10 +67,10 @@
 - Consumes: legacy `get_prompt_injection`, `get_special_response` public methods and active persona setting.
 - Produces: backward-compatible persona context behavior with no hardwired special response as ordinary chat output and no coercive/false-claim defaults.
 
-- [ ] Step 1: Add tests for quote handling and ensure generic greeting/error events return no scripted answer; persona injection identifies role as optional context and includes truthful capability boundaries.
-- [ ] Step 2: Run focused persona tests and observe failures.
-- [ ] Step 3: Update legacy engine/config to align with approved canonical profile; retain APIs where required, but special responses must only be explicit user-requested examples or removed from ordinary response selection; eliminate default assertion of fictional shareholding/model vendor as real fact.
-- [ ] Step 4: Run focused legacy and canonical persona tests; expected all pass.
+- [x] Step 1: Add tests for quote handling and ensure generic greeting/error events return no scripted answer; persona injection identifies role as optional context and includes truthful capability boundaries.
+- [x] Step 2: Run focused persona tests before implementation during the original execution.
+- [x] Step 3: Update legacy engine/config to align with approved canonical profile; retain APIs where required, but special responses must only be explicit user-requested examples or removed from ordinary response selection; eliminate default assertion of fictional shareholding/model vendor as real fact.
+- [x] Step 4: Run focused legacy and canonical persona tests; 43 passed, 1 warning.
 
 ### Task 3: UI identity and edition alignment
 
@@ -82,10 +82,10 @@
 - Consumes: canonical IDs, version and immutable profile established in Task 1.
 - Produces: consistent product/family/instance/edition labels and explicit asset mapping metadata across desktop, web shell and Space, without asserting that nonconforming art is canon.
 
-- [ ] Step 1: Inspect each active UI mapping and locate focused config tests; add assertions for core/edition IDs, shared identity tokens, and host-vs-personal-edition mapping where the UI supports persona state.
-- [ ] Step 2: Run focused config/UI tests and observe failures.
-- [ ] Step 3: Align only in-scope mappings and labels; leave actual image/model files untouched. Mark Space procedural avatar as exploratory/unmatched rather than falsely canonical if no compliant asset exists.
-- [ ] Step 4: Run targeted config/UI checks and JavaScript syntax check for any changed JS; expected pass.
+- [x] Step 1: Inspected the Electron-loaded config and Space Studio avatar/rendering path; added focused renderer palette assertions. No existing host-vs-personal-edition UI state exists in these surfaces.
+- [x] Step 2: Added regression assertions for the missing Space palette rendering behavior.
+- [x] Step 3: Connected core identity palette to Electron's actual loaded config and Space Studio procedural rendering; marked the simplified Space representation as exploratory. Images/model files untouched.
+- [x] Step 4: Run Space Studio node tests, JS syntax checks, JSON parsing, and focused persona checks; see final verification record below.
 
 ### Task 4: Provenance, license and consistency documentation
 
@@ -98,12 +98,14 @@
 - Consumes: design disposition and UI IDs from Tasks 1–3.
 - Produces: auditable source/status classification for Gemini art, official-site Live2D downloads, rejected clay model, and Space procedural avatar; exact evidence/unknowns kept distinct.
 
-- [ ] Step 1: Add documentation checks only if existing tests validate these documents; otherwise inspect manual consistency requirements.
-- [ ] Step 2: Update asset report with user-confirmed provenance, canonical status, license-known/unknown field, and explicit no-bundle rule for unclear terms; update UI design's narrow identity consistency requirements.
-- [ ] Step 3: Verify changed Markdown references and metadata against the approved spec; no assets generated or copied.
+- [x] Step 1: No existing documentation-validation test convention found; manually cross-checked the spec and audit against active loaders/renderers.
+- [x] Step 2: Updated asset dispositions to distinguish active palette usage from finished visual conformity and retained unresolved license/no-bundle constraints.
+- [x] Step 3: Reconciled implementation status and asset notes with the approved spec; no production assets generated or copied.
 
 ## Final verification
 
-- Run focused persona tests from Tasks 1–2 after all persona edits.
-- Run the smallest targeted config/syntax checks for Task 3.
-- Review the final diff to confirm unrelated pre-existing changes were untouched and no asset was generated, copied, or bundled without documented rights.
+- Focused persona tests: `./.venv/bin/python -m pytest tests/core/test_identity_and_persona.py tests/ai/persona/test_lucifaella_engine.py tests/ai/persona/test_persona_integration_bridge.py tests/ai/persona/test_persona_engine.py -q` — 43 passed, 1 warning.
+- Space Studio tests: `node --test tests/*.test.js` (run from `apps/space-studio`) — 134 passed. `npm test --prefix apps/space-studio` is not a valid verification result here: the package script uses `node --test tests/`, which Node v24.19.0 rejects as a directory module.
+- `python3 scripts/sync_shared_js.py --check --surface desktop --surface web` — passed; desktop reports the expected optional missing Cubism Framework bundle warning.
+- JavaScript syntax checks (`node --check` for edited scripts), five JSON parse checks, and `git diff --check` — passed.
+- Desktop UI palette CSS has been edited, but the Electron interface has not been visually inspected. The Web Live2D Viewer remains unaligned. No art/model asset was generated, copied, or bundled without documented rights; unrelated training changes remain unstaged.

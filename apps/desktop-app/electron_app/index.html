@@ -34,7 +34,13 @@
         --bg-overlay: rgba(0, 0, 0, 0.5);
         --bg-hover: rgba(255, 255, 255, 0.1);
         --text-primary: #ffffff;
-        --accent-color: #4facfe;
+        --accent-color: #E88DB8;
+        --identity-hair: #E88DB8;
+        --identity-rose: #E88DB8;
+        --identity-eye: #69A9E8;
+        --identity-ivory: #FFF8F0;
+        --identity-teal: #4D9A91;
+        --identity-gold: #C9A44C;
         --danger-color: #ff4040;
         --success-color: #00ff80;
         --warning-color: #ffcc00;
@@ -49,7 +55,7 @@
         --bg-overlay: rgba(0, 0, 0, 0.7);
         --bg-hover: rgba(255, 255, 255, 0.15);
         --text-primary: #ffffff;
-        --accent-color: #4facfe;
+        --accent-color: #E88DB8;
         --danger-color: #ff4040;
         --success-color: #00ff80;
         --warning-color: #ffcc00;
@@ -64,7 +70,7 @@
         --bg-overlay: rgba(255, 255, 255, 0.7);
         --bg-hover: rgba(0, 0, 0, 0.05);
         --text-primary: #333333;
-        --accent-color: #0077cc;
+        --accent-color: #C44D78;
         --danger-color: #ff4040;
         --success-color: #00cc66;
         --warning-color: #ff9900;
@@ -79,7 +85,7 @@
         --bg-overlay: rgba(0, 0, 0, 0.7);
         --bg-hover: rgba(255, 255, 255, 0.1);
         --text-primary: #ffffff;
-        --accent-color: #9b59b6;
+        --accent-color: #E88DB8;
         --danger-color: #e74c3c;
         --success-color: #2ecc71;
         --warning-color: #f1c40f;
@@ -201,7 +207,7 @@
       }
 
       .window-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
+        background: color-mix(in srgb, var(--identity-rose) 30%, transparent);
       }
 
       .window-btn.close:hover {
@@ -260,7 +266,7 @@
 
       #dialogue-input:focus {
         background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(79, 172, 254, 0.6);
+        border-color: var(--identity-rose);
       }
 
       .toolbar-btn {
@@ -343,7 +349,8 @@
       }
 
       .message.angela {
-        background: rgba(255, 255, 255, 0.1);
+        background: color-mix(in srgb, var(--identity-teal) 20%, transparent);
+        border-left: 2px solid var(--identity-gold);
         color: #e0e0e0;
         align-self: flex-start;
       }
@@ -823,7 +830,7 @@
     <div id="container">
       <!-- Auto-hiding top title bar -->
       <div id="top-bar">
-        <div class="window-title">Angela AI</div>
+        <div class="window-title">Angela AI · Core 1.0.0</div>
         <div class="window-controls">
           <button class="window-btn minimize" id="btn-minimize" title="Minimize">−</button>
           <button class="window-btn maximize" id="btn-maximize" title="Maximize">□</button>

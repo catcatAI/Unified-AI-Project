@@ -4,12 +4,14 @@
   "character_id": "angela.core",
   "character_version": "1.0.0",
   "edition_id": "angela.personal",
-  "asset_status": "exploratory_unmatched_visual",
+  "asset_status": "exploratory_procedural_representation",
   "model": { "type": "procedural", "path": "models/Epsilon_free", "scale": 1.0 },
   "body": { "height": 1.62, "build": 0.5 },
   "palette": {
     "skin": "#f0d3b8",
-    "hair": "#2f2430",
+    "hair": "#E88DB8",
+    "eyes": "#69A9E8",
+    "signature": "#C9A44C",
     "canonical_hair_reference": "#E88DB8",
     "canonical_eye_reference": "#69A9E8"
   },

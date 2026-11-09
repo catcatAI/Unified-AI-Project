@@ -45,7 +45,9 @@ function fakeContext() {
           return undefined
         }
       },
-      set() {
+      set(target, prop, value) {
+        target[prop] = value
+        calls.push([`set:${String(prop)}`, [value]])
         return true
       },
     }
@@ -72,6 +74,30 @@ test('drawStage paints the room and the actor', () => {
     assert.ok(names.includes(required), `renderer never called ${required}`)
   }
   assert.ok(calls.some(([name, args]) => name === 'fillText' && args[0] === 'Angela'))
+})
+
+test('Angela palette drives rose hair, blue eyes, and gold signature cue', () => {
+  const { ctx, calls } = fakeContext()
+  const avatar = {
+    ...AVATAR,
+    palette: { skin: '#f0d3b8', hair: '#E88DB8', eyes: '#69A9E8', signature: '#C9A44C' },
+  }
+  drawStage(ctx, {
+    room: ROOM,
+    actors: [new Actor({ id: 'main', avatar, position: [8, 0] })],
+    camera: resolveCamera('wide'),
+    viewport: VIEWPORT,
+  })
+  const strokeColors = calls
+    .filter(([name]) => name === 'set:strokeStyle')
+    .map(([, [color]]) => color)
+  const fillColors = calls
+    .filter(([name]) => name === 'set:fillStyle')
+    .map(([, [color]]) => color)
+  assert.ok(strokeColors.includes('#69A9E8'), 'blue identity eye color missing')
+  assert.ok(strokeColors.includes('#2a2320'), 'mouth should retain a dark outline')
+  assert.ok(fillColors.includes('#E88DB8'), 'rose identity hair color missing')
+  assert.ok(fillColors.includes('#C9A44C'), 'gold signature cue missing')
 })
 
 test('every expression channel renders without throwing', () => {

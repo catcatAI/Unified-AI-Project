@@ -14,6 +14,7 @@ const ANGELA_CHARACTER_CONFIG = {
     hair: '#E88DB8',
     eyes: '#69A9E8',
     rose: '#E88DB8',
+    signature: '#C9A44C',
     ivory: '#FFF8F0',
     teal: '#4D9A91',
     gold: '#C9A44C',

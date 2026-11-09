@@ -12,7 +12,11 @@
         --line: #232b38;
         --text: #dfe6f0;
         --muted: #8b97a8;
-        --accent: #6aa9ff;
+        --accent: #E88DB8;
+        --identity-rose: #E88DB8;
+        --identity-ivory: #FFF8F0;
+        --identity-teal: #4D9A91;
+        --identity-gold: #C9A44C;
       }
       * {
         box-sizing: border-box;
@@ -67,6 +71,11 @@
         margin: 0 0 12px;
         color: var(--muted);
         font-size: 12px;
+      }
+      aside .identity-label {
+        color: var(--identity-rose);
+        border-left: 2px solid var(--identity-gold);
+        padding-left: 8px;
       }
       .section {
         margin-bottom: 12px;
@@ -153,6 +162,7 @@
     </main>
     <aside>
       <h1>Space Studio · S0</h1>
+      <p class="identity-label">Angela AI · Angela Core 1.0.0 · Personal edition</p>
       <p>
         一個房間、一個角色、鏡頭與錄影。資料在 <code>space/</code>，舞台在
         <code>apps/space-studio/</code>。
