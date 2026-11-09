@@ -31,6 +31,7 @@ export default function ChatPanel() {
   const [aiName, setAiName] = useState('Angela')
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const mountedRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -53,6 +54,8 @@ export default function ChatPanel() {
   }, [])
 
   const connect = () => {
+    if (!mountedRef.current) return
+
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const ws = new WebSocket(`${proto}//${window.location.hostname}:8000/ws`)
 
@@ -73,8 +76,10 @@ export default function ChatPanel() {
     }
 
     ws.onclose = () => {
+      if (wsRef.current === ws) wsRef.current = null
+      if (!mountedRef.current) return
+
       setConnected(false)
-      wsRef.current = null
       reconnectRef.current = setTimeout(connect, 3000)
     }
 
@@ -104,10 +109,13 @@ export default function ChatPanel() {
   }
 
   useEffect(() => {
+    mountedRef.current = true
     connect()
     return () => {
+      mountedRef.current = false
       if (reconnectRef.current) clearTimeout(reconnectRef.current)
       if (wsRef.current) wsRef.current.close()
+      wsRef.current = null
     }
   }, [])
 
