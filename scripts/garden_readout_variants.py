@@ -98,10 +98,49 @@ def _direct(core: TensorSNNCore, input_keys: Dict[str, float]) -> Dict[str, floa
     return result
 
 
+def _normalized(core: TensorSNNCore, input_keys: Dict[str, float]) -> Dict[str, float]:
+    """一步讀出的**頻率不變**版本：先把每一列（cue token）歸一化成對 target 的分佈。
+
+    WHY 需要它：定點（`target_strength·gate`）讓權重大小編碼「出現次數」，於是罕見配對的
+    絕對權重天生就小。任何直接比大小的讀出（``direct``）都會把「罕見」讀成「證據弱」，
+    訊號掉到共用噪聲位的地板以下——實測 `hard` 的定點上 `flat` 讀 1.000、`graded` 只剩
+    0.500，而兩者的差只在權重多了頻率這個尺度。PPMI 的答案是不要比絕對共現次數，而比
+    「給定 cue 時 target 的條件機率」：每一列除以該列總量，對 cue 的頻率就不敏感了。
+    """
+    V = core.vocab_size
+    if not input_keys or core._W is None or V == 0:
+        return {}
+    W = core._W[:V, :V]
+    a = core._init_activations(input_keys, None)
+    if float(a.sum()) == 0.0:
+        return {}
+    if W.ndim == 2:
+        # 正規化的是**來源列**（cue token 對 target 的分佈），所以乘的時候要取轉置：
+        # score[t] = Σ_i a[i]·W[i,t]/Σ_k W[i,k]。用 `Wn @ a` 會除到 target 自己的列總量，
+        # 那是「依 target 頻率壓縮」，對罕見 cue 一點幫助都沒有（方向趁早賺回來）。
+        row_sums = W.sum(dim=1, keepdim=True)
+        # 完全沒有出去的列（沒被寫入過的 token）保持 0，不要拿 0 當分母造出 inf。
+        row_sums = row_sums.masked_fill(row_sums == 0, 1.0)
+        values = (W / row_sums).transpose(0, 1) @ a
+    else:
+        values = a * W
+    result: Dict[str, float] = {}
+    for idx in snn_core._nonzero_indices(values).tolist():
+        key = core._idx_to_key[idx] if isinstance(core._idx_to_key, list) else core._idx_to_key[idx]
+        result[key] = float(values[idx])
+    return result
+
+
 def _forward(core: TensorSNNCore, input_keys: Dict[str, float], readout: str) -> Dict[str, float]:
-    """與 `forward` 同一個 LIF 迴圈，只換最後的讀出（候選，不動生產程式碼）。"""
+    """與 `forward` 同一個 LIF 迴圈，只換最後的讀出（候選，不動生產程式碼）。
+
+    ``normalized`` 是給 AL 協定的強弱探針用的候選（見 `al_downstream_protocol` 的
+    `READOUTS`）：它不進本檔的 `run()` 掃描，所以這裡的既有報告不受影響。
+    """
     if readout == "direct":
         return _direct(core, input_keys)
+    if readout == "normalized":
+        return _normalized(core, input_keys)
     V = core.vocab_size
     if not input_keys or core._W is None or V == 0:
         return {}

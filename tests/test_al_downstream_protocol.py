@@ -603,6 +603,69 @@ class TestUnmeasuredFamiliesAreNamed:
         assert protocol._stale_registrations(cells[:0], {"hard": "x"}) == []
 
 
+class TestNormalizedReadout:
+    """`normalized` 讀出：把來源列（cue token）歸一化成對 target 的分佈。
+
+    它存在的理由是可檢定的：定點用權重大小編碼頻率，所以罕見配對的絕對權重天生小，任何直接
+    比大小的讀出都會把「罕見」讀成「證據弱」。歸一化後讀出對頻率尺度不敏感——所以「分級
+    掉一半」是尺度問題而不是學錯問題。但方向很容易寫反（除到 target 的列總量就完全沒用了），
+    所以下面兩條把它釘死。
+    """
+
+    @staticmethod
+    def _trained(protocol):
+        readouts = protocol._downstream._readouts
+        core = protocol._downstream.TensorSNNCore(threshold=0.25, timesteps=readouts.TIMESTEPS)
+        for i in range(3):
+            core.hebbian_update(
+                {f"c{i}": 1.0, "n0": 1.0},
+                {f"t{i}": 1.0},
+                lr=0.2,
+                target_strength=0.35,
+            )
+        return core, readouts
+
+    def test_it_normalizes_the_source_row_not_the_target_column(self, protocol):
+        core, readouts = self._trained(protocol)
+        V = core.vocab_size
+        W = core._W[:V, :V]
+        row_sums = W.sum(dim=1)
+        inputs = {k: 1.0 for k in ("c1", "n0")}
+
+        got = readouts._forward(core, inputs, "normalized")
+        expected = {}
+        for target in ("t0", "t1", "t2"):
+            j = core._key_to_idx[target]
+            expected[target] = sum(
+                float(W[core._key_to_idx[key], j]) / float(row_sums[core._key_to_idx[key]])
+                for key in inputs
+                if float(row_sums[core._key_to_idx[key]]) > 0
+            )
+
+        for target, value in expected.items():
+            assert got.get(target, 0.0) == pytest.approx(value, abs=1e-5), target
+
+    def test_rescaling_a_row_does_not_change_what_is_read(self, protocol):
+        """頻率不變性：每個 cue 名下的權重整體多大不重要，重要的是分佈在哪個 target。"""
+        core, readouts = self._trained(protocol)
+        V = core.vocab_size
+        W = core._W[:V, :V].clone()
+        inputs = {k: 1.0 for k in ("c1", "n0")}
+        baseline = readouts._forward(core, inputs, "normalized")
+        direct = readouts._forward(core, inputs, "direct")
+
+        # 每一列乘上不同的正數：等於模擬「這些 cue 出現得比較多／比較少」。
+        for i in range(V):
+            core._W[i, :V] = W[i] * (1.0 + i % 7)
+        rescaled = readouts._forward(core, inputs, "normalized")
+        direct_rescaled = readouts._forward(core, inputs, "direct")
+
+        for key, value in baseline.items():
+            assert rescaled[key] == pytest.approx(value, abs=1e-5), key
+        # 對照：直接比大小的讀出會被這個縮放整批改掉，所以它才看不到「罕見」之後的東西。
+        assert any(abs(direct_rescaled[key] - value) > 1e-4 for key, value in direct.items())
+
+
 class TestStrengthProbe:
     """G1（定點 = target_strength·gate）在 12 格階梯上結構上量不到，這裡釘住探針本身。
 

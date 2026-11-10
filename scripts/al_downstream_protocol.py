@@ -108,7 +108,9 @@ PROTOCOL_VERSION = "al-downstream-v24"
 READOUT = "potential"
 # 可選的讀出。``direct`` 是 `garden_readout_variants` 裡已有的變體（一步 ``W·a``），不是這支
 # 協定新發明的；它不飽和在擴散上，所以是「定點承載強弱，但讀不出」這個結論的對照。
-READOUTS = ("potential", "direct")
+# ``normalized`` 是 `garden_readout_variants._normalized`：每一列先歸一成對 target 的分佈，
+# 所以對 cue 的出現頻率不敏感。它是「分級掉一半是頻率尺度、不是學錯」那個說法的直接檢定。
+READOUTS = ("potential", "direct", "normalized")
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
 HIT_RANGE = (0.30, 0.70)
