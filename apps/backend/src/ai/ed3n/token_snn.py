@@ -411,6 +411,44 @@ class TokenVocab:
         return len(self.itos)
 
 
+def encode_ids(vocab: Any, prompt: str, answer: str, max_len: int) -> Tuple[List[int], int, int]:
+    """``[BOS] prompt ['\\n'] answer [EOS]`` clipped to ``max_len``.
+
+    Returns ``(ids, answer_start, response_end)``. It lives here, outside the
+    model, because the distillation cache builder needs the *same* ids a run
+    would feed the network — and a second copy of this arithmetic would drift
+    from the first one silently (the ids are what the cached positions index).
+    """
+    prompt = prompt.strip()
+    answer = answer.strip()
+    budget = max_len
+    body = answer.split(AL_OUT_MARK, 1)[0] if AL_OUT_MARK in answer else answer
+    body_ids = vocab.encode(body)
+    ids = [vocab.bos_id] + vocab.encode(prompt)
+    prompt_len = len(ids)
+    ids.append(vocab.stoi["\n"])
+    prompt_len += 1  # first answer character
+    ids.extend(vocab.encode(answer))
+    ids.append(vocab.eos_id)
+    response_end = prompt_len + len(body_ids)
+    if len(ids) > budget:
+        # Keep the beginning of the prompt and as much of the answer as fits.
+        keep_tail = budget - prompt_len
+        if keep_tail < 8:
+            prompt_keep = max(4, budget - 32)
+            ids = (
+                ids[:prompt_keep]
+                + [vocab.stoi["\n"]]
+                + ids[prompt_len:][: budget - prompt_keep - 1]
+            )
+            prompt_len = prompt_keep + 1
+        else:
+            ids = ids[:budget]
+        # truncation may have eaten the state block: never point past the row
+        response_end = min(prompt_len + len(body_ids), len(ids))
+    return ids, prompt_len, response_end
+
+
 def _make_net(torch: Any, pad_id: int = 0) -> Any:
     """Define the nn.Module lazily so importing this file stays torch-free."""
     nn = torch.nn
@@ -544,6 +582,22 @@ def resolve_device(torch: Any, wanted: str = "auto") -> str:
     return resolve_torch_device(wanted, torch_module=torch)
 
 
+def _kd_extra(kd: Any, rows: Sequence[int], box: List[Any]) -> Any:
+    """Adapt ``kd(hidden, rows)`` into the ``extra(hidden)`` the loss expects.
+
+    Reading the term back out through ``box`` lets ``train_on`` report the
+    distillation objective separately from the hard-label one.
+    """
+
+    def extra(hidden: Any) -> Any:
+        term = kd(hidden, rows)
+        if term is not None:
+            box.append(term)
+        return term
+
+    return extra
+
+
 class TokenSNN:
     """Small token-level SNN language model (torch required at build time)."""
 
@@ -579,34 +633,7 @@ class TokenSNN:
         answer without the marker ends where the answer ends, i.e. it is all
         response.
         """
-        prompt = prompt.strip()
-        answer = answer.strip()
-        budget = self.config.max_len
-        body = answer.split(AL_OUT_MARK, 1)[0] if AL_OUT_MARK in answer else answer
-        body_ids = self.vocab.encode(body)
-        ids = [self.vocab.bos_id] + self.vocab.encode(prompt)
-        prompt_len = len(ids)
-        ids.append(self.vocab.stoi["\n"])
-        prompt_len += 1  # first answer character
-        ids.extend(self.vocab.encode(answer))
-        ids.append(self.vocab.eos_id)
-        response_end = prompt_len + len(body_ids)
-        if len(ids) > budget:
-            # Keep the beginning of the prompt and as much of the answer as fits.
-            keep_tail = budget - prompt_len
-            if keep_tail < 8:
-                prompt_keep = max(4, budget - 32)
-                ids = (
-                    ids[:prompt_keep]
-                    + [self.vocab.stoi["\n"]]
-                    + ids[prompt_len:][: budget - prompt_keep - 1]
-                )
-                prompt_len = prompt_keep + 1
-            else:
-                ids = ids[:budget]
-            # truncation may have eaten the state block: never point past the row
-            response_end = min(prompt_len + len(body_ids), len(ids))
-        return ids, prompt_len, response_end
+        return encode_ids(self.vocab, prompt, answer, self.config.max_len)
 
     def make_batch(self, pairs: Sequence[Tuple[str, str]]) -> Tuple[Any, Any, Any]:
         torch = self.torch
@@ -685,7 +712,22 @@ class TokenSNN:
         choose = mask & (torch.rand(mask.shape, device=mask.device) < p)
         return torch.where(choose, guess, ids)
 
-    def loss(self, ids: Any, mask: Any, weights: Any = None, targets: Any = None) -> Any:
+    def loss(
+        self,
+        ids: Any,
+        mask: Any,
+        weights: Any = None,
+        targets: Any = None,
+        extra: Any = None,
+    ) -> Any:
+        """Cross-entropy on masked positions, plus an optional soft-target term.
+
+        ``extra(hidden)`` is called with the *same* shifted hidden states the
+        hard-label term uses, so distillation adds a head pass over the
+        distilled positions and nothing else — no second forward, no second
+        encoding. It returns a scalar tensor (or ``None`` to contribute
+        nothing), already scaled by the caller's weight.
+        """
         torch = self.torch
         # The head is d_hidden x vocab: at 10^8 parameters it is >90% of the
         # per-token compute and of the activation memory, and it is needed only
@@ -704,11 +746,17 @@ class TokenSNN:
             self.net.head(flat_hidden), flat_targets, reduction="none"
         )
         if weights is None:
-            return per_tok.mean()
-        w = weights[:, 1:].reshape(-1)[flat_mask]
-        # Weighted *mean*, not sum: the scale stays comparable to an unweighted
-        # run, so a tail weight never silently rescales the learning rate.
-        return (per_tok * w).sum() / w.sum().clamp(min=1e-6)
+            base = per_tok.mean()
+        else:
+            w = weights[:, 1:].reshape(-1)[flat_mask]
+            # Weighted *mean*, not sum: the scale stays comparable to an
+            # unweighted run, so a tail weight never silently rescales the
+            # learning rate.
+            base = (per_tok * w).sum() / w.sum().clamp(min=1e-6)
+        if extra is None:
+            return base
+        term = extra(hidden)
+        return base if term is None else base + term
 
     # -- diagnostics ---------------------------------------------------------
     def tf_accuracy(self, pairs: Sequence[Tuple[str, str]]) -> Dict[str, float]:
@@ -841,8 +889,11 @@ class TokenSNN:
         out: Dict[str, Any] = {
             "rows": len(pairs[:n]),
             "layers": layers,
-            "beta": round(float(torch.sigmoid(net.beta)), 4),
-            "threshold": round(abs(float(net.threshold)), 4),
+            # detach: these are parameters, and converting a requires_grad
+            # tensor to a scalar warns (nothing here trains, but a noisy
+            # warning in every run hides the numbers people should read).
+            "beta": round(float(torch.sigmoid(net.beta.detach())), 4),
+            "threshold": round(abs(float(net.threshold.detach())), 4),
             "per_layer": [],
         }
         for layer in range(layers):
@@ -934,7 +985,13 @@ class TokenSNN:
                         weight.mul_(gain_cap / radius)
 
     # -- training -----------------------------------------------------------
-    def _batch_loss(self, chunk: Sequence[Tuple[str, str]], tail_weight: float, p_ss: float) -> Any:
+    def _batch_loss(
+        self,
+        chunk: Sequence[Tuple[str, str]],
+        tail_weight: float,
+        p_ss: float,
+        extra: Any = None,
+    ) -> Any:
         """Loss for one batch, weighted/scheduled-sampling only when requested.
 
         Kept out of ``train_on`` so the epoch loop reads as one story; the
@@ -943,11 +1000,13 @@ class TokenSNN:
         """
         if tail_weight == 1.0 and p_ss == 0.0:
             ids, mask, _ = self.make_batch(chunk)
-            return self.loss(ids, mask)
+            return self.loss(ids, mask, extra=extra)
         ids, mask, _, weights = self.make_batch_weighted(chunk, tail_weight)
         if p_ss > 0.0:
-            return self.loss(self._ss_inputs(ids, mask, p_ss), mask, weights, targets=ids)
-        return self.loss(ids, mask, weights)
+            return self.loss(
+                self._ss_inputs(ids, mask, p_ss), mask, weights, targets=ids, extra=extra
+            )
+        return self.loss(ids, mask, weights, extra=extra)
 
     def train_on(
         self,
@@ -965,6 +1024,7 @@ class TokenSNN:
         diverge_factor: float = 3.0,
         min_lr: float = 1e-5,
         should_stop: Any = None,
+        kd: Any = None,
     ) -> List[Dict[str, float]]:
         """Train on ``pairs``.
 
@@ -988,6 +1048,10 @@ class TokenSNN:
         non-finite batches, and ``rolled_back``. ``lr_at(epoch)`` overrides the
         base rate per epoch (schedules live in the caller); ``should_stop()`` is
         polled between epochs so validation can end a run early.
+
+        ``kd(hidden, rows)`` adds a soft-target term to each batch. ``rows`` are
+        indices into ``pairs`` (the same indices the shuffle produced), because
+        a distillation target belongs to a corpus row, not to a batch slot.
         """
         torch = self.torch
         torch.manual_seed(seed)
@@ -1020,10 +1084,18 @@ class TokenSNN:
             total = 0.0
             steps = 0
             skipped = 0
+            kd_total = 0.0
+            kd_steps = 0
             for start in range(0, len(shuffled), batch_size):
-                chunk = [pairs[i] for i in shuffled[start : start + batch_size]]
+                batch_rows = shuffled[start : start + batch_size]
+                chunk = [pairs[i] for i in batch_rows]
                 opt.zero_grad()
-                loss = self._batch_loss(chunk, tail_weight, p_ss)
+                extra = None
+                kd_box: List[Any] = []
+                if kd is not None:
+                    extra = _kd_extra(kd, batch_rows, kd_box)
+
+                loss = self._batch_loss(chunk, tail_weight, p_ss, extra=extra)
                 if not bool(torch.isfinite(loss)):
                     # one bad batch must not poison the weights for the epochs
                     # that follow: drop the step instead of stepping into NaN
@@ -1036,6 +1108,9 @@ class TokenSNN:
                 self._project_structure()
                 total += float(loss.detach())
                 steps += 1
+                if kd_box:
+                    kd_total += float(kd_box[0].detach())
+                    kd_steps += 1
             row: Dict[str, Any] = {
                 "epoch": epoch,
                 "loss": total / max(1, steps) if steps else float("nan"),
@@ -1043,6 +1118,12 @@ class TokenSNN:
                 "skipped": skipped,
                 "rolled_back": False,
             }
+            if kd is not None:
+                # Reported separately: a rising total loss with a falling KD
+                # term means the soft target is pulling against the hard label,
+                # and that is invisible in a single number.
+                row["kd_loss"] = round(kd_total / kd_steps, 6) if kd_steps else None
+                row["kd_batches"] = kd_steps
             if guard:
                 best_loss, best_state, lr_scale, opt = self._guard_epoch(
                     row, best_loss, best_state, steps, lr, lr_scale, min_lr, diverge_factor, opt

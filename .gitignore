@@ -106,6 +106,7 @@ credentials.json
 !apps/backend/src/ai/ed3n/token_snn.py
 !scripts/train_token_snn.py
 !tests/ai/test_token_snn.py
+!tests/test_train_token_snn.py
 *.key
 *.pem
 .env

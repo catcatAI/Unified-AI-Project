@@ -21,7 +21,7 @@ import shutil
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
@@ -163,6 +163,32 @@ def main() -> int:
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="seeds the initial weights AND the batch order (default 0). Without "
+        "it two runs differ by a random initialisation, which is larger than the "
+        "effect a 3k-row comparison is trying to see.",
+    )
+    ap.add_argument(
+        "--kd-cache",
+        default="",
+        help="KdCache built by scripts/build_kd_cache.py. Adds a soft-target term "
+        "from the llama.cpp teacher on top of the hard-label loss. The cache is "
+        "bound to its vocabulary and its row list, and both are checked before "
+        "training: a mismatched cache attaches every target to the wrong row and "
+        "the loss still falls.",
+    )
+    ap.add_argument(
+        "--kd-weight",
+        type=float,
+        default=0.5,
+        help="scale of the distillation term relative to the hard-label CE "
+        "(default 0.5; ignored without --kd-cache). The term is "
+        "-sum_a q_a log p_a under the full softmax with q unnormalised, so it is "
+        "on the same nats scale as the CE and a fixed weight is meaningful.",
+    )
     ap.add_argument("--max-len", type=int, default=192)
     ap.add_argument(
         "--tail-weight",
@@ -407,6 +433,11 @@ def main() -> int:
 
     device = resolve_device(torch, args.device)
     print(f"device={device}")
+    # Seed *before* construction: torch.initial_seed() differs in every
+    # process, so two runs of the same command start from different weights.
+    # train_on() reseeds for the batch order, but that happens after the
+    # parameters already exist, so it cannot make an A/B comparable on its own.
+    torch.manual_seed(int(args.seed))
     model = TokenSNN(vocab, cfg, device=device)
     if args.resume:
         if Path(args.out).is_file():
@@ -421,6 +452,52 @@ def main() -> int:
             print(f"resumed from {args.out}", flush=True)
         else:
             print(f"--resume: no checkpoint at {args.out}, starting fresh", flush=True)
+    kd = None
+    kd_info: Dict[str, Any] = {}
+    if args.kd_cache:
+        from ai.ed3n.kd_cache import KdCache
+
+        cache = KdCache.load(Path(args.kd_cache))
+        cache.require_vocab(vocab.itos, source=str(args.kd_cache))
+        if cache.n_rows != len(train_fit):
+            # Row *index* is the join between cache and sample: a cache built on
+            # a different limit/max_len trains every target against the wrong
+            # prompt, and the only symptom is a slightly worse loss.
+            print(
+                f"refusing --kd-cache: it holds {cache.n_rows} rows but this run "
+                f"trains on {len(train_fit)}; rebuild it with the same --limit / "
+                "--max-len / vocabulary"
+            )
+            return 1
+        drift = cache.verify_rows(train_fit, model)
+        if drift:
+            print("refusing --kd-cache: cached rows do not match this run:")
+            for problem in drift:
+                print(f"  {problem}")
+            return 1
+        weight = float(args.kd_weight)
+
+        def kd(hidden: Any, rows: List[int], _cache: Any = cache, _net: Any = model.net) -> Any:
+            term = _cache.batch_loss(_net, hidden, rows)
+            return None if term is None else weight * term
+
+        stats = cache.stats()
+        kd_info = {
+            "cache": str(args.kd_cache),
+            "weight": weight,
+            "rows": cache.n_rows,
+            "meta": cache.meta,
+            "stats": {k: round(v, 4) for k, v in stats.items()},
+            # The builder records the teacher's real coverage; ``stats`` also
+            # measures it across a sample, so the two should agree.
+            "teacher_mapped_mass": cache.meta.get("teacher_mapped_mass"),
+        }
+        print(
+            f"kd cache={args.kd_cache} rows={cache.n_rows} weight={weight} "
+            f"mapped_mass={stats['mapped_mass']:.3f} "
+            f"positions/row={stats['positions_per_row']:.1f}",
+            flush=True,
+        )
     started = time.time()
     curve: List[dict] = []
     held_out = []
@@ -490,6 +567,8 @@ def main() -> int:
             note = "  [rolled back: restored best weights, lr halved]"
         if row.get("skipped"):
             note += f"  [skipped {row['skipped']} non-finite batches]"
+        if row.get("kd_loss") is not None:
+            note += f"  [kd={row['kd_loss']:.3f} over {row['kd_batches']} batches]"
         print(
             f"  epoch {row['epoch'] + 1}: loss={loss:.4f} lr={row.get('lr', args.lr):.2e}{note}",
             flush=True,
@@ -539,6 +618,8 @@ def main() -> int:
         diverge_factor=args.diverge_factor,
         min_lr=args.min_lr,
         should_stop=lambda: stop["now"],
+        kd=kd,
+        seed=int(args.seed),
     )
     train_elapsed = time.time() - started
     last_loss = float(history[-1]["loss"]) if history else float("inf")
@@ -608,8 +689,10 @@ def main() -> int:
         "epochs": args.epochs,
         "batch": args.batch,
         "lr": args.lr,
+        "seed": int(args.seed),
         "tail_weight": args.tail_weight,
         "ss_final": args.ss_final,
+        "kd": kd_info or None,
         "device": device,
         "seconds": round(elapsed, 1),
         "train_seconds": round(train_elapsed, 1),
