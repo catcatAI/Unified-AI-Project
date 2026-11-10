@@ -601,3 +601,98 @@ class TestUnmeasuredFamiliesAreNamed:
         assert protocol._stale_registrations(cells, {"hard": "x"}) == []
         # 沒跑到的族（沒有 cell）不算過期，也不算漏登記：這次沒量它。
         assert protocol._stale_registrations(cells[:0], {"hard": "x"}) == []
+
+
+class TestStrengthProbe:
+    """G1（定點 = target_strength·gate）在 12 格階梯上結構上量不到，這裡釘住探針本身。
+
+    階梯每一筆樣本都是 `{key: 1.0}`，`gate` 恆為 1，所以不管規則怎麼改，所有配對都停在同一個
+    定點。要有東西可量，輸入端必須真的帶強弱——探針用「出現次數」分層（真實語料的共現頻率就是
+    這樣分佈的），四個臂共用同一條訓練流，只改信心怎麼進 ``hebbian_update``。
+    """
+
+    @staticmethod
+    def _task(protocol, pairs=8):
+        return {"pairs": pairs, "noise_bits": 2, "shared": False, "lr": 0.05, "threshold": 0.25}
+
+    def test_spearman_extremes_and_no_spread(self, protocol):
+        assert protocol._spearman([1, 2, 3, 4], [10, 20, 30, 40]) == pytest.approx(1.0)
+        assert protocol._spearman([1, 2, 3, 4], [40, 30, 20, 10]) == pytest.approx(-1.0)
+        # 全平不是「完美相關」：那種情況該回 None，讓報表說「量不到」而不是說 1.0。
+        assert protocol._spearman([1, 1, 1, 1], [1, 2, 3, 4]) is None
+
+    def test_tier_assignment_is_fixed_not_resampled(self, protocol):
+        pairs = [(f"c{i}", "t00") for i in range(10)]
+        tiers = protocol._tier_of_pairs(pairs)
+
+        assert sorted(set(tiers)) == [1, 3]
+        assert tiers.count(3) == 5
+        # 固定種子：哪個配對是強層不能每次跑都不一樣，否則跨臂比較會混到抽樣差異。
+        assert tiers == protocol._tier_of_pairs(pairs)
+
+    def test_the_stream_repeats_each_pair_by_its_tier(self, protocol):
+        tiers = [3, 1, 1]
+        stream = protocol._strength_stream([("c", "t")] * 3, tiers, seed=1, epochs=2)
+
+        assert len(stream) == 2 * sum(tiers)
+        for index, tier in enumerate(tiers):
+            assert stream.count(index) == 2 * tier
+
+    def test_the_fixed_point_carries_the_tier_and_the_flat_arm_does_not(self, protocol):
+        """跑到接近定點才分得開：flat 的弱層只是 decay 不平衡，graded 的弱層停在 T·gate。"""
+        task = self._task(protocol)
+        pairs = protocol._downstream._pairs(task)
+        tiers = protocol._tier_of_pairs(pairs)
+        stream = protocol._strength_stream(pairs, tiers, seed=11, epochs=40)
+        conf = [tiers[i] / float(max(protocol.STRENGTH_TIERS)) for i in stream]
+
+        flat = protocol._run_strength_arm(
+            task, pairs, tiers, stream, [1.0] * len(stream), 11, "flat"
+        )
+        graded = protocol._run_strength_arm(task, pairs, tiers, stream, conf, 11, "graded")
+
+        assert graded["weight_weak"] < flat["weight_weak"] * 0.8
+        assert graded["tier_gap"] > flat["tier_gap"]
+
+    def test_equilibrium_reports_the_ratio_and_a_verdict(self, protocol):
+        task = self._task(protocol)
+        calibration = {
+            "step": {k: task[k] for k in ("pairs", "noise_bits", "shared")},
+            "lr": task["lr"],
+        }
+
+        report = protocol.strength_equilibrium("easy", calibration, seeds=(11, 23, 37), epochs=20)
+
+        assert report["verdict"] in {"fixed-point-carries-strength", "fixed-point-inert"}
+        assert (
+            report["arms"]["graded"]["weak_over_strong_mean"]
+            < report["arms"]["flat"]["weak_over_strong_mean"]
+        )
+        assert report["graded_below_flat"] == report["seeds"]
+
+    def test_equilibrium_refuses_calibration_seeds(self, protocol):
+        task = self._task(protocol)
+        calibration = {
+            "step": {k: task[k] for k in ("pairs", "noise_bits", "shared")},
+            "lr": task["lr"],
+        }
+
+        with pytest.raises(ValueError, match="calibration seeds"):
+            protocol.strength_equilibrium("easy", calibration, seeds=protocol.CALIBRATION_SEEDS)
+
+    @pytest.mark.parametrize(
+        "better, worse, expected",
+        [
+            # 40 個種子 ⇒ need 26：只有「同向且超過門檻」才算有方向。
+            (40, 0, "readout-better"),
+            (7, 27, "readout-worse"),
+            (20, 19, "readout-no-difference"),  # 望遠鏡兩端都不夠，不能報方向
+            (13, 20, "readout-no-difference"),
+            # 兩個方向都過門檻（不可能同時發生，但別讓程式默默選一邊）
+            (30, 30, "readout-no-difference"),
+        ],
+    )
+    def test_readout_direction_needs_a_sign_test(self, protocol, better, worse, expected):
+        need = protocol._sign_test_minimum(40)
+        assert need == 26
+        assert protocol._readout_verdict(better, worse, need) == expected

@@ -100,7 +100,11 @@ sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 # 0.08–0.12 正是「先調門檻再量」會繞不出去的迴圈。v23 不動 HIT_MARGIN、不動判詞門檻、不動
 # 問題，只把同一批量測多跑 28 個種子（同一組固定質數，不是 1000+ 的流水號）。門檻
 # `SIGN_TEST_MIN` 由 n 導出（40 → 26，單尾 p≈0.040），所以「多跑種子」不會悄悄放寬判詞。
-PROTOCOL_VERSION = "al-downstream-v23"
+# v24 新增一個**獨立**的探針（``strength_probe``），不改 12 格階梯的任何門檻與問題：階梯每筆
+# 樣本都是 ``{key: 1.0}``，``gate`` 恆等於 1，所以 G1（定點 = target_strength·gate）在階梯上
+# 結構上不可能量到——要有東西可量，輸入端必須真的帶強弱。探針預設不跑（``--strength-probe``），
+# 因為它答的是另一個問題，不該改變既有報告的內容與成本。
+PROTOCOL_VERSION = "al-downstream-v24"
 READOUT = "potential"
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
@@ -665,6 +669,352 @@ def evaluate_cell(
     }
 
 
+# ---------------------------------------------------------------------------
+# G1 的下游探針：強弱進到權重裡之後，讀出有沒有看見？
+# ---------------------------------------------------------------------------
+# WHY 這一段不在 12 格階梯裡：階梯量的是「時機」（phase vs shuffled），而它每一筆樣本都是
+# `{key: 1.0}` / `{label: 1.0}`，`gate` 恆等於 1，所以 G1（定點 = target_strength·gate）在階梯上
+# **結構上不可能**有任何效果——不管規則怎麼改，每個配對都停在同一個 0.35。這是上一輪
+# (G1) 修正的限制，寫在 CHANGELOG 但沒有量具。要讓「強弱」有東西可量，輸入端必須真的帶強弱。
+#
+# 這裡用「出現次數」當強弱來源（真實語料的共現頻率就是這樣分佈的：常見關聯多次、罕見一次），
+# 四個臂**共用同一條訓練流**（同樣的配對、同樣的順序、同樣的長度），只改信心怎麼進
+# ``hebbian_update``：
+#   flat    信心 1.0、plasticity 1.0         —— 舊規則的輸入（定點人人相同）
+#   graded  信心 = tier/3、plasticity 1.0    —— G1：強弱進到**定點**
+#   matched 同一組信心打散到別的樣本上        —— 控制：信心分佈相同、對應關係毁掉
+#   speed   信心 1.0、plasticity = tier/3    —— 舊語意：強弱只當**速率**
+# 判準只比 ``graded`` 與 ``matched``：前者測「對應關係」，後者測「剛好有些信心值比較小」。
+STRENGTH_TIERS = (1, 3)
+STRENGTH_EPOCHS = 3
+STRENGTH_TIER_SEED = 20261110  # 固定：哪個配對屬於哪一層不能隨評估種子改
+# 收斂區要另一批設定：ep3 的權重離定點還很遠（實測強層 0.065，收斂後 0.22），那個區域量到的
+# 是累積速率—四個臂拉的節點都在同一個量級，「定點帶強弱」與「速率帶強弱」分不開。只有接近
+# 定點才分得開，所以收斂區單獨一跑，且只需要前 12 個種子（每一下都貴 13 倍）。
+STRENGTH_EQUILIBRIUM_EPOCHS = 40
+STRENGTH_EQUILIBRIUM_SEEDS = 12
+# 收斂區的判準：graded 的「弱/強 權重比」必須比 flat 低至少這麼多。實測 flat 0.84、speed 0.62、
+# graded 0.41，所以 0.15 的分界落在「速率造成的差」與「定點造成的差」之間。
+STRENGTH_MIN_RATIO_DROP = 0.15
+# 權重要算得上「照 tier 排序」：Spearman 中位以上、且兩層平均差至少 0.02（實測 flat 的兩層差
+# 來自 decay 不平衡，量級 0.005–0.02，所以門檻必須高於它才分得開「定點真的有差」）。
+STRENGTH_MIN_SPEARMAN = 0.5
+STRENGTH_MIN_GAP = 0.02
+
+
+def _ranks(values: Sequence[float]) -> List[float]:
+    """平均名次（同分共用名次），給 Spearman 用；不引進 scipy。"""
+    order = sorted(range(len(values)), key=lambda i: values[i])
+    ranks = [0.0] * len(values)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and values[order[j + 1]] == values[order[i]]:
+            j += 1
+        shared = (i + j) / 2.0 + 1.0
+        for k in range(i, j + 1):
+            ranks[order[k]] = shared
+        i = j + 1
+    return ranks
+
+
+def _spearman(xs: Sequence[float], ys: Sequence[float]) -> Optional[float]:
+    """秩相關；任一側完全沒有散佈時回 ``None``（同分全平不是「完美相關」）。"""
+    if len(xs) != len(ys) or len(xs) < 3:
+        return None
+    rx, ry = _ranks(xs), _ranks(ys)
+    mx, my = statistics.fmean(rx), statistics.fmean(ry)
+    num = sum((a - mx) * (b - my) for a, b in zip(rx, ry))
+    den = math.sqrt(sum((a - mx) ** 2 for a in rx) * sum((b - my) ** 2 for b in ry))
+    return num / den if den else None
+
+
+def _pair_weight(core: object, inputs: Sequence[str], target: str) -> Optional[float]:
+    """這個配對在權重矩陣上的平均權重（cue token → target）。"""
+    idx = getattr(core, "_key_to_idx", {})
+    matrix = getattr(core, "_W", None)
+    j = idx.get(target)
+    if matrix is None or j is None:
+        return None
+    values = []
+    for key in inputs:
+        i = idx.get(key)
+        if i is None:
+            continue
+        cell = matrix[i, j]
+        values.append(float(cell.item() if hasattr(cell, "item") else cell))
+    return statistics.fmean(values) if values else None
+
+
+def _tier_of_pairs(pairs: Sequence[Tuple[List[str], str]]) -> List[int]:
+    """把配對分層：一半強（tier 3）、一半弱（tier 1），用固定種子打散，不跟 target 分組共振。"""
+    count = len(pairs)
+    strong = set(random.Random(STRENGTH_TIER_SEED).sample(range(count), count // 2))
+    return [STRENGTH_TIERS[1] if i in strong else STRENGTH_TIERS[0] for i in range(count)]
+
+
+def _strength_stream(
+    pairs: Sequence[Tuple[List[str], str]], tiers: Sequence[int], seed: int, epochs: int
+) -> List[int]:
+    """訓練流：每個配對按 tier 重複，逐 epoch 打亂；回傳的每一項是配對索引。"""
+    stream = [i for i, tier in enumerate(tiers) for _ in range(tier)]
+    rng = random.Random(seed * 6151 + 17)
+    out: List[int] = []
+    for _ in range(epochs):
+        order = stream[:]
+        rng.shuffle(order)
+        out.extend(order)
+    return out
+
+
+def _run_strength_arm(
+    task: Dict[str, object],
+    pairs: Sequence[Tuple[List[str], str]],
+    tiers: Sequence[int],
+    stream: Sequence[int],
+    confidences: Sequence[float],
+    seed: int,
+    arm: str,
+) -> Dict[str, float]:
+    """同一條流、同一個種子，只改信心與 plasticity 怎麼進來。"""
+    core = _downstream.TensorSNNCore(
+        threshold=float(task["threshold"]),  # type: ignore[arg-type]
+        timesteps=_downstream._readouts.TIMESTEPS,
+    )
+    top = float(max(STRENGTH_TIERS))
+    for pair_index, conf in zip(stream, confidences):
+        inputs, target = pairs[pair_index]
+        tier = tiers[pair_index]
+        graded = tier / top
+        core.hebbian_update(
+            {key: (conf if arm in ("graded", "matched") else 1.0) for key in inputs},
+            {target: (conf if arm in ("graded", "matched") else 1.0)},
+            lr=float(task["lr"]),  # type: ignore[arg-type]
+            target_strength=_downstream.TARGET_STRENGTH,
+            plasticity=(graded if arm == "speed" else 1.0),
+        )
+    weights = [_pair_weight(core, inputs, target) for inputs, target in pairs]
+    usable = [(t, w) for t, w in zip(tiers, weights) if w is not None]
+    strong = [w for t, w in usable if t == STRENGTH_TIERS[1]]
+    weak = [w for t, w in usable if t == STRENGTH_TIERS[0]]
+    rho = _spearman([float(t) for t, _ in usable], [float(w) for _, w in usable])
+    evaluated = _downstream._evaluate(core, dict(task, pairs=len(pairs)), pairs=pairs)
+    return {
+        "spearman": round(rho, 3) if rho is not None else None,
+        "tier_gap": (
+            round(statistics.fmean(strong) - statistics.fmean(weak), 5) if strong and weak else 0.0
+        ),
+        "weight_strong": round(statistics.fmean(strong), 5) if strong else 0.0,
+        "weight_weak": round(statistics.fmean(weak), 5) if weak else 0.0,
+        "distinct_levels": len({round(w, 3) for _, w in usable}),
+        "hit_rate": round(evaluated["hit_rate"], 3),
+        "margin": round(evaluated["margin"], 5),
+    }
+
+
+def strength_probe(
+    family: str,
+    calibration: Dict[str, object],
+    readout: Optional[str] = None,
+    seeds: Optional[Sequence[int]] = None,
+    epochs: int = STRENGTH_EPOCHS,
+) -> Dict[str, object]:
+    """強弱（出現次數）有沒有進到權重，以及讀出看不看得見。
+
+    四個臂共用同一條訓練流與同一個種子，所以任何差異都只能來自「信心怎麼進 update」。
+    """
+    assert readout in (None, READOUT), "the strength probe fixes the potential readout"
+    task = _task(family, calibration["step"], float(calibration["lr"]))  # type: ignore[arg-type]
+    pairs = _downstream._pairs(task)
+    tiers = _tier_of_pairs(pairs)
+    use_seeds = tuple(seeds) if seeds else SEEDS
+    arms = ("flat", "graded", "matched", "speed")
+    rows: Dict[str, List[Dict[str, float]]] = {name: [] for name in arms}
+    for seed in use_seeds:
+        stream = _strength_stream(pairs, tiers, seed, epochs)
+        graded_conf = tuple(tiers[i] / float(max(STRENGTH_TIERS)) for i in stream)
+        matched_conf = list(graded_conf)
+        random.Random(seed * 104729 + 7).shuffle(matched_conf)
+        confidences = {
+            "flat": [1.0] * len(stream),
+            "graded": list(graded_conf),
+            "matched": matched_conf,
+            "speed": [1.0] * len(stream),
+        }
+        for arm in arms:
+            rows[arm].append(
+                _run_strength_arm(task, pairs, tiers, stream, confidences[arm], seed, arm)
+            )
+
+    need = _sign_test_minimum(len(use_seeds))
+    gaps = {arm: [row["tier_gap"] for row in rows[arm]] for arm in arms}
+    ordered = sum(1 for a, b in zip(gaps["graded"], gaps["matched"]) if a > b)
+    hits_better = sum(
+        1 for a, b in zip(rows["graded"], rows["matched"]) if a["hit_rate"] > b["hit_rate"]
+    )
+    hits_worse = sum(
+        1 for a, b in zip(rows["graded"], rows["matched"]) if a["hit_rate"] < b["hit_rate"]
+    )
+    summary = {
+        arm: {
+            "spearman_mean": (
+                round(
+                    statistics.fmean(r["spearman"] for r in rows[arm] if r["spearman"] is not None),
+                    3,
+                )
+                if any(r["spearman"] is not None for r in rows[arm])
+                else None
+            ),
+            "tier_gap_mean": round(statistics.fmean(gaps[arm]), 5),
+            "tier_gap_sd": round(statistics.stdev(gaps[arm]), 5) if len(gaps[arm]) > 1 else 0.0,
+            "weight_strong_mean": round(statistics.fmean(r["weight_strong"] for r in rows[arm]), 5),
+            "weight_weak_mean": round(statistics.fmean(r["weight_weak"] for r in rows[arm]), 5),
+            "distinct_levels_min": min(int(r["distinct_levels"]) for r in rows[arm]),
+            "hit_rate_mean": round(statistics.fmean(r["hit_rate"] for r in rows[arm]), 3),
+            "margin_mean": round(statistics.fmean(r["margin"] for r in rows[arm]), 5),
+        }
+        for arm in arms
+    }
+    graded = summary["graded"]
+    ordering = (
+        "ordering-carries-across-tiers"
+        if (
+            (graded["spearman_mean"] or 0.0) >= STRENGTH_MIN_SPEARMAN
+            and graded["tier_gap_mean"] >= STRENGTH_MIN_GAP
+            and ordered >= need
+        )
+        else "ordering-not-separated-from-distribution"
+    )
+    readout = _readout_verdict(hits_better, hits_worse, need)
+    return {
+        "family": family,
+        "epochs": epochs,
+        "stream_length": len(_strength_stream(pairs, tiers, 11, epochs)),
+        "pairs": len(pairs),
+        "tiers": {str(t): tiers.count(t) for t in sorted(set(tiers))},
+        "seeds": len(use_seeds),
+        "sign_test_min": need,
+        "arms": summary,
+        "graded_over_matched_tier_gap": ordered,
+        "graded_over_matched_hit": hits_better,
+        "graded_under_matched_hit": hits_worse,
+        "ordering_verdict": ordering,
+        "readout_verdict": readout,
+    }
+
+
+def _readout_verdict(better: int, worse: int, need: int) -> str:
+    """方向要分開講：贏過控制與輪給控制是相反的結論，把它們都叫「有效」就不算量了。
+
+    ``need`` 由種子數導出（``_sign_test_minimum``），所以多跑種子不會放寬判詞。
+    """
+    if better >= need and better > worse:
+        return "readout-better"
+    if worse >= need and worse > better:
+        return "readout-worse"
+    return "readout-no-difference"
+
+
+def strength_equilibrium(
+    family: str,
+    calibration: Dict[str, object],
+    seeds: Optional[Sequence[int]] = None,
+    epochs: int = STRENGTH_EQUILIBRIUM_EPOCHS,
+) -> Dict[str, object]:
+    """収斂區的同一組比較：只看兩層的權重比，不看 top-1。
+
+    WHY 需要這一跑：``strength_probe`` 在 ep3 量到的權重離定點還很遠（實測強層 0.065，収斂後
+    0.22），那個區域四臂拉的節點都在同一個量級——「定點帶強弱」與「速率帶強弱」在瞬態分不開。
+    接近定點時才分開：flat 的弱/強 比 0.84（純粋是 decay 不平衡造成的）、speed 0.62（慢的更少
+    累積）、graded 0.41（定點本身就是 T·gate）。
+
+    top-1 在這個區域已經不能用：讀出在大量權重下飽和（實測 ep20 起 flat 也是 0.000），所以
+    這裡只報權重比，不報命中率——量不到的不假裝量到。
+    """
+    using = tuple(seeds) if seeds else tuple(SEEDS[:STRENGTH_EQUILIBRIUM_SEEDS])
+    if set(using) & set(CALIBRATION_SEEDS):
+        raise ValueError("equilibrium seeds must not include calibration seeds")
+    task = _task(family, calibration["step"], float(calibration["lr"]))  # type: ignore[arg-type]
+    pairs = _downstream._pairs(task)
+    tiers = _tier_of_pairs(pairs)
+    arms = ("flat", "graded", "matched", "speed")
+    rows: Dict[str, List[Dict[str, float]]] = {name: [] for name in arms}
+    for seed in using:
+        stream = _strength_stream(pairs, tiers, seed, epochs)
+        matched_conf = [tiers[i] / float(max(STRENGTH_TIERS)) for i in stream]
+        random.Random(seed * 104729 + 7).shuffle(matched_conf)
+        confidences = {
+            "flat": [1.0] * len(stream),
+            "graded": [tiers[i] / float(max(STRENGTH_TIERS)) for i in stream],
+            "matched": matched_conf,
+            "speed": [1.0] * len(stream),
+        }
+        for arm in arms:
+            rows[arm].append(
+                _run_strength_arm(task, pairs, tiers, stream, confidences[arm], seed, arm)
+            )
+
+    def ratio(row: Dict[str, float]) -> float:
+        strong = row["weight_strong"] or 0.0
+        return row["weight_weak"] / strong if strong else 0.0
+
+    summary = {
+        arm: {
+            "weak_over_strong_mean": round(statistics.fmean(ratio(r) for r in rows[arm]), 3),
+            "weak_over_strong_sd": (
+                round(statistics.stdev(ratio(r) for r in rows[arm]), 3)
+                if len(rows[arm]) > 1
+                else 0.0
+            ),
+            "weight_strong_mean": round(statistics.fmean(r["weight_strong"] for r in rows[arm]), 5),
+            "weight_weak_mean": round(statistics.fmean(r["weight_weak"] for r in rows[arm]), 5),
+        }
+        for arm in arms
+    }
+    need = _sign_test_minimum(len(using))
+    graded_below_flat = sum(1 for g, f in zip(rows["graded"], rows["flat"]) if ratio(g) < ratio(f))
+    graded_below_matched = sum(
+        1 for g, m in zip(rows["graded"], rows["matched"]) if ratio(g) < ratio(m)
+    )
+    drop = summary["flat"]["weak_over_strong_mean"] - summary["graded"]["weak_over_strong_mean"]
+    reaches = (
+        drop >= STRENGTH_MIN_RATIO_DROP and min(graded_below_flat, graded_below_matched) >= need
+    )
+    return {
+        "family": family,
+        "epochs": epochs,
+        "seeds": len(using),
+        "sign_test_min": need,
+        "arms": summary,
+        "ratio_drop_vs_flat": round(drop, 3),
+        "graded_below_flat": graded_below_flat,
+        "graded_below_matched": graded_below_matched,
+        "verdict": "fixed-point-carries-strength" if reaches else "fixed-point-inert",
+    }
+
+
+def strength_report(
+    family: str, calibration: Dict[str, object], seeds: Optional[Sequence[int]] = None
+) -> Dict[str, object]:
+    """瞬態（讀出還活著）＋収斂區（定點看得到）兩段合起來看。
+
+    兩段必須一起報：只跑瞬態得到「四臂差不多」會誤判成「強弱沒用」，實際上是「還沒走到定點」；
+    只跑収斂則會把已經飽和的 top-1（0.000）誤讀成「強弱有害」。
+    """
+    transient = strength_probe(family, calibration, seeds=seeds, epochs=STRENGTH_EPOCHS)
+    plateau = strength_equilibrium(family, calibration)
+    return {
+        "family": family,
+        "transient": transient,
+        "equilibrium": plateau,
+        # 兩句都要留下來：「定點有沒有带強弱」與「讀出看不看得見」是兩個獨立問題，拿其中
+        # 一句當結論會把「還沒走到定點」或「讀出已經飽和」誤讀成機制的成敗。
+        "weights_verdict": plateau["verdict"],
+        "ordering_verdict": transient["ordering_verdict"],
+        "readout_verdict": transient["readout_verdict"],
+    }
+
+
 NO_BENEFIT = (
     "no-downstream-difference",
     "margin-gain-without-hit-gain",
@@ -746,8 +1096,10 @@ def run(
     readout: Optional[str] = None,
     seeds: Optional[Sequence[int]] = None,
     families: Optional[Sequence[str]] = None,
+    strength: bool = False,
 ) -> Dict[str, object]:
     cells: List[Dict[str, object]] = []
+    probes: List[Dict[str, object]] = []
     use_seeds = tuple(seeds) if seeds else SEEDS
     if set(use_seeds) & set(CALIBRATION_SEEDS):
         raise ValueError("evaluation seeds must not include calibration seeds")
@@ -783,6 +1135,31 @@ def run(
                     "thin_margin": in_range and margin < HIT_MARGIN,
                 }
             )
+        # 強弱探針只在這一族校準成功時才有意義（校準失敗＝連基準都量不到）。
+        if strength and calibration["informative"]:
+            probe = strength_report(family, calibration, seeds=use_seeds)
+            probes.append(probe)
+            t = probe["transient"]
+            e = probe["equilibrium"]
+            print(
+                f"strength {family:<12} ep{STRENGTH_EPOCHS} (readout alive) "
+                f"graded rho {t['arms']['graded']['spearman_mean']} "
+                f"hit {t['arms']['graded']['hit_rate_mean']} vs matched "
+                f"{t['arms']['matched']['hit_rate_mean']} "
+                f"(G>M {t['graded_over_matched_hit']}/{t['seeds']}, "
+                f"G<M {t['graded_under_matched_hit']}/{t['seeds']}) "
+                f"-> {t['ordering_verdict']}/{t['readout_verdict']}"
+            )
+            print(
+                f"strength {family:<12} ep{STRENGTH_EQUILIBRIUM_EPOCHS} (plateau) "
+                f"weak/strong flat {e['arms']['flat']['weak_over_strong_mean']} "
+                f"graded {e['arms']['graded']['weak_over_strong_mean']} "
+                f"matched {e['arms']['matched']['weak_over_strong_mean']} "
+                f"speed {e['arms']['speed']['weak_over_strong_mean']} "
+                f"| drop {e['ratio_drop_vs_flat']} "
+                f"| G<F {e['graded_below_flat']}/{e['seeds']} "
+                f"G<M {e['graded_below_matched']}/{e['seeds']} -> {e['verdict']}"
+            )
 
     # 哪些族沒有產出可下結論的格、以及為什麼；未登記的族會讓整體判詞變成
     # ``unmeasured-unregistered``，不再讓它們安靜地從判詞裡消失。
@@ -810,7 +1187,7 @@ def run(
             f"held-out {control['heldout']} (chance {control['chance']})"
         )
 
-    return {
+    result: Dict[str, object] = {
         "protocol": PROTOCOL_VERSION,
         "readout": readout or READOUT,
         "controls": controls,
@@ -826,6 +1203,26 @@ def run(
         "cells": cells,
         "verdict": overall_verdict(cells, unregistered),
     }
+    if strength:
+        result["strength_probe"] = probes
+        result["strength_verdict"] = _strength_verdict(probes)
+    return result
+
+
+def _strength_verdict(probes: Sequence[Dict[str, object]]) -> str:
+    """跨族判詞：兩個問題分開講；只有不一致的族才退成「依 regime 而定」。
+
+    一致性的負結果也是結論（所有族都「定點沒帶強弱」或「讀出看不見」），不能模糊成「沒差」。
+    """
+    if not probes:
+        return "no-strength-probe"
+    weights = {str(p["weights_verdict"]) for p in probes}
+    ordering = {str(p["ordering_verdict"]) for p in probes}
+    readout = {str(p["readout_verdict"]) for p in probes}
+    w = weights.pop() if len(weights) == 1 else "weights-regime-dependent"
+    o = ordering.pop() if len(ordering) == 1 else "ordering-regime-dependent"
+    r = readout.pop() if len(readout) == 1 else "readout-regime-dependent"
+    return f"{w}/{o}/{r}"
 
 
 def main(argv=None) -> int:
@@ -838,6 +1235,9 @@ def main(argv=None) -> int:
     # 同向，判詞會悄悄變鬆。校準種子永不參與評估。
     ap.add_argument("--seeds", type=int, default=len(SEEDS))
     ap.add_argument("--families", default=",".join(FAMILIES))
+    # 強弱探針：問「出現次數造成的強弱有沒有進到權重、讀出看不看得見」。預設不跑，因為它
+    # 問的不是時機（階梯的問題），而且會多出 4 臂 × 種子 的訓練成本。
+    ap.add_argument("--strength-probe", action="store_true")
     args = ap.parse_args(argv)
 
     seed_list = tuple(SEEDS) + tuple(s for s in range(1000, 1000 + max(0, args.seeds - len(SEEDS))))
@@ -845,6 +1245,7 @@ def main(argv=None) -> int:
         readout=args.readout,
         seeds=seed_list[: args.seeds],
         families=[f for f in args.families.split(",") if f],
+        strength=args.strength_probe,
     )
     print(f"protocol: {result['protocol']}  readout {result['readout']}")
     for cell in result["cells"]:  # type: ignore[union-attr]
@@ -879,6 +1280,8 @@ def main(argv=None) -> int:
             f"-> {body['verdict']}"
         )
     print(f"verdict: {result['verdict']}")
+    if result.get("strength_verdict"):
+        print(f"strength verdict: {result['strength_verdict']}")
 
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)
