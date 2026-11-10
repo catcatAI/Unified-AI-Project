@@ -670,6 +670,88 @@ class TestStrengthProbe:
         )
         assert report["graded_below_flat"] == report["seeds"]
 
+    def test_the_probe_records_which_readout_produced_the_numbers(self, protocol):
+        """讀出是待測變因之一，所以報告必須帶上是哪一個——不然兩份數字分不出差在讀出。
+
+        v24 的兩難就是「讀出有訊號的區域還沒走到定點、定點看得見的區域讀出已經飽和」，
+        換讀出（``potential`` → ``direct``）若不留痕，這兩個結論會互相冒充。
+        """
+        task = self._task(protocol)
+        calibration = {
+            "step": {k: task[k] for k in ("pairs", "noise_bits", "shared")},
+            "lr": task["lr"],
+        }
+
+        probe = protocol.strength_probe(
+            "easy", calibration, readout="direct", seeds=(11, 23), epochs=1
+        )
+
+        assert probe["readout"] == "direct"
+        # 預設沒指定時仍是 potential：既有報告要能逐位重現。
+        default = protocol.strength_probe("easy", calibration, seeds=(11,), epochs=1)
+        assert default["readout"] == protocol.READOUT == "potential"
+
+    def test_the_readout_cannot_change_the_weights(self, protocol):
+        """不變量：讀出只決定「怎麼看」，不得影響「學到什麼」。
+
+        這條會被試探出來：換讀出必須重跑校準，而校準會挑不同的 ``lr``／``step``，於是「讀出
+        差異」很容易混進「任務參數差異」。把權重釘死，就分得出哪一部分真的是讀出造成的。
+        """
+        task = self._task(protocol)
+        pairs = protocol._downstream._pairs(task)
+        tiers = protocol._tier_of_pairs(pairs)
+        stream = protocol._strength_stream(pairs, tiers, seed=11, epochs=2)
+        conf = [tiers[i] / float(max(protocol.STRENGTH_TIERS)) for i in stream]
+
+        potential = protocol._run_strength_arm(
+            task, pairs, tiers, stream, conf, 11, "graded", readout="potential"
+        )
+        direct = protocol._run_strength_arm(
+            task, pairs, tiers, stream, conf, 11, "graded", readout="direct"
+        )
+
+        for key in ("weight_strong", "weight_weak", "tier_gap", "spearman", "distinct_levels"):
+            assert potential[key] == direct[key], key
+        assert potential["readout"] == "potential" and direct["readout"] == "direct"
+
+    def test_unknown_readout_is_rejected_instead_of_silently_defaulting(self, protocol):
+        task = self._task(protocol)
+        calibration = {
+            "step": {k: task[k] for k in ("pairs", "noise_bits", "shared")},
+            "lr": task["lr"],
+        }
+
+        with pytest.raises(AssertionError, match="unknown readout"):
+            protocol.strength_probe(
+                "easy", calibration, readout="spike_count", seeds=(11,), epochs=1
+            )
+
+    def test_equilibrium_answers_the_readout_question_at_the_fixed_point(self, protocol):
+        """定點區的 top-1 是「讀出飽和」假設的拷問：``potential`` 下全 0，換讀出才有內容。"""
+        task = self._task(protocol)
+        calibration = {
+            "step": {k: task[k] for k in ("pairs", "noise_bits", "shared")},
+            "lr": task["lr"],
+        }
+
+        report = protocol.strength_equilibrium(
+            "easy", calibration, seeds=(11, 23, 37), epochs=20, readout="direct"
+        )
+
+        assert report["readout"] == "direct"
+        assert report["readout_verdict"] in {
+            "readout-better",
+            "readout-worse",
+            "readout-no-difference",
+        }
+        assert (
+            report["graded_over_matched_hit"] + report["graded_under_matched_hit"]
+            <= report["seeds"]
+        )
+        # 每個臂都有定點區的命中率，即使它是 0.000（「量到 0」與「沒量」要分得開）。
+        for arm in ("flat", "graded", "matched", "speed"):
+            assert 0.0 <= report["arms"][arm]["hit_rate_mean"] <= 1.0
+
     def test_equilibrium_refuses_calibration_seeds(self, protocol):
         task = self._task(protocol)
         calibration = {

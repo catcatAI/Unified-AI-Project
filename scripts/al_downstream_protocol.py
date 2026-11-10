@@ -106,6 +106,9 @@ sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 # 因為它答的是另一個問題，不該改變既有報告的內容與成本。
 PROTOCOL_VERSION = "al-downstream-v24"
 READOUT = "potential"
+# 可選的讀出。``direct`` 是 `garden_readout_variants` 裡已有的變體（一步 ``W·a``），不是這支
+# 協定新發明的；它不飽和在擴散上，所以是「定點承載強弱，但讀不出」這個結論的對照。
+READOUTS = ("potential", "direct")
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
 HIT_RANGE = (0.30, 0.70)
@@ -775,8 +778,14 @@ def _run_strength_arm(
     confidences: Sequence[float],
     seed: int,
     arm: str,
+    readout: str = READOUT,
 ) -> Dict[str, float]:
-    """同一條流、同一個種子，只改信心與 plasticity 怎麼進來。"""
+    """同一條流、同一個種子，只改信心與 plasticity 怎麼進來。
+
+    ``readout`` 決定這批權重要怎麼讀：``potential``（16 步擴散，會把連通分量填平）或
+    ``direct``（一步 ``W·a``，只吃直接關聯，不飽和在擴散上）。同一批權重、不同讀出，
+    就是「塌的是讀出還是學到的東西」那個問題。
+    """
     core = _downstream.TensorSNNCore(
         threshold=float(task["threshold"]),  # type: ignore[arg-type]
         timesteps=_downstream._readouts.TIMESTEPS,
@@ -798,8 +807,11 @@ def _run_strength_arm(
     strong = [w for t, w in usable if t == STRENGTH_TIERS[1]]
     weak = [w for t, w in usable if t == STRENGTH_TIERS[0]]
     rho = _spearman([float(t) for t, _ in usable], [float(w) for _, w in usable])
-    evaluated = _downstream._evaluate(core, dict(task, pairs=len(pairs)), pairs=pairs)
+    evaluated = _downstream._evaluate(
+        core, dict(task, pairs=len(pairs)), pairs=pairs, readout=readout
+    )
     return {
+        "readout": readout,
         "spearman": round(rho, 3) if rho is not None else None,
         "tier_gap": (
             round(statistics.fmean(strong) - statistics.fmean(weak), 5) if strong and weak else 0.0
@@ -822,8 +834,13 @@ def strength_probe(
     """強弱（出現次數）有沒有進到權重，以及讀出看不看得見。
 
     四個臂共用同一條訓練流與同一個種子，所以任何差異都只能來自「信心怎麼進 update」。
+
+    ``readout`` 不固定成 ``potential``：v24 量到的兩難就是「讀出有訊號的區域還沒走到定點、
+    定點看得見的區域讀出已經飽和」，所以讀出本身就是待測變因之一——換讀出要能改變結論，
+    否則「讀出飽和」只是猜測。預設仍舊是 ``potential``。
     """
-    assert readout in (None, READOUT), "the strength probe fixes the potential readout"
+    use_readout = readout or READOUT
+    assert use_readout in READOUTS, f"unknown readout {use_readout!r}"
     task = _task(family, calibration["step"], float(calibration["lr"]))  # type: ignore[arg-type]
     pairs = _downstream._pairs(task)
     tiers = _tier_of_pairs(pairs)
@@ -843,7 +860,9 @@ def strength_probe(
         }
         for arm in arms:
             rows[arm].append(
-                _run_strength_arm(task, pairs, tiers, stream, confidences[arm], seed, arm)
+                _run_strength_arm(
+                    task, pairs, tiers, stream, confidences[arm], seed, arm, readout=use_readout
+                )
             )
 
     need = _sign_test_minimum(len(use_seeds))
@@ -889,6 +908,10 @@ def strength_probe(
     return {
         "family": family,
         "epochs": epochs,
+        "readout": use_readout,
+        # 任務參數要跟著讀出一起記：換讀出必須重跑校準，而校準會挑不同的 ``lr``／``step``。
+        # 少了這兩個數字，「讀出差異」會偷偷混到「任務參數差異」裡。
+        "lr": round(float(task["lr"]), 4),  # type: ignore[arg-type]
         "stream_length": len(_strength_stream(pairs, tiers, 11, epochs)),
         "pairs": len(pairs),
         "tiers": {str(t): tiers.count(t) for t in sorted(set(tiers))},
@@ -920,6 +943,7 @@ def strength_equilibrium(
     calibration: Dict[str, object],
     seeds: Optional[Sequence[int]] = None,
     epochs: int = STRENGTH_EQUILIBRIUM_EPOCHS,
+    readout: Optional[str] = None,
 ) -> Dict[str, object]:
     """収斂區的同一組比較：只看兩層的權重比，不看 top-1。
 
@@ -931,6 +955,8 @@ def strength_equilibrium(
     top-1 在這個區域已經不能用：讀出在大量權重下飽和（實測 ep20 起 flat 也是 0.000），所以
     這裡只報權重比，不報命中率——量不到的不假裝量到。
     """
+    use_readout = readout or READOUT
+    assert use_readout in READOUTS, f"unknown readout {use_readout!r}"
     using = tuple(seeds) if seeds else tuple(SEEDS[:STRENGTH_EQUILIBRIUM_SEEDS])
     if set(using) & set(CALIBRATION_SEEDS):
         raise ValueError("equilibrium seeds must not include calibration seeds")
@@ -951,7 +977,9 @@ def strength_equilibrium(
         }
         for arm in arms:
             rows[arm].append(
-                _run_strength_arm(task, pairs, tiers, stream, confidences[arm], seed, arm)
+                _run_strength_arm(
+                    task, pairs, tiers, stream, confidences[arm], seed, arm, readout=use_readout
+                )
             )
 
     def ratio(row: Dict[str, float]) -> float:
@@ -968,6 +996,9 @@ def strength_equilibrium(
             ),
             "weight_strong_mean": round(statistics.fmean(r["weight_strong"] for r in rows[arm]), 5),
             "weight_weak_mean": round(statistics.fmean(r["weight_weak"] for r in rows[arm]), 5),
+            # 定點區的 top-1：在 ``potential`` 下這個數字全部是 0.000（飽和），在 ``direct`` 下
+            # 才有內容——兩者要一起看，「讀出死了」才不是一句無法反駁的話。
+            "hit_rate_mean": round(statistics.fmean(r["hit_rate"] for r in rows[arm]), 3),
         }
         for arm in arms
     }
@@ -980,9 +1011,21 @@ def strength_equilibrium(
     reaches = (
         drop >= STRENGTH_MIN_RATIO_DROP and min(graded_below_flat, graded_below_matched) >= need
     )
+    hits_better = sum(
+        1 for g, m in zip(rows["graded"], rows["matched"]) if g["hit_rate"] > m["hit_rate"]
+    )
+    hits_worse = sum(
+        1 for g, m in zip(rows["graded"], rows["matched"]) if g["hit_rate"] < m["hit_rate"]
+    )
     return {
         "family": family,
         "epochs": epochs,
+        "readout": use_readout,
+        "lr": round(float(task["lr"]), 4),  # type: ignore[arg-type]
+        # 定點區的 top-1 是否分得開：這一格就是「讀出飽和」假設的拷問。
+        "graded_over_matched_hit": hits_better,
+        "graded_under_matched_hit": hits_worse,
+        "readout_verdict": _readout_verdict(hits_better, hits_worse, need),
         "seeds": len(using),
         "sign_test_min": need,
         "arms": summary,
@@ -994,24 +1037,33 @@ def strength_equilibrium(
 
 
 def strength_report(
-    family: str, calibration: Dict[str, object], seeds: Optional[Sequence[int]] = None
+    family: str,
+    calibration: Dict[str, object],
+    seeds: Optional[Sequence[int]] = None,
+    readout: Optional[str] = None,
 ) -> Dict[str, object]:
     """瞬態（讀出還活著）＋収斂區（定點看得到）兩段合起來看。
 
     兩段必須一起報：只跑瞬態得到「四臂差不多」會誤判成「強弱沒用」，實際上是「還沒走到定點」；
     只跑収斂則會把已經飽和的 top-1（0.000）誤讀成「強弱有害」。
     """
-    transient = strength_probe(family, calibration, seeds=seeds, epochs=STRENGTH_EPOCHS)
-    plateau = strength_equilibrium(family, calibration)
+    transient = strength_probe(
+        family, calibration, readout=readout, seeds=seeds, epochs=STRENGTH_EPOCHS
+    )
+    plateau = strength_equilibrium(family, calibration, readout=readout)
     return {
         "family": family,
+        "readout": transient["readout"],
         "transient": transient,
         "equilibrium": plateau,
         # 兩句都要留下來：「定點有沒有带強弱」與「讀出看不看得見」是兩個獨立問題，拿其中
         # 一句當結論會把「還沒走到定點」或「讀出已經飽和」誤讀成機制的成敗。
         "weights_verdict": plateau["verdict"],
         "ordering_verdict": transient["ordering_verdict"],
+        # 讀出的兩難要靠兩格一起講：瞬態有訊號但還沒走到定點，定點區在 potential 下又全 0。
+        # 把兩者分開報，才不會用一邊的失敗冒充另一邊的。
         "readout_verdict": transient["readout_verdict"],
+        "equilibrium_readout_verdict": plateau["readout_verdict"],
     }
 
 
@@ -1137,12 +1189,12 @@ def run(
             )
         # 強弱探針只在這一族校準成功時才有意義（校準失敗＝連基準都量不到）。
         if strength and calibration["informative"]:
-            probe = strength_report(family, calibration, seeds=use_seeds)
+            probe = strength_report(family, calibration, seeds=use_seeds, readout=readout)
             probes.append(probe)
             t = probe["transient"]
             e = probe["equilibrium"]
             print(
-                f"strength {family:<12} ep{STRENGTH_EPOCHS} (readout alive) "
+                f"strength {family:<12} ep{STRENGTH_EPOCHS} (readout {probe['readout']}) "
                 f"graded rho {t['arms']['graded']['spearman_mean']} "
                 f"hit {t['arms']['graded']['hit_rate_mean']} vs matched "
                 f"{t['arms']['matched']['hit_rate_mean']} "
@@ -1159,6 +1211,16 @@ def run(
                 f"| drop {e['ratio_drop_vs_flat']} "
                 f"| G<F {e['graded_below_flat']}/{e['seeds']} "
                 f"G<M {e['graded_below_matched']}/{e['seeds']} -> {e['verdict']}"
+            )
+            print(
+                f"strength {family:<12} ep{STRENGTH_EQUILIBRIUM_EPOCHS} (top-1, "
+                f"{e['readout']}) flat {e['arms']['flat']['hit_rate_mean']} "
+                f"graded {e['arms']['graded']['hit_rate_mean']} "
+                f"matched {e['arms']['matched']['hit_rate_mean']} "
+                f"speed {e['arms']['speed']['hit_rate_mean']} "
+                f"(G>M {e['graded_over_matched_hit']}/{e['seeds']}, "
+                f"G<M {e['graded_under_matched_hit']}/{e['seeds']}) "
+                f"-> {e['readout_verdict']}"
             )
 
     # 哪些族沒有產出可下結論的格、以及為什麼；未登記的族會讓整體判詞變成
@@ -1230,7 +1292,7 @@ def main(argv=None) -> int:
     ap.add_argument("--json", type=Path)
     # 讀出：預設仍是 ``potential``（16 步擴散，既有報告要能重現）。``direct`` 是一步
     # ``W · a``，不會被擴散壓平；切過去等於重新基線，所有格子都要重跑重報。
-    ap.add_argument("--readout", choices=("potential", "direct"), default=READOUT)
+    ap.add_argument("--readout", choices=READOUTS, default=READOUT)
     # 種子可以加，但門檻要跟著 n 走（``_sign_test_minimum``）——否則 40 個種子仍只要求 10 個
     # 同向，判詞會悄悄變鬆。校準種子永不參與評估。
     ap.add_argument("--seeds", type=int, default=len(SEEDS))
