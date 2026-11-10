@@ -1038,6 +1038,168 @@ def strength_equilibrium(
     }
 
 
+# ---------------------------------------------------------------------------
+# G1 的第三種量法：同一個 cue 底下的兩個 target 競爭
+# ---------------------------------------------------------------------------
+# WHY 又一套：上面三族都是「一個 cue 對一個 target」，所以唯一的問法就是 top-1。但 §46 的擴散
+# 把它壓平、§47 的絕對值讓它偏、§48 的歸一化把它整個抹掉——三種讀出壞在不同地方，共同點是
+# 只看勝負、不看分佈。分佈敏感的問法不能跨配對比（絕對值只能跨配對比，一歸一化就沒了），
+# 只能在**同一個 cue 內部**比：給每個 cue 兩個 target，強的那個信心高、弱的那個信心低，
+# 問「強的排在弱的前面嗎」。同一個 cue 的兩個分數同乘一個正數不會改變順序，所以這個量法
+# 對頻率完全免疫，歸一化讀出也保得住它。
+#
+# 為了讓信心是**唯一**的強弱來源，每個配對每輪只出現一次（不是按 tier 重複）。否則「出現
+# 次數」本身就會把強的那個寫得更重，四個臂都靠重複次數得分，測到的就不是定點而是頻率。
+# flat 因此必然是打平（兩個 target 被寫入同樣多次），這正好是「這個量法不是白送」的證據。
+AMBIGUOUS_CUES = 24
+AMBIGUOUS_EPOCHS = 40
+AMBIGUOUS_SEEDS = 12
+# 「強排在弱前面」要算成立：平均勝率至少這麼多，而且贏過控制臂的種子數要過符號檢定。
+AMBIGUOUS_MIN_WINS = 0.75
+
+
+def _ambiguous_design() -> List[Tuple[List[str], str, str]]:
+    """每個 cue 共用同一組輸入 token、指向兩個不同的 target（強／弱）。"""
+    design: List[Tuple[List[str], str, str]] = []
+    for i in range(AMBIGUOUS_CUES):
+        design.append(
+            ([f"cue{i:02d}", f"n{i % 3}", "shared"], f"t{2 * i:02d}", f"t{2 * i + 1:02d}")
+        )
+    return design
+
+
+def _ambiguous_stream(count: int, seed: int, epochs: int) -> List[int]:
+    """每個配對每輪恰好一次；每一項是配對索引（偶數強、奇數弱）。"""
+    rng = random.Random(seed * 7907 + 13)
+    base = list(range(count))
+    out: List[int] = []
+    for _ in range(epochs):
+        order = base[:]
+        rng.shuffle(order)
+        out.extend(order)
+    return out
+
+
+def _run_within_cue_arm(
+    pairs: Sequence[Tuple[List[str], str]],
+    tiers: Sequence[int],
+    stream: Sequence[int],
+    confidences: Sequence[float],
+    arm: str,
+    readout: str,
+    lr: float,
+) -> Dict[str, object]:
+    """同一條流、同一組配對，只改信心怎麼進來；回傳「強排在弱前面」的逐 cue 結果。"""
+    core = _downstream.TensorSNNCore(threshold=0.25, timesteps=_downstream._readouts.TIMESTEPS)
+    top = float(max(STRENGTH_TIERS))
+    for pair_index, conf in zip(stream, confidences):
+        inputs, target = pairs[pair_index]
+        tier = tiers[pair_index]
+        core.hebbian_update(
+            {key: (conf if arm in ("graded", "matched") else 1.0) for key in inputs},
+            {target: (conf if arm in ("graded", "matched") else 1.0)},
+            lr=lr,
+            target_strength=_downstream.TARGET_STRENGTH,
+            plasticity=(tier / top if arm == "speed" else 1.0),
+        )
+    wins, ties, margins = 0, 0, []
+    for inputs, strong, weak in _ambiguous_design():
+        out = _downstream._readouts._forward(core, {key: 1.0 for key in inputs}, readout)
+        hi, lo = out.get(strong), out.get(weak)
+        if hi is None or lo is None:
+            continue
+        margins.append(float(hi) - float(lo))
+        if float(hi) == float(lo):
+            ties += 1
+        elif float(hi) > float(lo):
+            wins += 1
+    cues = len(margins)
+    return {
+        "win_rate": round(wins / cues, 3) if cues else 0.0,
+        "wins": wins,
+        "ties": ties,
+        "cues": cues,
+        "margin_mean": round(statistics.fmean(margins), 5) if margins else 0.0,
+    }
+
+
+def within_cue_probe(
+    readout: Optional[str] = None,
+    seeds: Optional[Sequence[int]] = None,
+    epochs: int = AMBIGUOUS_EPOCHS,
+    lr: float = 0.015,
+) -> Dict[str, object]:
+    """強弱是不是真的被綁在**對的關聯**上（而不是剛好有些權重比較小）。
+
+    判準只看 ``graded`` 對 ``matched``：後者的信心分佈完全相同，只是被打散到別的配對，所以
+    差異只能來自「信心有沒有落在正確的關聯上」。``flat`` 是下界（兩個 target 被寫入同樣多次，
+    應該打平），``speed`` 把強弱放在速率而非定點，用來分開兩種語意。
+    """
+    use_readout = readout or READOUT
+    assert use_readout in READOUTS, f"unknown readout {use_readout!r}"
+    using = tuple(seeds) if seeds else tuple(SEEDS[:AMBIGUOUS_SEEDS])
+    design = _ambiguous_design()
+    pairs: List[Tuple[List[str], str]] = []
+    tiers: List[int] = []
+    for inputs, strong, weak in design:
+        pairs.append((inputs, strong))
+        tiers.append(STRENGTH_TIERS[1])
+        pairs.append((inputs, weak))
+        tiers.append(STRENGTH_TIERS[0])
+    arms = ("flat", "graded", "matched", "speed")
+    top = float(max(STRENGTH_TIERS))
+    rows: Dict[str, List[Dict[str, object]]] = {name: [] for name in arms}
+    for seed in using:
+        stream = _ambiguous_stream(len(pairs), seed, epochs)
+        graded_conf = [tiers[i] / top for i in stream]
+        matched_conf = list(graded_conf)
+        random.Random(seed * 104729 + 7).shuffle(matched_conf)
+        confidences = {
+            "flat": [1.0] * len(stream),
+            "graded": graded_conf,
+            "matched": matched_conf,
+            "speed": [1.0] * len(stream),
+        }
+        for arm in arms:
+            rows[arm].append(
+                _run_within_cue_arm(pairs, tiers, stream, confidences[arm], arm, use_readout, lr)
+            )
+
+    need = _sign_test_minimum(len(using))
+    rates = {arm: [float(r["win_rate"]) for r in rows[arm]] for arm in arms}
+    better = sum(1 for g, m in zip(rates["graded"], rates["matched"]) if g > m)
+    worse = sum(1 for g, m in zip(rates["graded"], rates["matched"]) if g < m)
+    graded_mean = statistics.fmean(rates["graded"])
+    anchored = graded_mean >= AMBIGUOUS_MIN_WINS and better >= need and better > worse
+    return {
+        "family": "ambiguous",
+        "epochs": epochs,
+        "readout": use_readout,
+        "lr": lr,
+        "cues": len(design),
+        "seeds": len(using),
+        "sign_test_min": need,
+        "arms": {
+            arm: {
+                "win_rate_mean": round(statistics.fmean(rates[arm]), 3),
+                "win_rate_sd": (
+                    round(statistics.stdev(rates[arm]), 3) if len(rates[arm]) > 1 else 0.0
+                ),
+                "tie_mean": round(statistics.fmean(float(r["ties"]) for r in rows[arm]), 2),
+                "margin_mean": round(
+                    statistics.fmean(float(r["margin_mean"]) for r in rows[arm]), 5
+                ),
+            }
+            for arm in arms
+        },
+        "graded_over_matched": better,
+        "graded_under_matched": worse,
+        "verdict": (
+            "within-cue-strength-anchored" if anchored else "within-cue-strength-not-anchored"
+        ),
+    }
+
+
 def strength_report(
     family: str,
     calibration: Dict[str, object],
@@ -1302,6 +1464,9 @@ def main(argv=None) -> int:
     # 強弱探針：問「出現次數造成的強弱有沒有進到權重、讀出看不看得見」。預設不跑，因為它
     # 問的不是時機（階梯的問題），而且會多出 4 臂 × 種子 的訓練成本。
     ap.add_argument("--strength-probe", action="store_true")
+    # 同 cue 內競爭：問「強弱有沒有綁在對的關聯上」。它不屬於任何既有族（每族都是一個 cue 對
+    # 一個 target，只有 top-1 可問），所以自己一套設計，也自己一個開關。
+    ap.add_argument("--within-cue", action="store_true")
     args = ap.parse_args(argv)
 
     seed_list = tuple(SEEDS) + tuple(s for s in range(1000, 1000 + max(0, args.seeds - len(SEEDS))))
@@ -1346,6 +1511,18 @@ def main(argv=None) -> int:
     print(f"verdict: {result['verdict']}")
     if result.get("strength_verdict"):
         print(f"strength verdict: {result['strength_verdict']}")
+    if args.within_cue:
+        within = within_cue_probe(readout=args.readout, seeds=seed_list[:AMBIGUOUS_SEEDS])
+        result["within_cue"] = within
+        arms = within["arms"]  # type: ignore[index]
+        print(
+            f"within-cue {within['readout']}: "
+            + " ".join(
+                f"{k} {arms[k]['win_rate_mean']}" for k in ("flat", "graded", "matched", "speed")
+            )
+            + f" | G>M {within['graded_over_matched']} G<M {within['graded_under_matched']}"
+            f" need {within['sign_test_min']} -> {within['verdict']}"
+        )
 
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)

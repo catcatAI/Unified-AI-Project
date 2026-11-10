@@ -603,6 +603,45 @@ class TestUnmeasuredFamiliesAreNamed:
         assert protocol._stale_registrations(cells[:0], {"hard": "x"}) == []
 
 
+class TestWithinCueProbe:
+    """同一個 cue 底下兩個 target 競爭：唯一對分佈敏感、又不受讀出尺度影響的量法。
+
+    top-1 只能問「這批權重最像哪個 target」，而強弱住的是「同一個 cue 內部相對誰大」——後者在
+    任何正數縮放下都不變（歸一化也保得住），所以這個量表在三個讀出下都應該拿到同一個答案。
+    """
+
+    def test_design_gives_every_cue_two_distinct_targets(self, protocol):
+        design = protocol._ambiguous_design()
+        assert len(design) == protocol.AMBIGUOUS_CUES
+        strong = [s for _, s, _ in design]
+        weak = [w for _, _, w in design]
+        assert len(set(strong + weak)) == 2 * len(design)
+        for _, hi, lo in design:
+            assert hi != lo
+
+    def test_stream_gives_every_pair_the_same_number_of_visits(self, protocol):
+        """等次數是這個量法的前提：不然強弱有一部分來自「出現得多」，四個臂都靠它得分。"""
+        visits = protocol._ambiguous_stream(6, seed=3, epochs=4)
+        assert len(visits) == 6 * 4
+        for index in range(6):
+            assert visits.count(index) == 4
+
+    def test_report_is_paired_against_the_shuffled_control(self, protocol):
+        report = protocol.within_cue_probe(readout="direct", seeds=(1, 2), epochs=3)
+        assert report["verdict"] in {
+            "within-cue-strength-anchored",
+            "within-cue-strength-not-anchored",
+        }
+        assert set(report["arms"]) == {"flat", "graded", "matched", "speed"}
+        assert report["cues"] == protocol.AMBIGUOUS_CUES
+        assert 0.0 <= report["arms"]["graded"]["win_rate_mean"] <= 1.0
+        assert report["sign_test_min"] == protocol._sign_test_minimum(2)
+
+    def test_unknown_readout_is_rejected(self, protocol):
+        with pytest.raises(AssertionError):
+            protocol.within_cue_probe(readout="softmax", seeds=(1,), epochs=1)
+
+
 class TestNormalizedReadout:
     """`normalized` 讀出：把來源列（cue token）歸一化成對 target 的分佈。
 
