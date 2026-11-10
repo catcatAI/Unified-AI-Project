@@ -1,1 +1,43 @@
-/* Basic styling for the web Live2D viewer */
+/* Angela identity cues for the existing Live2D viewer shell. */
+:root {
+  --angela-rose: #E88DB8;
+  --angela-eye: #69A9E8;
+  --angela-ivory: #FFF8F0;
+  --angela-teal: #4D9A91;
+  --angela-gold: #C9A44C;
+}
+
+#top-bar,
+#unified-nav {
+  border-bottom-color: color-mix(in srgb, var(--angela-gold) 35%, transparent);
+}
+
+#top-bar .window-title,
+#panel-pet h2 {
+  color: var(--angela-rose);
+}
+
+#dialogue-input:focus,
+#chat-input-row input:focus,
+.shell-panel button:focus-visible,
+#unified-nav button:focus-visible {
+  outline: 2px solid var(--angela-eye);
+  outline-offset: 2px;
+}
+
+#chat-messages .message.angela {
+  background: color-mix(in srgb, var(--angela-teal) 20%, transparent);
+  border-left: 2px solid var(--angela-gold);
+}
+
+#panel-pet #pet-status {
+  color: var(--angela-ivory);
+}
+
+.angela-identity {
+  margin: -6px 0 12px 28px;
+  padding-left: 9px;
+  border-left: 2px solid var(--angela-gold);
+  color: var(--angela-rose);
+  font-size: 12px;
+}

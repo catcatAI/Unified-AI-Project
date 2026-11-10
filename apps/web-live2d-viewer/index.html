@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Angela AI - Digital Life Companion v6.2.0</title>
+    <title>Angela AI · Core 1.0.0</title>
     <style>
       * {
         margin: 0;
@@ -704,6 +704,7 @@
         }
       }
     </style>
+    <link rel="stylesheet" href="style.css" />
 
     <!-- Unified Shell Styles -->
     <style>
@@ -1201,7 +1202,7 @@
     <div id="container">
       <!-- Auto-hiding top title bar -->
       <div id="top-bar">
-        <div class="window-title">Angela AI</div>
+        <div class="window-title">Angela AI · Core 1.0.0</div>
         <div class="window-controls">
           <button class="window-btn minimize" id="btn-minimize" title="Minimize">−</button>
           <button class="window-btn maximize" id="btn-maximize" title="Maximize">□</button>
@@ -1259,6 +1260,7 @@
     <!-- Pet Panel (Live2D Character View) -->
     <section class="shell-panel active" id="panel-pet">
       <h2>🖼️ <span data-ai-name>Angela</span></h2>
+      <p class="angela-identity" aria-label="Angela identity">Angela Core 1.0.0 · Personal edition</p>
       <!-- 與 #character-container 內的 #live2d-canvas 撞名。全站所有 JS 都用
            getElementById('live2d-canvas')，一定取到文件中第一個，所以這個
            canvas 永遠不會被繪製；重複 id 在 HTML 中也是非法的。角色實際由
