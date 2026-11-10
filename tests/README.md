@@ -84,7 +84,7 @@ curl -X POST http://localhost:8000/api/v1/chat/unified \
 
 ### Manual Test Patterns
 
-1. Start backend: `python run_angela.py` or `pnpm dev:backend`
+1. Start backend: `python scripts/run_angela.py` or `pnpm dev:backend`
 2. Open any frontend in browser/Electron
 3. Press Ctrl+` to open terminal
 4. Type a message and press Enter — observe `route` and `hit_source` fields
