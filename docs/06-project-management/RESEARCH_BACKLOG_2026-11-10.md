@@ -13,7 +13,15 @@
 | P2 | 待量測 | MSBA 融合效果是否有品質收益 | 矩陣列為 wired、有 A/B 對照，但 lifecycle 仍將融合品質 benchmark 標為 partial，且記載 A/B 不切流量。 | 建立固定、未用於調參的輸入集，報告相對於無 MSBA 路徑的品質、延遲與失敗率；量測完成前維持 partial。 |
 | P2 | 待補證據 | Luanti agent 的 live 環境行為及 20 FPS 目標 | 矩陣明記 live 樣本待玩家在線累積、現 10Hz＋預設 2 秒 poller；offline tests 不能證明真實伺服器閉環。 | 在明確版本/伺服器環境記錄觀測、動作、延遲、重連與樣本數；在沒有 live 測試前保留 wired/partial，不宣稱 20 FPS。 |
 | P2 | 外部狀態未知 | GitHub Dependabot alerts 的目前 open/closed 狀態 | 本地有 `.github/dependabot.yml`（npm、pip、GitHub Actions 每週更新），沒有可用的 alerts 匯出；本工作區不能從 lockfile 判斷 GitHub 當下是否仍開啟某 alert，也不能將重複套件告警直接判為誤報。 | 需要認證的 GitHub Dependabot alerts 清單（含 advisory、manifest、範圍、修復版本、狀態與時間）；再逐 alert 對照目前 lockfile、使用路徑與已修復提交。 |
+| P2 | 進度缺口（計畫明列） | Interactive Space S2/S4/S5/S6 與實機驗收 | `plans/INTERACTIVE_SPACE_PLAN.md` 仍以未勾選標出後端衣櫃存檔、AI 換裝工具、攝影機/錄影、直播 relay、安全、目錄熱載入與 A/B；S1/S3/S6 亦有「程式測試具備、實機驗收待做」。這些是清楚的 roadmap 缺口，不等於既有功能故障。 | 按外部條件拆成可交付子任務（直播平台/RTMP、雙視窗環境、攝影機驗收）；先決定產品範圍與優先順序，再更新計畫完成狀態與測試證據。 |
+| P2 | 進度缺口（計畫明列） | Multi-role 前端與治理收尾 | `plans/MULTI_ROLE_PLAY_AGENT_PLAN.md` P4-1..3（多 Live2D、角色切換/group chat、per-role 面板）與 P5-5（multi_role fact-gate）仍未勾選；P3-4 文件同步也刻意未做。 | 若前端多角色仍在產品範圍內，定義 P4 的最小 UI 驗收；P5-5 評估納入既有 fact-gate，並避免把歷史任務地圖未同步誤寫成 runtime 缺陷。 |
 | P3 | 應分類而非全域清零 | 來源碼中的 `stub`／`placeholder` 字樣 | 靜態掃描在 backend 找到相容代理、可選依賴 fallback、明確標示未載模型的 Vision agent、Google Drive handler「stub mode」等。字詞命中不代表功能缺陷；目前需要逐條看生產可達性及產品宣告。 | 只挑 active/wired 路徑；確認呼叫者、設定預設與面向使用者回應。分類為有意降級、未接線、錯誤宣稱或真缺陷，避免以文字掃描數量作完成度指標。 |
+
+## 本輪核對修正
+
+- 舊 `ISSUES_2026-10-29.md` 將 AL Phase 3 item 2 留作未完成；對照現行 `plans/AL_ENGINE_THREE_CORE_PLAN.md` 的 2026-10-31 完成記錄，以及程式中的 `_ctx_al_state()`／`core/life/al_temporal.py`，此項已完成，應視為舊清單過期，不再當作目前待辦。
+- `BUG_TRACKER.md` 的 Open 區寫「無」，但多角色與互動空間計畫仍有明確未完成項。這不是 tracker 的矛盾：前者是已稽核 bug，後者是尚未交付的 roadmap。後續報告需分開 bug 與產品進度。
+- Interactive Space 中未完成項已有清楚說明：localStorage 不等同後端持久化；人點 UI 的衣櫃不等同 AI 工具；本機測試不等同雙視窗/真機驗收。應保留這些區分，不以勾選程式實作推論整個階段完成。
 
 ## 已排除／不可據此下結論
 
