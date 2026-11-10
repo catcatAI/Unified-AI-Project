@@ -32,6 +32,23 @@ and this project adheres to
 
 ### Changed
 
+- **`docs/status_matrix.yaml` 的 25 條 `verified`
+  沒有任何東西在讀（2026-11-10）**：這張表是功能成熟度的唯一總表，但在此之前**沒有任何檢查讀它**——欄位在、狀態寫成
+  `verified`，就算過關，於是「宣稱比證據走得更遠」不會有任何後果。新增兩個事實門（`scripts/check_fact_gates.py`）：①`matrix.verified_paths_exist`（硬零）——`verified`
+  功能指向的 `implementation`／`tests`
+  路徑必須還在，檔案改名或刪掉就紅；②`matrix.verified_evidence_ratchet`（棘輪，`scripts/matrix_evidence_budget.txt`
+  = 0）——只判三個機械條件：驗證指令不得含
+  `<placeholder>`（否則沒有人能照抄重跑）、不得只做 `ls`／`test -f`
+  這類存在性檢查、證據裡必須有任何量測數字。首跑就抓到兩條真的不合格，並且都照實改掉而不是改門檻：`llm-providers`
+  的指令是
+  `--base-url <endpoint>`、證據寫「配置與路由存在；品質 benchmark 未建立」——**降為
+  `wired`**（品質確實沒量過，原本的 `verified`
+  站不住），指令換成可跑的 provider 接線測試；`unsupported-docs` 原本用 `ls`
+  三支檔案宣稱「三文檔存在且與 RELEASE_CRITERIA 同步」——存在不等於同步，改成新的事實門
+  `docs.unsupported_items_documented`
+  逐列比對：RELEASE_CRITERIA「明確不支援項」表 9 列每一列都必須出現在它指名的那份文檔裡（`／`／`（）`
+  全形半形先歸一），實測 9/9、缺 0。**限制照實記**：這道門檢查的是「證據可以被機械重驗」，不是「行為真的正確」——一句帶數字卻從未真的量過的證據仍會通過；它擋的是「連指令都抄不動」與「只證明檔案存在」這兩種最常見的空轉。
+
 - **三種「寫在文件裡但沒有門」的規則，現在會紅（2026-11-09）**：(1)
   **手改生成檔**——`scripts/INVENTORY.json` 的 `--check`
   寫好了卻從沒接上 CI／pre-commit；`scripts/ACTIVE_SCRIPTS.md`

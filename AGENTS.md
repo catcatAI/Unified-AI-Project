@@ -87,10 +87,10 @@ pre-commit run --all-files
 
 > 📌 **NOTE CHAIN IS A HISTORICAL CHANGELOG**: Every test count embedded below
 > (5,085 / 4,717 / 4,734 / … / 5,432 / …) is a dated milestone at the time of
-> that NOTE. The current authoritative count is **9,343 collected (tests/), 0
+> that NOTE. The current authoritative count is **9,373 collected (tests/), 0
 > errors** (re-verified 2026-11-10; full testpaths
-> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,105
-> collected / 10,000 passed / 112 skipped**, 0 failed).
+> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,135
+> collected / 10,026 passed / 112 skipped**, 0 failed).
 
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun
 > 25–29). Includes §X #34-#54: save_visual_decoder_weights,
@@ -1583,7 +1583,11 @@ tests/
 | Where the pass lines come from (external benchmarks, never self-set)                      | `docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md`                                                                                                           |
 
 > 🔎 **單一檢查入口**：所有「非編譯器」檢查集中在
-> `scripts/check_fact_gates.py`（edge/al/audit/chat/cluster/config/version/docs/modules/gates/hygiene/intelligence/benchmarks/layers/placement/definitions）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。定義稽核 MD 報告：`python3 scripts/check_fact_gates.py --write-definitions-audit`。
+> `scripts/check_fact_gates.py`（edge/al/audit/chat/cluster/config/version/docs/matrix/modules/gates/hygiene/intelligence/benchmarks/layers/placement/definitions）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。其中
+> `docs.unsupported_items_documented`
+> 逐列比對 RELEASE_CRITERIA 的「明確不支援項」與其指名的文檔（表與文檔不同步即紅），`matrix.verified_paths_exist`／`matrix.verified_evidence_ratchet`
+> 讓 `docs/status_matrix.yaml` 的 `verified`
+> 宣稱必須留下可機械重驗的痕跡（路徑還在、指令可抄、證據有量測數字）。定義稽核 MD 報告：`python3 scripts/check_fact_gates.py --write-definitions-audit`。
 
 > 🔒 🔒
 > **生成檔不准手改（會紅）**：`docs/STATUS_MATRIX.md`、`scripts/INVENTORY.json`、
@@ -1598,5 +1602,8 @@ tests/
 > 📏 **棘輪（只減不增）**：`scripts/type_ignore_budget.txt`（`# type: ignore`
 > 數）、 `scripts/ambiguity_budget.txt`（定義多重釋義數，11）、
 > `scripts/al_unmeasured_budget.txt`（AL 下游「結構上量不到」的族數，1：
-> `structured`；`hard`
-> 在 v23 的 40 個種子下三格全部可下結論，已除名）。要讓數字上升，必須在同一個 commit 裡改預算檔並寫出理由；定義歧義與量不到的族，都不得只是「看看而已」。
+> `structured`；`hard` 在 v23 的 40 個種子下三格全部可下結論，已除名）、
+> `scripts/matrix_evidence_budget.txt`（宣稱 `verified`
+> 但證據不可機械重驗的條數，0：驗證指令含 `<placeholder>`、只做 `ls`／`test -f`
+> 存在性檢查，或證據裡沒有任何量測數字）。要讓數字上升，必須在同一個 commit 裡改預算檔並寫出理由；定義歧義、量不到的族與站不住的
+> `verified`，都不得只是「看看而已」。

@@ -29,7 +29,13 @@ tests/core/test_fact_interpreter.py）：
               tests/test_config_coverage.py 共享黃金值）
   version     package.json 與 core/version.py 版本一致
   docs        活躍文件引用的 script/test 路徑必須可解析（複用
-              tests/test_documented_paths.py 的同一套解析規則）
+              tests/test_documented_paths.py 的同一套解析規則）；
+              RELEASE_CRITERIA「明確不支援項」表每一列都必須真的出現在它
+              指的那份文檔裡（表↔文檔的同步是檢查，不是靠人記得）
+  matrix      STATUS_MATRIX 的 verified 宣稱必須可被機械重驗：verified 功能的
+              implementation/tests 路徑必須還在，證據必須帶量測數字、驗證指令
+              不得含 <placeholder> 或只做存在性檢查（預算
+              scripts/matrix_evidence_budget.txt，只減不增）
   modules     模組系統現實：scanner 對缺目錄必須安全（must_pass）；
               目錄存在與否、發現模組數記 INFO（休眠是事實，不是失敗）
   gates       未拆門禁登記簿：每條臨時門禁都必須帶正當、可驗證的拆除理由
@@ -380,6 +386,156 @@ def _docs_facts():
             "active docs",
             f"resolved={resolved}",
             measured_at=MEASURED_AT,
+        ),
+    ]
+
+
+UNSUPPORTED_CRITERIA_MD = "docs/06-project-management/RELEASE_CRITERIA.md"
+UNSUPPORTED_HEADING = "## 正式版明確不支援項（正式版釋出時必須在文檔中明確列出）"
+
+
+def _label_key(text: str) -> str:
+    """比對用鍵：全形斜線/括號轉半形，去掉所有空白。"""
+    for src, dst in (("／", "/"), ("（", "("), ("）", ")")):
+        text = text.replace(src, dst)
+    return re.sub(r"\s+", "", text)
+
+
+def _unsupported_documented_facts():
+    """RELEASE_CRITERIA 的「明確不支援項」表，每一列都必須真的寫進它指的文檔。
+
+    WHY：`unsupported-docs` 這條 verified 的驗證指令原本是 `ls` 三支檔案——那只
+    證明檔案在，不證明任何「不支援項」被寫進去。表與文檔之間的同步靠人記得，於是
+    表新增一列、文檔沒跟上時，專案自己不會有任何反應。這裡把同步本身做成事實門。
+    """
+    from core.facts import Fact
+
+    text = read(REPO / UNSUPPORTED_CRITERIA_MD)
+    table = [
+        ln for ln in section(text, UNSUPPORTED_HEADING).splitlines() if ln.strip().startswith("|")
+    ]
+    rows: List[Tuple[str, str]] = []
+    for line in table[2:]:  # 跳過表頭與分隔線
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 4:
+            rows.append((cells[0], cells[3]))
+
+    missing: List[str] = []
+    for label, doc in rows:
+        path = REPO / doc
+        if not path.is_file():
+            missing.append(f"{label}: doc missing ({doc})")
+        elif _label_key(label) not in _label_key(read(path)):
+            missing.append(f"{label}: not documented in {doc}")
+    return [
+        Fact(
+            "docs.unsupported_items_documented",
+            float(len(missing)),
+            0.0,
+            "le",
+            "items",
+            UNSUPPORTED_CRITERIA_MD,
+            f"{len(rows) - len(missing)}/{len(rows)} declared items appear in their doc"
+            + (f"; missing={missing[:3]}" if missing else ""),
+            measured_at="2026-11-10",
+        ),
+    ]
+
+
+STATUS_MATRIX = REPO / "docs/status_matrix.yaml"
+MATRIX_EVIDENCE_BUDGET = REPO / "scripts" / "matrix_evidence_budget.txt"
+_METAVAR_RE = re.compile(r"<[^<>\s]{1,40}>")
+_EXISTENCE_ONLY_RE = re.compile(r"^(?:ls|stat|test\s+-[efdrs])\b")
+
+
+def _matrix_evidence_budget() -> int:
+    """「宣稱 verified 但證據無法機械重驗」的條數上限（scripts/matrix_evidence_budget.txt）。
+
+    讀不到檔案時回 0：verified 條目本來就該全部可重驗，讀不到預算就當作零容忍，
+    寧可紅一次逼人把預算寫回來，也不要因為讀不到就默默放行。
+    """
+    try:
+        return int(MATRIX_EVIDENCE_BUDGET.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return 0
+
+
+def _matrix_features(status: Optional[str] = None) -> List[Dict[str, Any]]:
+    import yaml
+
+    data = yaml.safe_load(read(STATUS_MATRIX)) or {}
+    rows = data.get("features") or []
+    return [r for r in rows if status is None or r.get("status") == status]
+
+
+def _weak_evidence_reasons(row: Dict[str, Any]) -> List[str]:
+    """為什麼這條 verified 宣稱不能機械重驗（空清單＝可重驗）。
+
+    只看三個機械判準，不評語意好壞：驗證指令能不能照抄執行、是不是只證明檔案存在、
+    證據裡有沒有任何量測數字。三者的共同前提是「一句話的宣稱必須留下可重跑的痕跡」。
+    """
+    cmd = str(row.get("verify_command") or "").strip()
+    ev = str(row.get("evidence") or "").strip()
+    reasons: List[str] = []
+    if not cmd:
+        reasons.append("no verify_command")
+    elif _METAVAR_RE.search(cmd):
+        reasons.append(f"unrunnable placeholder: {cmd}")
+    elif _EXISTENCE_ONLY_RE.match(cmd):
+        reasons.append(f"existence-only: {cmd}")
+    if not re.search(r"\d", ev):
+        reasons.append("evidence carries no measured number")
+    return reasons
+
+
+def _matrix_facts():
+    """verified 宣稱必須留下可重驗的痕跡。
+
+    WHY：STATUS_MATRIX 的結構檢查只確認欄位存在。一條 verified 可以先寫一句「配置與
+    路由存在」加上一支含 `<endpoint>` 的指令，看起來合格，卻沒有人能照著重跑；也可以
+    用 `ls` 證明檔案在就宣稱行為可用。這裡擋的是「宣稱比證據走得更遠」：路徑必須還
+    在（硬零），證據品質進棘輪（只能減不能增）。
+    """
+    from core.facts import Fact
+
+    verified = _matrix_features("verified")
+    broken: List[str] = []
+    for row in verified:
+        for key in ("implementation", "tests", "sources"):
+            value = row.get(key) or []
+            value = [value] if isinstance(value, str) else value
+            for rel in value:
+                if not (REPO / str(rel)).exists():
+                    broken.append(f"{row.get('id')}: {rel}")
+
+    weak = [(row.get("id"), _weak_evidence_reasons(row)) for row in verified]
+    weak = [(fid, why) for fid, why in weak if why]
+    budget = _matrix_evidence_budget()
+    detail = "; ".join(f"{fid}: {why[0]}" for fid, why in weak) or "all re-runnable"
+    return [
+        Fact(
+            "matrix.verified_paths_exist",
+            float(len(broken)),
+            0.0,
+            "le",
+            "paths",
+            "docs/status_matrix.yaml features[status=verified]",
+            (
+                f"{len(verified)} verified; broken={broken[:3]}"
+                if broken
+                else f"{len(verified)} verified, all paths exist"
+            ),
+            measured_at="2026-11-10",
+        ),
+        Fact(
+            "matrix.verified_evidence_ratchet",
+            float(len(weak)),
+            float(budget),
+            "le",
+            "claims",
+            "docs/status_matrix.yaml features[status=verified]",
+            f"weak={len(weak)} budget={budget}: {detail}",
+            measured_at="2026-11-10",
         ),
     ]
 
@@ -2237,6 +2393,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         _config_facts()
         + _version_facts()
         + _docs_facts()
+        + _unsupported_documented_facts()
+        + _matrix_facts()
         + _modules_facts()
         + _config_hygiene_facts()
         + _matrix_annotation_facts()
