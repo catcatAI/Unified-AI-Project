@@ -99,7 +99,7 @@ MVP）均配備**浮動終端覆蓋層**（Ctrl+` 切換），可直接測試對
 1. **啟動後端**：
 
    ```bash
-   python run_angela.py --api-only
+   python scripts/run_angela.py --api-only
    ```
 
    或
