@@ -641,6 +641,28 @@ class TestWithinCueProbe:
         with pytest.raises(AssertionError):
             protocol.within_cue_probe(readout="softmax", seeds=(1,), epochs=1)
 
+    def test_combined_verdict_cannot_hide_an_unanchored_probe(self, protocol):
+        """「定點有帶強弱、但綁錯關聯」不能被跨族判詞吃掉。"""
+        probes = [
+            {
+                "weights_verdict": "fixed-point-carries-strength",
+                "ordering_verdict": "ordering-carries-across-tiers",
+                "readout_verdict": "readout-better",
+            }
+        ]
+        loose = {"verdict": "within-cue-strength-not-anchored"}
+        verdict = protocol._strength_verdict(probes, loose)
+        assert verdict.endswith("within-cue-strength-not-anchored")
+        assert "anchored" not in verdict.replace("not-anchored", "")
+
+    def test_probe_verdict_is_named_even_without_a_ladder_probe(self, protocol):
+        assert (
+            protocol._strength_verdict([], {"verdict": "within-cue-strength-anchored"})
+            == "no-strength-probe/within-cue-strength-anchored"
+        )
+        # 沒跑就不能用空白冒充「沒問題」。
+        assert protocol._strength_verdict([], None) == "no-strength-probe"
+
 
 class TestNormalizedReadout:
     """`normalized` 讀出：把來源列（cue token）歸一化成對 target 的分佈。

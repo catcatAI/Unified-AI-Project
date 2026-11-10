@@ -30,6 +30,15 @@ and this project adheres to
   5.46/10**，4 過 2 不過，達成階梯仍 L0。限制照實記：套件判定當時是「任一關鍵詞命中」（同日由下方的 strict 正確性判定取代）；索引為衍生資料（`data/`
   gitignore），中文題仍答不出。### Changed
 
+- **同 cue 量法接進跨族判詞（2026-11-10）**：上一條的探針原本只是 CLI 上另一支孤兒——量到卻不進判詞，「定點有帶強弱、但綁錯關聯」可以從摘要裡消失。現在
+  `run(..., within_cue=True)`（CLI `--within-cue`）把它放進 `within_cue` 並接到
+  `strength_verdict`
+  尾端：`<weights>/<ordering>/<readout>/<within-cue-verdict>`。沒跑這一支時尾端**不加任何東西**（不能用空白冒充「沒問題」），所以「`fixed-point-carries-strength`
+  但
+  `within-cue-strength-not-anchored`」在摘要上不可能被讀成通過。兩個棘輪測試：不 anchored 的探針不能被組合判詞隱藏；沒跑階梯探針時仍要具名（`no-strength-probe/within-cue-strength-anchored`）。實跑
+  `--readout direct --within-cue`：`strength verdict: no-strength-probe/within-cue-strength-anchored`，`graded`
+  1.000 vs `matched` 0.605（2/2 種子）。+2 測試。
+
 - **同 cue 內競爭：三種讀出終於拿到同一個答案（2026-11-10）**：上一條把缺口定位在「評估目標只看勝負、不看分佈」。這條把分佈變成可問的問題：新增獨立探針
   `within_cue_probe`（CLI
   `--within-cue`），每個 cue 共用同一組輸入 token、指向兩個不同 target（強的信心 3/3、弱的 1/3），問「強的分數高於弱的嗎」。這只能**同一個 cue 內部比**：同一 cue 的兩個分數同乘一個正數不變順序，所以對頻率完全免疫，歸一化讀出也保得住（跨配對比一定要比絕對值，一歸一化就沒了）。關鍵前提是**等次數**——每個配對每輪恰好一次，不然「出現得多」本身就會把強的寫得更重，四個臂都靠重複次數得分，量到的會是頻率而不是定點。定點區（ep40、12 種子、24

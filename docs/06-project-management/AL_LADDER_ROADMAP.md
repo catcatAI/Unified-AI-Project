@@ -1725,3 +1725,16 @@ credit 的指標（例如把正確 target 的分數差距換成名次或機率�
   裡的一族，所以不進 12 格階梯、不影響任何既有族與報告。
 - 24 個 cue 全數回報（沒有 `None` 分數），但這只在 `target_strength` 與
   `threshold` 沿用既有值時成立；改那兩個參數要重跑。
+
+### 接進跨族判詞（而不是留在 CLI 的另一支孤兒探針）
+
+量到卻不進判詞，就等於「定點有帶強弱、但綁錯關聯」這種情況可以從摘要裡消失。所以
+`run(..., within_cue=True)`（CLI `--within-cue`）會把結果放進
+`within_cue`，並接到既有的 `strength_verdict` 尾端：
+
+```text
+<weights>/<ordering>/<readout>/<within-cue-verdict>
+```
+
+沒跑這一支時尾端不加任何東西——用空白冒充「沒問題」就是這裡最容易犯的錯。判詞只有一個字串，所以「`fixed-point-carries-strength`
+但 `within-cue-strength-not-anchored`」在摘要上不可能被讀成通過。

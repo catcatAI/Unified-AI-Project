@@ -1313,6 +1313,7 @@ def run(
     seeds: Optional[Sequence[int]] = None,
     families: Optional[Sequence[str]] = None,
     strength: bool = False,
+    within_cue: bool = False,
 ) -> Dict[str, object]:
     cells: List[Dict[str, object]] = []
     probes: List[Dict[str, object]] = []
@@ -1429,26 +1430,38 @@ def run(
         "cells": cells,
         "verdict": overall_verdict(cells, unregistered),
     }
-    if strength:
-        result["strength_probe"] = probes
-        result["strength_verdict"] = _strength_verdict(probes)
+    # 同 cue 內競爭跟族無關（它自己一套設計），所以只跑一次，而且跟 ``strength`` 共用一個
+    # 判詞——不然「定點有帶強弱但綁錯關聯」這種情況會從跨族判詞裡消失。
+    within = (
+        within_cue_probe(readout=readout, seeds=use_seeds[:AMBIGUOUS_SEEDS]) if within_cue else None
+    )
+    if within is not None:
+        result["within_cue"] = within
+    if strength or within is not None:
+        if strength:
+            result["strength_probe"] = probes
+        result["strength_verdict"] = _strength_verdict(probes, within)
     return result
 
 
-def _strength_verdict(probes: Sequence[Dict[str, object]]) -> str:
+def _strength_verdict(
+    probes: Sequence[Dict[str, object]], within: Optional[Dict[str, object]] = None
+) -> str:
     """跨族判詞：兩個問題分開講；只有不一致的族才退成「依 regime 而定」。
 
     一致性的負結果也是結論（所有族都「定點沒帶強弱」或「讀出看不見」），不能模糊成「沒差」。
     """
     if not probes:
-        return "no-strength-probe"
+        base = "no-strength-probe"
+        return f"{base}/{within['verdict']}" if within else base
     weights = {str(p["weights_verdict"]) for p in probes}
     ordering = {str(p["ordering_verdict"]) for p in probes}
     readout = {str(p["readout_verdict"]) for p in probes}
     w = weights.pop() if len(weights) == 1 else "weights-regime-dependent"
     o = ordering.pop() if len(ordering) == 1 else "ordering-regime-dependent"
     r = readout.pop() if len(readout) == 1 else "readout-regime-dependent"
-    return f"{w}/{o}/{r}"
+    # 第三句只有真的量到才加：沒跑就不能用空白冒充「沒問題」。
+    return f"{w}/{o}/{r}" + (f"/{within['verdict']}" if within else "")
 
 
 def main(argv=None) -> int:
@@ -1475,6 +1488,7 @@ def main(argv=None) -> int:
         seeds=seed_list[: args.seeds],
         families=[f for f in args.families.split(",") if f],
         strength=args.strength_probe,
+        within_cue=args.within_cue,
     )
     print(f"protocol: {result['protocol']}  readout {result['readout']}")
     for cell in result["cells"]:  # type: ignore[union-attr]
@@ -1511,9 +1525,9 @@ def main(argv=None) -> int:
     print(f"verdict: {result['verdict']}")
     if result.get("strength_verdict"):
         print(f"strength verdict: {result['strength_verdict']}")
-    if args.within_cue:
-        within = within_cue_probe(readout=args.readout, seeds=seed_list[:AMBIGUOUS_SEEDS])
-        result["within_cue"] = within
+    if result.get("within_cue"):
+        within = result["within_cue"]
+        assert isinstance(within, dict)
         arms = within["arms"]  # type: ignore[index]
         print(
             f"within-cue {within['readout']}: "
