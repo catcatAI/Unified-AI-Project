@@ -11,6 +11,7 @@ These tests keep it honest: a new script cannot appear without being
 triaged, and a stale entry fails.
 """
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -43,17 +44,31 @@ def _load() -> dict:
     return data["scripts"]
 
 
+def _inventory_scope() -> set[str]:
+    """The scripts the generator considers in scope (tracked, else on disk).
+
+    Asking the generator instead of globbing keeps the two halves of the guard
+    from disagreeing: the inventory describes the committed tree, so an
+    untracked draft must not be demanded and a deleted one must not linger.
+    """
+    spec = importlib.util.spec_from_file_location("gen_script_inventory", GENERATOR)
+    assert spec and spec.loader, f"cannot load {GENERATOR}"
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return {path.name for path in module._script_files()}
+
+
 class TestScriptInventory:
     def test_every_script_is_triaged(self):
         inventory = _load()
-        on_disk = {p.name for p in (ROOT / "scripts").glob("*.py")}
+        on_disk = _inventory_scope()
         on_disk.discard(GENERATOR.name)
         missing = sorted(on_disk - set(inventory))
         assert not missing, f"scripts not in the inventory: {missing}"
 
     def test_no_stale_entries(self):
         inventory = _load()
-        on_disk = {p.name for p in (ROOT / "scripts").glob("*.py")}
+        on_disk = _inventory_scope()
         on_disk.discard(GENERATOR.name)
         extra = sorted(set(inventory) - on_disk)
         assert not extra, f"the inventory lists scripts that no longer exist: {extra}"

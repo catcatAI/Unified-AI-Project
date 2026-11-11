@@ -32,6 +32,7 @@ import ast
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -109,10 +110,43 @@ REFERENCE_GLOBS = (
 )
 
 
+def _tracked_script_names() -> set[str] | None:
+    """`scripts/*.py` that git tracks, or None when git cannot answer.
+
+    The inventory describes what is committed, so a script still under
+    construction (untracked) must not enter it: the clean-clone gate would
+    otherwise list a file that does not exist in the clone. Without git (a
+    source tarball, say) the directory listing is the only source available.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "-z", "--", "scripts"],
+            cwd=str(ROOT),
+            capture_output=True,
+            check=False,
+            timeout=60,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    names = set()
+    for relative in result.stdout.decode("utf-8", "replace").split("\0"):
+        if not relative:
+            continue
+        path = ROOT / relative
+        if path.parent == SCRIPTS_DIR and path.suffix == ".py" and path.is_file():
+            names.add(path.name)
+    return names
+
+
 def _script_files() -> list[Path]:
-    return sorted(
-        p for p in SCRIPTS_DIR.iterdir() if p.suffix == ".py" and p.name != Path(__file__).name
-    )
+    tracked = _tracked_script_names()
+    if tracked is None:
+        candidates = [p for p in SCRIPTS_DIR.iterdir() if p.suffix == ".py"]
+    else:
+        candidates = [SCRIPTS_DIR / name for name in tracked]
+    return sorted(p for p in candidates if p.is_file() and p.name != Path(__file__).name)
 
 
 def _purpose(path: Path) -> str:
@@ -210,7 +244,8 @@ def main() -> int:
     payload = {
         "version": 1,
         "note": (
-            "每支 scripts/*.py 的類別與用途；referenced=false 表示除了本清單以外"
+            "每支「已進版控」的 scripts/*.py 的類別與用途（未追蹤的草稿不算，因為它們"
+            "不在 clone 出來的樹裡）；referenced=false 表示除了本清單以外"
             "沒有任何文件、工作流程或程式引用它（研究一次性腳本，保留作為紀錄）。"
         ),
         "scripts": inventory,

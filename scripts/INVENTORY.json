@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "每支 scripts/*.py 的類別與用途；referenced=false 表示除了本清單以外沒有任何文件、工作流程或程式引用它（研究一次性腳本，保留作為紀錄）。",
+  "note": "每支「已進版控」的 scripts/*.py 的類別與用途（未追蹤的草稿不算，因為它們不在 clone 出來的樹裡）；referenced=false 表示除了本清單以外沒有任何文件、工作流程或程式引用它（研究一次性腳本，保留作為紀錄）。",
   "scripts": {
     "_enrich_event_outcomes.py": {
       "category": "tool",
@@ -1386,11 +1386,6 @@
       "category": "tool",
       "referenced": true,
       "purpose": "Visual verification: render images from concept space → primitives → image."
-    },
-    "wardrobe_compositor.py": {
-      "category": "tool",
-      "referenced": false,
-      "purpose": "Wardrobe Layer Compositor (分層紙娃娃換裝合成器) for Angela AI."
     }
   }
 }

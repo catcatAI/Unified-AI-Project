@@ -5,13 +5,13 @@ Unified-AI-Project.
 
 ## 完整清單
 
-`scripts/` 目前有 278 支腳本。**每一支**都記在
+`scripts/` 目前有 277 支腳本。**每一支**都記在
 [`scripts/INVENTORY.json`](INVENTORY.json)（類別＋用途＋是否被引用），由
 `python3 scripts/gen_script_inventory.py` 產生，並由
 `tests/tools/test_script_inventory.py` 驗證（新增腳本必須先定級）。
 
 - 被引用（文件／工作流程／程式指向它）：213 支
-- 未被引用（研究一次性腳本，保留作為紀錄）：65 支
+- 未被引用（研究一次性腳本，保留作為紀錄）：64 支
 
 > 這取代了先前「69 孤兒腳本逐個定級」的待辦：分類現在是可驗證的，不再是口頭承諾。
 >
