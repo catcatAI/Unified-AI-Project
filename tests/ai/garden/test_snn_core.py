@@ -487,3 +487,45 @@ class TestRateAndFixedPointAreSeparable:
             weights.append(self._weight(core, "a", "b"))
         for value in weights:
             assert value == pytest.approx(0.35 * 0.25, abs=2e-3)
+
+
+class TestRowDecayReachesCellsItDidNotWrite:
+    """Roadmap §56: the late slide is row-wide decay, not a dead readout.
+
+    ``_decay_touched_rows`` multiplies the *whole* touched row by
+    ``(1 - weight_decay)`` and prunes below 0.01, so an association that happens
+    to live in a row somebody else keeps touching loses weight on their updates.
+    Measured on the AL `conflict` family (12 seeds, decay 0.002 vs 0.0): every arm
+    declines from ep40 to ep80 with decay on while its weights still rise, and
+    12/12 seeds improve with decay off — while the readout-free weight ranking
+    declines too, which rules out readout saturation. These two tests pin the
+    mechanism at unit scale, so a change to decay scope cannot pass silently.
+    """
+
+    @staticmethod
+    def _weight(core, a, b):
+        return float(core._W[core._key_to_idx[a], core._key_to_idx[b]])
+
+    def test_a_quiet_cell_loses_weight_when_its_row_is_touched(self):
+        core = TensorSNNCore(threshold=0.5)
+        for _ in range(30):
+            core.hebbian_update({"a": 1.0}, {"b": 1.0}, lr=0.1, weight_decay=0.0)
+        before = self._weight(core, "a", "b")
+        assert before > 0.3, "the cell under test must start well above the prune floor"
+
+        # A different target now shares the same source row; (a, b) is never
+        # written here, yet it is decayed because its row was touched.
+        for _ in range(60):
+            core.hebbian_update({"a": 1.0}, {"c": 1.0}, lr=0.1, weight_decay=0.002)
+        after = self._weight(core, "a", "b")
+        assert after < before * 0.95, f"row decay did not reach the quiet cell: {before} -> {after}"
+
+    def test_a_quiet_cell_under_the_floor_is_pruned_to_zero(self):
+        core = TensorSNNCore(threshold=0.5)
+        core.hebbian_update({"a": 0.05}, {"b": 0.05}, lr=0.01, weight_decay=0.0)
+        tiny = self._weight(core, "a", "b")
+        assert 0.0 < tiny < 0.01
+        # Default decay touches row `a`; the entry is not protected because this
+        # call did not write it, so it is erased rather than faded.
+        core.hebbian_update({"a": 1.0}, {"c": 1.0}, lr=0.05)
+        assert self._weight(core, "a", "b") == 0.0
