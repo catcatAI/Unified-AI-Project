@@ -249,7 +249,7 @@ class KdTeacher:
         ]
 
     def close(self) -> None:
-        self._llm = None  # type: ignore[assignment]
+        self._llm = None
 
 
 __all__ = ["AtomAlignment", "KdTeacher"]

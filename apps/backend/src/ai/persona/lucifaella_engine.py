@@ -55,7 +55,9 @@ class LucifaellaPersonaEngine:
 
     def _load_quotes(self) -> None:
         """Load non-canonical legacy quote references for explicit inspection only."""
-        self.quotes = {}
+        # 空的映射不是「還沒接好」，是刻意的：罐頭台詞已全部移除，回應由正常生成路徑負責。
+        # 型別寫出來是因為 `{}` 讓 mypy 無法從用途反推（var-annotated）。
+        self.quotes: Dict[str, List[str]] = {}
 
     def get_commercial_intro(self) -> str:
         """No canned introduction: normal assistant generation owns responses."""
