@@ -22,9 +22,9 @@
     "humorous": 0.55,
     "empathetic": 0.82,
     "creative": 0.78,
-    "assertive": 0.60,
+    "assertive": 0.6,
     "cautious": 0.65,
-    "candor": 0.90,
+    "candor": 0.9,
     "memory_retention": 0.85
   },
   "behavioral_guidelines": [
