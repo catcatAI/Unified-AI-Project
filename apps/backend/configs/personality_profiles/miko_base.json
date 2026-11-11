@@ -17,10 +17,10 @@
     "friendly": 0.8,
     "curious": 0.7,
     "humorous": 0.5,
-    "empathetic": 0.0,
-    "creative": 0.0,
-    "assertive": 0.0,
-    "cautious": 0.0,
+    "empathetic": 0.7,
+    "creative": 0.65,
+    "assertive": 0.5,
+    "cautious": 0.6,
     "memory_retention": 0.5
   },
   "behavioral_guidelines": [

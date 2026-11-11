@@ -1,1 +1,37 @@
-[]
+[
+  {
+    "stage_id": "observer",
+    "name": "觀察者態",
+    "description": "感知輸入信號、情緒特徵與對話背景",
+    "dominant_axes": ["alpha", "delta"],
+    "response_weight": 0.85
+  },
+  {
+    "stage_id": "analyzer",
+    "name": "解析者態",
+    "description": "因果推理、知識檢索與意圖辨識",
+    "dominant_axes": ["beta", "theta"],
+    "response_weight": 0.90
+  },
+  {
+    "stage_id": "synthesizer",
+    "name": "整合者態",
+    "description": "多模態資訊融合與內部狀態更新",
+    "dominant_axes": ["gamma", "zeta"],
+    "response_weight": 0.88
+  },
+  {
+    "stage_id": "empathizer",
+    "name": "共情者態",
+    "description": "生理情感迴路共振、語氣與關懷層級微調",
+    "dominant_axes": ["alpha", "gamma"],
+    "response_weight": 0.92
+  },
+  {
+    "stage_id": "reflector",
+    "name": "反思者態",
+    "description": "自主生命週期反饋、記憶留存與認知演化",
+    "dominant_axes": ["beta", "zeta"],
+    "response_weight": 0.87
+  }
+]
