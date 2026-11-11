@@ -110,17 +110,18 @@ REFERENCE_GLOBS = (
 )
 
 
-def _tracked_script_names() -> set[str] | None:
-    """`scripts/*.py` that git tracks, or None when git cannot answer.
+def _git_tracked_paths() -> set[str] | None:
+    """Every path git tracks, relative to the repo root (None without git).
 
-    The inventory describes what is committed, so a script still under
-    construction (untracked) must not enter it: the clean-clone gate would
-    otherwise list a file that does not exist in the clone. Without git (a
-    source tarball, say) the directory listing is the only source available.
+    One answer for both questions the inventory asks — which scripts exist, and
+    which documents may reference them. Untracked files (a draft, and also the
+    git-ignored ``PROJECT_MAP_GENERATED.md``) are not part of the commit, so
+    letting them vote makes the committed inventory impossible to reproduce
+    from a clean clone.
     """
     try:
         result = subprocess.run(
-            ["git", "ls-files", "-z", "--", "scripts"],
+            ["git", "ls-files", "-z"],
             cwd=str(ROOT),
             capture_output=True,
             check=False,
@@ -130,22 +131,27 @@ def _tracked_script_names() -> set[str] | None:
         return None
     if result.returncode != 0:
         return None
+    return {path for path in result.stdout.decode("utf-8", "replace").split("\0") if path}
+
+
+def _tracked_script_names(tracked: set[str] | None) -> set[str] | None:
+    """`scripts/*.py` that git tracks, or None when git cannot answer."""
+    if tracked is None:
+        return None
     names = set()
-    for relative in result.stdout.decode("utf-8", "replace").split("\0"):
-        if not relative:
-            continue
+    for relative in tracked:
         path = ROOT / relative
         if path.parent == SCRIPTS_DIR and path.suffix == ".py" and path.is_file():
             names.add(path.name)
     return names
 
 
-def _script_files() -> list[Path]:
-    tracked = _tracked_script_names()
-    if tracked is None:
+def _script_files(tracked: set[str] | None) -> list[Path]:
+    names = _tracked_script_names(tracked)
+    if names is None:
         candidates = [p for p in SCRIPTS_DIR.iterdir() if p.suffix == ".py"]
     else:
-        candidates = [SCRIPTS_DIR / name for name in tracked]
+        candidates = [SCRIPTS_DIR / name for name in names]
     return sorted(p for p in candidates if p.is_file() and p.name != Path(__file__).name)
 
 
@@ -195,10 +201,14 @@ def _category(name: str) -> str:
     return DEFAULT_CATEGORY
 
 
-def _reference_blob() -> str:
+def _reference_blob(tracked: set[str] | None) -> str:
     chunks = []
     for pattern in REFERENCE_GLOBS:
         for path in ROOT.glob(pattern):
+            if not path.is_file():
+                continue
+            if tracked is not None and path.relative_to(ROOT).as_posix() not in tracked:
+                continue
             try:
                 chunks.append(path.read_text(encoding="utf-8"))
             except (OSError, UnicodeDecodeError):
@@ -207,9 +217,10 @@ def _reference_blob() -> str:
 
 
 def build_inventory() -> dict:
-    blob = _reference_blob()
+    tracked = _git_tracked_paths()
+    blob = _reference_blob(tracked)
     inventory = {}
-    for path in _script_files():
+    for path in _script_files(tracked):
         name = path.name
         referenced = name in blob
         inventory[name] = {
@@ -245,7 +256,8 @@ def main() -> int:
         "version": 1,
         "note": (
             "每支「已進版控」的 scripts/*.py 的類別與用途（未追蹤的草稿不算，因為它們"
-            "不在 clone 出來的樹裡）；referenced=false 表示除了本清單以外"
+            "不在 clone 出來的樹裡；「被引用」也只採計已進版控的文件）；"
+            "referenced=false 表示除了本清單以外"
             "沒有任何文件、工作流程或程式引用它（研究一次性腳本，保留作為紀錄）。"
         ),
         "scripts": inventory,

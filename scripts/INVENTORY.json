@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "每支「已進版控」的 scripts/*.py 的類別與用途（未追蹤的草稿不算，因為它們不在 clone 出來的樹裡）；referenced=false 表示除了本清單以外沒有任何文件、工作流程或程式引用它（研究一次性腳本，保留作為紀錄）。",
+  "note": "每支「已進版控」的 scripts/*.py 的類別與用途（未追蹤的草稿不算，因為它們不在 clone 出來的樹裡；「被引用」也只採計已進版控的文件）；referenced=false 表示除了本清單以外沒有任何文件、工作流程或程式引用它（研究一次性腳本，保留作為紀錄）。",
   "scripts": {
     "_enrich_event_outcomes.py": {
       "category": "tool",
@@ -14,7 +14,7 @@
     },
     "_fix_card_tokens.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Fix game_cards.json token issues:"
     },
     "_fix_cc10_16_storyline.py": {
@@ -44,12 +44,12 @@
     },
     "_improve_token_types.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Improve token type assignment by adding more keyword rules."
     },
     "_server_helper.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "ANGELA-MATRIX: [L1] [β] [B] [L0]"
     },
     "ai_al_round_loop.py": {
@@ -144,7 +144,7 @@
     },
     "analyze_tokens.py": {
       "category": "analysis",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Generate token analysis from parsed card data."
     },
     "angela_review.py": {
@@ -174,7 +174,7 @@
     },
     "batch_optimize.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Batch direct optimization of CIFAR-10 images using differentiable renderer."
     },
     "bench_local_roles.py": {
@@ -284,7 +284,7 @@
     },
     "check_checkpoint.py": {
       "category": "diagnostics",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Reconstruct original checkpoint from saved weights + JSON metadata."
     },
     "check_default_config.py": {
@@ -339,7 +339,7 @@
     },
     "check_quality.py": {
       "category": "diagnostics",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Quick quality check on trained models."
     },
     "check_test_count.py": {
@@ -469,7 +469,7 @@
     },
     "debug_snn_load.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Debug SNN load to find why density=0."
     },
     "demo_clip_primitives.py": {
@@ -504,7 +504,7 @@
     },
     "diag_route.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "diag route（無說明：原始碼未附 docstring）"
     },
     "distill_core_data.py": {
@@ -634,7 +634,7 @@
     },
     "fix_checkpoint.py": {
       "category": "maintenance",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Fix existing saturated checkpoint by row-normalizing the weight matrix."
     },
     "fix_docstring_imports.py": {
@@ -714,7 +714,7 @@
     },
     "hardware_intelligence_report.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Hardware-Adaptive Intelligence Report — 智能驗收報告 (最小單位=模型驗證, 無偽裝)"
     },
     "hybrid_boundary.py": {
@@ -744,7 +744,7 @@
     },
     "inspect_char_lore.py": {
       "category": "analysis",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Build: card_id -> all lore tokens (full detail), useful for understanding merchant wares"
     },
     "inspect_chars.py": {
@@ -784,7 +784,7 @@
     },
     "parse_gdrive_cards.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "parse_gdrive_cards.py — 解析 Google Drive 下載的卡片堆檔案"
     },
     "patch_game_data.py": {
@@ -804,7 +804,7 @@
     },
     "phase1_real_1000.py": {
       "category": "experimental",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Phase 1 真實 1000 CIFAR — 硬件規格自適應（分批+sleep，<500MB）"
     },
     "phase2_real_1000.py": {
@@ -1069,7 +1069,7 @@
     },
     "test_ab_pipeline.py": {
       "category": "testing",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Test A→B pipeline: enhanced decomposer + PixelRefiner."
     },
     "test_ab_quick.py": {
@@ -1084,7 +1084,7 @@
     },
     "test_capability.py": {
       "category": "testing",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Quick capability test for Angela AI - no LLM contamination."
     },
     "test_clip_vs_primitives.py": {
@@ -1114,7 +1114,7 @@
     },
     "test_full_clip.py": {
       "category": "testing",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Test full pipeline with real CLIP on small subset."
     },
     "test_gpu_compat.py": {
@@ -1154,12 +1154,12 @@
     },
     "test_recognition_methods.py": {
       "category": "testing",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Test recognition WITHOUT per-image optimization — use raw image features."
     },
     "test_training_state.py": {
       "category": "testing",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Quick training test - ED3N + GARDEN with real data."
     },
     "test_wgpu_bench.py": {
@@ -1174,7 +1174,7 @@
     },
     "three_col_test.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Direct SNN-ONLY test - no GARDENEngine process/generate."
     },
     "three_layer_arch.py": {
@@ -1184,7 +1184,7 @@
     },
     "threshold_sweep.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Test SNN forward with correct keys"
     },
     "trace_pipeline.py": {
@@ -1234,7 +1234,7 @@
     },
     "train_decomposer_on_optimized.py": {
       "category": "training",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Train decomposer on directly-optimized primitive vectors."
     },
     "train_fixedcore_reasoning.py": {
@@ -1279,7 +1279,7 @@
     },
     "train_reinforce.py": {
       "category": "training",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Train learnable decomposer with REINFORCE on rendering loss."
     },
     "train_sls_real.py": {
@@ -1374,7 +1374,7 @@
     },
     "verify_snn_fix.py": {
       "category": "verification",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Verify SNN fix: different inputs should produce different outputs."
     },
     "verify_training.py": {
@@ -1384,7 +1384,7 @@
     },
     "visual_verify.py": {
       "category": "tool",
-      "referenced": true,
+      "referenced": false,
       "purpose": "Visual verification: render images from concept space → primitives → image."
     }
   }

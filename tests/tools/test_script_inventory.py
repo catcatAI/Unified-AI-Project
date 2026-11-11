@@ -55,7 +55,7 @@ def _inventory_scope() -> set[str]:
     assert spec and spec.loader, f"cannot load {GENERATOR}"
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return {path.name for path in module._script_files()}
+    return {path.name for path in module._script_files(module._git_tracked_paths())}
 
 
 class TestScriptInventory:
