@@ -20,8 +20,8 @@ from __future__ import annotations
 import importlib.util
 import json
 import math
-from typing import Dict
 from pathlib import Path
+from typing import Dict
 
 import pytest
 
