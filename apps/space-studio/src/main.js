@@ -29,6 +29,8 @@ import { OutfitStore } from './outfit_store.js'
 import { watchJson } from './reload.js'
 import { applySnapshot } from './snapshot_sync.js'
 import { createSpaceSocket } from './ws_client.js'
+import { createChatBridge } from './chat_bridge.js'
+import { createHandoff } from './handoff.js'
 
 const DATA = {
   room: '../../space/rooms/studio_a.json',
@@ -156,6 +158,119 @@ async function boot() {
     socket = null
     setStatus(`後端未連線：${err.message}`)
   }
+
+  // Conversation: the host opens the scene, then hands the floor to the main
+  // role. Chat stays disabled until the handover completes — a conversation
+  // that starts by itself would be the stage pretending the host spoke.
+  const chatSection = section('對話（主持人開場）')
+  const transcript = document.createElement('div')
+  transcript.className = 'transcript'
+  transcript.setAttribute('aria-live', 'polite')
+  chatSection.appendChild(transcript)
+
+  const bridge = createChatBridge({
+    // The stage is served from the repo root (5174); the API lives on 8000.
+    endpoint: window.SPACE_CHAT_URL || 'http://127.0.0.1:8000/api/v1/chat/unified',
+  })
+  const sessionId = `space-${Date.now().toString(36)}`
+  let sending = false
+
+  const handoff = createHandoff({
+    say: (roleId, text, ms) => {
+      port.say(roleId, text, ms)
+      port.play(roleId, 'nod')
+      socket?.send({ type: 'say', actor_id: roleId, text })
+    },
+  })
+
+  const chatControls = document.createElement('div')
+  chatControls.className = 'chat-controls'
+  chatSection.appendChild(chatControls)
+
+  const chatLine = document.createElement('input')
+  chatLine.placeholder = '等主持人開場後就能對話…'
+  chatLine.disabled = true
+  chatLine.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') sendChat()
+  })
+  chatControls.appendChild(chatLine)
+  const sendBtn = button(chatControls, '送出', () => sendChat())
+  sendBtn.disabled = true
+
+  function addTurn(who, text, meta = {}) {
+    const turn = document.createElement('div')
+    turn.className = 'turn'
+    const speaker = document.createElement('span')
+    speaker.className = 'who'
+    speaker.textContent = who
+    const body = document.createElement('span')
+    body.className = 'body'
+    body.textContent = text
+    turn.append(speaker, body)
+    const labels = [meta.route, meta.backend].filter(Boolean)
+    if (meta.abstain) labels.push('棄權')
+    if (labels.length) {
+      const label = document.createElement('span')
+      label.className = 'meta'
+      label.textContent = `（${labels.join(' · ')}）`
+      turn.appendChild(label)
+    }
+    transcript.appendChild(turn)
+    transcript.scrollTop = transcript.scrollHeight
+  }
+
+  async function sendChat() {
+    const text = chatLine.value.trim()
+    if (!text || sending || !handoff.canChat()) return
+    addTurn('你', text)
+    chatLine.value = ''
+    sending = true
+    sendBtn.disabled = true
+    setStatus('等待回覆…')
+    try {
+      const result = await bridge.send({ message: text, sessionId, roleId: 'main' })
+      if (!result.ok) {
+        // Never invent a character line: say what actually failed and leave
+        // the stage silent.
+        addTurn('系統', `後端沒有回覆（${result.reason}）`, { route: 'offline' })
+        setStatus(`對話失敗：${result.reason}${result.error ? `（${result.error}）` : ''}`)
+        return
+      }
+      addTurn('Angela', result.text, {
+        route: result.route,
+        backend: result.backend,
+        abstain: result.abstain,
+      })
+      try {
+        port.say('main', result.text, Math.max(3000, Math.min(9000, result.text.length * 120)))
+        socket?.send({ type: 'say', actor_id: 'main', text: result.text })
+      } catch (err) {
+        setStatus(`舞台顯示失敗：${err.message}`)
+      }
+      setStatus(`Angela 回覆（${result.route || result.backend || 'unknown'}）`)
+    } finally {
+      sending = false
+      sendBtn.disabled = !handoff.canChat()
+    }
+  }
+
+  button(chatSection, '主持人開場', () => {
+    const result = handoff.open()
+    if (!result.ok) {
+      setStatus(`已經開場（${result.state}）`)
+      return
+    }
+    setStatus('主持人開場中…')
+    if (handoff.lastError) setStatus(`舞台發言失敗：${handoff.lastError}`)
+  })
+
+  handoff.subscribe((state) => {
+    const ready = state === 'open'
+    chatLine.disabled = !ready
+    sendBtn.disabled = !ready
+    chatLine.placeholder = ready ? '對 Angela 說一句話…' : '等主持人開場後就能對話…'
+    if (ready) chatLine.focus()
+  })
 
   // who you are talking to
   const selectSection = section('說話對象')

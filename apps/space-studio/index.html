@@ -131,6 +131,35 @@
         font-size: 11px;
         color: var(--muted);
       }
+      .transcript {
+        max-height: 150px;
+        overflow-y: auto;
+        margin: 0 0 6px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: #10151d;
+        font-size: 12px;
+      }
+      .transcript:empty {
+        display: none;
+      }
+      .turn {
+        margin: 0 0 4px;
+        line-height: 1.45;
+      }
+      .turn .who {
+        color: var(--identity-rose);
+        margin-right: 6px;
+      }
+      .turn .body {
+        white-space: pre-wrap;
+      }
+      .turn .meta {
+        color: var(--muted);
+        font-size: 11px;
+        margin-left: 4px;
+      }
       .key {
         display: flex;
         justify-content: space-between;

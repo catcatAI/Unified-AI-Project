@@ -311,3 +311,32 @@ P5 需要「每一回合的（狀態，輸出結構）配對」。目前**沒有
 ——變的是同一條聊天路徑上的行為（P1/P3 用預先寫好的輸入直接呼叫
 `_handle_chat_request` 量，不另外造題進資料集）。這一輪不動分數、不動及格
 線：系統分仍 **6.41／10**、核心分仍 **0.00／10**。
+
+### 8.7 切片 B：Space host 開場 → 交棒（2026-11-11 落地）
+
+**改了什麼**（`apps/space-studio/`，沒有新依賴、沒有建置步驟）：
+
+| 檔案 | 職責 |
+| --- | --- |
+| `src/chat_bridge.js` | `POST /api/v1/chat/unified`；成功才回 `{text, route, backend, abstain}`，失敗只回 `{ok:false, reason}`（`offline`／`http_<status>`／`invalid_response`／`empty_response`／`empty_message`） |
+| `src/handoff.js` | `closed → opening → open` 狀態機；`host` 說開場句，排程後 `main` 說交棒句，`open` 之後 `canChat()` 才為 true |
+| `src/main.js`／`index.html` | 「主持人開場」按鈕、交棒前停用輸入框、逐回合顯示 `route`／`backend`／「棄權」 |
+
+**驗收（可重跑）**：
+
+- `cd apps/space-studio && node --test` → **154 passed / 0 failed**（新增 17 條：
+  bridge 9 條、handoff 8 條）。
+- 真的起後端（`uvicorn … --port 8123`）用瀏覽器同等請求驗過：
+  - `OPTIONS /api/v1/chat/unified`（`Origin: http://127.0.0.1:5174`）→ **200**，
+    `access-control-allow-origin: *`；
+  - `POST`（`chat_bridge` 的欄位：`message`／`user_id`／`tenant_id`／
+    `persona_id`／`client_id`／`session_id`／`role_id`）→
+    `{'response': '答案是 100。', 'backend': 'knowledge_pipeline',
+    'route': 'knowledge', 'abstain': None}`（本機有雲端後端時 `route` 會是
+    `llm`，來源照實顯示）。
+- 全量測試 **9,809 passed / 107 skipped / 0 failed**；`check_fact_gates.py`
+  ALL PASS；`check_generated_docs.py` 乾淨。
+
+**照實記**：這一輪只加「回合的來源」與「交棒前不能聊天」，沒有增加任何智能
+分數；核心分仍 **0.00／10**。切片 B 的用處是讓 P5 的配對開始有第二個真實
+回合來源，不是宣告能力提升。
