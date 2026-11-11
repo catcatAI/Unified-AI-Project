@@ -1204,3 +1204,60 @@ class TestStrengthArmsInjectTheSameMagnitude:
             assert set(inputs.values()) == {1.0}
             assert set(target.values()) == {1.0}
             assert kwargs["plasticity"] == tier / 3
+
+
+class TestTierHitRatesReconstructTheOverall:
+    """分層命中率必須拼得回全體命中率，否則「弱層全輸」與「兩層各退一點」分不開。
+
+    `_hit_rates_by_tier` 與 `_evaluate` 是兩次獨立的讀出（不同的迴圈、不同的分組），所以
+    只要有一邊把層分錯、或把配對數算錯，兩者就會對不上。
+    """
+
+    def test_flat_tiers_reconstruct_the_overall_rate(self, protocol):
+        task = protocol._task("conflict", protocol.FAMILIES["conflict"][0], 0.01)
+        pairs = protocol._downstream._pairs(task)[:4]
+        tiers = [3, 1, 3, 1]
+        row = protocol._run_strength_arm(
+            task, pairs, tiers, [0, 1, 2, 3], [1.0] * 4, 5, "flat", readout="direct"
+        )
+        rebuilt = (tiers.count(3) * row["hit_strong"] + tiers.count(1) * row["hit_weak"]) / len(
+            pairs
+        )
+        assert abs(rebuilt - row["hit_rate"]) < 2e-3
+
+
+class TestGradedWeakTierAccumulatesAtConfSquared:
+    """弱層權重必須是 1 : 3 : 9（graded : speed : flat）——這是機制的算術，不是判詞。
+
+    `graded` 的弱層更新是 `lr·c·(0.35·c − w)`：速率帶一次 c、終點再帶一次，未飽和時增量
+    正比於 c²；`speed` 是 `lr·c·(0.35 − w)`，正比於 c；`flat` 兩邊都是 1。c = 1/3，所以三個
+    臂的弱層權重必須是 1 : 3 : 9。把信心再放回輸入（gate = c²）會變成 1 : 9 : 81，把終點
+    改成不隨 conf 會變成 1 : 3 : 3——兩種舊寫法都會讓這條測試紅。
+    """
+
+    def test_weak_weights_keep_the_one_three_nine_ratio(self, protocol):
+        task = protocol._task(
+            "many_to_one",
+            {"pairs": 48, "noise_bits": 3, "shared": True, "target_group": 24},
+            0.005,
+        )
+        pairs = protocol._downstream._pairs(task)
+        tiers = protocol._tier_of_pairs(pairs)
+        stream = protocol._strength_stream(pairs, tiers, 0, 6)
+        conf = [tiers[i] / 3.0 for i in stream]
+        weak = {}
+        for arm in ("flat", "graded", "speed"):
+            row = protocol._run_strength_arm(
+                task,
+                pairs,
+                tiers,
+                stream,
+                conf if arm == "graded" else [1.0] * len(stream),
+                0,
+                arm,
+                readout="direct",
+            )
+            weak[arm] = row["weight_weak"]
+        assert weak["speed"] > 0 and weak["flat"] > 0
+        assert 0.30 <= weak["graded"] / weak["speed"] <= 0.37
+        assert 2.8 <= weak["flat"] / weak["speed"] <= 3.2

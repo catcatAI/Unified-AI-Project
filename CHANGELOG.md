@@ -32,6 +32,15 @@ and this project adheres to
 
 ### Fixed
 
+- **`graded`
+  的弱層是「既贏不了，也學得慢」（2026-11-11）**：把命中率按層拆開之後，上一條的 0.717 有了解釋——`graded`
+  的弱層在 `many_to_one` 從 ep1 到 ep10 都停在 0.029–0.040（亂猜 1/24 =
+  0.042），ep40 才爬到 0.398；`speed` 走同一條流是 0.036 → 0.173 → 0.329 →
+  0.983（`flat` 1.000）。算術上 `graded` 的弱層增量 ∝
+  c²（速率與終點各帶一次 conf）、`speed` ∝ c，所以弱層權重固定是 1 : 3 :
+  9（ep6 實測 0.00039／0.00117／0.00348），先前寫的「不是還沒學完，是天花板」只對一半。新增
+  `_hit_rates_by_tier`，棘輪 `TestGradedWeakTierAccumulatesAtConfSquared`（1 : 3
+  : 9）與 `TestTierHitRatesReconstructTheOverall`（分層必須拼回全體）。
 - **「調變信心本身有害」的機制說錯了（2026-11-11）**：在沒有 stride 別名的第二族
   `many_to_one`（官方校準 lr 0.005、40 種子、`direct`）重測四臂，`graded` 對
   `flat` 是 **0 勝 40 敗**（ep3 0.514 對 0.698），與

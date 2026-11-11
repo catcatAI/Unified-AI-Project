@@ -874,6 +874,41 @@ def _rank_credit_mean(
     }
 
 
+def _hit_rates_by_tier(
+    core: Any,
+    pairs: Sequence[Tuple[List[str], str]],
+    targets: Sequence[str],
+    tiers: Sequence[int],
+    readout: Optional[str] = None,
+) -> Dict[str, float]:
+    """把命中率**按層拆開**：弱層是「學得慢」還是「永遠贏不了」，全體平均分不出來。
+
+    WHY 非拆不可：``graded`` 的弱層定點本來就低（``0.35×conf``），所以全體命中率同時混著
+    「弱層那一半掉了多少」與「強層有沒有被拖累」兩件事。實測 `many_to_one`（lr 0.005、
+    40 種子、``direct``）``graded`` 全體 0.514 對 ``flat`` 0.698——那個 0.514 可能是弱層
+    全輸，也可能是兩層各退一點，而這兩種解釋要的修法完全不同（前者要改終點，後者要改
+    訓練量）。
+
+    與 `_rank_credit_mean` 同一批配對、同一個讀出、同一種分層，只是把「第幾名」換成
+    「有沒有贏」，所以兩者的分層可以直接對照。
+    """
+    use_readout = readout or READOUT
+    per_tier: Dict[int, List[int]] = {}
+    hits = 0
+    for index, (inputs, target) in enumerate(pairs):
+        out = _downstream._readouts._forward(core, {key: 1.0 for key in inputs}, use_readout)
+        _, hit = _downstream._score(out, targets, target)
+        hits += int(hit)
+        per_tier.setdefault(int(tiers[index]), []).append(int(hit))
+    strong = per_tier.get(max(STRENGTH_TIERS), [])
+    weak = per_tier.get(min(STRENGTH_TIERS), [])
+    return {
+        "hit_rate": hits / len(pairs) if pairs else 0.0,
+        "hit_strong": statistics.fmean(strong) if strong else 0.0,
+        "hit_weak": statistics.fmean(weak) if weak else 0.0,
+    }
+
+
 def _run_strength_arm(
     task: Dict[str, object],
     pairs: Sequence[Tuple[List[str], str]],
@@ -904,11 +939,13 @@ def _run_strength_arm(
         # 一次（plasticity = conf、gate = 1）。兩個臂要分的是「強弱住在終點還是速率」，
         # 注入量不同就混進第三個變因，所以先把它對齊。
         #
-        # 對齊之後（40 種子、direct、`many_to_one` lr 0.005）瞬態一格沒動：ep3 與 ep6 都是
-        # 0.514，四臂名次也一樣；定點則從 0.521 抬到 0.717（flat 1.000）。所以 conf² 只解釋
-        # 「長期卡在 0.5」，瞬態那 0.18 的落差來自機制本身——把強弱寫進終點，弱層的終點就低於
-        # 被共用 cue 抬高的對手，這一半的配對永遠贏不了。同一個機制的反面證據是 `speed`：
-        # 強弱只改速率、終點不動，定點追平 flat（1.000）。
+        # 對齊之後（20 種子、direct、`many_to_one` lr 0.005、命中率按層拆開）：ep1 兩臂每一層
+        # 都相同到三位小數（0.648／0.036）——注入速率確實一樣了，分歧從 ep3 才開始，因為終點
+        # 一個是 0.35、一個是 0.35·c。`graded` 的弱層因此有兩件事同時成立：ep1–ep10 停在亂猜
+        # （0.029–0.040，亂猜 1/24 = 0.042），ep10–ep40 才爬到 0.398；`speed` 走同一條流是
+        # 0.036 → 0.173 → 0.329 → 0.983（flat 1.000）。算術上未飽和時增量 ∝ c²（速率與終點
+        # 各帶一次 conf）對 ∝ c，所以弱層權重固定是 1 : 3 : 9（graded : speed : flat），棘輪
+        # `TestGradedWeakTierAccumulatesAtConfSquared` 釘住這個比值。
         core.hebbian_update(
             {key: 1.0 for key in inputs},
             {target: (conf if arm in ("graded", "matched") else 1.0)},
@@ -924,6 +961,9 @@ def _run_strength_arm(
     evaluated = _downstream._evaluate(
         core, dict(task, pairs=len(pairs)), pairs=pairs, readout=readout
     )
+    tiered = _hit_rates_by_tier(
+        core, pairs, _downstream._candidate_targets(pairs), tiers, readout=readout
+    )
     rank_credit = _rank_credit_mean(
         core, pairs, _downstream._candidate_targets(pairs), tiers=tiers, readout=readout
     )
@@ -937,6 +977,9 @@ def _run_strength_arm(
         "weight_weak": round(statistics.fmean(weak), 5) if weak else 0.0,
         "distinct_levels": len({round(w, 3) for _, w in usable}),
         "hit_rate": round(evaluated["hit_rate"], 3),
+        # 同一次訓練、同一批配對，只是把命中率按層拆開（見 `_hit_rates_by_tier`）。
+        "hit_strong": round(tiered["hit_strong"], 3),
+        "hit_weak": round(tiered["hit_weak"], 3),
         "margin": round(evaluated["margin"], 5),
         "rank_credit": round(rank_credit["all"], 5),
         # 判詞只看強層：那裡才是「強弱沒有綁在對的關聯上」這個宣稱的適用範圍。
