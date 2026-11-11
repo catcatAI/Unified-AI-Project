@@ -952,3 +952,73 @@ class TestWeightAttribution:
 
         assert "cells-shared 0.05" in verdict
         assert "fixed-point-carries-strength" not in verdict
+
+
+class TestRankCredit:
+    """§46–§48 的三種讀出都只看勝負或絕對尺度；名次信用是唯一能說「差一點」的既有量具。
+
+    它自己也會說謊，而且撒謊的方式跟 §50 同型：在前提不成立的地方講話。這裡把兩道前提釘住。
+    """
+
+    def test_credit_is_one_over_rank(self, protocol):
+        out = {"t_a": 5.0, "t_b": 3.0, "t_c": 1.0}
+
+        assert protocol._rank_credit(out, ["t_a", "t_b", "t_c"], "t_a") == 1.0
+        assert protocol._rank_credit(out, ["t_a", "t_b", "t_c"], "t_b") == pytest.approx(0.5)
+        assert protocol._rank_credit(out, ["t_a", "t_b", "t_c"], "t_c") == pytest.approx(1 / 3)
+
+    def test_never_scored_target_earns_nothing(self, protocol):
+        assert protocol._rank_credit({"t_a": 1.0}, ["t_a", "t_b"], "t_b") == 0.0
+
+    def test_a_tie_counts_as_beating_us(self, protocol):
+        # 並列被當成證據會讓「什麼都沒學」看起來像有排序，所以保守處理。
+        out = {"t_a": 2.0, "t_b": 2.0}
+
+        assert protocol._rank_credit(out, ["t_a", "t_b"], "t_a") == pytest.approx(0.5)
+
+    def test_averaging_over_both_tiers_punishes_grading_by_construction(self, protocol):
+        """ratchet：全體平均會讓「把弱層壓低」的臂看起來比較差，所以判詞不准用它。
+
+        這條測試就是在把那個陷阱寫成不變量——`graded` 的強層若排得更前、弱層排得更後，
+        平均可以是負的。判詞因此只看強層。
+        """
+        strong_tier, weak_tier = max(protocol.STRENGTH_TIERS), min(protocol.STRENGTH_TIERS)
+        graded = {strong_tier: [1.0, 1.0], weak_tier: [0.125, 0.125]}
+        flat = {strong_tier: [0.9, 0.9], weak_tier: [0.6, 0.6]}
+
+        def mean(per_tier):
+            values = [v for tier in per_tier for v in per_tier[tier]]
+            return sum(values) / len(values)
+
+        assert mean(graded) < mean(flat)  # 平均看起來「分級較差」
+        assert sum(graded[strong_tier]) > sum(flat[strong_tier])  # 但強層其實較好
+
+    def test_both_arms_must_name_the_right_answer(self, protocol):
+        """只有一邊點得出答案時，另一邊的名次只是「所有東西都贏過我」，不是排序資訊。"""
+        assert protocol._rank_interpretable(0.42, 0.46) is True
+        assert protocol._rank_interpretable(0.0, 0.0) is False
+        assert protocol._rank_interpretable(0.0, 0.203) is False
+
+    def test_the_verdict_refuses_to_read_a_dead_readout(self, protocol):
+        # 四臂 top-1 全 0＝讀出連正確 target 都點不出來，名次在那裡只是雜訊排列。
+        assert protocol._rank_verdict(40, 0, 26, interpretable=False) == (
+            "rank-credit-readout-degenerate"
+        )
+        assert protocol._rank_verdict(40, 0, 26, interpretable=True) == "rank-credit-favours-graded"
+        assert protocol._rank_verdict(0, 40, 26) == "rank-credit-favours-matched"
+        assert protocol._rank_verdict(14, 25, 26) == "rank-credit-no-difference"
+
+    def test_the_rank_verdict_joins_the_cross_family_verdict_only_when_measured(self, protocol):
+        base = {
+            "weights_verdict": "fixed-point-carries-strength",
+            "ordering_verdict": "ordering-carries-across-tiers",
+            "readout_verdict": "readout-better",
+        }
+        unmeasured = protocol._strength_verdict([dict(base)])
+        measured = protocol._strength_verdict(
+            [dict(base, rank_verdict="rank-credit-no-difference")]
+        )
+
+        # 沒跑就不能用空白冒充「沒問題」：句子長度本身是證據。
+        assert unmeasured.count("/") == 2
+        assert measured.endswith("/rank-credit-no-difference")

@@ -1736,6 +1736,9 @@ credit 的指標（例如把正確 target 的分數差距換成名次或機率�
 <weights>/<ordering>/<readout>/<within-cue-verdict>
 ```
 
+§51 又在同一個尾端加了名次信用（`<rank-verdict>`，只在每一族都量到時才出現），所以完整形狀是
+`<weights>/<ordering>/<readout>/[<within-cue-verdict>]/[<rank-verdict>]`。
+
 沒跑這一支時尾端不加任何東西——用空白冒充「沒問題」就是這裡最容易犯的錯。判詞只有一個字串，所以「`fixed-point-carries-strength`
 但 `within-cue-strength-not-anchored`」在摘要上不可能被讀成通過。
 
@@ -1794,3 +1797,67 @@ conflict   fixed-point-inert (cells-shared 0.05)
   計入所有 cue token；兩者在正常詞彙下相同，若索引被裁掉才會有差。
 - `structured` 本來就登記為量不到（`UNMEASURED_FAMILIES`），`0.250`
   只是補上它量不到的另一個原因。
+
+## §51 名次信用：把「差一點」量出來，`conflict` 從「量不到」變成「量到沒有好處、direct 下還更差」
+
+§48 的結論是「三種讀出都只看勝負或絕對尺度，所以答不了『強弱有沒有被放到正確的關聯上』」。這一節把 §48 自己點名的那個指標做出來：**名次信用（reciprocal
+rank）**——正確 target 排第 1 名給 1.0、第 2 名給 0.5、第 3 名給 1/3。它對尺度不變（換讀出不會換單位），又保留「差一點」與「差很多」的差別（top-1 把兩者都算成 0）。
+
+判詞用既有的符號檢定門檻（40 個種子 ⇒ 26），沒有新門檻。
+
+### 兩個陷阱，都跟 §50 同型：量具在前提不成立的地方講話
+
+**陷阱一：對兩層平均會懲罰分級本身。** `graded`
+的設計就是把弱層的權重壓低，所以把強弱兩層平均起來評分，等於在問「有沒有把弱層當強層」。第一版就是這樣寫的，跑出來是
+`conflict` / `normalized` / ep40：全體平均 graded 0.679、matched
+0.744、**40/0 個種子全部同向**——看起來像「分級讓名次變差」的重磅結果。拆層之後：強層 0.8023 對 0.8046（14/25，`no-difference`），那個 40/0 的差**全部**來自被刻意壓低的弱層。所以判詞只准看強層，`rank_credit_mean`（全體）只留著報告。
+
+**陷阱二：死讀出上的名次不是 0。** ep40 的 `potential`
+是擴散飽和後的死讀出（四臂 top-1 全 0），但名次信用在那裡照樣有個值，而且方向會亂跳：`hard`
+graded 0.0135 對 matched 0.2281（40/0）、`many_to_one`
+0.0451 對 0.0069（39/1）——同一種格子上兩個相反的重磅結論。那不是機制，是「連正確答案都點不出來時」的排列。所以名次判詞多一道
+`_rank_interpretable`：**兩臂中任一臂**的 top-1 是 0 就回
+`rank-credit-readout-degenerate`，不准講話（第一版寫成「兩臂都是 0 才擋」，於是
+`hard` 那格 graded 0.0 / matched 0.203 溜過去，照樣報 40/0）。
+
+### 數據（官方校準 `calibrate_family`、40 個種子、強層信用）
+
+| 族／讀出                  | ep  | 命中 graded / matched / flat | 強層信用 graded / matched / flat | 判詞                                       |
+| ------------------------- | --- | ---------------------------- | -------------------------------- | ------------------------------------------ |
+| `conflict` / `normalized` | 3   | 0.416 / 0.459 / 0.472        | 0.758 / 0.766 / 0.792            | `no-difference`（15/25）                   |
+| `conflict` / `normalized` | 40  | 0.458 / 0.497 / 0.500        | 0.802 / 0.805 / 0.813            | `no-difference`（14/25）                   |
+| `conflict` / `direct`     | 3   | 0.416 / 0.466 / 0.494        | 0.694 / 0.716 / 0.769            | **`rank-credit-favours-matched`**（13/27） |
+| `conflict` / `direct`     | 40  | 0.423 / 0.460 / 0.466        | 0.762 / 0.779 / 0.800            | **`rank-credit-favours-matched`**（9/30）  |
+| `many_to_one` / `direct`  | 40  | 0.520 / 1.000 / 1.000        | 1.000 / 1.000 / 1.000            | `no-difference`（0/0，天花板）             |
+| `hard` / `direct`         | 40  | —（校準掃描全在天花板）      | —                                | `uninformative`（§47 已記）                |
+
+### 三句話
+
+1. **「互相打散的控制臂」在 `conflict`
+   的強層上排得比分級臂更前**（`direct`：13/27、9/30，門檻 26，兩個 epoch 同向）。這比 §50 的「量具講不了話」更強：不是沒有好處，是在這個讀出下**有代價**。方向與 §47 的機制解釋一致（權重大小在編碼頻率，罕見配對被壓到噪聲地板以下），但這裡是名次層面獨立看到。
+2. **`flat`
+   全程最好**（0.769–0.813）。在共用 target 的族裡，「把所有配對當一樣」比「分級」排得更準——分級唯一確定做到的事是把弱層往後推。
+3. **`normalized` 下是
+   `no-difference`**，所以第 1 句的「更差」是**讀出相依**的，不能寫成「分級有害」。判詞因此逐讀出報，不跨讀出合併。
+
+### 這一節改變了什麼
+
+- §50 說「`conflict` 的 `fixed-point-inert`
+  不是對 G1 的宣稱」——現在有一條**不讀格子**的量具接著講話了，而它說的是「沒有好處，`direct`
+  下還有代價」。
+- `strength_probe` 的報告多了
+  `rank_verdict`、`graded_over_matched_rank`、`graded_under_matched_rank`，每個臂多了
+  `rank_credit_mean`（全體）、`rank_credit_strong_mean`、`rank_credit_weak_mean`；跨族判詞只在**每一族都量到**時才把名次接上去（`<weights>/<ordering>/<readout>/[<within-cue>]/<rank>`），沒跑就不加。
+- 名次信用不讀格子，所以不帶 §50 的 `(cells-shared …)` 註記。
+
+### 限制（照實記）
+
+- 只有 `conflict` 出得了判詞。`many_to_one` 在
+  `direct`/ep40 是天花板（強層三臂全 1.000），`hard` 在 `direct`
+  下校準掃描就全在天花板（§47 已記），所以這兩族的名次信用目前無法分辨——`no-difference`
+  在他們身上是「三臂都滿分」，不是「一樣好」。
+- 並列算贏過我們（`>=`）：並列被當成證據會讓「什麼都沒學、全部打平」看起來像完美第 1 名。
+- 只跑 `potential`、`direct`、`normalized` 三種讀出各一輪；`first_spike`
+  沒跑（它與名次同構，預期資訊重複）。
+- `rank_credit` 的分母是該族所有候選 target（`conflict`
+  8 個 ⇒ 地板 1/8），跨族不能直接比大小，只能同族內同讀出比。

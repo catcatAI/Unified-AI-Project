@@ -88,7 +88,7 @@ import random
 import statistics
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
@@ -813,6 +813,62 @@ def _strength_stream(
     return out
 
 
+def _rank_credit(out: Dict[str, float], targets: Sequence[str], target: str) -> float:
+    """正確 target 名次的信用（reciprocal rank）：第 1 名 1.0、第 2 名 0.5、第 3 名 0.33……
+
+    WHY 需要第三種指標：§46–§48 試過的三種讀出都只看勝負或絕對尺度——top-1 把「差一點」
+    與「完全沒有」算成一樣（`conflict` 的 0.420 對隨機 0.125 明明活著，卻說不出好壞），而
+    `margin` 是「與最強對手的分數差」，換讀出就換尺度，且它與 top-1 會給相反答案。名次對
+    尺度不變、且保留「差一點」與「差很多」的差別，所以它是唯一能回答「強弱有沒有被放到
+    正確的關聯上、只是不夠強」的既有量具。
+
+    並列時算贏過我們（保守）：只在嚴格大於時才降名次，免得並列被當成證據。
+    """
+    correct = out.get(target)
+    if correct is None:
+        return 0.0
+    # ``>=``：並列要算贏過我們，否則「什麼都沒學到、全部打平」會被讀成完美的第 1 名。
+    better = sum(
+        1
+        for label in targets
+        if label != target and out.get(label) is not None and float(out[label]) >= float(correct)
+    )
+    return 1.0 / (1.0 + better)
+
+
+def _rank_credit_mean(
+    core: Any,
+    pairs: Sequence[Tuple[List[str], str]],
+    targets: Sequence[str],
+    tiers: Optional[Sequence[int]] = None,
+    readout: Optional[str] = None,
+) -> Dict[str, float]:
+    """名次信用，**按層分開**（與 `_evaluate` 同一批配對、同一個讀出）。
+
+    WHY 不能只看全體平均：``graded`` 的設計就是讓弱層的權重比強層小，所以把兩層平均起來
+    等於用「有沒有把弱層當強層」去評分——那會讓 ``graded`` 看起來比把一切都當一樣的
+    ``flat`` 差。實測 `conflict` 在 ``normalized``、ep40：全體平均 graded 0.679 對 matched
+    0.744（40/0 種子都像「graded 較差」），而那個差全部來自被刻意壓低的弱層。這裡跟 §50
+    同型：量具只能在它的前提成立的那一層講話，所以判詞只看強層。
+    """
+    use_readout = readout or READOUT
+    per_tier: Dict[int, List[float]] = {}
+    credits: List[float] = []
+    for index, (inputs, target) in enumerate(pairs):
+        out = _downstream._readouts._forward(core, {key: 1.0 for key in inputs}, use_readout)
+        credit = _rank_credit(out, targets, target)
+        credits.append(credit)
+        if tiers is not None:
+            per_tier.setdefault(int(tiers[index]), []).append(credit)
+    strong = per_tier.get(max(STRENGTH_TIERS), [])
+    weak = per_tier.get(min(STRENGTH_TIERS), [])
+    return {
+        "all": statistics.fmean(credits) if credits else 0.0,
+        "strong": statistics.fmean(strong) if strong else 0.0,
+        "weak": statistics.fmean(weak) if weak else 0.0,
+    }
+
+
 def _run_strength_arm(
     task: Dict[str, object],
     pairs: Sequence[Tuple[List[str], str]],
@@ -853,6 +909,9 @@ def _run_strength_arm(
     evaluated = _downstream._evaluate(
         core, dict(task, pairs=len(pairs)), pairs=pairs, readout=readout
     )
+    rank_credit = _rank_credit_mean(
+        core, pairs, _downstream._candidate_targets(pairs), tiers=tiers, readout=readout
+    )
     return {
         "readout": readout,
         "spearman": round(rho, 3) if rho is not None else None,
@@ -864,6 +923,10 @@ def _run_strength_arm(
         "distinct_levels": len({round(w, 3) for _, w in usable}),
         "hit_rate": round(evaluated["hit_rate"], 3),
         "margin": round(evaluated["margin"], 5),
+        "rank_credit": round(rank_credit["all"], 5),
+        # 判詞只看強層：那裡才是「強弱沒有綁在對的關聯上」這個宣稱的適用範圍。
+        "rank_credit_strong": round(rank_credit["strong"], 5),
+        "rank_credit_weak": round(rank_credit["weak"], 5),
     }
 
 
@@ -935,6 +998,13 @@ def strength_probe(
             "distinct_levels_min": min(int(r["distinct_levels"]) for r in rows[arm]),
             "hit_rate_mean": round(statistics.fmean(r["hit_rate"] for r in rows[arm]), 3),
             "margin_mean": round(statistics.fmean(r["margin"] for r in rows[arm]), 5),
+            "rank_credit_mean": round(statistics.fmean(r["rank_credit"] for r in rows[arm]), 4),
+            "rank_credit_strong_mean": round(
+                statistics.fmean(r["rank_credit_strong"] for r in rows[arm]), 4
+            ),
+            "rank_credit_weak_mean": round(
+                statistics.fmean(r["rank_credit_weak"] for r in rows[arm]), 4
+            ),
         }
         for arm in arms
     }
@@ -949,6 +1019,18 @@ def strength_probe(
         else "ordering-not-separated-from-distribution"
     )
     readout = _readout_verdict(hits_better, hits_worse, need)
+    # 判詞的比較對象是**強層**信用：平均會懲罰分級本身（見 ``_rank_credit_mean``），
+    # 而宣稱是「強弱綁在對的關聯上」，所以要看強層有沒有排前面。
+    rank_better = sum(
+        1
+        for a, b in zip(rows["graded"], rows["matched"])
+        if a["rank_credit_strong"] > b["rank_credit_strong"]
+    )
+    rank_worse = sum(
+        1
+        for a, b in zip(rows["graded"], rows["matched"])
+        if a["rank_credit_strong"] < b["rank_credit_strong"]
+    )
     return {
         "family": family,
         "epochs": epochs,
@@ -969,6 +1051,19 @@ def strength_probe(
         # 排序判詞也建在 ``_pair_weight`` 上，所以同樣要帶著污染度；命中率的那一句不必（它不讀格子）。
         "ordering_verdict": _caveated(ordering, attribution),
         "readout_verdict": readout,
+        # 名次信用對尺度不變、也不讀格子，所以它跟「讀出看不看得見」是**不同的問題**：
+        # ``readout_verdict`` 問「graded 有沒有比控制臂多命中」，這裡問「正確 target 是不是
+        # 排得更前」——後者就是 §48 說「三種讀出都回答不了」的那個問題。
+        "rank_verdict": _rank_verdict(
+            rank_better,
+            rank_worse,
+            need,
+            _rank_interpretable(
+                float(graded["hit_rate_mean"]), float(summary["matched"]["hit_rate_mean"])
+            ),
+        ),
+        "graded_over_matched_rank": rank_better,
+        "graded_under_matched_rank": rank_worse,
     }
 
 
@@ -1248,6 +1343,38 @@ def within_cue_probe(
     }
 
 
+def _rank_interpretable(graded_hit: float, matched_hit: float) -> bool:
+    """讀出還活著嗎——死讀出上的名次一律不准講話。
+
+    WHY 必須擋：ep40 的 ``potential`` 讀出是擴散飽和後的死讀出（四臂 top-1 全 0.0），可是名次
+    信用在那裡**不是 0**：實測 `hard` graded 0.0135 對 matched 0.2281（鈕 40/0）、
+    `many_to_one` 0.0451 對 0.0069（39/1）——兩個方向都出現，而且都在四臂命中率全 0 的格子上。
+    那不是機制，是「連正確 target 都點不出來時」的勝負排列。若讓它講話，它會開始製造
+    「graded 比較好」與「graded 比較壞」兩種相反的假宣稱。
+
+    界是絕對下限而不是新門檻：0.0 就是「完全點不出正確答案」。而且必須**兩臂都**點得出來：
+    第一版寫成 ``max(...) > 0``，於是 `hard`/`potential`/ep40（graded 0.0、matched 0.2030）
+    没被擋下，還報了 ``favours-matched`` 40/0。要被評的那個臂自己都拿不到正確答案時，它的
+    名次只是「所有東西都贏過我」，不是排序資訊；那一句話要由 ``readout_verdict`` 去講。
+    """
+    return min(graded_hit, matched_hit) > 0.0
+
+
+def _rank_verdict(better: int, worse: int, need: int, interpretable: bool = True) -> str:
+    """名次的方向也要分開講，且用同一個由種子數導出的門檻（不另外挑門檻）。
+
+    ``need`` 從種子數算出來，所以這條也繼承「多跑種子不會放寬判詞」。死讀出上則回
+    ``rank-credit-readout-degenerate``：空白不能冒充「沒問題」。
+    """
+    if not interpretable:
+        return "rank-credit-readout-degenerate"
+    if better >= need and better > worse:
+        return "rank-credit-favours-graded"
+    if worse >= need and worse > better:
+        return "rank-credit-favours-matched"
+    return "rank-credit-no-difference"
+
+
 def strength_report(
     family: str,
     calibration: Dict[str, object],
@@ -1276,6 +1403,8 @@ def strength_report(
         # 把兩者分開報，才不會用一邊的失敗冒充另一邊的。
         "readout_verdict": transient["readout_verdict"],
         "equilibrium_readout_verdict": plateau["readout_verdict"],
+        # 名次信用只看排序、不看格子，所以不帶污染度註記；它回答的是 top-1 回答不了的問題。
+        "rank_verdict": transient["rank_verdict"],
     }
 
 
@@ -1501,7 +1630,8 @@ def _strength_verdict(
     """
     if not probes:
         base = "no-strength-probe"
-        return f"{base}/{within['verdict']}" if within else base
+        tail = f"/{within['verdict']}" if within else ""
+        return f"{base}{tail}"
     weights = {str(p["weights_verdict"]) for p in probes}
     ordering = {str(p["ordering_verdict"]) for p in probes}
     readout = {str(p["readout_verdict"]) for p in probes}
@@ -1509,7 +1639,12 @@ def _strength_verdict(
     o = ordering.pop() if len(ordering) == 1 else "ordering-regime-dependent"
     r = readout.pop() if len(readout) == 1 else "readout-regime-dependent"
     # 第三句只有真的量到才加：沒跑就不能用空白冒充「沒問題」。
-    return f"{w}/{o}/{r}" + (f"/{within['verdict']}" if within else "")
+    verdict = f"{w}/{o}/{r}" + (f"/{within['verdict']}" if within else "")
+    # 名次信用也只在每一族都量到時才組成：它是「排序」那個問題，跟 weights／ordering 不同格。
+    ranks = {str(p["rank_verdict"]) for p in probes if "rank_verdict" in p}
+    if ranks and len(ranks) == 1 and all("rank_verdict" in p for p in probes):
+        verdict = f"{verdict}/{ranks.pop()}"
+    return verdict
 
 
 def main(argv=None) -> int:

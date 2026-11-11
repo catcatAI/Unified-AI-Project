@@ -30,6 +30,19 @@ and this project adheres to
   5.46/10**，4 過 2 不過，達成階梯仍 L0。限制照實記：套件判定當時是「任一關鍵詞命中」（同日由下方的 strict 正確性判定取代）；索引為衍生資料（`data/`
   gitignore），中文題仍答不出。### Changed
 
+- **名次信用：把「差一點」量出來（2026-11-11）**：§48 留下的缺口是「三種讀出都只看勝負或絕對尺度，答不了『強弱有沒有放在正確的關聯上』」。新增 reciprocal
+  rank 信用（第 1 名 1.0、第 2 名 0.5……），對尺度不變又保留「差一點」。它自己也會撒謊，兩種方式跟 §50 同型：(a)
+  **對強弱兩層平均會懲罰分級本身**——第一版在
+  `conflict`/`normalized`/ep40 報出 40/0 種子「graded 較差」，拆層後強層 0.8023 對 0.8046 是
+  `no-difference`，差全來自被刻意壓低的弱層；(b)
+  **死讀出上的名次不是 0**——ep40 的 `potential`
+  四臂 top-1 全 0，名次卻在兩族給出相反的重磅結果，因此新增
+  `_rank_interpretable`（兩臂任一 top-1 為 0 即
+  `rank-credit-readout-degenerate`）。結果：`conflict` 的強層在 `direct` 下
+  **graded 明顯輸給打散控制臂**（ep3 13/27、ep40 9/30，門檻 26），`normalized`
+  下無差（15/25、14/25），而 `flat` 全程最好（0.769–0.813）。`rank_verdict`
+  只在每一族都量到時才接進跨族判詞。+7 測試。
+
 - **判詞帶著量具的污染度：`conflict` 的 `fixed-point-inert`
   不是模型的性質（2026-11-10）**：`conflict` 從 §46 起被記成
   `fixed-point-inert`（權重比 drop
