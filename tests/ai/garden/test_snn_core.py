@@ -425,3 +425,65 @@ class TestStrengthProportionalWeights:
         )
         old_rule = min(1.0, max(0.0, 0.0 + lr * 1.0 * (target - 0.0)))
         assert self._weight(snn_core, "f", "g") == pytest.approx(old_rule, abs=1e-6)
+
+
+class TestRateAndFixedPointAreSeparable:
+    """AL §55 applied to the production core: confidence is charged once.
+
+    The pair's product already sets the destination (``0.35 * gate``). Charging
+    it again in the step made a 0.5 x 0.5 association learn 16x slower than a
+    crisp one *while* settling at half the height. ``rate_exponent`` keeps the
+    destination and softens only the rate: 1.0 is the historical rule, 0.5 makes
+    the rate follow the geometric mean (one confidence per side) — the ``c`` the
+    AL arms measured against ``c²``.
+    """
+
+    @staticmethod
+    def _weight(core, a, b):
+        return float(core._W[core._key_to_idx[a], core._key_to_idx[b]])
+
+    def test_the_default_reproduces_the_historical_rate(self):
+        """Without the new argument nothing may move — old callers stay identical."""
+        # Own core: the shared fixture may already hold weight on these keys, and
+        # this test compares against a recurrence that starts from zero.
+        core = TensorSNNCore(threshold=0.5)
+        lr, target, gate = 0.05, 0.35, 0.25
+        expected = 0.0
+        for _ in range(8):
+            # b at full confidence: the pair's gate is then exactly ``gate``,
+            # which is what the scalar recurrence below models.
+            core.hebbian_update(
+                {"a": gate}, {"b": 1.0}, lr=lr, target_strength=target, weight_decay=0.0
+            )
+            expected = expected + lr * gate * (target * gate - expected)
+        assert self._weight(core, "a", "b") == pytest.approx(expected, abs=1e-6)
+
+    def test_a_soft_rate_accumulates_faster_without_raising_the_ceiling(self):
+        gate = 0.25
+        fast = TensorSNNCore(threshold=0.5)
+        slow = TensorSNNCore(threshold=0.5)
+        for _ in range(8):
+            fast.hebbian_update(
+                {"a": gate}, {"b": 1.0}, lr=0.05, weight_decay=0.0, rate_exponent=0.5
+            )
+            slow.hebbian_update({"a": gate}, {"b": 1.0}, lr=0.05, weight_decay=0.0)
+        fast_w, slow_w = self._weight(fast, "a", "b"), self._weight(slow, "a", "b")
+        assert fast_w > slow_w * 1.5, "the soft rate must actually soften the slowdown"
+        # The destination is the product's job; softening the rate must not raise it.
+        assert fast_w < 0.35 * gate
+
+    def test_the_fixed_point_does_not_depend_on_the_rate(self):
+        weights = []
+        for exponent in (1.0, 0.5):
+            core = TensorSNNCore(threshold=0.5)
+            for _ in range(400):
+                core.hebbian_update(
+                    {"a": 0.25},
+                    {"b": 1.0},
+                    lr=0.05,
+                    weight_decay=0.0,
+                    rate_exponent=exponent,
+                )
+            weights.append(self._weight(core, "a", "b"))
+        for value in weights:
+            assert value == pytest.approx(0.35 * 0.25, abs=2e-3)

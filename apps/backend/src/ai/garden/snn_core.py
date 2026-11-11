@@ -854,6 +854,7 @@ class TensorSNNCore:
         target_strength: float = 0.35,
         weight_decay: float = 0.002,
         plasticity: float = 1.0,
+        rate_exponent: float = 1.0,
     ) -> float:
         """Hebbian weight update with a strength-proportional target + row decay.
 
@@ -882,12 +883,29 @@ class TensorSNNCore:
         to 1.0 and any non-finite or non-positive value collapses back to 1.0,
         so an unwired caller behaves bit-identically to before.
 
+        ``rate_exponent`` separates *how fast* a cell moves from *where* it
+        settles. The fixed point stays ``target_strength * gate``; only the
+        step size changes. 1.0 is the historical rule and bit-identical. Values
+        below 1 soften the rate for weak co-activations, which matters because
+        the two sides of a pair each carry a similarity: with the product doing
+        double duty (destination *and* rate) a 0.5 x 0.5 pair learns 16x slower
+        and needs ~50 repeats to approach a ceiling that is already half as
+        high (AL §55 measured this as the 1:3:9 weak-tier ratio, and the GARDEN
+        dictionary reproduces it on ordinary sentences).
+
         Returns total weight delta applied.
         """
         if not input_keys or not target_keys:
             return 0.0
 
         lr = _plasticity_lr(lr, plasticity)
+        rate_exponent = float(rate_exponent)
+        if (
+            not (rate_exponent >= 0.0)
+            or rate_exponent != rate_exponent
+            or rate_exponent == float("inf")
+        ):
+            rate_exponent = 1.0
 
         # Register any unseen keys first (preserves legacy auto-registration),
         # then map to row/col indices, vectorized.
@@ -907,7 +925,7 @@ class TensorSNNCore:
         # _register_key guarantees _W is initialized
         assert self._W is not None
         delta_total, touched_rows = self._hebbian_patch(
-            src_idx, tgt_idx, src_conf, tgt_conf, lr, target_strength
+            src_idx, tgt_idx, src_conf, tgt_conf, lr, target_strength, rate_exponent
         )
 
         for i in src_idx:
@@ -942,6 +960,7 @@ class TensorSNNCore:
         tgt_conf: List[float],
         lr: float,
         target_strength: float,
+        rate_exponent: float = 1.0,
     ) -> "tuple[float, set]":
         """Write one symmetric, strength-proportional patch over the block.
 
@@ -973,7 +992,11 @@ class TensorSNNCore:
             old_patch = W.index_select(0, src_t).index_select(1, tgt_t)
             # 定點 = target_strength * gate：強弱寫進權重，不是只寫進速度。
             equilibrium = gate * target_strength
-            delta_patch = lr * gate * (equilibrium - old_patch)
+            # Rate uses ``gate ** rate_exponent``: the destination above already
+            # carries the co-activation strength, so charging the same product
+            # again here would make weak pairs pay twice (see hebbian_update).
+            rate = gate if rate_exponent == 1.0 else gate.clamp(min=1e-6) ** rate_exponent
+            delta_patch = lr * rate * (equilibrium - old_patch)
             new_patch = old_patch + delta_patch
             new_patch = new_patch.clamp(min=0.0, max=1.0)
             # Cartesian-pair write-back: broadcast src rows × tgt cols.
@@ -989,7 +1012,8 @@ class TensorSNNCore:
         old_patch = W[np.ix_(src_idx, tgt_idx)]
         # 定點 = target_strength * gate（與 torch 分支同一個式子）。
         equilibrium = gate * target_strength
-        delta_patch = lr * gate * (equilibrium - old_patch)
+        rate = gate if rate_exponent == 1.0 else np.clip(gate, 1e-6, None) ** rate_exponent
+        delta_patch = lr * rate * (equilibrium - old_patch)
         new_patch = np.clip(old_patch + delta_patch, 0.0, 1.0)
         W[np.ix_(src_idx, tgt_idx)] = new_patch
         W[np.ix_(tgt_idx, src_idx)] = new_patch

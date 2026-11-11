@@ -226,6 +226,29 @@ class TestGARDENEngineLearning:
         result = engine.learn_from_interaction("happy glad", "joy delight", confidence=0.9)
         assert result["hebbian_delta"] >= 0
 
+    def test_learning_softens_the_rate_so_weak_pairs_are_not_punished_twice(
+        self, engine: GARDENEngine
+    ):
+        """AL §55 applied at the call site, not only in the core.
+
+        ``encode()`` hands both sides real confidence, so the pair product already
+        sets the ceiling. Without ``rate_exponent`` here the same product also
+        scales the step, and a 0.5 x 0.5 association learns 16x slower than a
+        crisp one (measured: 12% of its ceiling after 5 repeats, 41% after 20).
+        Removing this argument silently restores that, so it is pinned.
+        """
+        seen = {}
+        original = engine.snn.hebbian_update
+
+        def spy(input_keys, output_keys, **kwargs):
+            seen.update(kwargs)
+            return original(input_keys, output_keys, **kwargs)
+
+        engine.snn.hebbian_update = spy  # type: ignore[method-assign]
+        engine.learn_from_interaction("the weather is nice today", "天氣很好", confidence=0.9)
+        assert seen, "learn() did not reach the Hebbian step at all"
+        assert seen.get("rate_exponent") == pytest.approx(0.5)
+
 
 class TestGARDENEngineHormonal:
     """Tests for hormonal modulation."""

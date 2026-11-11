@@ -1745,6 +1745,15 @@ class GARDENEngine:
                 lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05),
                 target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.35),
                 plasticity=plasticity,
+                # Encode() gives BOTH sides real confidence, so the product does
+                # double duty by default: it sets the destination (0.35·gate) and
+                # also scales the step, which makes a 0.5×0.5 pair learn 16x
+                # slower toward a ceiling that is already half as high. Measured
+                # on ordinary text (weather/天氣 pair, gate 0.507): 5 repeats
+                # reach 12% of the fixed point and 20 repeats 41%. The AL
+                # research established destination and rate are separable, so
+                # keep the destination and pay the confidence once in the rate.
+                rate_exponent=confidence_value("ai.garden.engine.hebbian_rate_exponent", 0.5),
             )
 
         return {
