@@ -54,6 +54,11 @@ def _has_ranking_signal(output: Dict[str, float]) -> bool:
     of both AL families, while the one-step readout on the same weights ranked
     0.583 and 1.000 (roadmap §59). Equal scores are not "no preference in the
     weights", they are the readout throwing the preference away.
+
+    Those numbers are at the AL harness's 16 timesteps. At production's 6 the
+    spike readout does rank (conflict ep10: 58% of queries decode above the
+    gate, top-two equal only 2%), so this fallback is a tie-breaker for the
+    cases that stay flat, not a rescue of the readout (roadmap §60).
     """
     distinct = {round(float(value), 9) for value in output.values() if float(value) > 0.0}
     return len(distinct) >= 2

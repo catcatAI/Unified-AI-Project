@@ -863,6 +863,14 @@ class TensorSNNCore:
         changes every GARDEN output and needs its own measured round. Callers
         that need a ranking (decode, retrieval) may use it when the spike readout
         is flat.
+
+        One reason it cannot simply become the default (§60): ``_DECODE_GATE`` is
+        0.15, the value one spike has in 6 timesteps. ``W·a`` lives on the weight
+        scale instead, and at the AL families' training budgets its top value was
+        0.005–0.234 — below that gate in 5 of 6 cells, while the gate that would
+        match the spike readout's coverage moved 6x with training in one family.
+        A constant gate cannot serve both readouts; the scale-free option
+        (``normalized``) is untested downstream.
         """
         if not input_keys or self._W is None or self.vocab_size == 0:
             return {}
