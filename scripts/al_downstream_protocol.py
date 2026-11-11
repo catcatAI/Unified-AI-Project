@@ -185,10 +185,14 @@ FAMILIES: Dict[str, List[Dict[str, object]]] = {
         {"pairs": 96, "noise_bits": 2, "shared": True},
         {"pairs": 144, "noise_bits": 1, "shared": True},
     ],
-    # 衝突證據的任務族：cue 沒有專屬 token，每個 feature 都對多個 target 有邊。實測
-    # 96 pair／12 feature／5 token／2 個支持證據／8 個 target／lr 0.01 時，中性臂在
-    # ep1/3/5 是 0.361／0.486／0.500，held-out 是 0.347／0.486／0.500（亂猜 0.125）——
-    # 中段存在，而且遷移與訓練同步，不是背誦。
+    # 衝突證據的任務族：cue 沒有專屬 token，每個 feature 都對多個 target 有邊。
+    #
+    # 更正（見 docs/06-project-management/AL_LADDER_ROADMAP.md §53）：這裡原本記「中性臂 ep1/3/5
+    # 0.361／0.486／0.500、held-out 0.347／0.486／0.500、遷移與訓練同步」——那組數字是**支持
+    # token 別名**的產物，不是中段：stride 寫死 3、`features=12` 時 target 0/4、1/5、2/6、3/7
+    # 共用同一組支持 token，命中率卡在 0.5，held-out 也只是継承了同一組 token。修掉別名後，
+    # 這一族在 lr 0.008 的中性臂是 0.391／0.406／0.443（真中段），但 held-out 掉回亂猜
+    # （ep5 訓練 0.75、held-out 0.167、亂猜 0.125）——不再遷移。
     "conflict": [
         {
             "pairs": 96,

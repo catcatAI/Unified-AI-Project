@@ -47,6 +47,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import math
 import random
 import statistics
 import sys
@@ -95,8 +96,14 @@ TASKS: Dict[str, Dict[str, object]] = {
     # 多對一：兩個 cue 共用同一個 target。干擾真的存在（同一列由兩組 cue 累積），
     # 但答案仍然可學 —— 這才是「干擾結構不同、難度可校準」的第二族。
     # 衝突證據的任務族：cue 只由跨 target 共用的 feature 組成，沒有專屬 token。正確答案要靠
-    # 多數證據勝出，所以命中率有真正的中段，而且 held-out（同批 feature、沒出現過的組合）
-    # 與訓練集一致——這才是「學會」而不是「背起來」。
+    # 多數證據勝出，所以命中率有中段。
+    #
+    # 更正（見 docs/06-project-management/AL_LADDER_ROADMAP.md §53）：這裡原本寫「held-out 與
+    # 訓練集一致，不是背起來」——那是**支持 token 別名**造成的假象。原本 stride 寫死 3，
+    # `features=12` 時 target 0/4、1/5、2/6、3/7 共用同一組支持 token，held-out 只要帶到那組
+    # 就「答對」，於是 train 與 held-out 都被釘在 0.5。修掉別名（stride 與 feats 互質）之後，
+    # 同一級 ep5 訓練 0.75、held-out 0.167（亂猜 0.125）——**不再遷移**。這一族現在只證明
+    # 「訓練集上的 top-1」，任何「學會 vs 背起來」的宣稱都不能再用它。
     "conflict": {
         "pairs": 96,
         "features": 12,
@@ -129,6 +136,36 @@ TASKS: Dict[str, Dict[str, object]] = {
 DEFAULT_TASK = "hard"
 
 
+def _conflict_stride(feats: int, group: int, support: int) -> int:
+    """挑一個讓每個 target 的「正確證據」token 集合互不相同的 stride。
+
+    WHY 不能寫死 3：``features=12``／``support=2``／``group=8`` 時 ``(3·tid+j) mod 12`` 讓
+    target 0 與 4、1 與 5、2 與 6、3 與 7 拿到**完全一樣**的支持 token 集合。於是這一級在
+    ep1/3/5 是 0.361／0.500／0.500——不是「落在中段」，而是十六個 target 裡有一半從頭就分不出來，
+    命中率卡在別名的天花板上。把 stride 換成與 ``features`` 互質的值之後，同一級變成
+    0.611／0.833／0.847，難度必須來自真正的競爭（rival token），不是來自不可辨識的答案。
+
+    優先回互質的 stride（token 才會平均散開）；找不到時退回任何讓集合互異的 stride——
+    互質是公平性偏好，可辨識性是不可退讓的最低要求。
+    """
+
+    def unique(stride: int) -> bool:
+        sets = [
+            frozenset((tid * stride + j) % feats for j in range(support)) for tid in range(group)
+        ]
+        return len(set(sets)) == len(sets)
+
+    for allow_non_coprime in (False, True):
+        for stride in range(1, feats + 1):
+            if not allow_non_coprime and math.gcd(stride, feats) != 1:
+                continue
+            if unique(stride):
+                return stride
+    raise ValueError(
+        f"conflict task has no alias-free stride (features={feats}, group={group}, support={support})"
+    )
+
+
 def _conflict_cue(task: Dict[str, object], index: int, target: str) -> List[str]:
     """衝突證據：cue 只由**跨 target 共用**的 feature 組成，沒有任何專屬 token。
 
@@ -139,8 +176,10 @@ def _conflict_cue(task: Dict[str, object], index: int, target: str) -> List[str]
     feats = int(task["features"])  # type: ignore[arg-type]
     width = int(task.get("cue_tokens") or 3)
     support = int(task.get("support") or 1)
+    group = int(task.get("target_group") or 8)
     tid = int(target[1:])
-    cue = [f"f{(tid * 3 + j) % feats}" for j in range(support)]
+    stride = _conflict_stride(feats, group, support)
+    cue = [f"f{(tid * stride + j) % feats}" for j in range(support)]
     for k in range(width - support):
         cue.append(f"f{(index * 7 + k * 5) % feats}")
     return cue

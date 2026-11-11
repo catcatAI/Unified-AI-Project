@@ -360,16 +360,23 @@ class TestConflictTaskHasAMiddleBand:
         hit = downstream._evaluate(core, task, readout="direct")["hit_rate"]
         assert 0.2 < hit < 0.8, hit
 
-    def test_conflict_transfers_to_unseen_combinations(self, downstream):
+    def test_conflict_does_not_transfer_once_targets_are_identifiable(self, downstream):
+        """修掉 target 別名之後，held-out 掉回亂猜——原本的「同步遷移」也是別名撐起來的。
+
+        別名版本裡 target 0/4 共用同一組支持 token，於是 held-out cue 只要帶到那組 token 就
+        「答對」，命中率被釘在 0.5、訓練與 held-out 自然同步。拿掉別名後訓練集 0.75、
+        held-out 0.167（亂猜 0.125，96 條 held-out 的二項上界 0.193）——學到的是每個 cue 的
+        rival token 組合，不是可組合的證據。這條測試記錄的是**現在的**性質，不是願望。
+        """
         task = downstream.TASKS["conflict"]
         core = downstream._train([1.0] * 96 * 5, 11, task, 5)
         on_train = downstream._evaluate(core, task, readout="direct")["hit_rate"]
-        off_train = downstream._evaluate(
-            core, task, downstream._heldout_pairs(task), readout="direct"
-        )["hit_rate"]
+        held = downstream._heldout_pairs(task)
+        off_train = downstream._evaluate(core, task, held, readout="direct")["hit_rate"]
+        chance = 1 / 8
+        chance_upper = chance + 2 * math.sqrt(chance * (1 - chance) / len(held))
         assert on_train > 0.3
-        # held-out 與訓練集同步，差距不超過 0.2——這是組合證據，不是背誦。
-        assert abs(on_train - off_train) < 0.2
+        assert off_train <= chance_upper, (on_train, off_train, chance_upper)
 
 
 class TestDetectableEffectSize:
@@ -408,9 +415,11 @@ class TestLabelShuffleControl:
     def test_shuffle_is_much_worse_than_trained(self, protocol):
         control = protocol._label_shuffle_baseline("conflict", (0, 1), readout="direct")
         assert control["chance"] == 0.125
-        # 打亂後模型把錯誤的對應學得很牢，真標籤永遠輸：比亂猜還低。
-        assert control["train"] < control["chance"]
-        assert control["heldout"] < control["chance"]
+        # 打亂後模型把錯誤的對應學得很牢，真標籤只剩亂猜：不是「嚴格低於 0.125」——那是抽樣
+        # 噪音（修掉 target 別名後實測 0.188），而是「落在亂猜的二項上界內」。
+        upper = control["chance"] + 2 * math.sqrt(control["chance"] * (1 - control["chance"]) / 96)
+        assert control["train"] <= upper, (control["train"], upper)
+        assert control["heldout"] <= upper, (control["heldout"], upper)
 
     def test_shuffle_control_reports_chance_for_each_family(self, protocol):
         for family, targets in (("conflict", 8), ("many_to_one", 24)):
@@ -1072,3 +1081,51 @@ class TestControlArmValidity:
         assert probe["control_verdict"] == "control-arm-indistinguishable-from-flat"
         # 新欄位留在報告裡，不進跨族字串（那條協定由 TestWeightAttribution 釘住）。
         assert "contrast_verdict" in probe and "control_verdict" in probe
+
+
+class TestConflictTargetsAreIdentifiable:
+    """難度必須來自競爭，不能來自「兩個 target 拿到同一組正確證據」。
+
+    `features=12`／`support=2`／`group=8` 時，寫死的 stride 3 讓 `(3·tid+j) mod 12` 把 target
+    0/4、1/5、2/6、3/7 映到同一組支持 token，於是這一級在 ep1/3/5 是 0.361/0.500/0.500——卡在
+    別名天花板上。校準卻因為它「剛好落在中段」而選了它，量的東西因此不是模型。
+    """
+
+    def test_the_old_stride_really_did_alias_targets(self, protocol):
+        """把缺陷本身釘住：這不是猜的，是可重現的集合相等。"""
+
+        def sets(stride, feats=12, group=8, support=2):
+            return [
+                frozenset((tid * stride + j) % feats for j in range(support))
+                for tid in range(group)
+            ]
+
+        aliased = [group for group in sets(3) if sets(3).count(group) > 1]
+        assert len(aliased) == 8  # 0/4、1/5、2/6、3/7 四對，每對兩個 target
+        assert len(set(sets(5))) == 8
+
+    def test_every_conflict_level_has_distinct_support_tokens(self, protocol):
+        downstream = protocol._downstream
+        for step in protocol.FAMILIES["conflict"]:
+            feats = int(step["features"])
+            group = int(step["target_group"])
+            support = int(step["support"])
+            stride = downstream._conflict_stride(feats, group, support)
+            assert math.gcd(stride, feats) == 1, (feats, group, support, stride)
+            sets = [
+                frozenset((tid * stride + j) % feats for j in range(support))
+                for tid in range(group)
+            ]
+            assert len(set(sets)) == group, (feats, group, support, stride)
+
+    def test_the_generator_uses_the_alias_free_stride(self, protocol):
+        downstream = protocol._downstream
+        task = protocol._task(
+            "conflict",
+            {"pairs": 16, "features": 12, "cue_tokens": 5, "support": 2, "target_group": 8},
+            0.01,
+        )
+        first = {}
+        for inputs, target in downstream._pairs(task):
+            first.setdefault(target, frozenset(inputs[:2]))
+        assert len(set(first.values())) == len(first)
