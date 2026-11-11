@@ -43,7 +43,12 @@ and this project adheres to
   在 ep40 反而暫時較差（2/12、4/12），到 ep80 才回到較好；且第一版 `written`
   分支錯把剛寫入的格子也剪枝，讓每個臂每個 epoch 都是 0.000，修正後以
   `test_written_scope_does_not_prune_a_freshly_written_cell`
-  釘住。GARDEN 全套 354 passed。
+  釘住。GARDEN 全套 354 passed。**同日被自己推翻**：補跑
+  `many_to_one`（同一個單一變因、12 種子）方向完全相反——row 的 `flat`
+  每一格都是 1.000，written 是 0.250／0.500／0.750（**0/12 種子較好**），而權重高 5–20 倍，表示「更高」不是「學到更多」而是共用噪聲位元被寫滿。因此生產**不採用**：`learn_from_interaction()`
+  維持 `row`（不傳
+  `decay_scope`），核心保留選項與機制測試，等有「怎麼分辨族」的量具再談；`test_learning_softens_the_rate…`
+  加上 `assert "decay_scope" not in seen` 釘住这个撤回。
 - **`conflict` 的 ep40 下滑是 row-wise
   decay，不是讀出飽和（2026-11-11）**：用不經讀出的權重排名配上單一變因（`weight_decay`
   0.002 對 0.0、12 種子、ep10/40/80）把兩種解釋分開。有 decay 時三臂從 ep40 到 ep80 都下滑（`flat`
