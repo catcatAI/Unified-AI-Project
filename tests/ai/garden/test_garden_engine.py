@@ -226,6 +226,22 @@ class TestGARDENEngineLearning:
         result = engine.learn_from_interaction("happy glad", "joy delight", confidence=0.9)
         assert result["hebbian_delta"] >= 0
 
+    def test_a_flat_spike_readout_falls_back_to_the_associative_one(self, engine: GARDENEngine):
+        """§59: equal scores mean the readout lost the order, not the weights."""
+        engine.snn.forward = lambda *args, **kwargs: {"a": 1.0, "b": 1.0}
+        called = {}
+        real = engine.snn.associative_readout
+
+        def spy(input_keys, context=None):
+            called.update(input_keys)
+            return real(input_keys, context=context)
+
+        engine.snn.associative_readout = spy
+        # The readout selection is the unit under test: process() also runs the
+        # dictionary and reflex layers, which would make this depend on presets.
+        engine._ranked_readout({"a": 1.0})
+        assert called, "a flat spike readout did not trigger the associative fallback"
+
     def test_learning_softens_the_rate_so_weak_pairs_are_not_punished_twice(
         self, engine: GARDENEngine
     ):

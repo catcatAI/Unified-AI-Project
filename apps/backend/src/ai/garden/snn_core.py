@@ -842,6 +842,41 @@ class TensorSNNCore:
             result[key] = float(cumulative[idx]) / self.timesteps
         return result
 
+    def associative_readout(
+        self,
+        input_keys: Dict[str, float],
+        context: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, float]:
+        """One-step ``W · a``: what the weights say without the LIF loop.
+
+        ``forward()`` returns cumulative spikes divided by timesteps. That is a
+        coarse integer count, and once several targets reach the top-k threshold
+        in the same number of steps they all return the same value -- measured on
+        the AL families with production training (both sides at confidence 1.0),
+        its top-1 hit rate was **0.000 for 8/8 seeds in every epoch of both
+        `conflict` and `many_to_one`**, while the same weights read one step
+        ranked 0.583 and 1.000. Ties are not "no signal from the weights", they
+        are the spike count discarding the magnitude that distinguishes them.
+
+        The AL protocol calls this readout ``direct`` (§46–§48, §51). It is
+        deliberately *not* the default here: swapping the production readout
+        changes every GARDEN output and needs its own measured round. Callers
+        that need a ranking (decode, retrieval) may use it when the spike readout
+        is flat.
+        """
+        if not input_keys or self._W is None or self.vocab_size == 0:
+            return {}
+        V = self.vocab_size
+        W = self._W[:V, :V]
+        a = self._init_activations(input_keys, context)
+        if float(a.sum()) == 0.0:
+            return {}
+        values = W @ a if len(W.shape) == 2 else a * W
+        result: Dict[str, float] = {}
+        for idx in _nonzero_indices(values).tolist():
+            result[self._idx_to_key[idx]] = float(values[idx])
+        return result
+
     # ------------------------------------------------------------------
     # Hebbian training step
     # ------------------------------------------------------------------

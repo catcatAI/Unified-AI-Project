@@ -110,7 +110,11 @@ READOUT = "potential"
 # 協定新發明的；它不飽和在擴散上，所以是「定點承載強弱，但讀不出」這個結論的對照。
 # ``normalized`` 是 `garden_readout_variants._normalized`：每一列先歸一成對 target 的分佈，
 # 所以對 cue 的出現頻率不敏感。它是「分級掉一半是頻率尺度、不是學錯」那個說法的直接檢定。
-READOUTS = ("potential", "direct", "normalized")
+# ``spike_count`` 是**生產路徑**的讀出（`TensorSNNCore.forward`：累積脈衝數 ÷ timesteps）。
+# 它原本不在這裡，於是「研究用 membrane potential、生產用 spike count」這兩個名字一直
+# 被混著講：`garden_readout_variants` 的判詞（連續讀出在脈衝讀出失敗的閾值上排得出來）
+# 因此從來沒有在生產讀出上量過。補進來之後，同一批權重可以三個讀出並排比較。
+READOUTS = ("potential", "direct", "normalized", "spike_count")
 EPOCHS_MATRIX = (1, 3, 5)
 LR_GRID = (0.005, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05)
 HIT_RANGE = (0.30, 0.70)

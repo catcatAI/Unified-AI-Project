@@ -30,6 +30,17 @@ and this project adheres to
   5.46/10**，4 過 2 不過，達成階梯仍 L0。限制照實記：套件判定當時是「任一關鍵詞命中」（同日由下方的 strict 正確性判定取代）；索引為衍生資料（`data/`
   gitignore），中文題仍答不出。### Fixed
 
+- **生產讀出把所有候選壓成同分（2026-11-11）**：把生產讀出
+  `forward()`（累積脈衝數 ÷ timesteps）加進協議的
+  `READOUTS`（`spike_count`）之後，同一批權重下它的 top-1 在
+  `conflict`／`many_to_one`、8/8 種子、ep1/3/10 全部是
+  **0.000**，而膜電位是 0.240–0.958、一步讀出 0.339–1.000；不是「比較差」，是每個候選同分（計分要求嚴格大於）。新增
+  `TensorSNNCore.associative_readout()`（`W·a`，即 AL 的 `direct`）與
+  `GARDENEngine._ranked_readout()`：只在 `forward()`
+  沒有任何名次訊號時才替換，已有排序的輸出逐位不變，兩個解碼入口都走它。棘輪
+  `TestAssociativeReadout` 與
+  `test_a_flat_spike_readout_falls_back_to_the_associative_one`。照實記：只量兩族、8 種子、top-1，沒有量回答品質；`forward()`
+  的預設與下游門檻未動。
 - **decay 只看自己寫的格子：晚段下滑消失，且遺忘改成排程（2026-11-11）**：§56 診斷出 row-wise
   decay 在抹安靜關聯後，這一輪把 decay 範圍變成可選並量了決定（`conflict`、12 種子、lr
   0.008、`direct`、ep10/40/80）。`row`

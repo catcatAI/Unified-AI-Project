@@ -853,9 +853,11 @@ class TestStrengthProbe:
             "lr": task["lr"],
         }
 
+        # "spike_count" is a real readout now (the production one, §59); this test
+        # is about names that exist nowhere, so use one of those.
         with pytest.raises(AssertionError, match="unknown readout"):
             protocol.strength_probe(
-                "easy", calibration, readout="spike_count", seeds=(11,), epochs=1
+                "easy", calibration, readout="not_a_readout", seeds=(11,), epochs=1
             )
 
     def test_equilibrium_answers_the_readout_question_at_the_fixed_point(self, protocol):

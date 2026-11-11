@@ -566,3 +566,30 @@ class TestRowDecayReachesCellsItDidNotWrite:
         # call did not write it, so it is erased rather than faded.
         core.hebbian_update({"a": 1.0}, {"c": 1.0}, lr=0.05)
         assert self._weight(core, "a", "b") == 0.0
+
+
+class TestAssociativeReadout:
+    """Roadmap §59: the one-step readout, and why decode needs it when spikes tie.
+
+    `forward()` returns cumulative spikes / timesteps, a coarse integer. With
+    production training its top-1 was 0.000 for 8/8 seeds in both AL families
+    while `W · a` on the same weights ranked 0.583 and 1.000 — equal scores are
+    the readout discarding the magnitude, not the weights having no preference.
+    """
+
+    def test_it_is_the_weight_matrix_times_the_activation(self):
+        core = TensorSNNCore(threshold=0.5)
+        for _ in range(10):
+            core.hebbian_update({"a": 1.0}, {"b": 1.0}, lr=0.1, target_strength=0.35)
+        out = core.associative_readout({"a": 1.0})
+        idx = core._key_to_idx
+        V = core.vocab_size
+        W = core._W[:V, :V]
+        activation = core._init_activations({"a": 1.0}, None)
+        expected = float((W @ activation)[idx["b"]])
+        assert out["b"] == pytest.approx(expected, rel=1e-6)
+        assert out["b"] > 0.0
+
+    def test_an_empty_input_reads_as_empty(self):
+        core = TensorSNNCore(threshold=0.5)
+        assert core.associative_readout({}) == {}

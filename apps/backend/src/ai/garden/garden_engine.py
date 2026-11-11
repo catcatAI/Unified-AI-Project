@@ -43,6 +43,22 @@ from core.utils import any_keyword
 
 from .dictionary import VectorDictionary
 from .snn_core import TensorSNNCore
+
+
+def _has_ranking_signal(output: Dict[str, float]) -> bool:
+    """Does this readout distinguish any two candidates?
+
+    ``forward()`` returns cumulative spikes / timesteps, so candidates that
+    spike in the same number of steps come back *equal*. Measured with
+    production training: its top-1 rate was 0.000 for 8/8 seeds in every epoch
+    of both AL families, while the one-step readout on the same weights ranked
+    0.583 and 1.000 (roadmap §59). Equal scores are not "no preference in the
+    weights", they are the readout throwing the preference away.
+    """
+    distinct = {round(float(value), 9) for value in output.values() if float(value) > 0.0}
+    return len(distinct) >= 2
+
+
 from .vector_decoder import VectorDecoder
 
 logger = logging.getLogger(__name__)
@@ -1402,8 +1418,9 @@ class GARDENEngine:
             self._last_confidence = 0.0
             return self._fallback_str(text)
 
-        # Stage 6: SNN forward
-        network_output = self.snn.forward(input_keys, context=context)
+        # Stage 6: SNN forward. When the spike readout is flat there is nothing
+        # to rank, so the one-step readout supplies the order (§59).
+        network_output = self._ranked_readout(input_keys, context)
         self._last_network_output = network_output
 
         # Stage 6.5: Anchor calibration (learned-target rescue merge)
@@ -1460,6 +1477,27 @@ class GARDENEngine:
                 results.append(result)
         return "\n".join(results) if results else self._fallback_str(text)
 
+    def _ranked_readout(
+        self, input_keys: Dict[str, float], context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, float]:
+        """``forward()``, but never a readout that cannot rank.
+
+        The spike count returns equal values whenever candidates spike in the
+        same number of steps; measured top-1 was 0.000 for 8/8 seeds in every
+        epoch of both AL families, while the one-step readout on the same weights
+        ranked 0.583 and 1.000 (roadmap §59). Falling back keeps every already
+        ranked output bit-identical and only changes replies that previously had
+        no order at all.
+        """
+        output = self.snn.forward(input_keys, context=context)
+        if _has_ranking_signal(output):
+            return output
+        alternative = self.snn.associative_readout(input_keys, context=context)
+        if _has_ranking_signal(alternative):
+            logger.debug("GARDEN: flat spike readout, using the associative readout")
+            return alternative
+        return output
+
     def _single_step_process(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
         """Process a single step through the GARDEN pipeline."""
         # Reflex check
@@ -1475,7 +1513,7 @@ class GARDENEngine:
         if not input_keys:
             return ""
 
-        network_output = self.snn.forward(input_keys, context=context)
+        network_output = self._ranked_readout(input_keys, context)
         response = _anchored_decode(network_output, input_keys, self.dictionary, original_text=text)
 
         if not response:
