@@ -1157,3 +1157,50 @@ class TestHeldOutSharesTheTrainingSupportTokens:
         assert set(train) == set(held)
         for target in train:
             assert train[target] == held[target], target
+
+
+class TestStrengthArmsInjectTheSameMagnitude:
+    """四個臂的差別只能是「強弱住在哪裡」，不能是「注入了多少」。
+
+    `_hebbian_patch` 的 gate 是**兩側**信心的乘積，所以同一個信心放在輸入與 target 兩邊
+    等於注入 conf²（弱層 1/9），而 `speed` 臂走 plasticity 只注入 conf。這樣 `graded` 與
+    `speed` 的比較就混進了「誰注入得多」。修成單側注入後瞬態命中率一格沒動
+    （`many_to_one` ep3 與 ep6 都是 0.514），定點從 0.521 抬到 0.717——所以這條棘輪釘的是
+    比較的公平性，不是任何一個數字。
+    """
+
+    def _calls(self, protocol, monkeypatch, arm, confidences):
+        downstream = protocol._downstream
+        real = downstream.TensorSNNCore
+        calls = []
+
+        class Spy(real):
+            def hebbian_update(self, inputs, target, **kwargs):
+                calls.append((dict(inputs), dict(target), kwargs))
+                return super().hebbian_update(inputs, target, **kwargs)
+
+        monkeypatch.setattr(downstream, "TensorSNNCore", Spy)
+        task = protocol._task("conflict", protocol.FAMILIES["conflict"][0], 0.01)
+        pairs = downstream._pairs(task)[:4]
+        tiers = [3, 1, 3, 1]
+        protocol._run_strength_arm(
+            task, pairs, tiers, [0, 1, 2, 3], confidences, 11, arm, readout="direct"
+        )
+        return calls, tiers
+
+    def test_graded_scales_the_target_only(self, protocol, monkeypatch):
+        confidences = [1.0, 1 / 3, 1.0, 1 / 3]
+        calls, _ = self._calls(protocol, monkeypatch, "graded", confidences)
+        assert len(calls) == 4
+        for (inputs, target, kwargs), conf in zip(calls, confidences):
+            assert set(inputs.values()) == {1.0}
+            assert list(target.values()) == [conf]
+            assert kwargs["plasticity"] == 1.0
+
+    def test_speed_scales_plasticity_only(self, protocol, monkeypatch):
+        calls, tiers = self._calls(protocol, monkeypatch, "speed", [1.0] * 4)
+        assert len(calls) == 4
+        for (inputs, target, kwargs), tier in zip(calls, tiers):
+            assert set(inputs.values()) == {1.0}
+            assert set(target.values()) == {1.0}
+            assert kwargs["plasticity"] == tier / 3

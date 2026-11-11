@@ -899,8 +899,18 @@ def _run_strength_arm(
         inputs, target = pairs[pair_index]
         tier = tiers[pair_index]
         graded = tier / top
+        # 信心只放一側（target）：`_hebbian_patch` 的 gate 是**兩側**信心的乘積，兩邊都放
+        # 等於把同一個信心算兩次（gate = conf²、定點 0.35·conf² = 1/9），而 `speed` 臂只放
+        # 一次（plasticity = conf、gate = 1）。兩個臂要分的是「強弱住在終點還是速率」，
+        # 注入量不同就混進第三個變因，所以先把它對齊。
+        #
+        # 對齊之後（40 種子、direct、`many_to_one` lr 0.005）瞬態一格沒動：ep3 與 ep6 都是
+        # 0.514，四臂名次也一樣；定點則從 0.521 抬到 0.717（flat 1.000）。所以 conf² 只解釋
+        # 「長期卡在 0.5」，瞬態那 0.18 的落差來自機制本身——把強弱寫進終點，弱層的終點就低於
+        # 被共用 cue 抬高的對手，這一半的配對永遠贏不了。同一個機制的反面證據是 `speed`：
+        # 強弱只改速率、終點不動，定點追平 flat（1.000）。
         core.hebbian_update(
-            {key: (conf if arm in ("graded", "matched") else 1.0) for key in inputs},
+            {key: 1.0 for key in inputs},
             {target: (conf if arm in ("graded", "matched") else 1.0)},
             lr=float(task["lr"]),  # type: ignore[arg-type]
             target_strength=_downstream.TARGET_STRENGTH,

@@ -28,8 +28,19 @@ and this project adheres to
   成為別名。對話探針無迴歸（人味 0.685 → 0.689、答對 45%、棄權 28.7% →
   26%）。總分 **5.00 →
   5.46/10**，4 過 2 不過，達成階梯仍 L0。限制照實記：套件判定當時是「任一關鍵詞命中」（同日由下方的 strict 正確性判定取代）；索引為衍生資料（`data/`
-  gitignore），中文題仍答不出。### Fixed
+  gitignore），中文題仍答不出。
 
+### Fixed
+
+- **「調變信心本身有害」的機制說錯了（2026-11-11）**：在沒有 stride 別名的第二族
+  `many_to_one`（官方校準 lr 0.005、40 種子、`direct`）重測四臂，`graded` 對
+  `flat` 是 **0 勝 40 敗**（ep3 0.514 對 0.698），與
+  `conflict`（4 勝 34 敗）同向——所以那不是別名或某一族的產物。但真正的原因是**強弱被寫進終點**：`speed`
+  只改速率，ep40 追平 `flat`（1.000），`graded` 停在 0.717，因為弱層的定點
+  `0.35×conf` 低於被共用 cue 抬高的對手。順帶修掉一個不公平：`graded`／`matched`
+  原本把信心同時放輸入與 target（gate = conf²）、`speed`
+  只放一次（conf），改成單側後瞬態完全不變（ep3／ep6 都 0.514）、定點 0.521 →
+  0.717，棘輪 `TestStrengthArmsInjectTheSameMagnitude` 釘住接線。
 - **`conflict` 族有一半的 target 分不出來（2026-11-11）**：支持 token 原本是
   `f{(tid*3+j) % features}`，`features=12`／`support=2`／`group=8` 時
   `gcd(3,12)=3` 讓 target
