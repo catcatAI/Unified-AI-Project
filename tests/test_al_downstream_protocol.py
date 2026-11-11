@@ -902,3 +902,53 @@ class TestStrengthProbe:
         need = protocol._sign_test_minimum(40)
         assert need == 26
         assert protocol._readout_verdict(better, worse, need) == expected
+
+
+class TestWeightAttribution:
+    """權重比量具讀的是誰的格子——沒有這一格，判詞就分不出「模型不帶強弱」與「量具把十個寫入者平均掉」。"""
+
+    def test_a_family_with_one_pair_per_target_is_fully_attributable(self, protocol):
+        task = dict(protocol._downstream.TASKS["hard"])
+        pairs = protocol._downstream._pairs(task)
+        attribution = protocol._attribution(pairs, protocol._tier_of_pairs(pairs))
+
+        assert attribution["single_tier_fraction"] == 1.0
+        assert attribution["writers_per_cell"] == 1.0
+
+    def test_a_family_that_shares_a_target_pins_the_ratio_near_one(self, protocol):
+        """96 個 cue 共用 8 個 target：每個格子平均十個寫入者，兩層各佔一半。
+
+        那種格子讀出來的比例不可能反映 tier，所以那一族的 ``fixed-point-inert`` 不是對模型的
+        宣稱，是量具的產物。
+        """
+        task = dict(protocol._downstream.TASKS["conflict"])
+        pairs = protocol._downstream._pairs(task)
+        attribution = protocol._attribution(pairs, protocol._tier_of_pairs(pairs))
+
+        assert attribution["single_tier_fraction"] < 0.1
+        assert attribution["writers_per_cell"] > 5
+
+    def test_a_verdict_must_carry_its_contamination(self, protocol):
+        clean = {"single_tier_fraction": 1.0, "writers_per_cell": 1.0}
+        mixed = {"single_tier_fraction": 0.05, "writers_per_cell": 10.4}
+
+        assert protocol._caveated("fixed-point-inert", clean) == "fixed-point-inert"
+        assert (
+            protocol._caveated("fixed-point-inert", mixed)
+            == "fixed-point-inert (cells-shared 0.05)"
+        )
+
+    def test_the_caveat_cannot_be_laundered_by_the_cross_family_verdict(self, protocol):
+        """混合族的結論進到跨族判詞後，仍然看得出它是混合的。"""
+        probes = [
+            {
+                "weights_verdict": "fixed-point-inert (cells-shared 0.05)",
+                "ordering_verdict": "ordering-not-separated-from-distribution",
+                "readout_verdict": "readout-no-difference",
+            }
+        ]
+
+        verdict = protocol._strength_verdict(probes)
+
+        assert "cells-shared 0.05" in verdict
+        assert "fixed-point-carries-strength" not in verdict

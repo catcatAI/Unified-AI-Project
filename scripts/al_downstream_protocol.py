@@ -751,6 +751,47 @@ def _pair_weight(core: object, inputs: Sequence[str], target: str) -> Optional[f
     return statistics.fmean(values) if values else None
 
 
+def _attribution(pairs: Sequence[Tuple[List[str], str]], tiers: Sequence[int]) -> Dict[str, object]:
+    """這個族的權重比量具到底在讀誰的格子（純設計量，不訓練）。
+
+    WHY 需要這一格：``_pair_weight`` 讀的是 (cue token → target) 的**平均權重**，並把它當成「這個
+    配對的權重」。但那只在某個格子只被一個配對寫過時才成立。`conflict` 是 96 個 cue 共用 8 個
+    target、每個 target 被 6 強 + 6 弱寫入，於是每一個格子平均有 10.4 個寫入者、95% 的格子混了
+    兩個 tier——讀出來的比例必然趨近 1，跟 G1 學到什麼無關。把那種數字叫 ``fixed-point-inert``
+    是對模型的宣稱，而量具根本分不出「不帶強弱」與「十個寫入者被平均掉」。
+
+    所以判詞從此要帶著這個比例一起講：只有 ``single_tier_fraction == 1.0`` 時，比值才能不帶註記。
+    """
+    writers: Dict[Tuple[str, str], Dict[int, int]] = {}
+    for (inputs, target), tier in zip(pairs, tiers):
+        for token in inputs:
+            cell = writers.setdefault((token, target), {})
+            cell[tier] = cell.get(tier, 0) + 1
+    reads = 0
+    single = 0
+    total_writers = 0
+    for (inputs, target), _tier in zip(pairs, tiers):
+        for token in inputs:
+            cell = writers[(token, target)]
+            reads += 1
+            total_writers += sum(cell.values())
+            if len(cell) == 1:
+                single += 1
+    return {
+        "reads": reads,
+        "single_tier_fraction": round(single / reads, 3) if reads else 0.0,
+        "writers_per_cell": round(total_writers / reads, 2) if reads else 0.0,
+    }
+
+
+def _caveated(verdict: str, attribution: Dict[str, object]) -> str:
+    """判詞帶著量具的污染度：分不出乾淨與混合的族，就不准講成乾淨的結論。"""
+    fraction = float(attribution["single_tier_fraction"])  # type: ignore[arg-type]
+    if fraction >= 1.0:
+        return verdict
+    return f"{verdict} (cells-shared {fraction:g})"
+
+
 def _tier_of_pairs(pairs: Sequence[Tuple[List[str], str]]) -> List[int]:
     """把配對分層：一半強（tier 3）、一半弱（tier 1），用固定種子打散，不跟 target 分組共振。"""
     count = len(pairs)
@@ -870,6 +911,7 @@ def strength_probe(
     need = _sign_test_minimum(len(use_seeds))
     gaps = {arm: [row["tier_gap"] for row in rows[arm]] for arm in arms}
     ordered = sum(1 for a, b in zip(gaps["graded"], gaps["matched"]) if a > b)
+    attribution = _attribution(pairs, tiers)
     hits_better = sum(
         1 for a, b in zip(rows["graded"], rows["matched"]) if a["hit_rate"] > b["hit_rate"]
     )
@@ -917,13 +959,15 @@ def strength_probe(
         "stream_length": len(_strength_stream(pairs, tiers, 11, epochs)),
         "pairs": len(pairs),
         "tiers": {str(t): tiers.count(t) for t in sorted(set(tiers))},
+        "attribution": _attribution(pairs, tiers),
         "seeds": len(use_seeds),
         "sign_test_min": need,
         "arms": summary,
         "graded_over_matched_tier_gap": ordered,
         "graded_over_matched_hit": hits_better,
         "graded_under_matched_hit": hits_worse,
-        "ordering_verdict": ordering,
+        # 排序判詞也建在 ``_pair_weight`` 上，所以同樣要帶著污染度；命中率的那一句不必（它不讀格子）。
+        "ordering_verdict": _caveated(ordering, attribution),
         "readout_verdict": readout,
     }
 
@@ -1005,6 +1049,7 @@ def strength_equilibrium(
         for arm in arms
     }
     need = _sign_test_minimum(len(using))
+    attribution = _attribution(pairs, tiers)
     graded_below_flat = sum(1 for g, f in zip(rows["graded"], rows["flat"]) if ratio(g) < ratio(f))
     graded_below_matched = sum(
         1 for g, m in zip(rows["graded"], rows["matched"]) if ratio(g) < ratio(m)
@@ -1034,7 +1079,10 @@ def strength_equilibrium(
         "ratio_drop_vs_flat": round(drop, 3),
         "graded_below_flat": graded_below_flat,
         "graded_below_matched": graded_below_matched,
-        "verdict": "fixed-point-carries-strength" if reaches else "fixed-point-inert",
+        "attribution": attribution,
+        "verdict": _caveated(
+            "fixed-point-carries-strength" if reaches else "fixed-point-inert", attribution
+        ),
     }
 
 

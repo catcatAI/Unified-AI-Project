@@ -30,6 +30,18 @@ and this project adheres to
   5.46/10**，4 過 2 不過，達成階梯仍 L0。限制照實記：套件判定當時是「任一關鍵詞命中」（同日由下方的 strict 正確性判定取代）；索引為衍生資料（`data/`
   gitignore），中文題仍答不出。### Changed
 
+- **判詞帶著量具的污染度：`conflict` 的 `fixed-point-inert`
+  不是模型的性質（2026-11-10）**：`conflict` 從 §46 起被記成
+  `fixed-point-inert`（權重比 drop
+  0.069，門檻 0.15），但那個數字是**設計算出來的**：96 個 cue 共用 8 個 target，每個 target 被 6 強 +
+  6 弱寫入，於是 `_pair_weight`
+  讀的 480 格裡有 95% 混了兩個 tier、平均 10.4 個寫入者——比值必然被鎖在 1 附近，分不出「G1 不帶強弱」與「十個寫入者被平均掉」。新增
+  `_attribution()`（純設計量）與 `_caveated()`：`single_tier_fraction < 1.0`
+  時判詞尾端必須帶 `(cells-shared <比例>)`，且註記在跨族組成裡留著。實跑：`hard`
+  = `fixed-point-carries-strength`（1.000／1.00 寫入者），`conflict` =
+  `fixed-point-inert (cells-shared 0.05)`；`many_to_one` 0.667、`structured`
+  0.250 此後都帶著比例。沒有新門檻——門檻是「只有 1.000 才能講成乾淨」。+4 測試。
+
 - **同 cue 量法接進跨族判詞（2026-11-10）**：上一條的探針原本只是 CLI 上另一支孤兒——量到卻不進判詞，「定點有帶強弱、但綁錯關聯」可以從摘要裡消失。現在
   `run(..., within_cue=True)`（CLI `--within-cue`）把它放進 `within_cue` 並接到
   `strength_verdict`
