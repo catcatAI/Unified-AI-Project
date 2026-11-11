@@ -246,3 +246,68 @@ P5 需要「每一回合的（狀態，輸出結構）配對」。目前**沒有
 
 不做工具型代理（`tools`
 仍是 0.0，沒有東西可包裝）；不做多租戶／雲端部署；不改角色外觀與素材（授權未釐清前，藝術資產維持未提交）。
+
+### 8.6 因果問句的棄權（2026-11-11 預先註冊，先寫再量）
+
+**要修的行為**：`why`／`為什麼` 問句問的是**解釋**，不是屬性值。現況三條
+路徑都會回非解釋：
+
+| 輸入                      | 現況                                                    | 生產者         |
+| ------------------------- | ------------------------------------------------------- | -------------- |
+| `天空為什麼是藍色的?`     | `蓝色。`                                                | `semantic-qa`  |
+| `為什麼天空是藍的？`      | `顏色是藍色。`                                          | `knowledge`    |
+| `Why is the sky blue?`    | `Blue Sky is a 1994 drama movie. …`                     | `knowledge`    |
+
+`semantic-qa` 檢索到的是「天空是什麼顏色」的配對；`route_knowledge` 回的是
+屬性 `blue`；百科層取到的是同詞但不相關的句子。三者都是**自信的非答案**。
+
+**規則（一般性，不是針對題目）**：
+
+1. 因果問句（`為什麼／为什么／為何／为何／原因／why`）不得由「回傳裸屬性／
+   實體」的查表路徑回答；精選庫的屬性、最高級、曆法、換算查表一律跳過。
+2. 檢索型答案（百科層、語義 QA）只有在答案句本身帶**因果證據**
+   （`because`／`due to`／`因此`／`所以`／`導致`…）時才可採用；否則棄權。
+3. 棄權走**既有**信封，不新增管線：native 聊天路徑由
+   `_fb_honest_refusal` 回 `metadata["abstain"]`（`route=fallback`，
+   宣告層＝surface）。
+4. 有生成後端時不變：仍是 `_try_knowledge` 先讓位給生成器（既有契約）。
+
+**通過條件（量測前固定）**：
+
+- **P1 誠實**：上表三條輸入在 native 下都必須是棄權信封
+  （`abstain != null`），不得回屬性／實體。
+- **P2 不迴歸**：`knowledge` 正確數 ≥ 8/15；`knowledge_mc` = 40/40；
+  `math`／`routing` 正確數不得下降（同一條 strict 評分）。
+- **P3 泛化**：未參與開發的因果問句（`Why does ice float on water?`、
+  `Why do leaves look green?`）在 native 下必須棄權；非因果的屬性問句
+  （`What color is the sky?`）仍必須答對。
+- **P4 宣告一致**：`audit_placement.py` 維持 7/7；棄權句宣告為 surface，
+  不得記成 knowledge。
+- 不改資料集、不改錨、不改及格線、不改評分規則。
+
+**量測指令**（strict，前後同一條）：
+
+```bash
+./.venv/bin/python scripts/run_benchmarks.py --backend native \
+    --suite knowledge,knowledge_mc --out /tmp/opencode/bench_<before|after>
+```
+
+**量測結果（2026-11-11，同一條指令，before → after）**：
+
+| 檢查 | 結果 |
+| --- | --- |
+| P1 `天空為什麼是藍色的?` | `蓝色。`（`semantic-qa`）→ **棄權信封** `{v:1, reason:no_answer, tier:honest}`，`route=fallback` |
+| P1 `為什麼天空是藍的？` | `顏色是藍色。`（`knowledge`）→ **棄權信封** |
+| P1 `Why is the sky blue?` | `Blue Sky is a 1994 drama movie. …`（`knowledge`）→ **棄權信封**（英文文案） |
+| P2 `knowledge` | 8/15 → **8/15**（correct 8／wrong 5／abstain 2，未變） |
+| P2 `knowledge_mc` | 40/40 → **40/40** |
+| P2 `math`／`routing` | 32/40、10/10 → **32/40、10/10**（未變） |
+| P3 `Why does ice float on water?`／`Why do leaves look green?` | **棄權** |
+| P3 `What color is the sky?`／`天空是什麼顏色？` | **`blue`／`blue`**（照常回答） |
+| P4 `audit_placement.py` | 7/7 → **7/7**；該句 declared＝surface、actual＝surface |
+| 全量測試 | **9,809 passed / 107 skipped / 0 failed** |
+
+**照實記**：`knowledge` 那 15 題裡沒有 `why` 問句，所以這個套件分數不會變
+——變的是同一條聊天路徑上的行為（P1/P3 用預先寫好的輸入直接呼叫
+`_handle_chat_request` 量，不另外造題進資料集）。這一輪不動分數、不動及格
+線：系統分仍 **6.41／10**、核心分仍 **0.00／10**。

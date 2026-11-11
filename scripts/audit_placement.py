@@ -50,6 +50,12 @@ DECLARED: Dict[str, str] = {
     "composed-template": "surface",
     "template": "surface",
     "dialog": "surface",
+    # Honest abstain: the sentence is a canned frame ("I don't have enough
+    # knowledge to answer that"), not knowledge. The content is "unknown",
+    # so the layer that produced it is surface (routing/phrasing), never
+    # knowledge — a why-question with no evidence must not be credited to
+    # the knowledge layer just because the lookup ran first.
+    "local-fallback": "surface",
     "knowledge": "knowledge",
     "knowledge_base": "knowledge",
     "knowledge_pipeline": "knowledge",
@@ -101,6 +107,11 @@ def actual_layer(reply: str, question: str, events: List[Dict[str, Any]]) -> str
         return "surface"
     if any("backend='memory-teaching'" in str(e.get("returned") or "") for e in events):
         return "memory"
+    # Honest abstain: a canned "I don't know" frame, not knowledge. Without
+    # this the reply is unattributable ("unknown") even though it declares
+    # itself as the fallback layer.
+    if any("backend='local-fallback'" in str(e.get("returned") or "") for e in events):
+        return "surface"
     copied = longest_common_run(question, reply)
     if copied >= max(4, len(_norm(question)) // 2):
         return "surface"

@@ -31,6 +31,7 @@ from ai.arithmetic.deterministic_router import try_logic as _det_try_logic
 from ai.arithmetic.deterministic_router import try_math as _det_try_math
 from ai.core.unicode_utils import normalize_text
 from ai.data_eng.presets import REFLEX_PRESETS, resolve_reflex
+from ai.reasoning.question_shape import has_causal_evidence, is_why_question
 from ai.unified_engine.core_model import FixedSizeCore
 from ai.unified_engine.semantic_qa import SemanticQA
 from core.system.config.magic_numbers import (
@@ -540,6 +541,14 @@ class UnifiedEngine:
         if hit is None:
             return None
         ans, sim = hit
+        # A why-question needs an explanation. Retrieval returns the nearest
+        # stored pair, which for "why is the sky blue" is the colour fact
+        # ("blue") — a confident non-answer. Accept only an answer that
+        # states a cause; otherwise decline so the fallback chain can
+        # abstain honestly.
+        if is_why_question(resolved) and not has_causal_evidence(ans):
+            logger.debug("semantic QA: causal question, retrieved answer has no causal evidence")
+            return None
         if not self._semantic_overlap_pass(resolved, ans, sim):
             return None
         self._last_route = "semantic-qa"

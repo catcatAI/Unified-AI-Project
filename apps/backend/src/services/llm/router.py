@@ -84,6 +84,7 @@ from ai.meta.priority_negotiator import (
     lifecycle_voter,
     meta_calibration_voter,
 )
+from ai.reasoning.question_shape import WHY_QUESTION_RE
 from core.system.state_store.global_store import state_store
 from services.llm.capability_catalog import (
     build_capability_snapshot,
@@ -324,11 +325,10 @@ _RECALL_META_QUESTION = re.compile(
 
 # A causal question asks *why*, so a stored attribute ("blue") is a
 # confident non-answer rather than an explanation. With a generator
-# registered the knowledge layer defers these (see `_try_knowledge`).
-_CAUSAL_QUESTION_RE = re.compile(
-    r"為什麼|为什么|為何|为何|原因|\bwhy\b",
-    re.IGNORECASE,
-)
+# registered the knowledge layer defers these (see `_try_knowledge`). The
+# pattern lives in ai/reasoning/question_shape so the native knowledge path,
+# the semantic-QA layer and this deferral cannot disagree about the shape.
+_CAUSAL_QUESTION_RE = WHY_QUESTION_RE
 
 
 def _is_negated(folded: str, keyword: str, index: int) -> bool:

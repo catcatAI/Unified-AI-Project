@@ -115,6 +115,9 @@ enum 是 `llamacpp`（還有 `llamacpp-qwen`／
 4. **native 的因果問句仍回屬性值** — `天空為什麼是藍色的?` →
    `蓝色。`。這是 offline 的已知降級（沒有模型可以解釋），已列在
    `MEASUREMENT_MAP`／`PROGRESS` 的既有缺陷，不在本輪假裝修好。
+   **2026-11-11 已修（§8.6，另有預先註冊與前後量測）**：因果問句不再回屬性
+   ／同詞句，走既有棄權信封；`knowledge` 8/15、`knowledge_mc` 40/40、
+   `audit_placement` 7/7 皆未變。
 5. **`tools` 維度 0.0** — 原生後端沒有代碼生成，`run_benchmarks.py`
    對 code 直接回空字串（設計上的誠實失敗），非回歸。
 

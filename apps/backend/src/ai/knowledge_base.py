@@ -21,6 +21,8 @@ import logging
 import re
 from typing import Dict, List, Optional, Tuple
 
+from ai.reasoning.question_shape import has_causal_evidence, is_why_question
+
 logger = logging.getLogger(__name__)
 
 # subject -> attribute -> value
@@ -601,28 +603,33 @@ def route_knowledge(text: str) -> Optional[str]:
     if not text or not isinstance(text, str):
         return None
     t = text.lower().strip()
+    why = is_why_question(text)
 
-    for matcher in (_rk_antonym, _rk_sound, _rk_alias):
-        result = matcher(t)
+    # A why-question asks for an explanation; the curated store only holds
+    # attributes and short facts, so every matcher below would answer a
+    # different question ("what colour" instead of "why"). Skip them.
+    if not why:
+        for matcher in (_rk_antonym, _rk_sound, _rk_alias):
+            result = matcher(t)
+            if result is not None:
+                return result
+
+        # 3b) phrase normalization mutates t before the remaining lookups
+        t = _rk_phrase_normalize(t)
+
+        for matcher in (_rk_calendar, _rk_superlative):
+            result = matcher(t)
+            if result is not None:
+                return result
+
+        result = _rk_subject_attrs(t)
         if result is not None:
             return result
 
-    # 3b) phrase normalization mutates t before the remaining lookups
-    t = _rk_phrase_normalize(t)
-
-    for matcher in (_rk_calendar, _rk_superlative):
-        result = matcher(t)
-        if result is not None:
-            return result
-
-    result = _rk_subject_attrs(t)
-    if result is not None:
-        return result
-
-    for matcher in (_rk_unit_conversion, _rk_chemical):
-        result = matcher(t)
-        if result is not None:
-            return result
+        for matcher in (_rk_unit_conversion, _rk_chemical):
+            result = matcher(t)
+            if result is not None:
+                return result
 
     # The long tail: an offline encyclopedia (public corpus, extractive).
     # The curated store above stays authoritative for what it knows; this
@@ -632,6 +639,12 @@ def route_knowledge(text: str) -> Optional[str]:
 
         general = route_general_knowledge(text)
         if general:
+            # A why-question needs a sentence that states a cause. A topical
+            # match ("Blue Sky is a 1994 drama movie") is not evidence for the
+            # question and must not be served as one.
+            if why and not has_causal_evidence(general):
+                logger.debug("General knowledge match lacks causal evidence; abstaining")
+                return None
             return general
     except Exception:  # pragma: no cover - optional data/index
         logger.debug("general knowledge layer unavailable", exc_info=True)

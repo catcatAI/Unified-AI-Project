@@ -151,6 +151,11 @@ lookup + 10 classifier 是層的成績）。這不是智能分數，是層的成
   `SemanticQA.answer`
   這個生產者。現在 7/7 回覆的宣告與生產者一致（`placement.replies_declare_their_layer`
   已納入 `check_fact_gates.py`，0 violations）。
+   **2026-11-11 §8.6 續修**：宣告一致只解決了「誰說的」，沒解決「答的是不是
+  被問的」。`天空為什麼是藍色的?` 問的是解釋，`semantic-qa` 卻回屬性
+  `蓝色`；現在同一句走既有棄權信封（`route=fallback`，宣告層＝surface），
+  不再記成 knowledge。三個入口（精選庫、百科層、語意 QA）共用
+  `ai/reasoning/question_shape.py` 的判定，避免三套規則各自漂移。
 
 ## 六、湧現界線 MVE-1（AI+AL 訓練主線的門檻，2026-10-31 註冊）
 

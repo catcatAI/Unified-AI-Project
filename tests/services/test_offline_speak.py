@@ -74,7 +74,10 @@ def test_offline_knowledge_curated_facts():
     assert route_knowledge("水的沸點是多少度？") == "100"
     assert "蝙蝠" in (route_knowledge("所有哺乳動物都會飛嗎？") or "")
     assert "太陽" in (route_knowledge("地球繞著什麼星轉？") or "")
-    assert route_knowledge("為什麼天空是藍的？") == "blue"
+    # A why-question asks for an explanation; the store only has the colour.
+    # Native has no explanation to give, so it abstains (2026-11-11) instead
+    # of serving "blue" as an answer to a different question.
+    assert route_knowledge("為什麼天空是藍的？") is None
     assert "220" in (route_knowledge("100公斤等於幾磅？") or "")
     assert route_knowledge("Do all mammals fly?") is not None
     # 既有邊界不得回歸
