@@ -248,6 +248,25 @@ class TestGARDENEngineLearning:
         engine.learn_from_interaction("the weather is nice today", "天氣很好", confidence=0.9)
         assert seen, "learn() did not reach the Hebbian step at all"
         assert seen.get("rate_exponent") == pytest.approx(0.5)
+        assert seen.get("decay_scope") == "written"
+
+    def test_online_forgetting_is_scheduled_not_a_side_effect(self, engine: GARDENEngine):
+        """Row scope did learning *and* forgetting in one write.
+
+        Written scope stops the accidental forgetting (§57), so the online path
+        has to schedule the global pass itself — otherwise "better learning"
+        would secretly mean "no forgetting at all". Pinned: nothing runs before
+        the interval, and one pass runs when it is crossed.
+        """
+        from ai.garden.garden_engine import ONLINE_DECAY_EVERY
+
+        calls = []
+        engine.snn.apply_decay = lambda weight_decay=0.002: calls.append(weight_decay)
+        engine.learn_from_interaction("the weather is nice today", "天氣很好", confidence=0.9)
+        assert calls == [], "global decay ran before the interval was crossed"
+        engine.snn.total_hebbian_updates = ONLINE_DECAY_EVERY - 1
+        engine.learn_from_interaction("the weather is nice today", "天氣很好", confidence=0.9)
+        assert len(calls) == 1, "the interval was crossed but global decay never ran"
 
 
 class TestGARDENEngineHormonal:

@@ -43,6 +43,13 @@ from core.utils import any_keyword
 
 from .dictionary import VectorDictionary
 from .snn_core import TensorSNNCore
+
+# Global-forgetting cadence for the online path (see learn_from_interaction).
+# Same 1000-update cadence the batch path already uses. It exists because
+# written-scope decay deliberately stops a neighbour's update from dimming this
+# pair, which removes the accidental forgetting that row scope performed on
+# every write (roadmap §57).
+ONLINE_DECAY_EVERY = 1000
 from .vector_decoder import VectorDecoder
 
 logger = logging.getLogger(__name__)
@@ -1754,7 +1761,18 @@ class GARDENEngine:
                 # research established destination and rate are separable, so
                 # keep the destination and pay the confidence once in the rate.
                 rate_exponent=confidence_value("ai.garden.engine.hebbian_rate_exponent", 0.5),
+                # Written scope (roadmap §57): with row scope an association is
+                # dimmed by updates that never mention it — 12 seeds on the AL
+                # `conflict` family lose hit rate from ep40 to ep80 for every
+                # arm while their weights keep growing. Written scope reverses
+                # that (graded 12/12 seeds up, speed 10/12) and settles weights
+                # ~2.5x higher, so the same stream buys more usable structure.
+                decay_scope="written",
             )
+            # ...and forgetting becomes an explicit schedule instead of a side
+            # effect of every write, at the cadence the batch path already uses.
+            if self.snn.total_hebbian_updates % ONLINE_DECAY_EVERY == 0:
+                self.snn.apply_decay(weight_decay=confidence_value("ai.garden.engine.decay", 0.002))
 
         return {
             "interaction": self._learn_count,

@@ -28,10 +28,22 @@ and this project adheres to
   成為別名。對話探針無迴歸（人味 0.685 → 0.689、答對 45%、棄權 28.7% →
   26%）。總分 **5.00 →
   5.46/10**，4 過 2 不過，達成階梯仍 L0。限制照實記：套件判定當時是「任一關鍵詞命中」（同日由下方的 strict 正確性判定取代）；索引為衍生資料（`data/`
-  gitignore），中文題仍答不出。
+  gitignore），中文題仍答不出。### Fixed
 
-### Fixed
-
+- **decay 只看自己寫的格子：晚段下滑消失，且遺忘改成排程（2026-11-11）**：§56 診斷出 row-wise
+  decay 在抹安靜關聯後，這一輪把 decay 範圍變成可選並量了決定（`conflict`、12 種子、lr
+  0.008、`direct`、ep10/40/80）。`row`
+  在 ep40→ep80 是 2/12、0/12、1/12 種子上升（平均 −0.052／−0.073／−0.069）；`written`
+  是 0/12（`flat`
+  完全不變）、**12/12**（`graded`）、10/12（`speed`），平均 0.000／+0.042／+0.034，弱層權重由 0.084–0.112 升到 0.227–0.279。`flat`
+  在 ep80 是 **12/12** 種子較好（平均 +0.142）。生產路徑
+  `learn_from_interaction()` 改傳 `decay_scope="written"`，並每隔
+  `ONLINE_DECAY_EVERY`（1000，與批次相同）呼叫
+  `apply_decay()`——學習與遺忘從同一個副作用拆成兩件事，預設關掉遺忘這種事不再可能悄悄發生。照實記：`graded`／`speed`
+  在 ep40 反而暫時較差（2/12、4/12），到 ep80 才回到較好；且第一版 `written`
+  分支錯把剛寫入的格子也剪枝，讓每個臂每個 epoch 都是 0.000，修正後以
+  `test_written_scope_does_not_prune_a_freshly_written_cell`
+  釘住。GARDEN 全套 354 passed。
 - **`conflict` 的 ep40 下滑是 row-wise
   decay，不是讀出飽和（2026-11-11）**：用不經讀出的權重排名配上單一變因（`weight_decay`
   0.002 對 0.0、12 種子、ep10/40/80）把兩種解釋分開。有 decay 時三臂從 ep40 到 ep80 都下滑（`flat`

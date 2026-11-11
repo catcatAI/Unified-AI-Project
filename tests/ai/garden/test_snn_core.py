@@ -520,6 +520,43 @@ class TestRowDecayReachesCellsItDidNotWrite:
         after = self._weight(core, "a", "b")
         assert after < before * 0.95, f"row decay did not reach the quiet cell: {before} -> {after}"
 
+    def test_written_scope_does_not_prune_a_freshly_written_cell(self):
+        """The regression that made every weight zero: prune in the same call.
+
+        One update writes ``lr*gate*target_strength`` — 0.0028 at lr 0.008 — which
+        is under the 0.01 prune floor. Decaying *and* pruning the cells this call
+        just wrote erased each sample's first increment, so the matrix stayed
+        empty and every arm read 0.000. Written scope must decay these cells and
+        leave pruning to the global ``apply_decay`` pass.
+        """
+        core = TensorSNNCore(threshold=0.5)
+        for _ in range(20):
+            core.hebbian_update(
+                {"a": 1.0}, {"b": 1.0}, lr=0.008, weight_decay=0.002, decay_scope="written"
+            )
+        weight = self._weight(core, "a", "b")
+        assert weight > 0.01, f"freshly written weight was pruned away: {weight}"
+
+    def test_written_scope_leaves_a_quiet_cell_alone(self):
+        """``decay_scope='written'`` decays only the cells this call wrote.
+
+        Same rows, same decay, same written cell; the difference is only whether
+        a neighbour's write is allowed to dim an association it never mentioned.
+        """
+        quiet = {}
+        for scope in ("row", "written"):
+            core = TensorSNNCore(threshold=0.5)
+            for _ in range(30):
+                core.hebbian_update({"a": 1.0}, {"b": 1.0}, lr=0.1, weight_decay=0.0)
+            before = self._weight(core, "a", "b")
+            for _ in range(60):
+                core.hebbian_update(
+                    {"a": 1.0}, {"c": 1.0}, lr=0.1, weight_decay=0.002, decay_scope=scope
+                )
+            quiet[scope] = (before, self._weight(core, "a", "b"))
+        assert quiet["written"][1] == pytest.approx(quiet["written"][0])
+        assert quiet["row"][1] < quiet["row"][0] * 0.99
+
     def test_a_quiet_cell_under_the_floor_is_pruned_to_zero(self):
         core = TensorSNNCore(threshold=0.5)
         core.hebbian_update({"a": 0.05}, {"b": 0.05}, lr=0.01, weight_decay=0.0)

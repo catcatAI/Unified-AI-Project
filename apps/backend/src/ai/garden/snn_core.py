@@ -855,6 +855,7 @@ class TensorSNNCore:
         weight_decay: float = 0.002,
         plasticity: float = 1.0,
         rate_exponent: float = 1.0,
+        decay_scope: str = "row",
     ) -> float:
         """Hebbian weight update with a strength-proportional target + row decay.
 
@@ -945,9 +946,11 @@ class TensorSNNCore:
         for j in tgt_idx:
             protected.setdefault(j, set()).update(src_idx)
 
-        # Targeted decay: only decay rows that were touched (O(nnz_per_row))
+        # Targeted decay: only decay rows that were touched (O(nnz_per_row)).
+        # ``decay_scope`` chooses between decaying the whole row (legacy) and
+        # decaying only the cells this call wrote (see _decay_touched_rows).
         if weight_decay > 0:
-            self._decay_touched_rows(touched_rows, protected, weight_decay)
+            self._decay_touched_rows(touched_rows, protected, weight_decay, decay_scope)
 
         self.total_hebbian_updates += 1
         return delta_total
@@ -1020,23 +1023,47 @@ class TensorSNNCore:
         return float(np.abs(delta_patch).sum()), set(src_idx) | set(tgt_idx)
 
     def _decay_touched_rows(
-        self, touched_rows: set, protected: Dict[int, set], weight_decay: float
+        self,
+        touched_rows: set,
+        protected: Dict[int, set],
+        weight_decay: float,
+        scope: str = "row",
     ) -> None:
-        """Decay only the touched rows; keep the entries this call wrote.
+        """Decay the touched rows; ``scope`` decides how far the decay reaches.
 
-        Pruning near-zero entries is part of the same pass (forgetting is
-        per-row here, which is what keeps it O(nnz)), but a column written by
-        the current update is exempt: see the note in ``hebbian_update``.
+        ``row`` (legacy) multiplies the *entire* row by (1 - decay) and prunes
+        below 0.01, so an association is dimmed by updates that do not mention
+        it — measured cost: on the AL `conflict` family (rows average 10.4
+        writers) every arm loses hit rate after ep40 while its weights still
+        grow, and with decay off 12/12 seeds improve instead (roadmap §56).
+
+        ``written`` limits both the multiply and the prune to the cells this
+        call actually wrote, so a quiet association is not erased by a
+        neighbour's update. Forgetting does not disappear — ``apply_decay()``
+        is the global pass meant for that, and it is called periodically.
         """
         W = self._W
         if W is None:
             return
+        written_only = scope == "written"
         for row in touched_rows:
+            keep = protected.get(row)
+            if written_only:
+                if not keep:
+                    continue
+                cols = sorted(keep)
+                # Decay only — never prune here. A single update writes
+                # lr*gate*target_strength (0.0105 at lr 0.03, and 0.0028 at
+                # lr 0.008), which is at or below the 0.01 floor; pruning in the
+                # same call erased the sample's very first increment and left the
+                # matrix empty (measured: every arm 0.000 at every epoch). The
+                # legacy row scope protected these cells for exactly this reason.
+                W[row, cols] = W[row, cols] * (1.0 - weight_decay)
+                continue
             row_data = W[row, :]
             mask = row_data > 0.0
             row_data[mask] = row_data[mask] * (1.0 - weight_decay)
             prune = row_data < 0.01
-            keep = protected.get(row)
             if keep:
                 for col in keep:
                     prune[col] = False
