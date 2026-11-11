@@ -1,0 +1,32 @@
+[
+  {
+    "name": "greeting_formula",
+    "conditions": ["hello", "hi", "你好", "安安", "早安", "晚安"],
+    "action": "greet_user_with_warmth",
+    "valence_boost": 0.1
+  },
+  {
+    "name": "inquiry_identity",
+    "conditions": ["你是誰", "你的名字", "自我介紹", "who are you"],
+    "action": "introduce_angela_core",
+    "candor_boost": 0.05
+  },
+  {
+    "name": "inquiry_workshop",
+    "conditions": ["天使工房", "工房", "lucifaella", "露茜法埃拉", "看板娘"],
+    "action": "route_to_lucifaella_host",
+    "humor_boost": 0.05
+  },
+  {
+    "name": "curiosity_exploration",
+    "conditions": ["為什麼", "怎麼做", "原理", "解釋", "學習"],
+    "action": "engage_reflective_reasoning",
+    "arousal_boost": 0.15
+  },
+  {
+    "name": "emotional_comfort",
+    "conditions": ["難過", "累了", "壓力", "心煩", "失落"],
+    "action": "activate_empathetic_support",
+    "empathy_boost": 0.2
+  }
+]
