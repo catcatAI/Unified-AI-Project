@@ -13,6 +13,7 @@ Three properties are load-bearing and each is pinned here:
 
 from __future__ import annotations
 
+import json
 import math
 
 import numpy as np
@@ -129,6 +130,21 @@ def test_roundtrip_preserves_every_row(tmp_path) -> None:
         assert list(before.positions) == list(after.positions)
         assert list(before.atom_ids) == list(after.atom_ids)
         assert after.probs.tolist() == pytest.approx(before.probs.tolist(), abs=1e-3)
+
+
+def test_a_cache_from_an_older_format_is_refused(tmp_path) -> None:
+    """Format 1 stored a renormalised target; reading it as format 2 would
+    silently triple a low-coverage position's weight."""
+    cache = _build()
+    path = cache.save(tmp_path / "kd.npz")
+    with np.load(path) as data:
+        arrays = {name: data[name] for name in data.files}
+    meta = json.loads(str(arrays["meta"]))
+    meta["format"] = FORMAT_VERSION - 1
+    arrays["meta"] = np.asarray(json.dumps(meta))
+    np.savez_compressed(path, **arrays)
+    with pytest.raises(ValueError, match="format"):
+        KdCache.load(path)
 
 
 def test_meta_records_the_vocabulary_fingerprint() -> None:

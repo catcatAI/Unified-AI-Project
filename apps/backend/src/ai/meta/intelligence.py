@@ -17,9 +17,9 @@
 | 命名空間 | 意義 | 出處 |
 | --- | --- | --- |
 | `L0..L3` | **智能階梯**（本定義） | `AI_CAPABILITY_LADDER.md` |
-| `Q0..Q4` | 美術品質階梯（看多少定什麼） | `VISION_MAP_AND_QUALITY_LADDER.md` |
-| `X0..X11` | 成熟度／經驗值 | `ANGELA_MATRIX_ANNOTATION_GUIDE.md` |
-| `R1..R3` | 回應來源層級 | `docs/05-development/testing/timeout-strategy.md` |
+| `Q0..Q4` | 美術品質階梯（原文仍用 `L0-L4`） | `VISION_MAP_AND_QUALITY_LADDER.md` |
+| `X0..X11` | 成熟度／經驗值（原文仍用 `L0-L11`） | `ANGELA_MATRIX_ANNOTATION_GUIDE.md` |
+| `R1..R3` | 回應來源層級（**保留名稱，尚無定義**） | — |
 | `claimed..production` | 工程成熟度 | `docs/status_matrix.yaml` |
 
 **智能總分** = 六個能力維度的平均（0–10），**前提是誠實度全過**；來源分布
@@ -307,9 +307,9 @@ LEVEL_REQUIREMENTS: Dict[str, Tuple[str, ...]] = {
 #: The other ladders, with their namespaces (so L0 stops meaning five things).
 LADDER_NAMESPACES: Dict[str, str] = {
     "L0..L3": "智能階梯（本定義；AI_CAPABILITY_LADDER.md）",
-    "Q0..Q4": "美術品質階梯（看多少定什麼；VISION_MAP_AND_QUALITY_LADDER.md）",
-    "X0..X11": "成熟度／經驗值（ANGELA_MATRIX_ANNOTATION_GUIDE.md）",
-    "R1..R3": "回應來源層級（docs/05-development/testing/timeout-strategy.md）",
+    "Q0..Q4": "美術品質階梯（出處文件仍用 L0-L4；VISION_MAP_AND_QUALITY_LADDER.md）",
+    "X0..X11": "成熟度／經驗值（出處文件仍用 L0-L11；ANGELA_MATRIX_ANNOTATION_GUIDE.md）",
+    "R1..R3": "回應來源層級（保留名稱，尚無定義；舊註解誤指 timeout-strategy.md）",
     "claimed..production": "工程成熟度（docs/status_matrix.yaml）",
 }
 

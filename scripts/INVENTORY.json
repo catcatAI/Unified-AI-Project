@@ -237,6 +237,11 @@
       "referenced": false,
       "purpose": "Angela Clay Figurine — procedural modeling build script."
     },
+    "build_kd_cache.py": {
+      "category": "operations",
+      "referenced": true,
+      "purpose": "Build distillation targets from a llama.cpp teacher into a ``KdCache``."
+    },
     "build_knowledge_index.py": {
       "category": "operations",
       "referenced": true,
@@ -752,6 +757,11 @@
       "referenced": false,
       "purpose": "ORG cards"
     },
+    "measure_bigram_floor.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "同一刀上的 interpolated bigram floor — 判斷「學生到底有沒有贏過看一個 token」。"
+    },
     "mypy_budget_gate.py": {
       "category": "tool",
       "referenced": true,
@@ -921,6 +931,11 @@
       "category": "probe",
       "referenced": true,
       "purpose": "Measure whether long training erodes the recurrent structure."
+    },
+    "probe_training_readiness.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "Is the core *ready to accept training*? Measure, do not assume."
     },
     "quick_snn_test.py": {
       "category": "experimental",
@@ -1371,6 +1386,11 @@
       "category": "tool",
       "referenced": true,
       "purpose": "Visual verification: render images from concept space → primitives → image."
+    },
+    "wardrobe_compositor.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Wardrobe Layer Compositor (分層紙娃娃換裝合成器) for Angela AI."
     }
   }
 }

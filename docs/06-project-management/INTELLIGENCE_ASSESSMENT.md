@@ -50,13 +50,13 @@ historical score inflation.**
 
 **階梯命名空間**（原本四套 L0 開頭的階梯互相撞名，現在各有名稱）：
 
-| 命名空間              | 意義                         | 出處                                              |
-| --------------------- | ---------------------------- | ------------------------------------------------- |
-| `L0..L3`              | **智能階梯**（唯一）         | `AI_CAPABILITY_LADDER.md`                         |
-| `Q0..Q4`              | 美術品質階梯（看多少定什麼） | `VISION_MAP_AND_QUALITY_LADDER.md`                |
-| `X0..X11`             | 成熟度／經驗值               | `ANGELA_MATRIX_ANNOTATION_GUIDE.md`               |
-| `R1..R3`              | 回應來源層級                 | `docs/05-development/testing/timeout-strategy.md` |
-| `claimed..production` | 工程成熟度                   | `docs/status_matrix.yaml`                         |
+| 命名空間              | 意義                                | 出處                                |
+| --------------------- | ----------------------------------- | ----------------------------------- |
+| `L0..L3`              | **智能階梯**（唯一）                | `AI_CAPABILITY_LADDER.md`           |
+| `Q0..Q4`              | 美術品質階梯（原文仍用 `L0-L4`）    | `VISION_MAP_AND_QUALITY_LADDER.md`  |
+| `X0..X11`             | 成熟度／經驗值（原文仍用 `L0-L11`） | `ANGELA_MATRIX_ANNOTATION_GUIDE.md` |
+| `R1..R3`              | 回應來源層級（保留名稱，尚無定義）  | —                                   |
+| `claimed..production` | 工程成熟度                          | `docs/status_matrix.yaml`           |
 
 **及格線從外部基準算出來**（不是自己訂的——自己訂就是自問自答）。每條線掛一個公開基準與一條統一規則（R1 隨機 +20pp／R2
 0.5 × 人類上限／R3 0.7 × 已發表基線）， `Dimension.threshold` 是**由

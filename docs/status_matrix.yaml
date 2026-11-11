@@ -111,14 +111,13 @@ features:
     domain: LLM providers
     claim: OpenAI/Anthropic/Gemini/Ollama/llama.cpp 可接入
     status: wired
-    verify_command: pytest tests/services/test_llamacpp_provider.py tests/services/test_provider_streaming.py
     tests:
       - tests/services/test_llamacpp_provider.py
       - tests/services/test_provider_streaming.py
     implementation:
       - apps/backend/src/services/llm/providers
       - apps/backend/src/services/llm/router.py
-    evidence: 配置與路由存在、provider 接線有測試；**品質 benchmark 未建立**（原 verify_command 含 `<endpoint>` 佔位符，無法照抄重跑），故不宣稱 verified
+    evidence: 配置與路由存在、provider 接線有測試（可重跑 `pytest tests/services/test_llamacpp_provider.py tests/services/test_provider_streaming.py`，但那是接線不是品質）；**品質 benchmark 未建立**（原 verify_command 含 `<endpoint>` 佔位符，無法照抄重跑），故不宣稱 verified
     last_verified: "2026-11-10"
 
   - id: model-routing

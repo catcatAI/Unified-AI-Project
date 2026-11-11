@@ -130,7 +130,9 @@ async def test_respond_system_prompt_carries_persona_and_role():
     await agent.respond("hi", al_state={"fatigue": 0.9, "stress": 0.1, "valence": 0.5})
     system = llm.last["messages"][0]
     assert system["role"] == "system"
-    assert "[Tone: tired_yet_diligent]" in system["content"]
+    # 1606513d1 把 "Tone: X" 改成 "Tone tendency: X; adapt naturally, not as a fixed
+    # reply"（語氣是傾向，不是固定回覆），但沒有同步這條斷言。
+    assert "[Tone tendency: tired_yet_diligent" in system["content"]
     assert "[Role: Gemma 角色]" in system["content"]
 
 
