@@ -255,6 +255,11 @@ class AngelaAPIClient {
         response: data.response || data.message || 'No response',
         emotion: data.emotion || 'neutral',
         source: data.source || 'unknown',
+        // The layer that produced the answer (computed / knowledge / memory /
+        // template / llm / fallback). ``source`` above is the service name, so
+        // it cannot answer "was this looked up or generated?".
+        route: data.route || 'unknown',
+        backend: data.backend || 'unknown',
         neuro_blend: data.neuro_blend || null,
         timestamp: new Date().toISOString(),
       }
@@ -307,6 +312,7 @@ class AngelaAPIClient {
       let buf = ''
       let fullText = ''
       let backend = 'unknown'
+      let route = 'unknown'
       for (;;) {
         const { done, value } = await reader.read()
         if (done) break
@@ -335,13 +341,14 @@ class AngelaAPIClient {
           if (event.done) {
             if (event.response_text) fullText = event.response_text
             if (event.backend) backend = event.backend
+            if (event.route) route = event.route
           }
           if (event.error) {
             throw new Error(event.error)
           }
         }
       }
-      return { success: true, response: fullText, backend: backend }
+      return { success: true, response: fullText, backend: backend, route: route }
     } catch (error) {
       console.error('Stream failed, falling back to sendMessage:', error)
       return this.sendMessage(message)

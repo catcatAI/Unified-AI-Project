@@ -135,13 +135,36 @@ class UnifiedShell {
         else if (bubble.textContent === '…' || !bubble.textContent) {
           bubble.textContent = '（無回應）'
         }
+        this._attachSource(bubble, data?.route)
         return
       }
       const data = await this.apiClient.sendMessage(text)
-      this._appendMessage(messages, 'angela', data?.response || data?.content || '（無回應）')
+      const bubble = this._appendMessage(
+        messages,
+        'angela',
+        data?.response || data?.content || '（無回應）'
+      )
+      this._attachSource(bubble, data?.route)
     } catch (err) {
       this._appendMessage(messages, 'angela', `（連線失敗：${err.message || err}）`)
     }
+  }
+
+  /**
+   * Show which layer produced the answer. The backend already sends `route`
+   * (computed / knowledge / memory / template / llm / fallback); dropping it
+   * made a lookup and a generation look identical to the user.
+   */
+  _attachSource(el, route) {
+    if (!el || !route) return
+    const labels = typeof window !== 'undefined' ? window.AngelaSourceLabel : null
+    if (!labels || typeof labels.labelFor !== 'function') return
+    const meta = labels.labelFor(route)
+    const badge = document.createElement('span')
+    badge.className = `message-source source-${meta.key}`
+    badge.textContent = meta.label
+    badge.title = meta.hint
+    el.appendChild(badge)
   }
 
   _appendMessage(container, role, text) {

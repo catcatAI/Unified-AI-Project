@@ -863,6 +863,21 @@
         max-width: 80%;
       }
 
+      /* Which layer produced the answer — a lookup and a generation must not
+         look identical. */
+      .message-source {
+        display: block;
+        font-size: 10px;
+        opacity: 0.65;
+        margin-top: 6px;
+        letter-spacing: 0.04em;
+      }
+
+      .message-source.source-computed,
+      .message-source.source-knowledge {
+        opacity: 0.8;
+      }
+
       #chat-input-row {
         display: flex;
         gap: 8px;
@@ -1260,7 +1275,9 @@
     <!-- Pet Panel (Live2D Character View) -->
     <section class="shell-panel active" id="panel-pet">
       <h2>🖼️ <span data-ai-name>Angela</span></h2>
-      <p class="angela-identity" aria-label="Angela identity">Angela Core 1.0.0 · Personal edition</p>
+      <p class="angela-identity" aria-label="Angela identity">
+        Angela Core 1.0.0 · Personal edition
+      </p>
       <!-- 與 #character-container 內的 #live2d-canvas 撞名。全站所有 JS 都用
            getElementById('live2d-canvas')，一定取到文件中第一個，所以這個
            canvas 永遠不會被繪製；重複 id 在 HTML 中也是非法的。角色實際由
@@ -1556,6 +1573,8 @@
     <script src="js/shared-js/theme-manager.js"></script>
     <script src="js/shared-js/backend-websocket.js"></script>
     <script src="js/shared-js/api-client.js"></script>
+    <!-- Answer source labels (the backend sends `route`; the UI shows it) -->
+    <script src="js/shared-js/source-label.js"></script>
 
     <!-- Angela Systems -->
     <script src="js/shared-js/state-matrix.js"></script>

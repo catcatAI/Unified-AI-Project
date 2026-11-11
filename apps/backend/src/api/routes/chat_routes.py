@@ -1884,6 +1884,26 @@ def _handle_timeout(session_id: str, schema_ver: str) -> Dict[str, Any]:
     }
 
 
+def _observe_turn(*, session_id: str, user_message: str, response_text: str, source: str) -> None:
+    """Append a structure-only observation when turn observation is enabled.
+
+    Never raises: the answer has already been produced, and a logging failure
+    must not turn a served reply into an error. Off by default, so probes and
+    benchmarks running on the default configuration write nothing.
+    """
+    try:
+        from ai.lifecycle.turn_observation import record_turn
+
+        record_turn(
+            session_id=session_id,
+            user_message=user_message,
+            response_text=response_text,
+            source=source,
+        )
+    except Exception:
+        logger.warning("Turn observation failed (answer unaffected)", exc_info=True)
+
+
 def _format_chat_response(
     response_text: str,
     llm_response: Any,
@@ -1954,6 +1974,16 @@ def _format_chat_response(
         else:
             value = getattr(llm_response, name, None)
         return default if value is None else value
+
+    # Turn observation (default off): the only source of (AL state, answer
+    # structure) pairs, see ai/lifecycle/turn_observation.py. Placed after the
+    # route is derived so the record names the layer that really answered.
+    _observe_turn(
+        session_id=session_id,
+        user_message=user_message,
+        response_text=response_text,
+        source=_derived_route,
+    )
 
     return {
         "response_text": response_text,
@@ -3156,6 +3186,10 @@ async def _sse_finalize(task: "asyncio.Future", judge: Any) -> AsyncGenerator[st
         return
     final_text = (result or {}).get("response_text", "")
     final_backend = (result or {}).get("backend", "unknown")
+    # The route names the layer that produced the answer (computed / knowledge /
+    # memory / template / llm / fallback). Streaming used to send only
+    # ``backend``, so a client could not tell a lookup from a generation.
+    final_route = (result or {}).get("route", "unknown")
     # Never report success on an empty answer (audit 2026-10-10: a
     # failed pipeline yielded done:true with blank text and no signal).
     if not (final_text or "").strip() and final_backend == "unknown":
@@ -3169,6 +3203,7 @@ async def _sse_finalize(task: "asyncio.Future", judge: Any) -> AsyncGenerator[st
         "done": True,
         "response_text": final_text,
         "backend": final_backend,
+        "route": final_route,
         "judge_consistency": consistency,
     }
     yield f"data: {json.dumps(final, ensure_ascii=False)}\n\n"
@@ -3183,7 +3218,8 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
     it per generated token (Phase 1: transport streaming only — routing
     judgments still use the full text, so accuracy is unchanged). Non-LLM
     answers (template/math/clock/memory) arrive as one final event.
-    Events: {"token": str}… then {"done": true, "response_text", "backend"}.
+    Events: {"token": str}… then {"done": true, "response_text", "backend",
+    "route"}.
     """
     user_message = request.get("message", request.get("text", ""))
     mode = request.get("mode", "1:1")
