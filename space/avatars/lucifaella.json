@@ -1,0 +1,35 @@
+{
+  "avatar_id": "lucifaella",
+  "display_name": "Lucifaella",
+  "character_id": "angela.lucifaella",
+  "character_version": "1.0.0",
+  "core_id": "angela.core",
+  "core_version": "1.0.0",
+  "edition_id": "angela.lucifaella",
+  "asset_status": "official_workshop_host",
+  "model": { "type": "procedural", "path": "models/Epsilon_free", "scale": 1.0 },
+  "body": { "height": 1.62, "build": 0.5 },
+  "palette": {
+    "skin": "#f0d3b8",
+    "hair": "#E88DB8",
+    "eyes": "#69A9E8",
+    "signature": "#C9A44C",
+    "canonical_hair_reference": "#E88DB8",
+    "canonical_eye_reference": "#69A9E8",
+    "costume_base": "#FFF8F0",
+    "costume_accent": "#1E2A38",
+    "teal_highlight": "#4D9A91"
+  },
+  "wardrobe": {
+    "outfit": "workshop_host_concierge",
+    "slots": {
+      "top": { "item": "ivory_blouse_navy_capelet", "tint": "#1E2A38" },
+      "bottom": { "item": "tailored_skirt_navy", "tint": "#1A222D" },
+      "shoes": { "item": "concierge_pumps", "tint": "#2C3440" },
+      "accessory": { "item": "gold_star_brooch", "tint": "#C9A44C" }
+    }
+  },
+  "expression_channels": ["neutral", "confident", "smirk", "wink", "candid", "thoughtful"],
+  "motion_set": "workshop_host",
+  "rev": 0
+}

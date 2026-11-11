@@ -2,6 +2,11 @@
   "room_id": "studio_a",
   "actors": [
     {
+      "role_id": "host",
+      "avatar_id": "lucifaella",
+      "position": [3.0, 0]
+    },
+    {
       "role_id": "main",
       "avatar_id": "angela_base",
       "position": [5.5, 0]

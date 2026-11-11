@@ -7,6 +7,7 @@
  * No framework, no build step: serve the repo root and open /apps/space-studio/.
  */
 
+import { AVATARS } from './avatars.js'
 import { drawStage } from './renderer.js'
 import { resolveCamera } from './camera.js'
 import { SpacePort } from './space_port.js'
@@ -35,13 +36,6 @@ const DATA = {
   motions: '../../space/motions/index.json',
   catalog: '../../space/wardrobe/catalog.json',
   rules: '../../space/rules/al_motion.json',
-}
-
-const AVATARS = {
-  angela_base: '../../space/avatars/angela_base.json',
-  gemma_b: '../../space/avatars/gemma_b.json',
-  qwen_c: '../../space/avatars/qwen_c.json',
-  deepseek_d: '../../space/avatars/deepseek_d.json',
 }
 
 async function loadJson(path) {
