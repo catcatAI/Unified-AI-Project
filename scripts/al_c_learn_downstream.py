@@ -101,9 +101,13 @@ TASKS: Dict[str, Dict[str, object]] = {
     # 更正（見 docs/06-project-management/AL_LADDER_ROADMAP.md §53）：這裡原本寫「held-out 與
     # 訓練集一致，不是背起來」——那是**支持 token 別名**造成的假象。原本 stride 寫死 3，
     # `features=12` 時 target 0/4、1/5、2/6、3/7 共用同一組支持 token，held-out 只要帶到那組
-    # 就「答對」，於是 train 與 held-out 都被釘在 0.5。修掉別名（stride 與 feats 互質）之後，
-    # 同一級 ep5 訓練 0.75、held-out 0.167（亂猜 0.125）——**不再遷移**。這一族現在只證明
-    # 「訓練集上的 top-1」，任何「學會 vs 背起來」的宣稱都不能再用它。
+    # 就「答對」，於是 train 與 held-out 都被釘在 0.5——同步，但兩邊都沒有內容。
+    #
+    # 修掉別名（`_conflict_stride`）時只改了訓練端，`_heldout_pairs` 還留著 stride 3，於是
+    # held-out 拿到的是**另一個 target 的支持證據**，量到 0.167（亂猜 0.125）——那是不一致，
+    # 不是不會遷移。兩端對齊後 lr 0.008 的 ep1/3/5 是訓練 0.389／0.403／0.486、held-out
+    # 0.347／0.389／0.500（差 ≤0.042）：遷移保住了，而且比別名版更有內容（別名版兩邊都在 0.5
+    # 的地板上）。
     "conflict": {
         "pairs": 96,
         "features": 12,
@@ -270,7 +274,12 @@ def _heldout_pairs(
             feats = int(task["features"])  # type: ignore[arg-type]
             width = int(task.get("cue_tokens") or 3)
             support = int(task.get("support") or 1)
-            cue = [f"f{(tid * 3 + m) % feats}" for m in range(support)]
+            # 必須與 `_conflict_cue` 用同一個 stride：held-out 是「同一個 target 的新組合」，
+            # 支持 token 要是該 target **學過的那一組**。寫死 3 的時候，訓練用 stride 5、
+            # held-out 用 3，兩邊的支持證據根本不是同一組——量到的 0.167 是這個不一致造成的，
+            # 不是「不會遷移」。
+            stride = _conflict_stride(feats, group, support)
+            cue = [f"f{(tid * stride + m) % feats}" for m in range(support)]
             for k in range(width - support):
                 cue.append(f"f{(j * 11 + k * 7) % feats}")
             held_conflict.append((cue, target))

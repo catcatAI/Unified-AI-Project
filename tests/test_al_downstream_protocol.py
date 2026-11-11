@@ -360,23 +360,22 @@ class TestConflictTaskHasAMiddleBand:
         hit = downstream._evaluate(core, task, readout="direct")["hit_rate"]
         assert 0.2 < hit < 0.8, hit
 
-    def test_conflict_does_not_transfer_once_targets_are_identifiable(self, downstream):
-        """修掉 target 別名之後，held-out 掉回亂猜——原本的「同步遷移」也是別名撐起來的。
+    def test_conflict_transfers_to_unseen_combinations(self, downstream):
+        """held-out 是「同一個 target 的新組合」：支持 token 同一組、rival token 沒見過。
 
-        別名版本裡 target 0/4 共用同一組支持 token，於是 held-out cue 只要帶到那組 token 就
-        「答對」，命中率被釘在 0.5、訓練與 held-out 自然同步。拿掉別名後訓練集 0.75、
-        held-out 0.167（亂猜 0.125，96 條 held-out 的二項上界 0.193）——學到的是每個 cue 的
-        rival token 組合，不是可組合的證據。這條測試記錄的是**現在的**性質，不是願望。
+        別名版把訓練與 held-out 都釘在 0.5，看起來「同步」其實兩邊都沒有內容。修掉別名之後
+        必須**兩件事一起**才成立：`_heldout_pairs` 也要用同一組支持 token（修一半時它還留著
+        stride 3，實測 held-out 掉到 0.167——那是不一致，不是不會遷移）。對齊後訓練 0.806、
+        held-out 0.750。
         """
         task = downstream.TASKS["conflict"]
         core = downstream._train([1.0] * 96 * 5, 11, task, 5)
         on_train = downstream._evaluate(core, task, readout="direct")["hit_rate"]
-        held = downstream._heldout_pairs(task)
-        off_train = downstream._evaluate(core, task, held, readout="direct")["hit_rate"]
-        chance = 1 / 8
-        chance_upper = chance + 2 * math.sqrt(chance * (1 - chance) / len(held))
+        off_train = downstream._evaluate(
+            core, task, downstream._heldout_pairs(task), readout="direct"
+        )["hit_rate"]
         assert on_train > 0.3
-        assert off_train <= chance_upper, (on_train, off_train, chance_upper)
+        assert abs(on_train - off_train) < 0.2, (on_train, off_train)
 
 
 class TestDetectableEffectSize:
@@ -1129,3 +1128,32 @@ class TestConflictTargetsAreIdentifiable:
         for inputs, target in downstream._pairs(task):
             first.setdefault(target, frozenset(inputs[:2]))
         assert len(set(first.values())) == len(first)
+
+
+class TestHeldOutSharesTheTrainingSupportTokens:
+    """held-out 是「同一個 target 的新組合」，不是「同一個 target 的另一組證據」。
+
+    修 stride 時只改了 `_conflict_cue`，`_heldout_pairs` 還留著寫死的 3：訓練端用 stride 5、
+    held-out 用 3，兩邊的支持 token 不是同一組，量出來的「遷移失敗」是這個不一致造成的。
+    """
+
+    def test_each_target_keeps_its_support_tokens_in_heldout(self, protocol):
+        downstream = protocol._downstream
+        task = protocol._task(
+            "conflict",
+            {"pairs": 96, "features": 12, "cue_tokens": 5, "support": 2, "target_group": 8},
+            0.01,
+        )
+        support = int(task["support"])
+
+        def by_target(pairs):
+            out = {}
+            for cue, target in pairs:
+                out.setdefault(target, set()).add(frozenset(cue[:support]))
+            return out
+
+        train = by_target(downstream._pairs(task))
+        held = by_target(downstream._heldout_pairs(task))
+        assert set(train) == set(held)
+        for target in train:
+            assert train[target] == held[target], target
