@@ -30,6 +30,22 @@ and this project adheres to
   5.46/10**，4 過 2 不過，達成階梯仍 L0。限制照實記：套件判定當時是「任一關鍵詞命中」（同日由下方的 strict 正確性判定取代）；索引為衍生資料（`data/`
   gitignore），中文題仍答不出。### Changed
 
+- **控制臂體檢：`matched` 其實是第二個
+  `flat`（2026-11-11）**：§51 的「分級輸給打散控制臂」經不起追問——更新規則是「拉向
+  `target_strength × gate`」，而 `matched`
+  只打散信心、不動訓練流，於是每條配對的終點期望值都一樣，行為上等於「幅度較低的均勻權重」。實測
+  `conflict`/`direct`/ep40（40 種子，門檻 26）：`matched` 對 `flat`
+  命中 10/13 無差，而 `graded` 對 `flat` 是命中 1/29、強層名次信用 0/40、margin
+  0/40（全顯著）。因此 `strength_probe` 新增 `contrast_verdict`（graded vs
+  flat，不依賴 `matched`）、`graded_over_flat_hit`/`graded_under_flat_hit` 與
+  `control_verdict`（控制臂能否與 `flat`
+  分辨），三者都不進跨族判詞字串。另外三個機制假設：並列（exact
+  tie 三臂都是 0%）、target 質量先驗（top-1
+  winner 直方圖三臂相同）、串音回歸（r≈0.02，但 `conflict` 的 rival
+  load 沒有變異數，**不是**有效檢定）——都被否掉或無檢定力，所以只記錄證據支持的形狀：`graded`
+  頂端間距最大（中位數 0.1220 vs `flat` 0.0759）而命中最低（0.431 vs
+  0.472）——更有自信但更常錯，機制未定案。+2 測試。
+
 - **名次信用：把「差一點」量出來（2026-11-11）**：§48 留下的缺口是「三種讀出都只看勝負或絕對尺度，答不了『強弱有沒有放在正確的關聯上』」。新增 reciprocal
   rank 信用（第 1 名 1.0、第 2 名 0.5……），對尺度不變又保留「差一點」。它自己也會撒謊，兩種方式跟 §50 同型：(a)
   **對強弱兩層平均會懲罰分級本身**——第一版在

@@ -1031,6 +1031,24 @@ def strength_probe(
         for a, b in zip(rows["graded"], rows["matched"])
         if a["rank_credit_strong"] < b["rank_credit_strong"]
     )
+    # ``matched`` 這個控制臂還有效嗎？它把 tier 與信心的綁定打散，而更新規則是「拉向
+    # ``target_strength × gate``（gate＝兩個信心的乘積）」，所以它只會把每條配對的終點抹平——
+    # 行為上很接近另一個 ``flat``。實測 `conflict`/`direct`/ep40（40 種子）：`matched` 對 `flat`
+    # 命中 10/13（門檻 26，無差），而 `graded` 對 `flat` 命中 1/29、名次 0/40、margin 0/40
+    # （全顯著）。也就是說「輸給打散控制臂」跟「輸給均勻權重」是同一件事，不能拿前者當獨立證據。
+    # 所以這裡多存一組不依賴 `matched` 的比較，讓判詞可以兩個控制臂都報。
+    flat_better = sum(
+        1 for a, b in zip(rows["graded"], rows["flat"]) if a["hit_rate"] > b["hit_rate"]
+    )
+    flat_worse = sum(
+        1 for a, b in zip(rows["graded"], rows["flat"]) if a["hit_rate"] < b["hit_rate"]
+    )
+    control_better = sum(
+        1 for a, b in zip(rows["matched"], rows["flat"]) if a["hit_rate"] > b["hit_rate"]
+    )
+    control_worse = sum(
+        1 for a, b in zip(rows["matched"], rows["flat"]) if a["hit_rate"] < b["hit_rate"]
+    )
     return {
         "family": family,
         "epochs": epochs,
@@ -1064,7 +1082,31 @@ def strength_probe(
         ),
         "graded_over_matched_rank": rank_better,
         "graded_under_matched_rank": rank_worse,
+        # 第二條控制比較（不依賴 `matched`）：分級對「均勻權重」的淨值。
+        "contrast_verdict": _readout_verdict(flat_better, flat_worse, need),
+        "graded_over_flat_hit": flat_better,
+        "graded_under_flat_hit": flat_worse,
+        # 控制臂自己的體檢：`matched` 跟 `flat` 分不開時，任何「輸給控制臂」都等於
+        # "輸給均勻權重"，不能算成獨立證據。
+        "control_verdict": _control_verdict(control_better, control_worse, need),
     }
+
+
+def _control_verdict(better: int, worse: int, need: int) -> str:
+    """`matched` 控制臂還分得出來嗎？
+
+    ``matched`` 只打散 tier 與信心的綁定，不動訓練流（流本身就按 tier 重複），所以它保留「強配對
+    看三次」這件事，只把信心換成隨機。在這個更新規則下（拉向 ``target_strength × gate``），隨機信心
+    的期望值對每條配對都一樣，於是它變成「幅度較低的均勻權重」，也就是第二個 ``flat``。
+
+    這件事必須自己回報，否則「分級輸給控制臂」會被誤讀成「分級輸給隨機的 tier 綁定」，實際上兩者
+    是同一句話。
+    """
+    if better >= need and better > worse:
+        return "control-arm-better-than-flat"
+    if worse >= need and worse > better:
+        return "control-arm-worse-than-flat"
+    return "control-arm-indistinguishable-from-flat"
 
 
 def _readout_verdict(better: int, worse: int, need: int) -> str:

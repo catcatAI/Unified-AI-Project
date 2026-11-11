@@ -1022,3 +1022,53 @@ class TestRankCredit:
         # 沒跑就不能用空白冒充「沒問題」：句子長度本身是證據。
         assert unmeasured.count("/") == 2
         assert measured.endswith("/rank-credit-no-difference")
+
+
+class TestControlArmValidity:
+    """`matched` 打散的是 tier↔信心，而更新規則是「拉向 target_strength × gate(gate=兩個信心乘積)」。
+
+    隨機信心的期望值對每條配對都一樣，所以那個臂會退化成「幅度較低的 flat」。控制臂退化成被比較對象
+    本身時，「輸給控制臂」跟「輸給均勻權重」就是同一句話——協定必須自己說出這件事。
+    """
+
+    def test_control_arm_that_matches_flat_is_reported_as_such(self, protocol):
+        # 實測 conflict/direct/ep40：matched 對 flat 命中 10/13（門檻 26）。
+        assert protocol._control_verdict(10, 13, 26) == "control-arm-indistinguishable-from-flat"
+        assert protocol._control_verdict(30, 5, 26) == "control-arm-better-than-flat"
+        assert protocol._control_verdict(3, 33, 26) == "control-arm-worse-than-flat"
+
+    def test_the_report_carries_a_comparison_that_does_not_need_the_shuffled_arm(
+        self, protocol, monkeypatch
+    ):
+        """把四臂換成已知數值，確認新欄位真的接進報告，而且跨族字串形狀不變。"""
+
+        def fake_arm(task, pairs, tiers, stream, confidences, seed, arm, readout=protocol.READOUT):
+            hits = {"graded": 0.40, "matched": 0.50, "flat": 0.50, "speed": 0.45}[arm]
+            return {
+                "readout": readout,
+                "spearman": 0.5,
+                "tier_gap": 0.01,
+                "weight_strong": 0.1,
+                "weight_weak": 0.1,
+                "distinct_levels": 2,
+                "hit_rate": hits,
+                "margin": 0.0,
+                "rank_credit": 0.5,
+                "rank_credit_strong": 0.5,
+                "rank_credit_weak": 0.5,
+            }
+
+        monkeypatch.setattr(protocol, "_run_strength_arm", fake_arm)
+        probe = protocol.strength_probe(
+            "conflict",
+            {"step": protocol.FAMILIES["conflict"][0], "lr": 0.01},
+            readout="direct",
+            seeds=tuple(range(1, 41)),
+            epochs=1,
+        )
+
+        assert probe["graded_under_flat_hit"] == 40
+        assert probe["contrast_verdict"] == "readout-worse"
+        assert probe["control_verdict"] == "control-arm-indistinguishable-from-flat"
+        # 新欄位留在報告裡，不進跨族字串（那條協定由 TestWeightAttribution 釘住）。
+        assert "contrast_verdict" in probe and "control_verdict" in probe
