@@ -568,6 +568,37 @@ class TestRowDecayReachesCellsItDidNotWrite:
         assert self._weight(core, "a", "b") == 0.0
 
 
+class TestScheduledDecayKeepsFreshAssociations:
+    """The global pass must not delete what was written since the last one.
+
+    The old floor was 0.01 while a single write adds lr*gate*0.35 = 0.0028, so
+    every one-observation cell was pruned at the next pass; on the real engine
+    that silenced 8/8 queries after eight interactions (roadmap §67).
+    """
+
+    def test_one_write_survives_a_scheduled_pass(self):
+        core = TensorSNNCore(threshold=0.25, timesteps=6)
+        core.hebbian_update(
+            {"cue": 1.0},
+            {"target": 1.0},
+            lr=0.008,
+            target_strength=0.35,
+            weight_decay=0.0,
+        )
+        before = float(core._W[core._key_to_idx["target"], core._key_to_idx["cue"]])
+        assert before > 0.0
+        core.apply_decay(0.002)
+        after = float(core._W[core._key_to_idx["target"], core._key_to_idx["cue"]])
+        assert after > 0.0
+        assert after == pytest.approx(before * 0.998, rel=1e-6)
+
+    def test_pruning_is_opt_in_and_still_works_when_asked(self):
+        core = TensorSNNCore(threshold=0.25, timesteps=6)
+        core.hebbian_update({"cue": 1.0}, {"target": 1.0}, lr=0.008, weight_decay=0.0)
+        core.apply_decay(0.002, prune_below=0.01)
+        assert float(core._W[core._key_to_idx["target"], core._key_to_idx["cue"]]) == 0.0
+
+
 class TestAssociativeReadout:
     """Roadmap §59: the one-step readout, and why decode needs it when spikes tie.
 

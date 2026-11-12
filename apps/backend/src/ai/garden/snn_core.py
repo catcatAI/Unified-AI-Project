@@ -1112,10 +1112,22 @@ class TensorSNNCore:
                     prune[col] = False
             row_data[prune] = 0.0
 
-    def apply_decay(self, weight_decay: float = 0.002) -> None:
-        """Apply weight decay + pruning to ALL non-zero weights. O(nnz).
+    def apply_decay(self, weight_decay: float = 0.002, prune_below: float = 0.0) -> None:
+        """Apply weight decay to ALL non-zero weights. O(nnz).
 
         Call periodically (e.g., every 1000 samples) for global forgetting.
+
+        ``prune_below`` defaults to 0.0 -- no pruning -- because the old
+        hardcoded 0.01 floor sat 3.6x above a single write: one Hebbian update
+        adds ``lr * gate * target_strength`` = 0.0028 at the production lr, so a
+        fact seen once had its cell deleted by the next scheduled pass. Measured
+        on the real engine: after eight interactions (432 live cells) one
+        ``apply_decay(0.002)`` left 8/8 queries with no SNN output at all
+        (roadmap §67). Decay without pruning still forgets -- repeated passes
+        drive a cell toward zero -- and it cannot erase what was just learned.
+
+        Pass a floor only if it sits below one write's increment for the lr in
+        use; anything above that deletes fresh associations by construction.
         """
         if weight_decay <= 0 or self._W is None:
             return
@@ -1123,8 +1135,8 @@ class TensorSNNCore:
         live = self._W[:V, :V]
         mask = live > 0.0
         live[mask] = live[mask] * (1.0 - weight_decay)
-        prune_mask = live < 0.01
-        live[prune_mask] = 0.0
+        if prune_below > 0.0:
+            live[live < prune_below] = 0.0
 
     # ------------------------------------------------------------------
     # Persistence
