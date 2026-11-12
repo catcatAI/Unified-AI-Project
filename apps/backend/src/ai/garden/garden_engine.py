@@ -835,6 +835,9 @@ class GARDENEngine:
         self._presets_loaded = False
         self._query_count = 0
         self._learn_count = 0
+        # Scheduled global forgetting counts across calls, not within one
+        # (roadmap §68).
+        self._updates_since_scheduled_decay = 0
         self._learning_enabled = True
         self._last_confidence = 0.0
         self._last_network_output: Dict[str, float] = {}
@@ -1808,6 +1811,7 @@ class GARDENEngine:
                 # family-dependent, so production keeps the measured legacy
                 # behaviour until something can tell the two families apart.
             )
+            self._maybe_scheduled_decay()
 
         return {
             "interaction": self._learn_count,
@@ -2007,6 +2011,30 @@ class GARDENEngine:
             auto_regressive_delta += delta_ar
         return hebbian_delta, auto_regressive_delta, True
 
+    # Scheduled global forgetting (§68). The counter lives on the engine, not
+    # in one batch pass: the original schedule used a local counter, so it only
+    # fired for single batches of 1000+ samples and learn_from_interaction()
+    # never decayed at all -- a long-running agent forgot nothing.
+    _DECAY_EVERY_UPDATES = 1000
+    _DECAY_WEIGHT_DECAY = 0.002
+
+    def _maybe_scheduled_decay(self, updates: int = 1) -> bool:
+        """Count Hebbian updates across calls; run one global pass per 1000.
+
+        Returns whether a pass ran. The rate stays at 0.002 on purpose: at one
+        pass per 1000 updates that is a ~346k-update half-life, i.e. free by
+        measurement, while the rate that actually crosses the 0.15 decode gate
+        on stale knowledge is 0.05 (about 40k updates). Choosing that is a
+        product decision, so this only makes the existing schedule work.
+        """
+        self._updates_since_scheduled_decay += updates
+        ran = False
+        while self._updates_since_scheduled_decay >= self._DECAY_EVERY_UPDATES:
+            self._updates_since_scheduled_decay -= self._DECAY_EVERY_UPDATES
+            self.snn.apply_decay(weight_decay=self._DECAY_WEIGHT_DECAY)
+            ran = True
+        return ran
+
     def _batch_train_associations(
         self,
         samples: List[Dict[str, str]],
@@ -2035,9 +2063,7 @@ class GARDENEngine:
             auto_regressive_delta += ard
             if updated:
                 updates_performed += 1
-                # Periodic global decay every 1000 Hebbian updates
-                if updates_performed % 1000 == 0:
-                    self.snn.apply_decay(weight_decay=0.002)
+                self._maybe_scheduled_decay()
         return hebbian_delta, auto_regressive_delta, updates_performed
 
     def learn_batch(

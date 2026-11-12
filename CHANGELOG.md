@@ -15,6 +15,13 @@ and this project adheres to
 
 ### Added
 
+- **遺忘速率的量測與窗口（路線圖 §68）**（2026-11-12）：均勻 `apply_decay`
+  **不改名次**（每個速率 top-1 完全相同：A 0.833、B
+  1.000），只在 0.15 解碼門檻上顯形；rate
+  0.05 時舊的 A 掉到 0.068（不再回答）而 B 維持 0.295／命中 1.000，rate
+  0.3 才連 B 也推不過門檻。換算生產節奏（每 1000 次互動一次）：0.002 要 103.9 萬次互動才過門檻（實務上沒有遺忘）、0.05 是 4 萬次。新棘輪
+  `TestScheduledGlobalDecay`（3 條）；GARDEN 366 passed。
+
 - **相對解碼門檻（opt-in）——`select_anchored_keys(..., gate_fraction=)`（路線圖 §62）**（2026-11-11）：§61 量到常數門檻無法服務非脈衝讀出，這裡把它做成機制但不接線。`gate_fraction ∈ (0, 1]`
   以每次查詢自身的SNN 最大分數為基準，零分數的 key 一律不收，非法比例 raise
   `ValueError`；未傳參數時行為逐位不變。選取層量測（timesteps
@@ -37,6 +44,14 @@ and this project adheres to
   26%）。總分 **5.00 →
   5.46/10**，4 過 2 不過，達成階梯仍 L0。限制照實記：套件判定當時是「任一關鍵詞命中」（同日由下方的 strict 正確性判定取代）；索引為衍生資料（`data/`
   gitignore），中文題仍答不出。### Fixed
+
+- **線上學習從來沒有觸發過排程式遺忘（路線圖 §68）**（2026-11-12）：`_batch_train_associations`
+  的 `updates_performed`
+  是區域計數器，每次呼叫歸零，所以只有在「單一批次 ≥1000 樣本」時才會 decay，而
+  `learn_from_interaction()` 根本沒有呼叫它。真實引擎 480 次互動 → 觸發 **0**
+  次；把速率從 0.002 改成 0.05 重跑，結果逐位相同（掛鉤從未被呼叫）。修法：計數器搬到引擎（`_updates_since_scheduled_decay`）、新增
+  `_maybe_scheduled_decay()`（`while`
+  迴圈補足大量寫入）、線上與批次共用同一排程。速率維持 0.002——那是 bug 修復；改成 0.05 屬產品決策，只記錄在 §68。
 
 - **排程式全域 decay 在刪剛學到的關聯（路線圖 §67）**（2026-11-11）：`apply_decay()`
   衰減後把 `< 0.01` 的格子歸零，而單次 Hebbian 寫入只有

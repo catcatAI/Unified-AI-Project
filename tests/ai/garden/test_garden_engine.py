@@ -557,3 +557,36 @@ class TestLearnBatchRobustness:
         ]
         result = e.learn_batch(samples, confidence=0.7, train_associations=True)
         assert result["samples_processed"] == 2
+
+
+class TestScheduledGlobalDecay:
+    """The forgetting schedule must count updates across calls (roadmap §68).
+
+    The old schedule used a counter local to one batch pass, so it only fired
+    for single batches of 1000+ samples and online learning never decayed.
+    """
+
+    def test_counter_accumulates_across_calls(self, engine):
+        calls = []
+        engine.snn.apply_decay = lambda **kw: calls.append(kw)
+        engine._maybe_scheduled_decay(600)
+        assert calls == []
+        engine._maybe_scheduled_decay(600)
+        assert len(calls) == 1
+        assert engine._updates_since_scheduled_decay == 200
+
+    def test_a_long_pass_fires_once_per_thousand(self, engine):
+        calls = []
+        engine.snn.apply_decay = lambda **kw: calls.append(kw)
+        engine._maybe_scheduled_decay(2500)
+        assert len(calls) == 2
+        assert engine._updates_since_scheduled_decay == 500
+
+    def test_online_interaction_counts_toward_the_schedule(self, engine):
+        calls = []
+        engine.snn.apply_decay = lambda **kw: calls.append(kw)
+        engine.learn_from_interaction(
+            "the harbour bell rings twice at dawn", "I will remember the bell."
+        )
+        assert engine._updates_since_scheduled_decay >= 1
+        assert calls == []
