@@ -87,6 +87,12 @@ BUCKET_TOKENS = (BUCKET_SHORT, BUCKET_LONG)
 # Round 2 removes the "count the chunks" shortcut: with 8 equal gaps every
 # session is advanced by exactly 8 chunks, so only the dt *magnitude* can carry
 # the elapsed time.  Same task, vocabulary and thresholds as round 1.
+# The semigroup measurement set is fixed for every round so the L_al arm and
+# its control are compared on identical pairs (§39.3).
+SEMIGROUP_TRAIN_PAIR: Tuple[float, float] = (25.0, 25.0)
+SEMIGROUP_HELDOUT_PAIRS: Tuple[Tuple[float, float], ...] = ((30.0, 30.0), (20.0, 40.0))
+L_AL_MAX_DELTA = 1e-2
+
 ROUNDS = {
     1: {"gap_count": 4, "gap_mode": "random"},
     2: {"gap_count": 8, "gap_mode": "equal"},
@@ -94,11 +100,10 @@ ROUNDS = {
         "gap_count": 8,
         "gap_mode": "equal",
         "l_al_weight": 0.5,
-        "l_al_train": (25.0, 25.0),
-        "l_al_eval": ((30.0, 30.0), (20.0, 40.0)),
+        "l_al_train": SEMIGROUP_TRAIN_PAIR,
+        "l_al_eval": SEMIGROUP_HELDOUT_PAIRS,
     },
 }
-L_AL_MAX_DELTA = 1e-2
 
 # Registered defaults (§37.3). A deviating run prints a banner and is not the
 # registered result.
@@ -575,7 +580,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     l_al_weight = float(round_config.get("l_al_weight", 0.0))
     if args.l_al_weight is not None:
         l_al_weight = float(args.l_al_weight)
-    l_al_train = tuple(round_config.get("l_al_train", (25.0, 25.0)))
+    l_al_train = tuple(round_config.get("l_al_train", SEMIGROUP_TRAIN_PAIR))
     l_al_eval = tuple(round_config.get("l_al_eval", ()))
     fake_dt = 120.0 / gap_count  # same chunk count as a real session, only dt differs
 
@@ -585,7 +590,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         and args.eval_sessions == REGISTERED["eval_sessions"]
         and args.hidden == REGISTERED["hidden"]
         and args.emb == REGISTERED["emb"]
-        and args.l_al_weight == l_al_weight
+        and l_al_weight == float(round_config.get("l_al_weight", 0.0))
         and tuple(args.seeds) == tuple(REGISTERED["seeds"])
     )
 
@@ -652,10 +657,12 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         }
         metrics["t4_restart_delta"] = restart_delta(core, heldout[:200])
         metrics["semigroup_gap"] = semigroup_gap(core)
+        # Measured for every round (no gradients), so the L_al arm and its
+        # control are compared on the same held-out states and pairs.
+        pairs = (SEMIGROUP_TRAIN_PAIR, *SEMIGROUP_HELDOUT_PAIRS)
+        metrics["semigroup_eval"] = semigroup_eval(core, heldout, pairs)
         if l_al_weight > 0.0:
-            pairs = (l_al_train, *l_al_eval)
-            metrics["semigroup_eval"] = semigroup_eval(core, heldout, pairs)
-            metrics["l_al_train_final"] = float(getattr(core, "last_l_al_value", float("nan")))
+            metrics["l_al_train_last_batch"] = float(getattr(core, "last_l_al_value", float("nan")))
         metrics["zero_time_identity"] = float(zero_time_identity(core))
         hash_after = core.weights_hash()
 
@@ -766,28 +773,30 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     if gap_mode == "equal":
         checks["equal_step_counts"] = chunk_totals == [gap_count]
 
+    semigroup_report: Dict[str, Dict[str, Any]] = {}
+    for pair in (SEMIGROUP_TRAIN_PAIR, *SEMIGROUP_HELDOUT_PAIRS):
+        key = f"{pair[0]:g}+{pair[1]:g}"
+        values = [seed_metrics["semigroup_eval"][key] for seed_metrics in per_seed]
+        semigroup_report[key] = {
+            "mean": _mean(values),
+            "max": max(values),
+            "per_seed": values,
+        }
+
     l_al_report: Dict[str, Any] = {}
     if l_al_weight > 0.0:
-        deltas: Dict[str, Dict[str, Any]] = {}
-        for pair in (l_al_train, *l_al_eval):
-            key = f"{pair[0]:g}+{pair[1]:g}"
-            values = [seed_metrics["semigroup_eval"][key] for seed_metrics in per_seed]
-            deltas[key] = {
-                "mean": _mean(values),
-                "max": max(values),
-                "per_seed": values,
-            }
-            checks[f"L_AL_{key}"] = max(values) <= L_AL_MAX_DELTA
+        for key, entry in semigroup_report.items():
+            checks[f"L_AL_{key}"] = entry["max"] <= L_AL_MAX_DELTA
         l_al_report = {
             "weight": l_al_weight,
             "train_pair": list(l_al_train),
             "eval_pairs": [list(pair) for pair in l_al_eval],
             "max_delta_allowed": L_AL_MAX_DELTA,
-            "delta": deltas,
-            "train_loss_final": {
+            "delta": semigroup_report,
+            "train_loss_last_batch": {
                 "mean": _mean(
                     [
-                        seed_metrics.get("l_al_train_final", float("nan"))
+                        seed_metrics.get("l_al_train_last_batch", float("nan"))
                         for seed_metrics in per_seed
                     ]
                 )
@@ -836,6 +845,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
             "t2_hand_ablation_delta": hand_ablation,
         },
         "checks": checks,
+        "semigroup_delta": semigroup_report,
         "l_al": l_al_report,
         "all_pass": all(checks.values()),
         "provenance": provenance,
@@ -850,7 +860,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
 
 
 def print_report(report: Dict[str, Any]) -> None:
-    section = "§37" if report.get("round", 1) == 1 else "§38"
+    section = {1: "§37", 2: "§38", 3: "§39"}.get(report.get("round", 1), "§?")
     if not report["registered"]:
         print(f"\n⚠️  非登記參數：這不是 {section} 的登記結果，只可當煙霧測試。\n")
     step_counts = report["config"]["step_counts"]["distinct_totals"]
@@ -876,10 +886,9 @@ def print_report(report: Dict[str, Any]) -> None:
         print(f"  {condition:22s} {metric:18s} {entry['mean']:.4f} ± {entry['ci']:.4f}")
     print(f"  T4 restart Δ {summary['t4_restart_delta']['mean']:.2e}")
     print(f"  semigroup Δ (report only) {summary['semigroup_gap']['mean']:.4f}")
-    if report.get("l_al"):
-        delta_block = report["l_al"]["delta"]
-        for key, entry in delta_block.items():
-            print(f"  L_al {key:10s} max|Δh| {entry['max']:.4e}")
+    if report.get("semigroup_delta"):
+        for key, entry in report["semigroup_delta"].items():
+            print(f"  semigroup {key:10s} max|Δh| {entry['max']:.4e}")
 
     print("\n== 預登記判定 ==")
     for name, passed in report["checks"].items():
@@ -919,7 +928,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     if args.out is None:
-        name = "probe_state_cycles.json" if args.round == 1 else "probe_state_cycles_round2.json"
+        name = {
+            1: "probe_state_cycles.json",
+            2: "probe_state_cycles_round2.json",
+            3: "probe_state_cycles_round3.json",
+        }[args.round]
         args.out = REPO_ROOT / "data" / "intelligence_reports" / name
 
     report = run(args)
