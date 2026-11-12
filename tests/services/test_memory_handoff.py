@@ -15,10 +15,14 @@
 import asyncio
 
 import pytest
+from ai.core.stateful_runtime import reset_runtime_for_tests
 from services.llm.generation_gate import (
     GENERATIVE_BACKENDS,
+    STATEFUL_BACKENDS,
     generation_available,
     has_generative_backend,
+    is_stateful_backend,
+    stateful_core_active,
 )
 from services.llm.memory_evidence import collect, remember
 from services.llm.memory_integration import MemoryIntegration
@@ -313,3 +317,30 @@ def test_the_native_path_still_answers_from_the_taught_pair():
     result = _router(["unified"])._try_neural_retrieval("水的沸點是多少？", {})
     assert result is not None
     assert result.text == "100 度"
+
+
+# -- continuity is not generation --------------------------------------------
+
+
+def test_the_stateful_core_is_not_a_generative_backend():
+    """Carrying state and writing a reply are different capabilities.
+
+    If the stateful core were listed as generative, a caller would hand it a
+    prompt it cannot follow and a template-shaped answer would be attributed to
+    it — the mirror image of the bug the gate exists to prevent.
+    """
+    assert "stateful-core" in STATEFUL_BACKENDS
+    assert not (STATEFUL_BACKENDS & GENERATIVE_BACKENDS)
+    assert is_stateful_backend("stateful-core")
+    assert is_stateful_backend("Stateful-Core")
+    assert not is_stateful_backend("openai")
+    assert not has_generative_backend(["stateful-core"])
+
+
+def test_the_stateful_core_is_off_by_default(monkeypatch):
+    monkeypatch.delenv("ANGELA_STATEFUL_CORE", raising=False)
+    reset_runtime_for_tests()
+    try:
+        assert stateful_core_active() is False
+    finally:
+        reset_runtime_for_tests()

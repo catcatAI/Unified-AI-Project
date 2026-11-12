@@ -21,6 +21,11 @@ The enum values below are the authoritative names (``LLMBackend`` in
 NOT here: it is the project's offline statistical core, not a model that can
 be given a prompt and asked to rephrase it — with it alone the honest surface
 layer is the only thing that can answer.
+
+``stateful_core_active()`` answers a neighbouring question that must not be
+confused with this one: does the opt-in core (contract P4) carry continuity for
+this turn? Its presence changes *where* the state lives, never *who writes the
+reply*.
 """
 
 # LAYER: surface
@@ -45,10 +50,24 @@ GENERATIVE_BACKENDS = frozenset(
 )
 
 
+# Continuity is a *different* capability from generation, and the stateful core
+# (contract P4) has only the first: it advances one state object per turn and
+# cannot take a prompt and rewrite it. It must never be added to
+# ``GENERATIVE_BACKENDS`` — that is how a template-shaped reply would get
+# attributed to a model. The set lives here because this module is the single
+# place that answers "which backend is what".
+STATEFUL_BACKENDS = frozenset({"stateful-core"})
+
+
 def backend_name(backend: Any) -> str:
     """The wire name of a backend (enum member, string, or config id)."""
     value = getattr(backend, "value", backend)
     return str(value or "").strip().lower()
+
+
+def is_stateful_backend(backend: Any) -> bool:
+    """True when ``backend`` carries continuity instead of generating text."""
+    return backend_name(backend) in STATEFUL_BACKENDS
 
 
 def has_generative_backend(backends: Any) -> bool:
@@ -102,9 +121,28 @@ def generation_available(service: Any = None) -> bool:
         return False
 
 
+def stateful_core_active() -> bool:
+    """True when the opt-in stateful core is running and carries continuity.
+
+    Default is False: ``ANGELA_STATEFUL_CORE`` is unset, so a default server
+    behaves exactly as before. Every failure (missing torch, no checkpoint,
+    refused state) is False rather than an exception — continuity is
+    infrastructure, and its absence must not change the reply path.
+    """
+    try:
+        from ai.core.stateful_runtime import get_runtime
+
+        return bool(get_runtime().carries_continuity())
+    except Exception:  # pragma: no cover - import cycle / optional torch
+        return False
+
+
 __all__ = [
     "GENERATIVE_BACKENDS",
+    "STATEFUL_BACKENDS",
     "backend_name",
     "generation_available",
     "has_generative_backend",
+    "is_stateful_backend",
+    "stateful_core_active",
 ]

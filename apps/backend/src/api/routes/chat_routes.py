@@ -761,8 +761,42 @@ def _ctx_bio_state(context: Dict[str, Any], bio: Any) -> None:
         logger.warning(f"Biological state retrieval failed: {e}", exc_info=True)
 
 
+def _stateful_core_enabled() -> bool:
+    """Is the opt-in stateful core switched on? (default off, contract P4)"""
+    try:
+        from ai.core.stateful_runtime import enabled
+
+        return bool(enabled())
+    except Exception as e:  # pragma: no cover - optional torch / import cycle
+        logger.debug(f"Stateful core unavailable: {e}", exc_info=True)
+        return False
+
+
+def _stateful_core_carries_continuity() -> bool:
+    """Does the core own continuity this turn, so the prompt must not?
+
+    Read through ``generation_gate`` so there is one definition of the
+    capability rather than a second one here.
+    """
+    try:
+        from services.llm.generation_gate import stateful_core_active
+
+        return bool(stateful_core_active())
+    except Exception as e:  # pragma: no cover - import cycle safety
+        logger.debug(f"Stateful core capability check failed: {e}", exc_info=True)
+        return False
+
+
 def _ctx_state_matrix(context: Dict[str, Any]) -> None:
-    """State matrix 4D axes + theta + eta injection."""
+    """State matrix 4D axes + theta + eta injection.
+
+    Skipped when the stateful core carries continuity (contract P4, opt-in):
+    the contract puts state in one object, not in the prompt, so a text copy
+    would be a second carrier that goes stale the moment the core advances.
+    """
+    if _stateful_core_carries_continuity():
+        context["state_source"] = "core"
+        return
     try:
         sm = _get_state_matrix()
         eta_state = _get_eta_axis()
@@ -2006,6 +2040,45 @@ def _format_chat_response(
     }
 
 
+def _advance_stateful_core(user_message: str, session_id: str) -> Optional[Dict[str, Any]]:
+    """Advance the opt-in core by one turn (contract P4); None when it refuses.
+
+    Default off: with ``ANGELA_STATEFUL_CORE`` unset this returns immediately
+    and no directory is created. A refusal (no checkpoint, a state saved under
+    different weights) also returns None — and leaves the saved state
+    byte-identical, because a silent reset is indistinguishable from a
+    successful resume to every later reader.
+    """
+    if not _stateful_core_enabled():
+        return None
+    try:
+        from ai.core.stateful_runtime import get_runtime
+
+        return get_runtime().advance(user_message, session_id=session_id)
+    except Exception as e:
+        # Infrastructure, not the reply: never take the turn down with it.
+        logger.warning(f"Stateful core advance failed: {e}", exc_info=True)
+        return None
+
+
+def _attach_core_provenance(
+    result: Optional[Dict[str, Any]], core: Optional[Dict[str, Any]]
+) -> None:
+    """Say where continuity came from this turn (only when the core is opted in).
+
+    Nothing is added when the core is off, so the default response shape is
+    unchanged. When it is on and refused, ``state_source="none"`` — claiming
+    ``"prompt"`` there would be asserting a carrier this turn never had.
+    """
+    if not isinstance(result, dict) or not _stateful_core_enabled():
+        return
+    if core:
+        result["state_source"] = "core"
+        result["core_state"] = core
+    else:
+        result["state_source"] = "none"
+
+
 async def _handle_chat_request(
     user_message: str,
     user_name: str,
@@ -2045,6 +2118,9 @@ async def _handle_chat_request(
     # resolved per user, and every downstream consumer (prompt builder, reflex
     # engines, subtitle/TTS layer) reads the same binding.
     _user_token = _bind_current_user((extra_context or {}).get("user_id") or user_name)
+    # Contract P4: the state object is advanced once per turn, by the turn loop
+    # — not by the prompt builder, and not by the reply. Opt-in; None when off.
+    core_provenance = _advance_stateful_core(user_message, session_id)
     try:
         result = await _run_chat_pipeline(
             user_message,
@@ -2097,6 +2173,7 @@ async def _handle_chat_request(
                 sessions.set(session_id, session)
             except Exception as e:
                 logger.warning(f"Session history persistence failed: {e}", exc_info=True)
+        _attach_core_provenance(result, core_provenance)
 
 
 async def _run_chat_pipeline(
