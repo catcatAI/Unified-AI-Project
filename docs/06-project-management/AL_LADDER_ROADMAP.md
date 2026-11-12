@@ -2485,3 +2485,72 @@ timesteps」，是整數級別的粗略量。多個 target 在同一個時間步
 - 兩族、8 種子、top-1、小訓練量（96／48 對、≤10
   epoch）；沒有量回答品質、延遲或回覆長度。
 - 「distinct」是不同值的個數，不是有效名次：整數讀出的 0.58 表示**幾乎沒有輸出**，不是「沒有名次」。
+
+## §62 相對門檻讓解碼看得到排名：opt-in 實作與選取層量測
+
+§61 的結論是門檻必須相對。這一節把它做成機制並量到選取層——**不是**回覆品質。
+
+### 實作
+
+`select_anchored_keys(network_output, input_keys, decode_gate=None, gate_fraction=None)`：
+
+- 預設路徑逐位不變（`decode_gate`，否則 `_DECODE_GATE` 的絕對 0.15）；
+- `gate_fraction ∈ (0, 1]` 時，門檻 = **該查詢**
+  SNN-only 最大分數 × 比例。比例無因次，所以跨訓練量仍然是同一個數；
+- 分數 `0.0`
+  的 key 一律不收（否則 0 會清掉 0 門檻，把所有沒動過的 key 拉進來）；
+- 比例不在 (0, 1] 就 `ValueError`，不靜默退回絕對門檻。
+
+**為什麼是 opt-in**：它決定哪些 key 進得去，也就是回覆的組成。兩個引擎（`garden_engine._anchored_decode`、ED3N）都**沒有**傳這個參數。
+
+### 數據（timesteps = 6、8 種子、選取層）
+
+「target-in-reply」= 正確 target 出現在 `select_anchored_keys`
+回傳的 SNN 段裡；「keys」= 平均進去的 SNN key 數。
+
+| 族            | ep  | 臂                | target-in-reply | keys |
+| ------------- | --- | ----------------- | --------------- | ---- |
+| `conflict`    | 1   | `spike` 絕對 0.15 | 0.000           | 0.00 |
+| `conflict`    | 1   | `W·a` 絕對 0.15   | 0.000           | 0.00 |
+| `conflict`    | 1   | `W·a` 相對 0.5    | **0.594**       | 2.12 |
+| `conflict`    | 1   | `W·a` 相對 1.0    | 0.375           | 1.07 |
+| `conflict`    | 10  | `spike` 絕對 0.15 | 0.438           | 0.60 |
+| `conflict`    | 10  | `W·a` 絕對 0.15   | 0.698           | 1.83 |
+| `conflict`    | 10  | `W·a` 相對 0.5    | **0.807**       | 2.50 |
+| `conflict`    | 10  | `W·a` 相對 1.0    | 0.583           | 1.00 |
+| `many_to_one` | 1   | `spike` 絕對 0.15 | 0.000           | 0.00 |
+| `many_to_one` | 1   | `W·a` 相對 0.5    | 0.750           | 3.95 |
+| `many_to_one` | 1   | `W·a` 相對 1.0    | 0.539           | 1.66 |
+| `many_to_one` | 10  | `spike` 絕對 0.15 | 0.000           | 0.00 |
+| `many_to_one` | 10  | `W·a` 絕對 0.15   | 0.000           | 0.00 |
+| `many_to_one` | 10  | `W·a` 相對 1.0    | **1.000**       | 1.00 |
+
+### 讀法
+
+1. **絕對門檻在 ep1 兩族都給 0 個 key**——不是「比較差」，是 SNN 段整個空的。相對門檻在同一批權重上給 0.594（`conflict`）與 0.750（`many_to_one`）。
+2. **同預算比較**（約 1 個 key）：`conflict` ep10 相對 1.0 = 0.583
+   vs 絕對 0.438（後者的 0.60 key 已經是它的上限）；`many_to_one` ep10 相對 1.0
+   = 1.000 vs 絕對 0.000。
+3. **收得越寬，答案越容易在裡面，這是機械效果**：相對 0.5 在 `many_to_one`
+   ep1 收了 3.95 個 key（8 個候選裡近一半）才有 0.750。所以 `target-in-reply`
+   必須和 keys 一起讀，不能單獨當成績。§61 那個 `normalized`
+   的 1.000 正是這一類：2.54 個 key 的廣度。
+4. **相對門檻的代價是回覆變雜**：更多 SNN
+   key 進得去，就更容易接上不相關的內容。這正是它停在 opt-in 的理由。
+
+### 已改
+
+- `ai/data_eng/assemble.py`：`gate_fraction`（opt-in，預設路徑不變）、零分數不收、非法比例 raise。
+- 兩條棘輪：`test_relative_gate_admits_a_top_key_the_absolute_gate_rejects`、
+  `test_relative_gate_rejects_a_fraction_outside_the_unit_interval`。
+
+### 沒有做
+
+- 引擎沒有接線：`garden_engine._anchored_decode` 與 ED3N 都仍用絕對門檻。
+- **沒有回覆層量測**：AL 任務族是合成 key、沒有文字可解碼；要接線前得在真實語料上量回覆品質與長度。
+
+### 限制
+
+- 選取層不是回覆品質：`target-in-reply` 只問答案在不在，不問回覆讀起來對不對。
+- 兩族、8 種子、top-1、小訓練量（96／48 對、≤10
+  epoch）。絕對值不可外推，只有「絕對門檻在此尺度下必然為空」這個結構性結論可以。

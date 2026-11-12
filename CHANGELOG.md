@@ -15,6 +15,14 @@ and this project adheres to
 
 ### Added
 
+- **相對解碼門檻（opt-in）——`select_anchored_keys(..., gate_fraction=)`（路線圖 §62）**（2026-11-11）：§61 量到常數門檻無法服務非脈衝讀出，這裡把它做成機制但不接線。`gate_fraction ∈ (0, 1]`
+  以每次查詢自身的SNN 最大分數為基準，零分數的 key 一律不收，非法比例 raise
+  `ValueError`；未傳參數時行為逐位不變。選取層量測（timesteps
+  6、8 種子）：絕對門檻在 ep1 兩族**一個 key 都收不到**，相對 0.5 在同一批權重上讓正確 target 進回覆的機率是 0.594（`conflict`）／0.750（`many_to_one`）；同預算（約 1 個 key）時
+  `conflict` ep10 相對 1.0 = 0.583 優於絕對的 0.438，`many_to_one` ep10 是 1.000
+  vs
+  0.000。代價是進去的 key 變多（相對 0.5 平均 2.1–3.95 個），回覆更容易接上不相關內容，因此兩個引擎都**沒有**接線，回覆層量測留待下一輪。
+
 - **事實維度（facts）由公開語料補上，20% → 46.7%**（2026-10-23）：
   `scripts/download_knowledge_corpus.py`（Simple English Wikipedia
   dump，驗 bzip2／sha256）＋`scripts/build_knowledge_index.py`（279,525 篇導言段、SQLite

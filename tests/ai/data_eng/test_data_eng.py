@@ -204,6 +204,29 @@ class TestAssemble:
         )
         assert "kLow" not in result
 
+    def test_relative_gate_admits_a_top_key_the_absolute_gate_rejects(self):
+        """0.15 is a spike-scale number; a weight-scale readout never reaches it.
+
+        `W · a` measured 0.0054-0.2342 across the AL cells while ranking
+        perfectly in one of them (roadmap §61), so the gate has to be relative
+        to the query's own top score instead of a constant.
+        """
+        output = {"kT": 0.02, "kR": 0.004}
+        inputs = {"a": 1.0}
+        assert "kT" not in select_anchored_keys(output, inputs, decode_gate=0.15)
+        selected = select_anchored_keys(output, inputs, gate_fraction=0.5)
+        assert "kT" in selected
+        assert "kR" not in selected
+
+    def test_relative_gate_rejects_a_fraction_outside_the_unit_interval(self):
+        for bad in (0.0, -0.5, 1.5):
+            try:
+                select_anchored_keys({"k1": 0.5}, {"a": 1.0}, gate_fraction=bad)
+            except ValueError as exc:
+                assert "gate_fraction" in str(exc)
+            else:
+                raise AssertionError(f"gate_fraction={bad} was accepted")
+
 
 class TestGrow:
     def test_growth_cap_ok(self):
