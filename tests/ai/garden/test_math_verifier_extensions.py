@@ -3,6 +3,7 @@
 # =============================================================================
 """Tests for deterministic engine extensions (trig, constants, logic, KB)."""
 
+import logging
 import math
 
 import pytest
@@ -244,3 +245,32 @@ class TestKnowledgeBaseExtensions:
 
     def test_chemical_none(self):
         assert route_knowledge("formula of nonexistent_element") is None
+
+
+class TestDatesAreNotArithmetic:
+    """A date is text, not a subtraction.
+
+    The operator pattern reads "2026-9-22" as 2026-9-22 and answered 1995; with
+    leading zeros it raised SyntaxError, which used to be logged at WARNING with
+    a traceback for every sentence that contained a date.
+    """
+
+    def test_iso_date_with_leading_zeros_is_not_an_expression(self):
+        assert MathExtractor().extract("2026-09-22") is None
+
+    def test_iso_date_without_leading_zeros_is_not_subtraction(self):
+        extractor = MathExtractor()
+        assert extractor.extract("2026-9-22") is None
+        assert extractor.extract("2026-9-22 的會議") is None
+
+    def test_slash_shaped_date_is_not_an_expression(self):
+        assert MathExtractor().extract("2026/9/22") is None
+
+    def test_non_expression_is_not_reported_as_a_failure(self, caplog):
+        with caplog.at_level(logging.WARNING):
+            assert MathExtractor()._safe_eval("2026-09-22") is None
+        assert [r for r in caplog.records if r.levelno >= logging.WARNING] == []
+
+    def test_plain_subtraction_still_evaluates(self):
+        assert MathExtractor().extract("12-3")[1] == 9.0
+        assert MathExtractor().extract("3-4-5")[1] == -6.0

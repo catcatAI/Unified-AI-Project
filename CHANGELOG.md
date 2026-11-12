@@ -38,6 +38,16 @@ and this project adheres to
   5.46/10**，4 過 2 不過，達成階梯仍 L0。限制照實記：套件判定當時是「任一關鍵詞命中」（同日由下方的 strict 正確性判定取代）；索引為衍生資料（`data/`
   gitignore），中文題仍答不出。### Fixed
 
+- **日期不再被當成減法，非運算式也不再噴 traceback（路線圖 §64）**（2026-11-11）：`services/math_verifier.py`
+  把 `2026-9-22` 讀成減法並回答 `2026-9-22 = 1995`；`2026-09-22` 則因前導零觸發
+  `SyntaxError`，以 `warning(..., exc_info=True)` 每句記錄一段 traceback。新增
+  `_DATE_SHAPED` 守衛（`YYYY-M-D`、`M-D-YYYY`，分隔符
+  `-`／`/`／`.`）跳過日期候選，並把 `SyntaxError` 降為 `debug`
+  且不附 traceback；其他例外維持 `warning` +
+  `exc_info`，真實錯誤的可見度沒有放寬。驗證：日期全部回 `None`、`12-3` →
+  9、`3-4-5` → -6 照舊，`test_math_verifier_extensions.py` 57 passed（+5 條
+  `TestDatesAreNotArithmetic`），相關三檔 117 passed。
+
 - **更正 §60–§62 的適用範圍：絕對解碼門檻的邊界是訓練量（路線圖 §63）**（2026-11-11）：在真實引擎（`GARDENEngine` +
   129 條字典 + 生產
   `learn_from_interaction`）補量回覆層，8 句互動、2 輪訓練時絕對門檻的覆蓋是 0.614、平均收 2.38 個 key，**不是空的**；相對 0.5 的覆蓋相同（0.614）但只收 1.88 個 key，相對 1.0 掉到 0.531。再把訓練量當唯一變因：1 輪時非輸入 top 值 0.0821、絕對門檻 8/8 查詢全空；2 輪 0.1542、剩 2/8 空；8 輪 0.8750、0/8。所以 0.15 判斷的是「學了多久」而非訊號好壞，§60–§62 的「收不到 key」屬於薄訓練 regime；生產訓練量下相對門檻沒有品質收益（只少收 key 或切短回覆），因此維持不接線，`gate_fraction`

@@ -26,6 +26,13 @@ import operator
 import re
 from typing import Any, Callable, Dict, Optional, Tuple
 
+# A date is not arithmetic. The operator pattern below reads "2026-9-22" as
+# subtraction and answered 1995; with leading zeros ("2026-09-22") it raised
+# SyntaxError, which was logged at WARNING with a full traceback for every such
+# sentence. Both are the same defect: text that merely contains digits and a
+# dash was treated as an expression.
+_DATE_SHAPED = re.compile(r"^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$" r"|^\d{1,2}[-/.]\d{1,2}[-/.]\d{4}$")
+
 
 class MathExtractor:
     """Extracts and parses mathematical expressions from text."""
@@ -65,6 +72,8 @@ class MathExtractor:
             m = re.search(p, text)
             if m:
                 expr = m.group(1).strip()
+                if _DATE_SHAPED.match(expr):
+                    continue
                 if len(expr) >= 2 and (
                     any(op in expr for op in "+-*/%") or re.search(r"[a-zA-Z_]\w*\(", expr)
                 ):
@@ -80,6 +89,12 @@ class MathExtractor:
             self._node_count = 0
             result = self._eval_node(tree.body)
             return float(result) if result is not None else None
+        except SyntaxError:
+            # Ordinary text lands here (a date, prose with a dash). It is not a
+            # failure to report: `extract` is a filter, and a stack trace per
+            # sentence at WARNING swamps the log.
+            logger.debug("Not an expression: '%s'", expr)
+            return None
         except Exception:
             logger.warning("Failed to evaluate expression '%s'", expr, exc_info=True)
             return None
