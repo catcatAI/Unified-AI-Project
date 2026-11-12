@@ -1322,6 +1322,11 @@
       "referenced": true,
       "purpose": "SLS 真實對比訓練（項目原生 SharedLatentSpace，吃稠密向量）— 硬件規格自適應"
     },
+    "train_state_content.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "Round 5: does the state carry content, and does generation read it back?"
+    },
     "train_three_layer.py": {
       "category": "training",
       "referenced": true,
