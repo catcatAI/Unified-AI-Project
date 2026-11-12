@@ -8,6 +8,7 @@ import os
 import sys
 import tempfile
 import time
+from pathlib import Path
 
 import pytest
 
@@ -367,22 +368,24 @@ class TestHandlerTaskManager:
     """Tests for task_manager_handler.py."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        from services.handlers.task_manager_handler import (
-            _TASKS_FILE,
-            TaskManagerHandler,
-            _load_tasks,
-            _save_tasks,
-        )
+    def setup(self, tmp_path, monkeypatch):
+        """Use a private task file, not the user's real one.
 
-        self.handler = TaskManagerHandler()
-        self._original_tasks = _load_tasks()
-        _save_tasks([])
+        The previous version called ``_save_tasks([])`` on
+        ``~/.angela/tasks/tasks.json`` and restored the old list in teardown.
+        That restores on the happy path only: a crash between the two calls
+        leaves the user with an empty task list, and every run rewrites a file
+        that belongs to them. A test must not write into the environment it is
+        testing.
+        """
+        import services.handlers.task_manager_handler as task_store
 
-    def teardown_method(self):
-        from services.handlers.task_manager_handler import _save_tasks
-
-        _save_tasks(self._original_tasks)
+        monkeypatch.setattr(task_store, "_TASKS_DIR", tmp_path / "tasks")
+        monkeypatch.setattr(task_store, "_TASKS_FILE", tmp_path / "tasks" / "tasks.json")
+        # Guard, not decoration: if the redirect ever stops working the tests
+        # below would silently rewrite a file that belongs to the user.
+        assert Path(task_store._TASKS_FILE) != Path.home() / ".angela" / "tasks" / "tasks.json"
+        self.handler = task_store.TaskManagerHandler()
 
     def test_create_task(self):
         result = _run_async(self.handler.handle("建立任務：買菜"))
