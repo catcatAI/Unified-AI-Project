@@ -152,6 +152,11 @@
       "referenced": false,
       "purpose": "!/usr/bin/env python3"
     },
+    "arithmetic_task.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "One definition of the arithmetic task, shared by every trainer and probe."
+    },
     "audit_dictionary_quality.py": {
       "category": "diagnostics",
       "referenced": true,
@@ -841,6 +846,11 @@
       "category": "tool",
       "referenced": true,
       "purpose": "Prepare the AI+AL joint training data (pilot records -> trainable jsonl)."
+    },
+    "prepare_arithmetic_task.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Turn the raw arithmetic corpus into a clean, leak-free plain-prompt split."
     },
     "prepare_core_training_data.py": {
       "category": "tool",

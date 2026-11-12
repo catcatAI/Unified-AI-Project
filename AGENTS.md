@@ -87,10 +87,10 @@ pre-commit run --all-files
 
 > 📌 **NOTE CHAIN IS A HISTORICAL CHANGELOG**: Every test count embedded below
 > (5,085 / 4,717 / 4,734 / … / 5,432 / …) is a dated milestone at the time of
-> that NOTE. The current authoritative count is **9,565 collected (tests/), 0
+> that NOTE. The current authoritative count is **9,575 collected (tests/), 0
 > errors** (re-verified 2026-11-12; full testpaths
-> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,327
-> collected / 10,224 passed / 112 skipped**, 0 failed).
+> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,337
+> collected / 10,234 passed / 112 skipped**, 0 failed).
 
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun
 > 25–29). Includes §X #34-#54: save_visual_decoder_weights,
@@ -1576,6 +1576,7 @@ tests/
 | Why the SNN core is still 0 after training (root cause + fix path)                        | `docs/06-project-management/CORE_GAP_ANALYSIS.md`                                                                                                                    |
 | Prepare core training data (normalise, dedup, leak check, 95-5 split)                     | `python3 scripts/prepare_core_training_data.py`                                                                                                                      |
 | Train the token-level SNN (tokens + surrogate gradient, next-token CE)                    | `PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_token_snn.py --limit 20000 --epochs 5 --max-len 160`                                                   |
+| SNN vs GRU, equal parameters + equal steps (pre-registered; results in CORE_GAP §36)      | `python3 scripts/compare_snn_gru.py`                                                                                                                                 |
 | Train ED3N (associations **and** the sequence decoder `generate()` reads)                 | `PYTHONPATH=apps/backend/src ./.venv/bin/python -m ai.ed3n train apps/backend/data/processed/core_train.jsonl --epochs 1 -o apps/backend/data/models/ed3n_core.json` |
 | Unified intelligence definition gate                                                      | `python3 scripts/check_intelligence_definition.py`                                                                                                                   |
 | Paraphrase generalisation probe (frozen splits + learning effect)                         | `python3 scripts/probe_paraphrase.py`                                                                                                                                |
