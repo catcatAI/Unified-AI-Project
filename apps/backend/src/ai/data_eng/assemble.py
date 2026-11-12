@@ -24,6 +24,13 @@ __all__ = [
 ]
 
 # Minimum SNN activation to enter the response (1 spike in ~6 timesteps).
+#
+# Absolute, and only meaningful on the spike scale: 1/6 = 0.167. A weight-scale
+# readout (``W · a``) has no natural 0.15 -- measured at production timesteps its
+# top value stayed under this gate in 5 of 6 AL cells, and the gate that would
+# give it the spike readout's coverage moved 34.6x as training grew inside one
+# family (roadmap §61). Making this gate relative to each query is the
+# prerequisite for decoding from anything but spikes.
 _DECODE_GATE = 0.15
 
 
