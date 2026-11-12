@@ -29,8 +29,9 @@
    兩個入口（`ai_step`／`al_step`）、同一個 state 物件；T1 歸零 `h` 後時間題掉回 chance
    （0.9998 → 0.5092）、不跑 `al_step` 與歸零逐位同分、hand-state 對照組在同一 T1 下
    不受影響（1.0000）。**這是機制證據，不是能力**：核心分仍 0.00/10，生產聊天路徑仍走
-   prompt／`state_for_llm`；只有 GRU、合成任務、同進程 restart，半群未成立。預登記與
-   限制見 `CORE_GAP_ANALYSIS.md` §37。
+   prompt／`state_for_llm`；只有 GRU、合成任務、同進程 restart，半群未成立。等段數重跑
+   （§38，每個 session 固定 8 個 chunk）18/18 通過，主臂 1.0000、歸零 0.4986——「數更新
+   次數」的捷徑已排除。預登記與限制見 `CORE_GAP_ANALYSIS.md` §37、§38。
 
 ---
 

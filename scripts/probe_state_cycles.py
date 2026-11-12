@@ -34,7 +34,9 @@ reported as intelligence.
 
 Usage
 -----
-    python3 scripts/probe_state_cycles.py                 # the registered run
+    python3 scripts/probe_state_cycles.py                 # registered round 1 (S37)
+    python3 scripts/probe_state_cycles.py --round 2       # registered round 2 (S38,
+                                                          # equal step counts)
     python3 scripts/probe_state_cycles.py --seeds 0 --epochs 1 \
         --train-sessions 256 --eval-sessions 64           # smoke only
 """

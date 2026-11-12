@@ -253,7 +253,8 @@ T5 對照組也變 → 先把實驗做乾淨。
 | **P0** | 凍結本契約＋schema＋測試骨架（不改行為） | 文件與 schema 審查通過；T1–T6 的定義寫定 |
 | — | **P0 狀態（2026-11-12）**：完成。`ai/core/core_state.py` ＋ 15 條 schema／拒絕載入測試；**行為未改**。 | `pytest tests/ai/test_core_state_contract.py` 綠；`mypy` 0 error |
 | **P1** | 用 GRU 實作 `CoreState`＋`ai_step`／`al_step`；合成多回合資料；跑 T1–T6 | T1 有顯著下降、T4 一致、T5 對照組不變 |
-| — | **P1 第一臂狀態（2026-11-12）**：完成，**17/17 預登記檢查通過**。主臂時間題／內容題 0.9998；歸零 `h` → 0.5092／0.0785（可回答半）；不跑 `al_step` 與歸零**逐位同分**；hand-state 臂歸零 `h` **完全不受影響**（1.0000）。預登記 §37.4–§37.5、結果 §37.6–§37.7。**這不是能力分**：核心分仍 0.00/10，生產路徑未接。 | `probe_state_cycles.py` 的 `all_pass=True`；`tests/ai/test_state_cycles.py` 17 條綠 |
+| — | **P1 第一臂狀態（2026-11-12）**：完成，**17/17 預登記檢查通過**。主臂時間題／內容題 0.9998；歸零 `h` → 0.5092／0.0785（可回答半）；不跑 `al_step` 與歸零**逐位同分**；hand-state 臂歸零 `h` **完全不受影響**（1.0000）。預登記 §37.4–§37.5、結果 §37.6–§37.7。**這不是能力分**：核心分仍 0.00/10，生產路徑未接。§38 的等段數重跑（每 session
+固定 8 個 chunk，排除「數更新次數」的捷徑）**18/18 通過**，主臂 1.0000、歸零 0.4986。 | `probe_state_cycles.py` 的 `all_pass=True`；`tests/ai/test_state_cycles.py` 17 條綠 |
 | **P2** | 把同一契約接到 SNN（先修梯度帶）；與 GRU 同預算比較 | 同參數同步數下可訓練；T1–T6 過 |
 | **P3** | SSM 原型（dt 原生） | 在 T3／T5 上優於或等於 GRU；成本可接受 |
 | **P4** | 接生產：`generation_gate` 加 `stateful`；`chat_routes` 傳 state 物件；`state_for_llm` 只給 fallback | 生產路徑不再把 state 寫進 core prompt；provenance 正確 |
@@ -324,9 +325,9 @@ T5 對照組也變 → 先把實驗做乾淨。
 - `tests/ai/test_core_state_contract.py`：schema、hash、版本、原子寫入、拒絕載入
   ——**P0 已建立，15 條通過**（P1 追加「存檔拒絕非 numpy 張量」1 條）。
 - `tests/ai/test_state_cycles.py`：`dt=0` 恆等、per-sample 更新、save/load 同 logits、
-  weights hash、半群**只量不判**——**P1 已建立，17 條**。
-- `scripts/probe_state_cycles.py`：T1–T6 的合成多回合 probe——**P1 已建立**；預登記在
-  `CORE_GAP_ANALYSIS.md` §37，結果見 §37.6。
+  weights hash、半群**只量不判**、等段數產生器——**P1 已建立，21 條**。
+- `scripts/probe_state_cycles.py`：T1–T6 的合成多回合 probe——**P1 已建立**；`--round 2`
+  是等段數重跑。預登記在 `CORE_GAP_ANALYSIS.md` §37／§38，結果見 §37.6／§38.4。
 - `scripts/probe_state_restart.py`：跨進程 save/load（**尚未建立**；T4 目前用同進程的
   `CoreState.save`／`load`，跨進程版是後續）。
 
@@ -370,4 +371,6 @@ T5 對照組也變 → 先把實驗做乾淨。
   預登記（§37.4–§37.5）在跑之前寫定，登記 run **17/17 通過**：state 被 `al_step` 使用，
   且 T1 偵測得到；hand-state 對照組在同一 T1 下不受影響（測試有鑑別力）。
   **限制照實記**：合成任務、只有 GRU、同進程 restart、半群 Δ=0.7588 未成立、chunk 數
-  本身是時間訊號（下一輪改等段數）。核心分不變（0.00/10），生產路徑未接。
+  本身是時間訊號。**§38 已把 chunk 數固定為 8 後重跑（18/18 通過，主臂 1.0000、歸零
+  0.4986）**，所以「數次數」不是通過的原因；半群在該輪反而變成 0.9180（仍未成立）。
+  核心分不變（0.00/10），生產路徑未接。
