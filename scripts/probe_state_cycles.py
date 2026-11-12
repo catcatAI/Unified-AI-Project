@@ -699,6 +699,15 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         seen_tokens = [int(token) for token in token_probe["query_tokens"].flatten().tolist()]
         core_has_bucket = any(token in BUCKET_TOKENS for token in seen_tokens)
 
+        tau_stats = None
+        if hasattr(core, "tau"):
+            tau = core.tau().detach().to("cpu")
+            tau_stats = {
+                "min": float(tau.min()),
+                "median": float(tau.median()),
+                "max": float(tau.max()),
+            }
+
         provenance.append(
             {
                 "seed": seed,
@@ -708,6 +717,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
                 "hand_parameters": hand.parameter_count(),
                 "core_tokens_include_bucket": core_has_bucket,
                 "core_query_tokens": sorted(set(seen_tokens)),
+                "tau_seconds": tau_stats,
             }
         )
         per_seed.append(metrics)
