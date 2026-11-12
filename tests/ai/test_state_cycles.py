@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from ai.core.core_state import CoreState
 from ai.core.core_step import chunk_dt
 
@@ -192,3 +191,80 @@ def test_semigroup_is_reported_not_claimed() -> None:
 
     difference = float((left.tensors["h"] - right.tensors["h"]).abs().max())
     assert 0.0 < difference < 1.0
+
+
+# -- round 2: the chunk count must stop being a time signal ------------------
+#
+# §37's gaps were unequal, so a 180 s gap became three al_step chunks and a 20 s
+# gap one; "how many steps elapsed" could stand in for "how much time elapsed".
+# Round 2 fixes 8 equal gaps, so every session takes exactly 8 chunks and only
+# the dt magnitude carries the gap.  These tests pin that property *before* the
+# scored run, so a generator change cannot quietly restore the shortcut.
+
+
+def _load_probe():
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    repo_root = Path(__file__).resolve().parents[2]
+    scripts = repo_root / "scripts"
+    sys.path.insert(0, str(scripts))
+    spec = importlib.util.spec_from_file_location(
+        "probe_state_cycles_under_test", scripts / "probe_state_cycles.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    # dataclasses resolves ``cls.__module__`` through sys.modules; an exec'd
+    # module that was never registered fails at the first @dataclass.
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.fixture(scope="module")
+def probe():
+    return _load_probe()
+
+
+def _chunk_totals(sessions, probe_module) -> set:
+    from ai.core.core_step import chunk_dt
+
+    return {sum(len(chunk_dt(gap, 60.0)) for gap in session.gaps) for session in sessions}
+
+
+def test_round2_generator_equalises_step_counts(probe) -> None:
+    sessions = probe.generate_sessions(200, seed=2000, gap_count=8, gap_mode="equal")
+
+    assert {len(session.gaps) for session in sessions} == {8}
+    assert max(max(session.gaps) for session in sessions) <= 50.0
+    assert _chunk_totals(sessions, probe) == {8}
+
+
+def test_round2_generator_preserves_the_registered_bands(probe) -> None:
+    sessions = probe.generate_sessions(400, seed=7, gap_count=8, gap_mode="equal")
+    totals = [sum(session.gaps) for session in sessions]
+
+    valid = [total for total, session in zip(totals, sessions) if not session.expired]
+    expired = [total for total, session in zip(totals, sessions) if session.expired]
+
+    assert valid and expired
+    assert all(total <= 200.0 for total in valid)
+    assert all(280.0 <= total <= 400.0 for total in expired)
+    assert all(total > probe.EXPIRY_S for total in expired)
+    assert all(total <= probe.EXPIRY_S for total in valid)
+
+
+def test_round1_generator_still_has_varying_step_counts(probe) -> None:
+    """Round 1 is kept reproducible *and* known to leak the chunk count."""
+    sessions = probe.generate_sessions(400, seed=11, gap_count=4, gap_mode="random")
+
+    assert len(_chunk_totals(sessions, probe)) > 1
+
+
+def test_round2_fake_clock_keeps_the_same_step_count(probe) -> None:
+    sessions = probe.generate_sessions(64, seed=5, gap_count=8, gap_mode="equal")
+    fake = [(120.0 / 8,) * 8 for _ in sessions]
+
+    assert _chunk_totals(sessions, probe) == {8}
+    assert {sum(len(chunk_dt(gap, 60.0)) for gap in gaps) for gaps in fake} == {8}

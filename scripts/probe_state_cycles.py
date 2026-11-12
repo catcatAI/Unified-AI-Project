@@ -58,6 +58,7 @@ if str(BACKEND_SRC) not in sys.path:
     sys.path.insert(0, str(BACKEND_SRC))
 
 from ai.core.core_state import CoreState  # noqa: E402
+from ai.core.core_step import chunk_dt  # noqa: E402
 from ai.core.stateful_decoder import GRUCore  # noqa: E402
 
 # -- vocabulary (fixed; changing it invalidates §37) -------------------------
@@ -78,6 +79,14 @@ TOKEN_COUNT = 26
 GAP_COUNT = 4
 EXPIRY_S = 240.0
 BUCKET_TOKENS = (BUCKET_SHORT, BUCKET_LONG)
+
+# Round 2 removes the "count the chunks" shortcut: with 8 equal gaps every
+# session is advanced by exactly 8 chunks, so only the dt *magnitude* can carry
+# the elapsed time.  Same task, vocabulary and thresholds as round 1.
+ROUNDS = {
+    1: {"gap_count": 4, "gap_mode": "random"},
+    2: {"gap_count": 8, "gap_mode": "equal"},
+}
 
 # Registered defaults (§37.3). A deviating run prints a banner and is not the
 # registered result.
@@ -130,8 +139,20 @@ class Session:
         return UNKNOWN if self.expired else self.value
 
 
-def generate_sessions(count: int, seed: int) -> List[Session]:
-    """Deterministic session generator (registered in §37.2)."""
+def generate_sessions(
+    count: int, seed: int, *, gap_count: int = GAP_COUNT, gap_mode: str = "random"
+) -> List[Session]:
+    """Deterministic session generator (§37.2 round 1, §38.2 round 2).
+
+    ``gap_mode="random"``: unequal gaps, some above 60 s (round 1).
+    ``gap_mode="equal"``: ``gap_count`` equal gaps, each ≤ 50 s for the
+    registered bands, so every session takes exactly ``gap_count`` chunks and
+    the chunk count stops being a time signal (round 2).
+    """
+    if gap_count <= 0:
+        raise ValueError("gap_count must be > 0")
+    if gap_mode not in {"random", "equal"}:
+        raise ValueError(f"unknown gap_mode {gap_mode!r}")
     rng = random.Random(seed)
     sessions: List[Session] = []
     for _ in range(count):
@@ -141,9 +162,12 @@ def generate_sessions(count: int, seed: int) -> List[Session]:
             total = rng.uniform(0.0, 200.0)
         else:
             total = rng.uniform(280.0, 400.0)
-        weights = [rng.random() + 0.05 for _ in range(GAP_COUNT)]
-        norm = sum(weights)
-        gaps = tuple(total * weight / norm for weight in weights)
+        if gap_mode == "equal":
+            gaps = tuple(total / gap_count for _ in range(gap_count))
+        else:
+            weights = [rng.random() + 0.05 for _ in range(gap_count)]
+            norm = sum(weights)
+            gaps = tuple(total * weight / norm for weight in weights)
         sessions.append(Session(key=key, value=value, gaps=gaps, expired=total > EXPIRY_S))
     return sessions
 
@@ -191,6 +215,7 @@ def run_sessions(
     torch = model._torch
     device = model.device
     batch = len(sessions)
+    gap_count = len(sessions[0].gaps)
     gap_source = gaps if gaps is not None else [session.gaps for session in sessions]
 
     state = model.init_state(batch, session_id="probe")
@@ -205,7 +230,7 @@ def run_sessions(
     talk = torch.full((batch, 1), TALK, device=device)
 
     _, state = model.ai_step(teach, state)
-    for index in range(GAP_COUNT - 1):
+    for index in range(gap_count - 1):
         if arm == "core" and not skip_al:
             state = model.al_step(
                 torch.tensor(
@@ -219,7 +244,7 @@ def run_sessions(
     if arm == "core" and not skip_al:
         state = model.al_step(
             torch.tensor(
-                [gaps_i[GAP_COUNT - 1] for gaps_i in gap_source],
+                [gaps_i[gap_count - 1] for gaps_i in gap_source],
                 dtype=torch.float32,
                 device=device,
             ),
@@ -286,6 +311,7 @@ def train_arm(
         rng.shuffle(order)
         for start in range(0, len(order), batch_size):
             batch = [sessions[i] for i in order[start : start + batch_size]]
+            gap_count = len(batch[0].gaps)
             state = model.init_state(len(batch), session_id="train")
             device = model.device
             teach = torch.stack(
@@ -298,7 +324,7 @@ def train_arm(
             )
             talk = torch.full((len(batch), 1), TALK, device=device)
             _, state = model.ai_step(teach, state)
-            for index in range(GAP_COUNT - 1):
+            for index in range(gap_count - 1):
                 if arm == "core":
                     state = model.al_step(
                         _gap_tensor(batch, index, torch, device),
@@ -307,7 +333,7 @@ def train_arm(
                 _, state = model.ai_step(talk, state)
             if arm == "core":
                 state = model.al_step(
-                    _gap_tensor(batch, GAP_COUNT - 1, torch, device),
+                    _gap_tensor(batch, gap_count - 1, torch, device),
                     state,
                 )
 
@@ -461,6 +487,11 @@ def _ci_half(values: Sequence[float]) -> float:
 
 
 def run(args: argparse.Namespace) -> Dict[str, Any]:
+    round_config = ROUNDS[args.round]
+    gap_count = int(round_config["gap_count"])
+    gap_mode = str(round_config["gap_mode"])
+    fake_dt = 120.0 / gap_count  # same chunk count as a real session, only dt differs
+
     registered = (
         args.epochs == REGISTERED["epochs"]
         and args.train_sessions == REGISTERED["train_sessions"]
@@ -474,9 +505,26 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     provenance: List[Dict[str, Any]] = []
     started = time.time()
 
+    # Measure (do not assume) whether the chunk count leaks time.  In round 2
+    # every session must take the same number of chunks, so only dt magnitude
+    # can carry the gap.
+    probe_sessions = generate_sessions(
+        args.eval_sessions, seed=2000 + args.seeds[0], gap_count=gap_count, gap_mode=gap_mode
+    )
+    chunk_totals = sorted(
+        {
+            sum(len(chunk_dt(gap, REGISTERED["chunk_seconds"])) for gap in session.gaps)
+            for session in probe_sessions
+        }
+    )
+
     for seed in args.seeds:
-        train = generate_sessions(args.train_sessions, seed=1000 + seed)
-        heldout = generate_sessions(args.eval_sessions, seed=2000 + seed)
+        train = generate_sessions(
+            args.train_sessions, seed=1000 + seed, gap_count=gap_count, gap_mode=gap_mode
+        )
+        heldout = generate_sessions(
+            args.eval_sessions, seed=2000 + seed, gap_count=gap_count, gap_mode=gap_mode
+        )
 
         shared = dict(
             seed=seed,
@@ -506,7 +554,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
                 core,
                 heldout,
                 arm="core",
-                gap_override=[(30.0,) * GAP_COUNT for _ in heldout],
+                gap_override=[(fake_dt,) * gap_count for _ in heldout],
             ),
             "hand_state": evaluate(hand, heldout, arm="hand"),
             "hand_state_ablated": evaluate(hand, heldout, arm="hand", ablate=True),
@@ -621,11 +669,26 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         "T6_no_bucket_tokens": not any(item["core_tokens_include_bucket"] for item in provenance),
         "zero_time_identity": summary["zero_time_identity"]["mean"] == 1.0,
     }
+    if gap_mode == "equal":
+        checks["equal_step_counts"] = chunk_totals == [gap_count]
 
     report = {
         "registered": registered,
-        "registration": "docs/06-project-management/CORE_GAP_ANALYSIS.md §37",
+        "round": args.round,
+        "registration": (
+            "docs/06-project-management/CORE_GAP_ANALYSIS.md §37"
+            if args.round == 1
+            else "docs/06-project-management/CORE_GAP_ANALYSIS.md §38"
+        ),
         "config": {
+            "round": args.round,
+            "gap_count": gap_count,
+            "gap_mode": gap_mode,
+            "step_counts": {
+                "distinct_totals": chunk_totals,
+                "min": chunk_totals[0] if chunk_totals else None,
+                "max": chunk_totals[-1] if chunk_totals else None,
+            },
             "epochs": args.epochs,
             "batch_size": args.batch_size,
             "lr": args.lr,
@@ -660,8 +723,11 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
 
 
 def print_report(report: Dict[str, Any]) -> None:
+    section = "§37" if report.get("round", 1) == 1 else "§38"
     if not report["registered"]:
-        print("\n⚠️  非登記參數：這不是 §37 的登記結果，只可當煙霧測試。\n")
+        print(f"\n⚠️  非登記參數：這不是 {section} 的登記結果，只可當煙霧測試。\n")
+    step_counts = report["config"]["step_counts"]["distinct_totals"]
+    print(f"\n== round {report.get('round', 1)}；每 session 的 chunk 總數 {step_counts} ==")
     summary = report["summary"]
     print("\n== 主臂／對照（5 種子平均）==")
     rows = [
@@ -692,6 +758,13 @@ def print_report(report: Dict[str, Any]) -> None:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--round",
+        type=int,
+        choices=sorted(ROUNDS),
+        default=1,
+        help="1 = registered §37 (unequal gaps); 2 = registered §38 (equal step counts)",
+    )
     parser.add_argument("--seeds", type=int, nargs="+", default=list(REGISTERED["seeds"]))
     parser.add_argument("--epochs", type=int, default=REGISTERED["epochs"])
     parser.add_argument("--batch-size", type=int, default=REGISTERED["batch_size"])
@@ -703,10 +776,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "--out",
         type=Path,
-        default=REPO_ROOT / "data" / "intelligence_reports" / "probe_state_cycles.json",
+        default=None,
     )
     parser.add_argument("--json", action="store_true", help="print the full report as JSON")
     args = parser.parse_args(argv)
+
+    if args.out is None:
+        name = "probe_state_cycles.json" if args.round == 1 else "probe_state_cycles_round2.json"
+        args.out = REPO_ROOT / "data" / "intelligence_reports" / name
 
     report = run(args)
     print_report(report)
