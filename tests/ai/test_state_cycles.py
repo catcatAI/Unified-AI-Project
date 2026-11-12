@@ -268,3 +268,59 @@ def test_round2_fake_clock_keeps_the_same_step_count(probe) -> None:
 
     assert _chunk_totals(sessions, probe) == {8}
     assert {sum(len(chunk_dt(gap, 60.0)) for gap in gaps) for gaps in fake} == {8}
+
+
+# -- round 3: L_al is registered, non-trivial, and held out ------------------
+
+
+def test_round3_registration_fixes_the_pairs(probe) -> None:
+    round3 = probe.ROUNDS[3]
+    train = tuple(round3["l_al_train"])
+    heldout = {tuple(pair) for pair in round3["l_al_eval"]}
+
+    assert round3["l_al_weight"] == 0.5
+    assert probe.L_AL_MAX_DELTA == 1e-2
+    assert train == (25.0, 25.0)
+    assert heldout == {(30.0, 30.0), (20.0, 40.0)}
+    assert train not in heldout
+    # A pair is trained only if the model can reach it in a single chunk.
+    assert train[0] + train[1] <= probe.REGISTERED["chunk_seconds"]
+
+
+def test_l_al_penalty_is_zero_for_zero_time(probe) -> None:
+    """``dt=0`` is the contract's identity, so the penalty must vanish exactly."""
+    model = _model()
+    hidden = torch.randn(3, 4)
+
+    penalty = probe.l_al_penalty(model, hidden, 0.0, 0.0)
+
+    assert float(penalty) == 0.0
+
+
+def test_l_al_penalty_has_a_real_gradient(probe) -> None:
+    """A decorative loss would have no gradient path into the recurrence."""
+    model = _model().train()
+    hidden = torch.randn(3, 4, requires_grad=True)
+
+    penalty = probe.l_al_penalty(model, hidden, 25.0, 25.0)
+    penalty.backward()
+
+    assert float(penalty) > 0.0
+    assert hidden.grad is not None
+    assert float(hidden.grad.abs().sum()) > 0.0
+    cell_grad = model.cell.weight_hh.grad
+    assert cell_grad is not None
+    assert float(cell_grad.abs().sum()) > 0.0
+
+
+def test_semigroup_eval_covers_every_registered_pair(probe) -> None:
+    # The probe's sessions use the 26-token vocabulary, not the 8-token unit one.
+    model = GRUCore(probe.TOKEN_COUNT, hidden=4, emb=3, seed=0).eval()
+    sessions = probe.generate_sessions(8, seed=3, gap_count=8, gap_mode="equal")
+    pairs = (probe.ROUNDS[3]["l_al_train"], *probe.ROUNDS[3]["l_al_eval"])
+
+    deltas = probe.semigroup_eval(model, sessions, pairs)
+
+    expected = {f"{pair[0]:g}+{pair[1]:g}" for pair in pairs}
+    assert set(deltas) == expected
+    assert all(value >= 0.0 and value == value for value in deltas.values())

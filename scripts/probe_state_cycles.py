@@ -37,6 +37,8 @@ Usage
     python3 scripts/probe_state_cycles.py                 # registered round 1 (S37)
     python3 scripts/probe_state_cycles.py --round 2       # registered round 2 (S38,
                                                           # equal step counts)
+    python3 scripts/probe_state_cycles.py --round 3       # registered round 3 (S39,
+                                                          # L_al semigroup loss)
     python3 scripts/probe_state_cycles.py --seeds 0 --epochs 1 \
         --train-sessions 256 --eval-sessions 64           # smoke only
 """
@@ -88,7 +90,15 @@ BUCKET_TOKENS = (BUCKET_SHORT, BUCKET_LONG)
 ROUNDS = {
     1: {"gap_count": 4, "gap_mode": "random"},
     2: {"gap_count": 8, "gap_mode": "equal"},
+    3: {
+        "gap_count": 8,
+        "gap_mode": "equal",
+        "l_al_weight": 0.5,
+        "l_al_train": (25.0, 25.0),
+        "l_al_eval": ((30.0, 30.0), (20.0, 40.0)),
+    },
 }
+L_AL_MAX_DELTA = 1e-2
 
 # Registered defaults (§37.3). A deviating run prints a banner and is not the
 # registered result.
@@ -294,6 +304,8 @@ def train_arm(
     hidden: int,
     emb: int,
     chunk_seconds: float,
+    l_al_weight: float = 0.0,
+    l_al_train: Tuple[float, float] = (25.0, 25.0),
 ) -> GRUCore:
     torch = model_torch()
     torch.manual_seed(seed)
@@ -339,6 +351,21 @@ def train_arm(
                     state,
                 )
 
+            l_al_value = None
+            if l_al_weight > 0.0 and arm == "core":
+                # §39.2: the same h advanced as dt1+dt2 vs dt2(dt1(h)).
+                # Only the training pair is taught; the held-out pairs are
+                # measured, never optimised.
+                hidden0 = state.tensors["h"]
+                sequential = model.init_state(len(batch), session_id="l_al_seq")
+                sequential.tensors["h"] = hidden0
+                model.al_step(l_al_train[0], sequential)
+                model.al_step(l_al_train[1], sequential)
+                joined = model.init_state(len(batch), session_id="l_al_join")
+                joined.tensors["h"] = hidden0
+                model.al_step(l_al_train[0] + l_al_train[1], joined)
+                l_al_value = ((sequential.tensors["h"] - joined.tensors["h"]) ** 2).mean()
+
             bucket = _bucket_tokens(batch, arm, torch, device)
             time_logits, state = model.ai_step(
                 torch.stack([bucket, torch.full_like(bucket, Q_TIME)], dim=1), state
@@ -352,12 +379,16 @@ def train_arm(
             loss = torch.nn.functional.cross_entropy(
                 time_logits[:, -1, :], time_target
             ) + torch.nn.functional.cross_entropy(key_logits[:, -1, :], key_target)
+            if l_al_value is not None:
+                loss = loss + l_al_weight * l_al_value
 
             optimiser.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(list(model.parameters()), grad_clip)
             optimiser.step()
             model.invalidate_hash()
+            if l_al_value is not None:
+                model.last_l_al_value = float(l_al_value.detach())
 
     model.eval()
     return model
@@ -459,6 +490,55 @@ def semigroup_gap(model: GRUCore) -> float:
     return float((left.tensors["h"] - right.tensors["h"]).abs().max())
 
 
+def l_al_penalty(model: GRUCore, hidden0: Any, dt1: float, dt2: float) -> Any:
+    """``mean((h(dt2 after dt1) - h(dt1+dt2))^2)`` for one state tensor (§39.2).
+
+    Kept as a named function so a test can pin the two properties the claim
+    depends on: zero time is exactly zero penalty, and the gradient actually
+    reaches the recurrence (otherwise ``L_al`` would be decorative).
+    """
+    sequential = model.init_state(int(hidden0.shape[0]), session_id="l_al_seq")
+    sequential.tensors["h"] = hidden0
+    model.al_step(dt1, sequential)
+    model.al_step(dt2, sequential)
+    joined = model.init_state(int(hidden0.shape[0]), session_id="l_al_join")
+    joined.tensors["h"] = hidden0
+    model.al_step(dt1 + dt2, joined)
+    return ((sequential.tensors["h"] - joined.tensors["h"]) ** 2).mean()
+
+
+def semigroup_eval(
+    model: GRUCore,
+    sessions: Sequence[Session],
+    pairs: Sequence[Tuple[float, float]],
+) -> Dict[str, float]:
+    """Max |h(dt2 then dt1) - h(dt1+dt2)| on the pre-question states.
+
+    The states are the ones the model actually visits (held-out sessions);
+    ``pairs`` are fixed in the pre-registration, and only the first pair is
+    ever trained on.  No gradients: a held-out pair that is optimised is not
+    a held-out pair.
+    """
+    torch = model_torch()
+    results: Dict[str, float] = {}
+    with torch.no_grad():
+        out = run_sessions(model, sessions, arm="core", keep_prefix_state=True)
+        prefix = out["prefix_state"]
+        assert prefix is not None
+        base = torch.as_tensor(prefix.tensors["h"], dtype=torch.float32, device=model.device)
+        for dt1, dt2 in pairs:
+            sequential = model.init_state(len(sessions), session_id="semigroup_eval")
+            sequential.tensors["h"] = base.clone()
+            model.al_step(dt1, sequential)
+            model.al_step(dt2, sequential)
+            joined = model.init_state(len(sessions), session_id="semigroup_eval")
+            joined.tensors["h"] = base.clone()
+            model.al_step(dt1 + dt2, joined)
+            delta = (sequential.tensors["h"] - joined.tensors["h"]).abs().max()
+            results[f"{dt1:g}+{dt2:g}"] = float(delta)
+    return results
+
+
 def zero_time_identity(model: GRUCore) -> bool:
     torch = model_torch()
     with torch.no_grad():
@@ -492,6 +572,11 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     round_config = ROUNDS[args.round]
     gap_count = int(round_config["gap_count"])
     gap_mode = str(round_config["gap_mode"])
+    l_al_weight = float(round_config.get("l_al_weight", 0.0))
+    if args.l_al_weight is not None:
+        l_al_weight = float(args.l_al_weight)
+    l_al_train = tuple(round_config.get("l_al_train", (25.0, 25.0)))
+    l_al_eval = tuple(round_config.get("l_al_eval", ()))
     fake_dt = 120.0 / gap_count  # same chunk count as a real session, only dt differs
 
     registered = (
@@ -500,6 +585,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         and args.eval_sessions == REGISTERED["eval_sessions"]
         and args.hidden == REGISTERED["hidden"]
         and args.emb == REGISTERED["emb"]
+        and args.l_al_weight == l_al_weight
         and tuple(args.seeds) == tuple(REGISTERED["seeds"])
     )
 
@@ -537,6 +623,8 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
             hidden=args.hidden,
             emb=args.emb,
             chunk_seconds=REGISTERED["chunk_seconds"],
+            l_al_weight=l_al_weight,
+            l_al_train=l_al_train,
         )
         core = train_arm(train, arm="core", **shared)
         hand = train_arm(train, arm="hand", **shared)
@@ -564,6 +652,10 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         }
         metrics["t4_restart_delta"] = restart_delta(core, heldout[:200])
         metrics["semigroup_gap"] = semigroup_gap(core)
+        if l_al_weight > 0.0:
+            pairs = (l_al_train, *l_al_eval)
+            metrics["semigroup_eval"] = semigroup_eval(core, heldout, pairs)
+            metrics["l_al_train_final"] = float(getattr(core, "last_l_al_value", float("nan")))
         metrics["zero_time_identity"] = float(zero_time_identity(core))
         hash_after = core.weights_hash()
 
@@ -674,6 +766,38 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     if gap_mode == "equal":
         checks["equal_step_counts"] = chunk_totals == [gap_count]
 
+    l_al_report: Dict[str, Any] = {}
+    if l_al_weight > 0.0:
+        deltas: Dict[str, Dict[str, Any]] = {}
+        for pair in (l_al_train, *l_al_eval):
+            key = f"{pair[0]:g}+{pair[1]:g}"
+            values = [seed_metrics["semigroup_eval"][key] for seed_metrics in per_seed]
+            deltas[key] = {
+                "mean": _mean(values),
+                "max": max(values),
+                "per_seed": values,
+            }
+            checks[f"L_AL_{key}"] = max(values) <= L_AL_MAX_DELTA
+        l_al_report = {
+            "weight": l_al_weight,
+            "train_pair": list(l_al_train),
+            "eval_pairs": [list(pair) for pair in l_al_eval],
+            "max_delta_allowed": L_AL_MAX_DELTA,
+            "delta": deltas,
+            "train_loss_final": {
+                "mean": _mean(
+                    [
+                        seed_metrics.get("l_al_train_final", float("nan"))
+                        for seed_metrics in per_seed
+                    ]
+                )
+            },
+            "note": (
+                "Only the train pair is optimised; the eval pairs are measured "
+                "on held-out session states."
+            ),
+        }
+
     report = {
         "registered": registered,
         "round": args.round,
@@ -712,6 +836,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
             "t2_hand_ablation_delta": hand_ablation,
         },
         "checks": checks,
+        "l_al": l_al_report,
         "all_pass": all(checks.values()),
         "provenance": provenance,
         "per_seed": per_seed,
@@ -751,6 +876,10 @@ def print_report(report: Dict[str, Any]) -> None:
         print(f"  {condition:22s} {metric:18s} {entry['mean']:.4f} ± {entry['ci']:.4f}")
     print(f"  T4 restart Δ {summary['t4_restart_delta']['mean']:.2e}")
     print(f"  semigroup Δ (report only) {summary['semigroup_gap']['mean']:.4f}")
+    if report.get("l_al"):
+        delta_block = report["l_al"]["delta"]
+        for key, entry in delta_block.items():
+            print(f"  L_al {key:10s} max|Δh| {entry['max']:.4e}")
 
     print("\n== 預登記判定 ==")
     for name, passed in report["checks"].items():
@@ -766,6 +895,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         choices=sorted(ROUNDS),
         default=1,
         help="1 = registered §37 (unequal gaps); 2 = registered §38 (equal step counts)",
+    )
+    parser.add_argument(
+        "--l-al-weight",
+        type=float,
+        default=None,
+        help="override the round's registered L_al weight (smoke runs only)",
     )
     parser.add_argument("--seeds", type=int, nargs="+", default=list(REGISTERED["seeds"]))
     parser.add_argument("--epochs", type=int, default=REGISTERED["epochs"])
