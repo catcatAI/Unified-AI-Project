@@ -18,7 +18,11 @@
         "value": "recall 7/7 on every stage; cold 7/7 abstain; answers attributed with source=memory",
         "measured_at": "2026-10-23"
       },
-      "must_not_be_used_as": ["knowledge", "learning", "intelligence"]
+      "must_not_be_used_as": [
+        "knowledge",
+        "learning",
+        "intelligence"
+      ]
     },
     {
       "id": "neural_fact_learning",
@@ -35,7 +39,9 @@
         "value": "cold 0%, taught 0%, after source deletion 0%; the objects are kept verbatim in dictionary.json and the learned pair is (statement -> canned reply)",
         "measured_at": "2026-10-23"
       },
-      "must_not_be_used_as": ["knowledge"]
+      "must_not_be_used_as": [
+        "knowledge"
+      ]
     },
     {
       "id": "curated_knowledge",
@@ -52,7 +58,9 @@
         "value": "knowledge 53.3% (8/15), knowledge_mc 100% (40/40)",
         "measured_at": "2026-10-24"
       },
-      "must_not_be_used_as": ["learning"]
+      "must_not_be_used_as": [
+        "learning"
+      ]
     },
     {
       "id": "offline_wiki_knowledge",
@@ -69,7 +77,9 @@
         "value": "ablation 2026-10-24: full 8/15 vs curated-only 5/15 vs knowledge-off 0/15 — the layer contributes +3 answers on top of the curated store and abstains on the rest",
         "measured_at": "2026-10-24"
       },
-      "must_not_be_used_as": ["learning"]
+      "must_not_be_used_as": [
+        "learning"
+      ]
     },
     {
       "id": "routing_surface",
@@ -86,7 +96,33 @@
         "value": "recorded so routing/templates can never be presented as knowledge or learning",
         "measured_at": "2026-10-23"
       },
-      "must_not_be_used_as": ["knowledge", "learning", "intelligence"]
+      "must_not_be_used_as": [
+        "knowledge",
+        "learning",
+        "intelligence"
+      ]
+    },
+    {
+      "id": "stateful_core_content",
+      "claim": "A trained core carries a token string across a turn boundary inside its state and generation reads it back: exact match is 0.995 on names and values never seen in training, while zeroing the state or skipping the teaching turn collapses it to 0.000. It is a *mechanism* (how to copy through the state), not knowledge or language: the name selects nothing (wrong_name 0.994).",
+      "layer": "learning",
+      "implemented_in": "scripts/train_state_content.py",
+      "evidence": {
+        "probe": "scripts/train_state_content.py",
+        "method": "Teach `remember <name> = <value> .` (no loss) -> al_step(120 s) -> ask `<name> ?` -> generate `<value> .`; the value never appears in turn 2's input. Train/dev/held-out values are disjoint by construction and the leak check is mechanical. Controls: zero_state (same state object, same weights, same prompt, only `h` zeroed), cold (teaching turn skipped; same questions), wrong_name (teach A, ask an untaught B). source_deleted: no evaluation reads the training data or any text store at all - the only artifact is the checkpoint - and deleting the carried state removes the capability, so what remains is a weight-level mechanism rather than a stored string.",
+        "source_deleted": true
+      },
+      "result": {
+        "status": "pass",
+        "value": "seed 20261114, 60 epochs: held-out exact 0.995 (3,000), dev 0.994; zero-state 0.000, cold 0.000; checkpoint reload reproduces 0.995/0.000. Limits: wrong_name 0.994 (single-slot carry, no keyed lookup), no-al_step 0.003 (not gap-invariant), closed CV alphabet (not language), not wired into production.",
+        "measured_at": "2026-11-13"
+      },
+      "must_not_be_used_as": [
+        "intelligence",
+        "knowledge",
+        "language",
+        "production_capability"
+      ]
     }
   ]
 }

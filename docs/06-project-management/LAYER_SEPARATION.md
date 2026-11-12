@@ -42,6 +42,7 @@
 | -------------------------------- | --------- | ---------------------------- | ------------------------------------ | ------------------------------------------------------------------- |
 | 對話中教的事實可回想             | memory    | `ai/memory/taught_facts.py`  | `scripts/probe_dialogue_teaching.py` | 7/7 每階段；冷問 7/7 棄權；回答標 `source=memory`                   |
 | 原生引擎（GARDEN）從對話學會事實 | learning  | `ai/garden/garden_engine.py` | `scripts/probe_neural_learning.py`   | **fail**：冷 0%／教後 0%／刪來源後 0%；物件明碼在 `dictionary.json` |
+| 核心狀態跨回合攜帶內容         | learning  | `scripts/train_state_content.py` | 同一支（內建零狀態／冷啟／`wrong_name` 對照） | **pass（機制，非知識）**：未見過的名字＋值 exact 0.995；零狀態 0.000、冷啟 0.000。邊界：`wrong_name` 0.994（單槽攜帶，名字沒被使用）、拿掉 `al_step` 0.003（非間隙不變）、封閉 CV 音節（不是語言）、未接生產 |
 | 策展事實回想                     | knowledge | `ai/knowledge_base.py`       | `scripts/run_benchmarks.py`          | knowledge 53.3%（8/15）、knowledge_mc 100%（40/40）                 |
 | 離線百科抽取                     | knowledge | `ai/knowledge/wiki_facts.py` | `scripts/run_benchmarks.py`          | 8/15 答案句含正確關鍵詞，其餘棄權                                   |
 | 路由／模板                       | surface   | `services/llm/router.py`     | `scripts/probe_native_dialogue.py`   | 只記來源分佈，不作正確性宣稱                                        |

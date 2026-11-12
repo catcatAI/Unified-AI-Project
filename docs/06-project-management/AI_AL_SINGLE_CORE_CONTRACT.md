@@ -262,6 +262,8 @@ T5 對照組也變 → 先把實驗做乾淨。
 | — | **P4 狀態（2026-11-12）**：接線完成，**opt-in、預設關**（`ANGELA_STATEFUL_CORE=1`）。`ai/core/stateful_runtime.py` 每回合推進一次 state 物件並存檔（每 session 一個目錄，共用同一份權重）；開啟時 `chat_routes._ctx_state_matrix` **不再發布** `state_for_llm`，回覆的 provenance 記 `state_source="core"` ＋ `core_state`（`ticks`／`state_version`／`dt_s`／`arch`／`tokenizer`／`weights_hash`）。**核心不寫回覆**：目前沒有任何核心能生成開放域文字，所以它只承載狀態，回覆仍由既有路由產生；`state_source` 就是為了不讓這件事被誤讀。預設關閉時回覆形狀完全不變。**核心分仍 0.00/10**（見 `CORE_GAP_ANALYSIS.md` §41）。 | 開啟後 `/api` 回覆帶 `state_source="core"`；`tests/ai/test_stateful_runtime.py` 16 條綠；關閉時 `_ctx_state_matrix` 行為與 §40 前相同 |
 | **P5** | 量產級：per-user 持久化、重啟、版本遷移、成本 | 文件與分數同步；核心分只在模型產生時變動 |
 | — | **P5 狀態（2026-11-13）**：量產級的三件事完成——**單一寫入者**（R3）、**狀態能說出它是誰的**、**真實回合的量測**。① R3 現在有三道鎖，各補別人的盲點：per-session 執行緒鎖（固定條帶，不會因為淘汰而讓同一 session 出現兩個鎖）、session 目錄裡的 advisory 檔案鎖（POSIX `flock`／Windows `msvcrt`）、以及存檔前的版本比對。第三道不是多餘的——它是唯一會發現「完全沒拿鎖的寫入者」的一道（測試用一次**合法**存檔、有效 checksum 的干擾寫入證明：只靠 checksum 會漏）。等待上限 2 秒，逾時就拒絕該回合而不是讓回覆卡住；`availability()` 回報 `lock`／`multi_writer_safe`，沒有檔案鎖的主機自己說出來。② `advance(user_id=...)`：新狀態記下主人，續接時主人不符就拒絕（session id 可猜，主人不行），空主人的舊狀態（§41 跑出來的那些）接受而不回溯作廢。③ `scripts/probe_core_turns.py` 走真正的 `_handle_chat_request`，把凍結標準集跑 **2,208 回合**（五個 stratum 各一個 session），逐回合寫 JSONL；gate 要求回合數、零拒絕、版本嚴格遞增（一次更新都沒掉）、五個 stratum 都在。**仍然沒變的**：核心不生成回覆，沒有任何東西把 state 讀回生成，核心分仍 **0.00/10**；`schema_version` 只有 v1，不符就拒絕（**沒有** migration 實作，照實記）；§40.7 的成本是合成任務的計算量，不是生產回合延遲。 | `tests/ai/test_stateful_runtime.py` 27 條綠；`scripts/probe_core_turns.py` 的 `all_pass=True`；`multi_writer_safe=True` 時可開多 worker |
+| **內容** | state 裡裝的東西有沒有語言內容、生成會不會讀它（§43–§44） | `heldout_names` exact 過線、零狀態與冷啟掉回 0 |
+| — | **內容狀態（2026-11-13）**：**有內容，但只在合成任務上，而且用法有邊界**。同一個 `GRUCore`（81,765 參數，`hidden=128`／`emb=64`，契約 R1 的那個臂）在 「教一次 `remember <name> = <value> .`（不算損失）→ `al_step(120 s)` → 問 `<name> ?` → 生成 `<value> .`」上，對**沒見過的名字＋沒見過的值** exact **0.995**（`dev` 0.994，3,000 題）；把 `h` 歸零（**同一個 state 物件、同一份權重、同一個 prompt**）**0.000**、跳過教學回合（`cold`，同題）**0.000**。teacher-forced 0.999、只讀 `h` 的線性 probe 0.851 → 失敗與成功都不是量測接錯。**三條邊界照實記**：① `wrong_name` **0.994**——教 A、問沒教過的 B 照樣吐 A 的值，所以是**單槽攜帶**、不是鍵值查詢（名字沒有被使用）；② 拿掉 `al_step` 掉到 **0.003**——不是間隙不變，學到的是「經過**一次** 120 秒」可讀；③ 詞彙是封閉 CV 音節（19 字母）、句型只有一種，這是**機制**不是語言。**核心分仍 0.00/10**：這條路沒有接進生產，`stateful_runtime` 仍是 `hash-bucket` tokenizer，回覆仍由表層產生——把只會講 `remember X = Y` 的 checkpoint 接上去會比不接更糟。 | `scripts/train_state_content.py` 的 `all_pass=True`；`tests/test_state_content_task.py` 13 條綠；checkpoint 重載後 `heldout` 0.995／零狀態 0.000 |
 
 **停損**：
 
@@ -353,6 +355,15 @@ T5 對照組也變 → 先把實驗做乾淨。
   遞增、五個 stratum 都在。它量的是**載體**，不是能力——回覆仍由表層產生。
 - `tests/test_probe_core_turns.py`（8 條）：上面那個 gate 自己的測試（掉一次更新／一次拒絕／
   少一個 stratum 都必須讓 `all_pass=False`），以及「整輪不截斷」與可重現性。
+- `scripts/train_state_content.py`：**§43–§44 的內容量測**。教一個配對、跨 `al_step(120 s)`、
+  再用問題生成答案；四種量測各有一個可以失敗的對照（零狀態 ablation 用**同一個** state
+  物件只把 `h` 歸零、`cold` 是同一批題目跳過教學回合、`wrong_name` 分開「值被攜帶」與
+  「配對被使用」），另加 teacher-forced 與只讀 `h` 的線性 probe 兩個診斷，用來說明資訊是
+  「沒存進去」還是「存了但讀不出來」。報告與 checkpoint 寫到 `data/state_content/`
+  （gitignored）。
+- `tests/test_state_content_task.py`（13 條）：那個任務自己的契約——洩漏偵測器被**故意餵壞**
+  一次（重用值／訓練過的名字）、`cold` 必須與 held-out 同一批題目、重跑可重現、答案不在
+  問句裡、損失從答案的第一個字元開始、零狀態真的把 `h` 歸零而**不換物件也不換權重**。
 - `tests/ai/test_stateful_runtime.py`（27 條）＋ `tests/services/test_memory_handoff.py`
   的兩條能力邊界測試：開關預設關、沒有 checkpoint 不建目錄、兩回合推進、session 互不
   汙染、restart 續接、三種拒絕（毀損／換權重）且檔案位元組不變、prompt 端不再發布
@@ -457,3 +468,19 @@ ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
   `state_source`／`ticks`／`state_version`／`dt_s`，gate 含「版本嚴格遞增」（掉一次更新就紅）。
   **沒變的**：核心不生成回覆，`schema_version` 只有 v1（不符拒絕，**沒有** migration），
   核心分仍 0.00/10。結果與限制見 `CORE_GAP_ANALYSIS.md` §42。
+
+- 2026-11-13（內容，§43–§44）：前面每一輪量的都是**載體**。這一輪問的是「state 裡裝的
+  東西有沒有語言內容、生成會不會讀它」——那是核心分 0.00 的**前置條件**，不是分數本身。
+  任務：教 `remember <name> = <value> .`（不計損失）→ `al_step(120 s)` → 問 `<name> ?`
+  → 生成 `<value> .`；答案是**兩次 `ai_step`**、不是兩句接成一個序列，第二回合的輸入裡
+  沒有值，所以 state 是唯一通道。所有非 train 切分都由**訓練沒看過的字串**組成，洩漏
+  檢查是機械的（值交集、名字交集、train 內重複、字母表外的字元）。
+  **實測**（`--seed 20261114 --epochs 60 --patience 0`，81,765 參數，271.6 秒，XPU）：
+  `heldout_names` exact **0.995**、`dev` 0.994、零狀態 ablation **0.000**、`cold`
+  **0.000**、teacher-forced 0.999、只讀 `h` 的線性 probe 0.851。checkpoint 重載後
+  數字相同。
+  **照實記的邊界**：`wrong_name` **0.994**（名字沒有被使用 → 單槽攜帶，不是鍵值查詢）、
+  拿掉 `al_step` 掉到 **0.003**（不是間隙不變）、封閉 CV 音節不是語言、**沒有接進生產**。
+  §43 的登記 run 先 FAIL（dev 0.001）並被判定為**協定缺陷**（早停看階躍的 exact），
+  §44 只改訓練長度與早停、門檻逐字不動、換一個沒用過的資料 seed 重跑——不是回頭改
+  登記的次數。核心分**不變**（0.00/10）。結果見 `CORE_GAP_ANALYSIS.md` §43／§44。

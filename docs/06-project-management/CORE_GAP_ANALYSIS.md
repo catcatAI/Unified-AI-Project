@@ -3776,22 +3776,6 @@ GRU 把一個**沒見過**的字串放進 state、跨過一個回合邊界（含
 3. **換成自然的詞彙**：把 CV 音節換成真實英文詞／子詞，任務不變。這一步才開始
    接近「狀態有語言內容」，但需要的資料與模型都大一個量級，應該在前兩項站穩之後。
 
-### 44.10 記錄缺陷與重現性重跑（2026-11-13，重跑之前寫定）
-
-§44.6 的**數字**是那次 run 的數字，但存下來的報告把**設定**記錯了：`config.max_epochs`
-寫的是模組預設 `24`、`early_stop_patience` 寫的是 `3`，實際跑的是 CLI 給的 `60`／`0`。
-這叫「記錄的 run 不是跑的 run」——與分數無關，但必須修：下一個人照報告重跑會得到不同
-的東西，而且從檔案看不出是誰對。
-
-修法：`config` 改記**生效值**（`max_epochs = 2 if --smoke else --epochs`、
-`early_stop_patience = --patience`）。修完之後用**完全相同**的指令與 seed 再跑一次，
-當作**重現性檢查**，不是第二次嘗試：
-
-- 兩個 run 的數字都會寫出來，**不論新的比較好還是比較差**。
-- 若 `heldout_names`／`zero_state` 有變動，照實記差值——那代表 XPU kernel 的非決定性
-  要寫進限制，而不是挑一個好看的 run。
-- 不因為重跑而改任何門檻、資料、臂或 epoch 數。
-
 ### 44.9 驗證指令
 
 ```bash
@@ -3810,3 +3794,45 @@ core.load_state_dict(payload["state_dict"]); core.eval()
 print(m.evaluate(core, table, m.build_splits(seed=20261114)["heldout_names"][:200], device="cpu")["exact"])
 EOF
 ```
+
+### 44.10 記錄缺陷與重現性重跑（2026-11-13，重跑之前寫定）
+
+§44.6 的**數字**是那次 run 的數字，但存下來的報告把**設定**記錯了：`config.max_epochs`
+寫的是模組預設 `24`、`early_stop_patience` 寫的是 `3`，實際跑的是 CLI 給的 `60`／`0`。
+這叫「記錄的 run 不是跑的 run」——與分數無關，但必須修：下一個人照報告重跑會得到不同
+的東西，而且從檔案看不出是誰對。
+
+修法：`config` 改記**生效值**（`max_epochs = 2 if --smoke else --epochs`、
+`early_stop_patience = --patience`）。修完之後用**完全相同**的指令與 seed 再跑一次，
+當作**重現性檢查**，不是第二次嘗試：
+
+- 兩個 run 的數字都會寫出來，**不論新的比較好還是比較差**。
+- 若 `heldout_names`／`zero_state` 有變動，照實記差值——那代表 XPU kernel 的非決定性
+  要寫進限制，而不是挑一個好看的 run。
+- 不因為重跑而改任何門檻、資料、臂或 epoch 數。
+
+### 44.11 重跑結果（2026-11-13，登記的重現性檢查）
+
+同一個指令、同一個 seed（`--seed 20261114 --epochs 60 --patience 0`），程式碼只差
+§44.10 的 `config` 記錄修正（`git_head ea19eaedf`）。報告：
+`data/state_content/state_content_20261113-014220.json`（gitignored）。
+
+| 量測 | §44.6 | §44.11 | 差 |
+| --- | --- | --- | --- |
+| `dev` exact／char | 0.994／0.999 | 0.994／0.999 | 0 |
+| `heldout_names` exact／char | 0.995／0.999 | 0.995／0.999 | 0 |
+| `heldout_names_no_al` | 0.003／0.312 | 0.003／0.312 | 0 |
+| `zero_state` | 0.000／0.135 | 0.000／0.135 | 0 |
+| `cold` | 0.000／0.136 | 0.000／0.136 | 0 |
+| `wrong_name` | 0.994／0.999 | 0.994／0.999 | 0 |
+| teacher-forced `dev`／`heldout` | 0.999／0.999 | 0.999／0.999 | 0 |
+| 線性 probe `dev`／`heldout` | 0.846／0.851 | 0.846／0.851 | 0 |
+
+不只數字相同：五個切分的 digest、`best_epoch`（51）、`epochs_run`（60）、
+`weights_hash`（`sha256:6b5e331d46cdb…`）都逐位相同，訓練 271.6 秒、81,765 參數、
+0.00015 秒/回合。`config` 現在記的是 `max_epochs: 60`、`early_stop_patience: 0`，
+與實際跑的一致。
+
+讀法：**在這個裝置、這個 seed 上這次訓練是決定性的**，所以 §44.6 的數字不是抽樣運氣；
+先前那份報告的錯只在「設定記成模組預設」，不在數字。門檻、資料、臂、epoch 數都沒有
+因為重跑而改動。
