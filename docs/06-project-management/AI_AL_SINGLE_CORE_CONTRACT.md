@@ -261,6 +261,7 @@ T5 對照組也變 → 先把實驗做乾淨。
 | **P4** | 接生產：`generation_gate` 加 `stateful`；`chat_routes` 傳 state 物件；`state_for_llm` 只給 fallback | 生產路徑不再把 state 寫進 core prompt；provenance 正確 |
 | — | **P4 狀態（2026-11-12）**：接線完成，**opt-in、預設關**（`ANGELA_STATEFUL_CORE=1`）。`ai/core/stateful_runtime.py` 每回合推進一次 state 物件並存檔（每 session 一個目錄，共用同一份權重）；開啟時 `chat_routes._ctx_state_matrix` **不再發布** `state_for_llm`，回覆的 provenance 記 `state_source="core"` ＋ `core_state`（`ticks`／`state_version`／`dt_s`／`arch`／`tokenizer`／`weights_hash`）。**核心不寫回覆**：目前沒有任何核心能生成開放域文字，所以它只承載狀態，回覆仍由既有路由產生；`state_source` 就是為了不讓這件事被誤讀。預設關閉時回覆形狀完全不變。**核心分仍 0.00/10**（見 `CORE_GAP_ANALYSIS.md` §41）。 | 開啟後 `/api` 回覆帶 `state_source="core"`；`tests/ai/test_stateful_runtime.py` 16 條綠；關閉時 `_ctx_state_matrix` 行為與 §40 前相同 |
 | **P5** | 量產級：per-user 持久化、重啟、版本遷移、成本 | 文件與分數同步；核心分只在模型產生時變動 |
+| — | **P5 狀態（2026-11-13）**：量產級的三件事完成——**單一寫入者**（R3）、**狀態能說出它是誰的**、**真實回合的量測**。① R3 現在有三道鎖，各補別人的盲點：per-session 執行緒鎖（固定條帶，不會因為淘汰而讓同一 session 出現兩個鎖）、session 目錄裡的 advisory 檔案鎖（POSIX `flock`／Windows `msvcrt`）、以及存檔前的版本比對。第三道不是多餘的——它是唯一會發現「完全沒拿鎖的寫入者」的一道（測試用一次**合法**存檔、有效 checksum 的干擾寫入證明：只靠 checksum 會漏）。等待上限 2 秒，逾時就拒絕該回合而不是讓回覆卡住；`availability()` 回報 `lock`／`multi_writer_safe`，沒有檔案鎖的主機自己說出來。② `advance(user_id=...)`：新狀態記下主人，續接時主人不符就拒絕（session id 可猜，主人不行），空主人的舊狀態（§41 跑出來的那些）接受而不回溯作廢。③ `scripts/probe_core_turns.py` 走真正的 `_handle_chat_request`，把凍結標準集跑 **2,208 回合**（五個 stratum 各一個 session），逐回合寫 JSONL；gate 要求回合數、零拒絕、版本嚴格遞增（一次更新都沒掉）、五個 stratum 都在。**仍然沒變的**：核心不生成回覆，沒有任何東西把 state 讀回生成，核心分仍 **0.00/10**；`schema_version` 只有 v1，不符就拒絕（**沒有** migration 實作，照實記）；§40.7 的成本是合成任務的計算量，不是生產回合延遲。 | `tests/ai/test_stateful_runtime.py` 27 條綠；`scripts/probe_core_turns.py` 的 `all_pass=True`；`multi_writer_safe=True` 時可開多 worker |
 
 **停損**：
 
@@ -337,14 +338,22 @@ T5 對照組也變 → 先把實驗做乾淨。
   `CORE_GAP_ANALYSIS.md` §40.8：兩臂 Δp = 0、歸零 state 差 0.91（GRU）／0.99（SSM）。
 - `tests/ai/test_state_restart.py`：上面那條的機制測試（煙霧預算，驗 Δp、hash、ticks、
   三種拒絕；**不**驗「歸零 state 差異」，那需要訓練過的核心）。
-- `apps/backend/src/ai/core/stateful_runtime.py`：**P4 的生產綁定**（opt-in、預設關）。
-  `ChatCoreRuntime` 每回合推進一次 state 物件並存檔；每 session 一個狀態目錄（id 的
-  digest），共用同一份權重；`availability()` 說明為何不可用（未開啟／沒有 checkpoint／
-  上次載入失敗），`advance()` 在任何拒絕路徑都回 `None` 且**不改動**既有狀態檔。
+- `apps/backend/src/ai/core/stateful_runtime.py`：**P4 的生產綁定**（opt-in、預設關），
+  **P5 加上 R3 的三道鎖與所有權**。`ChatCoreRuntime` 每回合推進一次 state 物件並存檔；
+  每 session 一個狀態目錄（id 的 digest），共用同一份權重；`availability()` 說明為何不可用
+  （未開啟／沒有 checkpoint／上次載入失敗）並回報 `lock`／`multi_writer_safe`；
+  `advance()` 在任何拒絕路徑都回 `None` 且**不改動**既有狀態檔，`last_refusal` 說明是哪一種
+  拒絕（同一個 `None` 可能是「沒有 checkpoint」「檔案被改」「版本輸了」「主人不符」）。
 - `apps/backend/src/services/llm/generation_gate.py` 的 `STATEFUL_BACKENDS`／
   `stateful_core_active()`：連續性是**另一種能力**，`stateful-core` **不在**
   `GENERATIVE_BACKENDS` 裡（它不能吃提示改寫，放進去就會讓模板答案被記在模型頭上）。
-- `tests/ai/test_stateful_runtime.py`（16 條）＋ `tests/services/test_memory_handoff.py`
+- `scripts/probe_core_turns.py`：**P5 的回合量測**。走真正的 `_handle_chat_request`，把凍結
+  標準集整輪整輪地跑（不截斷最後一輪，否則尾端 stratum 會無故缺額），每個 stratum 一個
+  session，逐回合寫 JSONL 到 `data/core_turns/`（gitignored）。gate：回合數、零拒絕、版本嚴格
+  遞增、五個 stratum 都在。它量的是**載體**，不是能力——回覆仍由表層產生。
+- `tests/test_probe_core_turns.py`（8 條）：上面那個 gate 自己的測試（掉一次更新／一次拒絕／
+  少一個 stratum 都必須讓 `all_pass=False`），以及「整輪不截斷」與可重現性。
+- `tests/ai/test_stateful_runtime.py`（27 條）＋ `tests/services/test_memory_handoff.py`
   的兩條能力邊界測試：開關預設關、沒有 checkpoint 不建目錄、兩回合推進、session 互不
   汙染、restart 續接、三種拒絕（毀損／換權重）且檔案位元組不變、prompt 端不再發布
   `state_for_llm`、回覆 provenance 記 `core`／`none`、關閉時回覆形狀不變、「有 checkpoint 但還沒載入」不算承載連續性（載入失敗時不得把 prompt 載體關掉卻什麼都不補）。
@@ -359,8 +368,12 @@ T5 對照組也變 → 先把實驗做乾淨。
   不建立空狀態。張量用 `.npz`＋`allow_pickle=False`，meta 用 JSON。
 - `derived` 不落盤（meta 的鍵集合被測試釘住）；單一 session ≤ 10 MB，超過拋錯不截斷。
 
-**尚未做（P1 才做）**：per-session 鎖與樂觀鎖（R3 的並發部分）、`ai_step`／`al_step`、
+**當時尚未做（P1 才做）**：per-session 鎖與樂觀鎖（R3 的並發部分）、`ai_step`／`al_step`、
 跨回合訓練、T1–T6。所以 P0 綠燈**不代表**「模型在用 state」。
+
+（R3 的並發部分後來在 P5 補上：per-session 執行緒條帶 ＋ `flock`／`msvcrt` 檔案鎖 ＋
+存檔前版本比對，見 §9 的 P5 列與 `CORE_GAP_ANALYSIS.md` §42。`core_state.py` 本身仍只提供
+「原子寫入＋拒絕載入」，鎖在它的呼叫者身上。）
 
 **指令**
 
@@ -377,6 +390,13 @@ T5 對照組也變 → 先把實驗做乾淨。
 ./.venv/bin/python -m pytest tests/ai/test_stateful_runtime.py -q
 ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
     ./.venv/bin/python -c "from ai.core.stateful_runtime import get_runtime; print(get_runtime().availability())"
+
+# P5：2,208 回合的真實路徑量測（沙盒；約 26 分鐘；gate 不過就 exit 1）
+./.venv/bin/python scripts/probe_core_turns.py --turns 2000
+./.venv/bin/python -m pytest tests/test_probe_core_turns.py -q
+
+# R3：跨進程鎖真的會擋（測試裡用一個持有 flock 的 subprocess）
+./.venv/bin/python -m pytest tests/ai/test_stateful_runtime.py -q -k "lock or owner or version"
 ```
 
 ---
@@ -423,3 +443,17 @@ ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
   **限制照實記**：合成任務、同進程 restart（§40.8 已補上跨進程）；§37／§38 的半群未成立（0.7588／0.9180），
   §39 把它縮小 12–24 倍但仍未達 1e-2，§40 靠架構讓它精確；核心分不變（0.00/10），
   生產路徑未接。
+
+- 2026-11-13（P5）：量產級的三件事。① **R3 的三道鎖**：per-session 執行緒條帶
+  （固定 64 條，不做淘汰——淘汰掉一個正在被持有的鎖會讓同一 session 出現兩個鎖）、
+  session 目錄的 advisory 檔案鎖（POSIX `flock`／Windows `msvcrt`，`LOCK_NB` 輪詢、
+  上限 2 秒）、以及**存檔前的版本比對**。第三道能抓到前兩道抓不到的寫入者（工具、手改、
+  舊版建置），測試用一次**合法**存檔（有效 checksum）的干擾寫入證明不能只靠 checksum。
+  `availability()` 回報 `lock`／`multi_writer_safe`；沒有檔案鎖的主機記一次 warning 並
+  只允許單一 worker。② **所有權**：`advance(user_id=...)` 在新狀態記下主人，續接時主人
+  不符就拒絕（session id 可猜）；空主人的舊狀態接受（§41 的 state 不能回溯作廢）。
+  `last_refusal` 說明是哪一種拒絕。③ **回合量**：`scripts/probe_core_turns.py` 走真正的
+  `_handle_chat_request`，2,208 回合（五個 stratum 各一個 session），逐回合記
+  `state_source`／`ticks`／`state_version`／`dt_s`，gate 含「版本嚴格遞增」（掉一次更新就紅）。
+  **沒變的**：核心不生成回覆，`schema_version` 只有 v1（不符拒絕，**沒有** migration），
+  核心分仍 0.00/10。結果與限制見 `CORE_GAP_ANALYSIS.md` §42。

@@ -3330,3 +3330,132 @@ expected_weights_hash=…)` 守檔案路徑，這個守記憶體路徑），並�
 ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
     ./.venv/bin/python scripts/trace_reply.py "你好"
 ```
+
+## 四十二、P5：單一寫入者、所有權、真實回合的量（2026-11-13）
+
+§41 用三個回合證明「接線是對的」。三個回合證明不了兩件事：連續性撐不撐得住一個
+session，以及多個 worker 同時跑時會不會互相覆寫。這一節只補這兩件，外加一件在補的時候
+發現的：**狀態說不說得出它是誰的**。能力不變——核心分仍 **0.00/10**，本節沒有任何一條
+是「模型變強」。
+
+### 42.1 為什麼是這三件
+
+- **R3 的字面要求**就是「per-session 鎖＋版本號」，而 §41.4 第 5 點自己記了「只有單進程
+  `threading.RLock`；多 worker 會變成兩個 writer」。旗標若在 `uvicorn --workers > 1`
+  下端開，就是一個已知會損壞狀態的設定——那比沒做更糟。
+- **所有權**：session id 由呼叫端給（前端可指定），所以「A 的 session」不是秘密。若狀態
+  不記主人，A 拿到 B 的 session id 就把 B 的連續性接下去，而檔案本身說不出這件事發生過。
+- **量**：三個回合只能說「三個回合是對的」。要說「載體撐得住一個 session」，得跑完整
+  標準集、每個 stratum 一個 session、逐回合記版本號。
+
+不是 P2（SNN 臂）的原因：§36 已量過同型比較，預期會 FAIL（T3）；它關的是架構問題，
+不會讓載體更正確。這一輪的順序是「先讓已存在的東西不會壞，再談更難的模型」。
+
+### 42.2 R3 的三道鎖，各補別人的盲點
+
+| 機制 | 擋得住 | 擋不住 |
+| --- | --- | --- |
+| per-session 執行緒**條帶**（固定 64） | 同一個進程裡的其他執行緒 | 其他進程 |
+| session 目錄裡的 advisory **檔案鎖**（POSIX `flock`／Windows `msvcrt`） | 其他有拿同一把鎖的進程 | 完全沒拿鎖的寫入者（工具、手改、舊版建置） |
+| 存檔前的**版本比對** | 任何改了 `state_version` 的寫入者 | 把版本寫回同一個數字的寫入者（那樣就與自己的續接無法區分） |
+
+- **條帶不是 dict**：以 session id 為鍵的 dict 會無限成長，而淘汰一個「正在被持有」的
+  條目會讓同一 session 產生第二把鎖——兩個 writer，而且安靜無聲。條帶永遠不變大小，
+  所以一個 session 的鎖物件在進程生命期內固定；碰撞只是讓兩個本來就不競爭的 session
+  多等一下。
+- **檔案鎖用 `LOCK_NB` 輪詢，不是阻塞式 `flock`**：阻塞式沒有逾時，一個卡住的持有者會
+  把一個聊天回合永遠掛住。上限 `LOCK_TIMEOUT_S = 2.0`（**呼叫時讀取**，測試可縮短），
+  逾時就拒絕該回合（`state_source="none"`）而不是排隊等。
+- **沒有檔案鎖的主機自己說出來**：`availability()["lock"]` 是 `flock`／`msvcrt`／
+  `none`，`multi_writer_safe` 隨之為真／假；`none` 時載入 checkpoint 記**一次** warning
+  （不是每回合，那只會把噪音埋掉），並要求只開一個 worker。
+
+**實測（測試，不是宣告）**：
+
+| 情境 | 結果 |
+| --- | --- |
+| 12 個執行緒同時推進同一個 session | 12 個全部落地，版本 `1..12` 不重複、遞增 |
+| 2 個**真實進程**各推進 5 回合 | 最終版本 `19`（`1 + 2×9`：建立那回合只 +1，之後每回合 `al_step`＋`ai_step` 各 +1）——一次更新都沒掉 |
+| 另一個進程持有 `flock` | 在 0.25 秒後拒絕（`LOCK_TIMEOUT_S` 於呼叫時改成 0.25），釋放後下一回合正常 |
+| 一個**合法**存檔（有效 checksum）但沒拿鎖的寫入者 | `version conflict: read 1, disk has 2`，拒絕覆寫，對方狀態留在磁碟上 |
+| `meta.json` 在回合中途消失 | 拒絕（`cannot verify the version on disk`），不復活一個看不見歷史的狀態 |
+
+最後兩列是這一輪**修掉的兩個真缺陷**：第三道鎖原本只在「版本不同」時拒絕，檔案讀不出來
+（`None`）卻繼續寫——那會把一個失去歷史的狀態寫成一個看起來正常的新版本；同一段
+`_disk_version` 的 docstring 原本就寫著「refusal, not overwrite」，是文件與程式不一致，
+以程式為準修好並補測試。另外 `_windows_lock` 把 `msvcrt` 的常數用 `getattr` 讀：POSIX
+上那個 stub 沒有 `locking`／`LK_NBLCK`，用 `# type: ignore` 會花掉專案零容忍的 ignore
+預算去掩蓋一個永遠不會在那裡執行的分支。
+
+### 42.3 所有權：狀態要說得出它是誰的
+
+- 新狀態把 `user_id` 寫進 invariant 欄位；續接時若呼叫端帶了 `user_id` 而檔案裡的是
+  另一個非空值，**拒絕**（`state belongs to 'alice', not 'bob'`），檔案不動。
+- **空主人的舊狀態接受**：§41 的 run 建立狀態時還沒有這個欄位，把它們回溯作廢等於用
+  一個新欄位宣告過去的量測無效。
+- 這不是身分驗證：它擋的是「不小心共用」與「檔案說不出主人」，擋不了呼叫端謊報
+  `user_id`。要擋那個需要真正的認證，不在這一輪。
+- 回覆 provenance 也多了 `user_id`，所以「這回合推進的是誰的狀態」在回覆裡可被檢查。
+
+### 42.4 量測：2,208 回合的真實路徑（2026-11-13，登記 run 實測）
+
+`scripts/probe_core_turns.py` 走**真正的** `_handle_chat_request`（`trace_reply.py` 用的
+同一個入口），把凍結標準集整輪整輪地跑（不截斷最後一輪，否則尾端 stratum 會無故缺額），
+五個 stratum 各一個 session，逐回合寫 JSONL 到 `data/core_turns/`（gitignored）。
+checkpoint 是**未訓練**的 SSM（26 tokens、hidden 64、emb 32）——這一節量的是載體，
+不是模型。
+
+| session | 回合 | `state_version` | 最終 `ticks` | 拒絕 | 第一回合建立 |
+| --- | --- | --- | --- | --- | --- |
+| `core-turns-claim` | 216 | 1→431 | 215 | 0 | 是 |
+| `core-turns-dialogue` | 200 | 1→399 | 199 | 0 | 是 |
+| `core-turns-multi` | 160 | 1→319 | 159 | 0 | 是 |
+| `core-turns-qa` | 984 | 1→1967 | 983 | 0 | 是 |
+| `core-turns-state` | 648 | 1→1295 | 647 | 0 | 是 |
+
+- 總計 **2,208 回合／1,545 秒（1.43 回合/秒）**；by stratum：
+  `claim 216／dialogue 200／multi 160／qa 984／state 648`（每輪 1,104 題，跑兩輪）。
+- **版本嚴格遞增**，而且每一個 session 都恰好是 `2n−1`：`al_step` 一次、`ai_step` 一次，
+  建立那回合只 +1。這是「一次更新都沒掉」的可檢查形式，掉一次就紅。
+- **拒絕 0 次**：2,208 個回合全部由 state 物件承載（`state_source="core"`），沒有任何
+  一回合退回 prompt 載體。
+- `dt_s`：2,203 個回合 > 0（每 session 第一回合是 0，因為那是建立、不是續接），中位數
+  **2.24 秒**、最大 **42.3 秒**。中位數是**回覆層**的處理時間（回合背靠背跑，中間沒有
+  sleep），最大值是載入模型／抓取的時間——兩者都不是核心成本。
+- `all_pass = True`（五項檢查：回合數、零拒絕、版本嚴格遞增、五個 stratum 都在、每一回合
+  都由核心承載）。
+- 狀態落在沙盒 `data/probe_native_dialogue/core_state/state/<digest>/`：探針只寫
+  gitignored 的 `data/`，量測不污染被量的環境。
+
+**怎麼讀**：這證明「同一個 state 物件在真實回合迴圈裡連續 2,208 次都是唯一寫入者，沒有
+一次更新被覆寫」。它**不**證明狀態有用——回覆仍由表層產生。
+
+### 42.5 這一節**沒有**證明什麼（照實寫）
+
+1. **沒有任何東西把 state 讀回生成**。核心不產生文字，prompt 不讀它，router 不讀它。
+   核心分仍 **0.00/10**；這輪的成果是「載體在多回合、多寫入者的情況下不會壞」。
+2. **`schema_version` 只有 v1，沒有 migration**。不符就拒絕（寧可拒絕，不可靜默重置），
+   但 P5 清單上的「版本遷移」只做了**拒絕那一半**。要真的 migration 需要一個 v2 schema
+   與它的測試；這裡沒有先寫一個空殼假裝做過。
+3. **tokenizer 仍是 `hash-bucket` 佔位**：2,208 回合的 state 內容沒有語言意義。要讓
+   它有，是 P2 的訓練工作。
+4. **回合速度不是核心成本**：1.43 回合/秒是**回覆層**的速度（模板／知識／路由），
+   核心只佔其中很小一段；§40.7 的 0.55× forward 是合成任務的計算量，兩者不可互相換算。
+5. **in-memory 訊息歷史仍是每進程一份**：多 worker 對**核心狀態檔**是安全的（R3），
+   對聊天歷史不是（既有問題，本輪未處理）。
+6. **不是多使用者並發壓力測試**：2,208 回合是同一台機器、同一個進程、五個 session
+   依序跑；併發只出現在測試裡（12 執行緒、2 進程）。
+
+### 42.6 指令
+
+```bash
+# 載體：2,208 回合的真實路徑量測（沙盒；約 26 分鐘；gate 不過就 exit 1）
+./.venv/bin/python scripts/probe_core_turns.py --turns 2000
+
+# R3：27 條 runtime 測試（12 執行緒、2 進程、flock 持有者、合法卻沒拿鎖的寫入者、
+# 中途消失的 meta.json、主人不符、空主人被接受、不可讀的版本）
+./.venv/bin/python -m pytest tests/ai/test_stateful_runtime.py -q
+
+# gate 自己的測試（掉一次更新／一次拒絕／少一個 stratum 都必須 all_pass=False）
+./.venv/bin/python -m pytest tests/test_probe_core_turns.py -q
+```
