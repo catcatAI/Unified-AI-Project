@@ -3240,3 +3240,93 @@ expected_weights_hash=…)` 守檔案路徑，這個守記憶體路徑），並�
    FAIL（`tests/ai/test_state_restart.py` 因此只驗機制，不驗這一項），這不是探針壞了，是
    那個預算下的 GRU 本來就幾乎不看 state。
 4. 核心分不變（**0.00/10**），生產路徑仍走 prompt／`state_for_llm`。
+
+## 四十一、P4：同一個 state 物件第一次進到真實路徑（2026-11-12）
+
+§37–§40 證明的是「在一個 probe 裡，模型會用 state」。P4 要回答的是另一件事：**在真正的
+聊天路徑上，連續性是不是由那個 state 物件承載，而不是由 prompt 文字承載。** 這一節只談
+載體，不談能力——核心分不變（**0.00/10**）。
+
+### 41.1 接法（opt-in，預設關）
+
+- `apps/backend/src/ai/core/stateful_runtime.py`：`ChatCoreRuntime`。每回合
+  `advance(text)` 做四件事：載入 checkpoint 描述的臂（臂由**檔案**決定，不是環境變數）、
+  載入該 session 的 state（`expected_weights_hash` ＋ `attach_state` 兩道檢查）、用
+  `last_update` 算 `dt` 後 `al_step(dt)`、把使用者這句話送進 `ai_step`、存檔。
+- **每 session 一個狀態目錄**（session id 的 sha256 前 16 碼），共用同一份權重。單一
+  process-wide 狀態檔會讓 A 的回合推進 B 的狀態——那正是契約要防的「不屬於任何人的
+  state」。
+- `chat_routes._handle_chat_request` 在 `try` 之前推進一次，於 `finally`（與 session
+  持久化同一個區塊）把 provenance 貼回回覆。所有失敗都吞掉並記 warning：核心是基礎設施，
+  不得把回覆一起帶走。
+- 開啟時 `_ctx_state_matrix` **直接返回**，不發布 `state_for_llm`；`context["state_source"]
+  = "core"`。契約 §3 的規則「狀態不得以文字寫進 prompt」於是在生產路徑上成立。
+  「承載連續性」的判定要求**核心真的載入成功**（`_core is not None`），不是「磁碟上有
+  checkpoint」：torch 缺失或 checkpoint 壞掉時，把 prompt 載體關掉卻沒有任何東西補上，
+  等於讓連續性歸零還宣稱有載體。此時 `state_source="none"`，prompt 走原本的路。
+- `generation_gate` 新增 `STATEFUL_BACKENDS = {"stateful-core"}` 與
+  `stateful_core_active()`。**`stateful-core` 不在 `GENERATIVE_BACKENDS` 裡**：它能承載
+  狀態，不能吃提示改寫；放進去就會讓模板答案被記在模型頭上。有一條測試釘住這件事。
+
+### 41.2 實測（真實路徑，不是 mock）
+
+`ANGELA_STATEFUL_CORE=1` ＋ 一份 26-token、`hidden=64`、`emb=32` 的 SSM checkpoint
+（未訓練——這一節量的是載體），連續三個回合呼叫**真正的** `_handle_chat_request`：
+
+| 回合 | 回覆（既有路由產生） | `state_source` | `ticks` | `state_version` | `dt_s` |
+| --- | --- | --- | --- | --- | --- |
+| 你好 | 你好呀！見到你真開心~ | `core` | 0 | 1 | 0.000 |
+| 水的沸點是多少? | 答案是 100。 | `core` | 1 | 3 | 6.304 |
+| 再見 | 拜拜！下次見啦~ | `core` | 2 | 5 | 0.625 |
+
+- 狀態真的落在 `state/<session digest>/`（`meta.json` ＋ `tensors.npz`），三回合是同一個
+  物件在長大：`state_version` 每回合 +2（`al_step` 一次、`ai_step` 一次），`ticks` 只在
+  `dt > 0` 時前進。
+- **回覆不是核心產生的**：三句分別來自模板與知識層，與 §40 之前相同。核心只承載狀態。
+  `state_source` 就是為了讓這件事在回覆裡可被檢查，而不是靠文件宣稱。
+- 關閉時（預設）：回覆**沒有**任何新鍵，狀態目錄**不存在**。預設行為未變。
+- prompt 端確實被關掉（同一進程實測）：`_stateful_core_carries_continuity()` 在載入前是
+  `False`、`advance()` 之後是 `True`；接著 `_ctx_state_matrix({})` 的結果是
+  **只有** `{'state_source': 'core'}`——`state_for_llm` 沒有被發布。
+
+### 41.3 接線時抓到的兩個真缺陷（已修）
+
+1. **`CoreState.load` 交回 numpy，不能直接步進**。第一次煙霧測試就在
+   `_hidden()` 拋 `CoreStateInvalid: state 'h' must be a torch tensor`。修法：載入後
+   必須 `core.attach_state(state)`——它同時是第二道 `model_kind`／`weights_hash` 檢查
+   （§40.8 修的正是那裡）。
+2. **`last_update` 是 UTC，卻用 `time.mktime` 解析**。`mktime` 把 struct 當**本地**時間，
+   於是每個 gap 都多算主機的 UTC 偏移（此機 +8 小時）：一個 6 秒的停頓會變成 8 小時的
+   `al_step`。改成 `calendar.timegm`，並加一條測試釘住 `1970-01-01T00:00:00Z == 0.0`
+   （在非 UTC 時區上會失敗的正是 `mktime` 版本）。
+
+### 41.4 這一節**沒有**證明什麼（照實寫）
+
+1. **沒有任何東西把 state 讀回生成**。核心不產生文字；prompt 不讀它；router 不讀它。
+   所以 P4 的成果是「載體在真實路徑上正確」，不是「載體被使用」。要走到後者，需要一個
+   能生成開放域文字的核心（§七／§X #276：目前 0/200 exact），那是 P2/P5 的工作。
+2. **tokenizer 是標記用的佔位實作**：文字被 crc32 雜湊進 26 個桶，provenance 寫
+   `tokenizer="hash-bucket"`。所以 state 的**內容**沒有語言意義；被驗證的是「一個物件、
+   一個 writer、跨回合存回來」。
+3. **沒接過 `/api` 的 HTTP 層**：量的是 `_handle_chat_request`（`trace_reply.py` 用的同一個
+   入口），不是 FastAPI 的請求／回應序列化。
+4. 核心分仍 **0.00/10**（L0）；系統分不因這條接線變動——它不產生任何被計分的答案。
+5. **只有單進程的鎖**：`ChatCoreRuntime` 用 `threading.RLock` 串行化同一進程內的回合，
+   多 worker（`uvicorn --workers > 1`）會變成兩個 writer 寫同一個 session 目錄。R3 的
+   樂觀鎖（`state_version` 比較）與檔案鎖還沒做，這是 P5 的項目；在那之前只該以單一
+   worker 開啟這個旗標。
+
+### 41.5 指令
+
+```bash
+# 16 條 runtime 測試（預設關、兩回合、session 隔離、restart、三種拒絕、prompt 抑制、
+# provenance、以及「檔案存在 ≠ 已載入」）
+./.venv/bin/python -m pytest tests/ai/test_stateful_runtime.py -q
+
+# 能力邊界：核心不是生成後端，且預設關
+./.venv/bin/python -m pytest tests/services/test_memory_handoff.py -q
+
+# 真實路徑（需要一份 checkpoint；預設關時同一個指令不會建立任何狀態）
+ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
+    ./.venv/bin/python scripts/trace_reply.py "你好"
+```

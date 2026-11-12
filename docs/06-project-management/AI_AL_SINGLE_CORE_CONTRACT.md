@@ -259,6 +259,7 @@ T5 對照組也變 → 先把實驗做乾淨。
 | **P3** | SSM 原型（dt 原生） | 在 T3／T5 上優於或等於 GRU；成本可接受 |
 | — | **P3 狀態（2026-11-12）**：SSM 臂**21/21 預登記檢查通過**（主臂 1.0000、歸零 0.0000＝常數錯答而非 chance、不跑 `al_step` 0.4970、打亂 0.4948、假時鐘 0.0000、restart 0）。半群 **1.9–3.8e-6**（登記 ≤1e-2）——但這是**架構保證**（指數相乘），不是學到的連續性。T3 1.0000（與 GRU 相同）；不跑 `al_step` 0.4970 vs GRU 0.4988（差 0.0018，在 ±0.0123 半寬內，不下降）。**成本已乾淨量測**（`--cost`，三次獨立 run、交替順序、每次 30 reps 取中位數）：參數 4,634 vs 21,402（0.217×）、checkpoint 20.8 vs 86.9 KiB（0.239×）、forward 1.14–1.15 vs 2.02–2.07 ms（**0.55×**）、訓練步 2.82–3.01 vs 6.31–6.42 ms（**0.45×**）。這是**合成任務尺寸**的計算量，不是生產延遲；P4 未接線前不宣稱「成本可接受」（見 `CORE_GAP_ANALYSIS.md` §40.7）。 | `probe_state_cycles.py --round 4` 的 `all_pass=True`；`tests/ai/test_ssm_core.py` 9 條綠 |
 | **P4** | 接生產：`generation_gate` 加 `stateful`；`chat_routes` 傳 state 物件；`state_for_llm` 只給 fallback | 生產路徑不再把 state 寫進 core prompt；provenance 正確 |
+| — | **P4 狀態（2026-11-12）**：接線完成，**opt-in、預設關**（`ANGELA_STATEFUL_CORE=1`）。`ai/core/stateful_runtime.py` 每回合推進一次 state 物件並存檔（每 session 一個目錄，共用同一份權重）；開啟時 `chat_routes._ctx_state_matrix` **不再發布** `state_for_llm`，回覆的 provenance 記 `state_source="core"` ＋ `core_state`（`ticks`／`state_version`／`dt_s`／`arch`／`tokenizer`／`weights_hash`）。**核心不寫回覆**：目前沒有任何核心能生成開放域文字，所以它只承載狀態，回覆仍由既有路由產生；`state_source` 就是為了不讓這件事被誤讀。預設關閉時回覆形狀完全不變。**核心分仍 0.00/10**（見 `CORE_GAP_ANALYSIS.md` §41）。 | 開啟後 `/api` 回覆帶 `state_source="core"`；`tests/ai/test_stateful_runtime.py` 16 條綠；關閉時 `_ctx_state_matrix` 行為與 §40 前相同 |
 | **P5** | 量產級：per-user 持久化、重啟、版本遷移、成本 | 文件與分數同步；核心分只在模型產生時變動 |
 
 **停損**：
@@ -336,6 +337,17 @@ T5 對照組也變 → 先把實驗做乾淨。
   `CORE_GAP_ANALYSIS.md` §40.8：兩臂 Δp = 0、歸零 state 差 0.91（GRU）／0.99（SSM）。
 - `tests/ai/test_state_restart.py`：上面那條的機制測試（煙霧預算，驗 Δp、hash、ticks、
   三種拒絕；**不**驗「歸零 state 差異」，那需要訓練過的核心）。
+- `apps/backend/src/ai/core/stateful_runtime.py`：**P4 的生產綁定**（opt-in、預設關）。
+  `ChatCoreRuntime` 每回合推進一次 state 物件並存檔；每 session 一個狀態目錄（id 的
+  digest），共用同一份權重；`availability()` 說明為何不可用（未開啟／沒有 checkpoint／
+  上次載入失敗），`advance()` 在任何拒絕路徑都回 `None` 且**不改動**既有狀態檔。
+- `apps/backend/src/services/llm/generation_gate.py` 的 `STATEFUL_BACKENDS`／
+  `stateful_core_active()`：連續性是**另一種能力**，`stateful-core` **不在**
+  `GENERATIVE_BACKENDS` 裡（它不能吃提示改寫，放進去就會讓模板答案被記在模型頭上）。
+- `tests/ai/test_stateful_runtime.py`（16 條）＋ `tests/services/test_memory_handoff.py`
+  的兩條能力邊界測試：開關預設關、沒有 checkpoint 不建目錄、兩回合推進、session 互不
+  汙染、restart 續接、三種拒絕（毀損／換權重）且檔案位元組不變、prompt 端不再發布
+  `state_for_llm`、回覆 provenance 記 `core`／`none`、關閉時回覆形狀不變、「有 checkpoint 但還沒載入」不算承載連續性（載入失敗時不得把 prompt 載體關掉卻什麼都不補）。
 
 ### P0 現況（2026-11-12，已實作，未改任何行為）
 
@@ -360,6 +372,11 @@ T5 對照組也變 → 先把實驗做乾淨。
 # 跨進程 restart（T4 的第二半；兩臂 Δp = 0，三個拒絕檢查全過）
 ./.venv/bin/python scripts/probe_state_restart.py
 ./.venv/bin/python -m pytest tests/ai/test_state_restart.py -q
+
+# P4：opt-in 的生產接線（預設關；核心只承載狀態，不寫回覆）
+./.venv/bin/python -m pytest tests/ai/test_stateful_runtime.py -q
+ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
+    ./.venv/bin/python -c "from ai.core.stateful_runtime import get_runtime; print(get_runtime().availability())"
 ```
 
 ---
@@ -383,6 +400,14 @@ T5 對照組也變 → 先把實驗做乾淨。
   12–24 倍（1.66–1.88 → 0.069–0.140），但未達登記的 1e-2，**3 項 FAIL**。最後 batch 的
   loss 1.4e-5 與 held-out 的 6.9e-2 並列，說明約束只作用在當前狀態分布。否定結果照實記，
   不調 λ；P3（SSM）是下一步。
+  2026-11-12（P4 接線）：`stateful_runtime.py` 把「每回合推進同一個 state 物件」接進
+  `chat_routes._handle_chat_request`，並在 `_ctx_state_matrix` 停止把 state 發布成 prompt
+  文字；**opt-in、預設關**，預設回覆形狀不變。回覆 provenance 記 `state_source`
+  （`core`／`none`）與 `core_state`。核心**不生成回覆**——目前沒有能生成開放域文字的核心，
+  所以這是「載體正確」而不是「載體被讀回生成」。核心分仍 0.00/10。
+  過程中修掉兩個真缺陷：`CoreState.load` 交回 numpy（必須 `attach_state` 才能步進）、
+  以及 `last_update` 是 UTC 卻用 `time.mktime`（本地時區）解析，會把每個 gap 多算
+  8 小時（改 `calendar.timegm`，測試釘住 epoch 0）。
   2026-11-12（§40.8 跨進程 restart）：新的 `probe_state_restart.py` 在**兩個新行程**之間
   傳遞權重檔＋狀態檔，兩臂 Δp = 0.000e+00、`ticks`／`state_version`／`last_dt_s`／hash
   全部保留、歸零 state 差 0.9063（GRU）／0.9904（SSM）。順手修掉真缺陷：
