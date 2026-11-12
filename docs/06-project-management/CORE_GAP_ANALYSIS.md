@@ -3651,6 +3651,7 @@ loss `1.546 → 1.201 → 1.007 → 0.955 → 0.926 → 0.901 → 0.882 → 0.86
 # 產生器與洩漏檢查的測試（切分交集為空、重跑可重現、cold 與 heldout 同題）
 ./.venv/bin/python -m pytest tests/test_state_content_task.py -q
 ```
+
 ## 四十四、把訓練長度修好之後：同一個任務、同一組門檻（2026-11-13，量測前寫定）
 
 §43 的登記 run 失敗，但失敗的位置是**協定**，不是模型：早停看 `dev` 的 exact，
@@ -3704,3 +3705,108 @@ seed 777 那一輪是**開發**，不進結果表。
     --seed 20261114 --epochs 60 --patience 0 --out data/state_content
 ```
 
+### 44.6 結果（2026-11-13，登記 run 實測；門檻未改）
+
+`./.venv/bin/python scripts/train_state_content.py --seed 20261114 --epochs 60 --patience 0`
+——與 §43 唯一的差別就是這兩個旗標。資料是**另一個種子**（`20261114`），洩漏檢查
+`clean=True`（值交集 0、名字交集 0、`<unk>` 0）。
+
+| 代號 | 門檻 | 實測 | |
+| --- | --- | --- | --- |
+| G1 `dev` exact | ≥ 0.60 | **0.994** | PASS |
+| G2 `heldout_names` exact | ≥ 0.30 | **0.995** | PASS |
+| G3 零狀態 / 差距 | ≤ 0.05 且 ≥ 0.25 | **0.000** / **0.995** | PASS |
+| G4 `cold` exact | ≤ 0.02 | **0.000** | PASS |
+| G5 成本 | 完整 | see below | PASS |
+
+`all_pass = True`。
+
+| 量測 | exact | 字元準確率 |
+| --- | --- | --- |
+| `dev`（看過的名字風格、沒看過的值） | 0.994 | 0.999 |
+| `heldout_names`（沒看過的名字＋沒看過的值） | **0.995** | 0.999 |
+| `zero_state`（同題、同權重、同 prompt，`h` 歸零） | **0.000** | 0.135 |
+| `cold`（跳過教學回合） | **0.000** | 0.136 |
+| `heldout_names_no_al`（不呼叫 `al_step`） | **0.003** | 0.312 |
+| `wrong_name`（教 A、問沒教過的 B） | **0.994** | 0.999 |
+
+診斷：teacher-forced `dev` 0.999／`heldout` 0.999（全對 0.994／0.995）；線性 probe
+`dev` 0.846／`heldout` 0.851（全對 0.285／0.308）。成本：**81,765 參數**、訓練
+**271.6 秒**（60 epochs，XPU）、評估 16,000 回合 2.42 秒（**0.00015 秒/回合**）。
+`dev` 的曲線是慢啟動：epoch 1–6 的 exact 是 0.000–0.021，epoch 10 才 0.238，
+epoch 20 到 0.877——**這正是 §43 用 exact 早停會誤殺的形狀**。
+
+**重載驗證**：把存下來的 checkpoint 重新載進一個全新的 `GRUCore`（CPU），
+`heldout` 前 200 題 exact **0.995**、零狀態 **0.000**，config 與詞表一致。報告裡的
+數字不是只在訓練進程裡成立。
+
+### 44.7 這一輪證明了什麼，以及它**沒有**證明什麼
+
+**證明（可重跑、有對照）**：在一個答案只存在於 state 的任務上，一個 81,765 參數的
+GRU 把一個**沒見過**的字串放進 state、跨過一個回合邊界（含一次 `al_step(120 s)`），
+再從生成把它完整讀回來（`heldout` 0.995，字元 0.999）；把 `h` 歸零（**同一個物件、
+同一份權重、同一個 prompt**）或跳過教學回合，都掉到 **0.000**。teacher-forced 與
+線性 probe 都接近滿分，說明失敗與成功都不是量測接錯。
+
+**沒有證明（照實，而且其中兩條是這一輪自己量到的）**：
+
+1. **名字沒有被使用**：`wrong_name` **0.994**——教 A、問一個沒教過的 B，模型照樣
+   吐出 A 的值。所以這是**單槽攜帶**，不是鍵值查詢。「state 有內容」成立，
+   「依查詢選取」不成立。§43 的診斷就是為這件事準備的，它給出的答案是「配對沒有
+   被使用」。
+2. **不是間隙不變的**：把 `al_step` 拿掉，exact 從 0.995 掉到 **0.003**。模型學到
+   的是「經過**一次** 120 秒的 `al_step` 之後可讀」，不是「無論多久都記得」。
+   生產路徑本來就每回合推進一次，所以這不是 bug，但它是一條**邊界**：這一輪沒有
+   量多個不同的 `dt`。
+3. **不是語言**：詞彙是封閉的 CV 音節字母表（19 個字母），句型只有一種。這是
+   **機制**的證明，不是「會說話」。
+4. **沒有接進生產**：`stateful_runtime` 的 tokenizer 仍是 `hash-bucket`，回覆仍由
+   表層產生。核心分**不變**（**0.00/10**）——這一輪用的不是任何 benchmark 題目，
+   也沒有任何一條路徑把這個 checkpoint 的輸出當成回覆。把它接進去會是一句只能講
+   `remember X = Y` 的模型，那比不接更糟。
+5. **`dev` 是開發集，`heldout` 才是分數**：§43.5c 的 seed 777 是開發，`20261114`
+   是這一輪才第一次用的。兩者都沒有被用來調門檻。
+
+### 44.8 下一輪的三個候選（照重要性排）
+
+1. **讓名字真的被使用**（`wrong_name` 要掉到 0）：多槽、或教學回合一次給兩三組，
+   問其中一組。這是把「攜帶」變成「查詢」的一步，也是唯一能讓這個機制有用的一步。
+2. **間隙不變**：訓練時 `dt` 從分佈抽（例如 30／60／120／240 秒），量「同一個
+   state 在不同 gap 下的召回率」。現在的 0.003 就是沒有做這件事的代價。
+3. **換成自然的詞彙**：把 CV 音節換成真實英文詞／子詞，任務不變。這一步才開始
+   接近「狀態有語言內容」，但需要的資料與模型都大一個量級，應該在前兩項站穩之後。
+
+### 44.10 記錄缺陷與重現性重跑（2026-11-13，重跑之前寫定）
+
+§44.6 的**數字**是那次 run 的數字，但存下來的報告把**設定**記錯了：`config.max_epochs`
+寫的是模組預設 `24`、`early_stop_patience` 寫的是 `3`，實際跑的是 CLI 給的 `60`／`0`。
+這叫「記錄的 run 不是跑的 run」——與分數無關，但必須修：下一個人照報告重跑會得到不同
+的東西，而且從檔案看不出是誰對。
+
+修法：`config` 改記**生效值**（`max_epochs = 2 if --smoke else --epochs`、
+`early_stop_patience = --patience`）。修完之後用**完全相同**的指令與 seed 再跑一次，
+當作**重現性檢查**，不是第二次嘗試：
+
+- 兩個 run 的數字都會寫出來，**不論新的比較好還是比較差**。
+- 若 `heldout_names`／`zero_state` 有變動，照實記差值——那代表 XPU kernel 的非決定性
+  要寫進限制，而不是挑一個好看的 run。
+- 不因為重跑而改任何門檻、資料、臂或 epoch 數。
+
+### 44.9 驗證指令
+
+```bash
+# 任務本身的契約（13 條：洩漏、可重現、cold 同題、答案不在問句裡、零狀態真的歸零）
+./.venv/bin/python -m pytest tests/test_state_content_task.py -q
+
+# checkpoint 重載（數字不是只在訓練進程裡成立）
+./.venv/bin/python - <<'EOF'
+import torch, importlib.util, sys
+spec = importlib.util.spec_from_file_location("tsc", "scripts/train_state_content.py")
+m = importlib.util.module_from_spec(spec); sys.modules["tsc"] = m; spec.loader.exec_module(m)
+ckpt = sorted(__import__("glob").glob("data/state_content/*.pt"))[-1]
+payload = torch.load(ckpt, map_location="cpu", weights_only=True)
+table = m.CharTable(); core = m.build_core(table, "cpu")
+core.load_state_dict(payload["state_dict"]); core.eval()
+print(m.evaluate(core, table, m.build_splits(seed=20261114)["heldout_names"][:200], device="cpu")["exact"])
+EOF
+```

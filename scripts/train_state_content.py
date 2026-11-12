@@ -601,6 +601,9 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
     device = _device()
     table = CharTable()
     sizes = dict(SMOKE if args.smoke else DEFAULTS)
+    # The *effective* budget, not the module default: a report that says
+    # "max_epochs: 24" after a 60-epoch run is a record of the wrong run.
+    epochs_budget = 2 if args.smoke else args.epochs
     splits = build_splits(seed=args.seed, sizes=sizes)
     leaks = leak_check(splits)
 
@@ -614,8 +617,8 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "chunk_seconds": CHUNK_SECONDS,
             "lr": LEARNING_RATE,
             "batch": BATCH,
-            "max_epochs": MAX_EPOCHS,
-            "early_stop_patience": EARLY_STOP_PATIENCE,
+            "max_epochs": epochs_budget,
+            "early_stop_patience": args.patience,
             "turn_gap_s": TURN_GAP_S,
             "seed": args.seed,
             "name_syllables": NAME_SYLLABLES,
@@ -644,7 +647,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         splits["train"],
         splits["dev"],
         device=device,
-        epochs=2 if args.smoke else args.epochs,
+        epochs=epochs_budget,
         batch_size=BATCH,
         lr=LEARNING_RATE,
         patience=args.patience,
