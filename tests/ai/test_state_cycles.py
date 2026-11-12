@@ -17,14 +17,16 @@ before it can move a number in ``CORE_GAP_ANALYSIS.md`` §37.
 
 from __future__ import annotations
 
+import argparse
+
 import numpy as np
 import pytest
-from ai.core.core_state import CoreState
+from ai.core.core_state import CoreState, CoreStateInvalid
 from ai.core.core_step import chunk_dt
 
 torch = pytest.importorskip("torch")
 
-from ai.core.stateful_decoder import GRUCore  # noqa: E402
+from ai.core.stateful_decoder import GRUCore, SSMCore  # noqa: E402
 
 
 def _model(**kwargs) -> GRUCore:
@@ -352,3 +354,65 @@ def test_probe_semigroup_eval_is_exact_for_the_ssm(probe) -> None:
 
     assert set(deltas) == {f"{dt1:g}+{dt2:g}" for dt1, dt2 in pairs}
     assert max(deltas.values()) <= 1e-5
+
+
+# -- S40.7 cost: the reported number is a median, and it is not a score -------
+
+
+def test_aggregate_reports_the_median_of_alternation_medians(probe) -> None:
+    entries = [
+        {"median": 2.0e-3, "min": 1.8e-3, "max": 4.0e-3},
+        {"median": 4.0e-3, "min": 3.9e-3, "max": 5.0e-3},
+        {"median": 3.0e-3, "min": 2.9e-3, "max": 6.0e-3},
+    ]
+
+    aggregated = probe._aggregate(entries)
+
+    assert aggregated["median_ms"] == pytest.approx(3.0)
+    assert aggregated["min_ms"] == pytest.approx(1.8)
+    assert aggregated["max_ms"] == pytest.approx(6.0)
+    assert aggregated["alternations"] == 3
+
+
+def test_cost_report_measures_both_phases_and_is_not_a_result(probe, monkeypatch) -> None:
+    # Shrink the measurement so the test checks the report's shape, not the
+    # machine's speed (the committed numbers come from a full --cost run).
+    for key, value in (("reps", 2), ("warmup", 1), ("alternations", 2), ("batch_size", 8)):
+        monkeypatch.setitem(probe.COST, key, value)
+    args = argparse.Namespace(hidden=16, emb=8, lr=5e-3)
+
+    report = probe.run_cost(args)
+
+    assert report["kind"] == "cost"
+    # A cost run must never be readable as a capability run.
+    assert report["registered"] is False
+    assert set(report["arms"]) == {"gru", "ssm"}
+    for arch in ("gru", "ssm"):
+        assert report["arms"][arch]["forward"]["median_ms"] > 0.0
+        assert report["arms"][arch]["train_step"]["median_ms"] > 0.0
+        assert report["arms"][arch]["parameters"] > 0
+    assert report["ratio"]["parameters"] < 1.0
+    assert report["ratio"]["forward"] > 0.0
+
+
+def test_attach_refuses_a_state_from_another_arm() -> None:
+    # Same hidden size, so nothing about the shapes would stop it: only the
+    # model_kind check does (contract R1/R5).
+    gru = GRUCore(26, hidden=8, emb=4, seed=0).eval()
+    ssm = SSMCore(26, hidden=8, emb=4, seed=0).eval()
+    state = gru.init_state(2, session_id="cross-arm")
+
+    with pytest.raises(CoreStateInvalid):
+        ssm.attach_state(state)
+
+
+def test_attach_refuses_a_state_from_other_weights() -> None:
+    model = GRUCore(26, hidden=8, emb=4, seed=0).eval()
+    state = model.init_state(2, session_id="stale")
+    other = GRUCore(26, hidden=8, emb=4, seed=1).eval()
+
+    with pytest.raises(CoreStateInvalid):
+        other.attach_state(state)
+
+    # The state still attaches to the weights that produced it.
+    assert model.attach_state(state).weights_hash == model.weights_hash()

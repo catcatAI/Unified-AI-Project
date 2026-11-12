@@ -189,8 +189,27 @@ class StatefulCore:
         )
 
     def attach_state(self, state: CoreState) -> CoreState:
-        """Turn a loaded (numpy) state back into tensors the cell can consume."""
+        """Turn a loaded (numpy) state back into tensors the cell can consume.
+
+        Refuses a state that was not produced by **these** weights or by this
+        arm (contract R1/R5): a ``gru`` state attached to an ``ssm`` core would
+        otherwise be accepted silently whenever the hidden size happens to
+        match, and the model would answer from a state that never existed for
+        it. ``CoreState.load(expected_weights_hash=...)`` guards the file path;
+        this guards the in-memory path.
+        """
         torch = self._torch
+        if state.model_kind != self.model_kind:
+            raise CoreStateInvalid(
+                f"state is {state.model_kind!r} but this core is {self.model_kind!r}"
+            )
+        expected = self.weights_hash()
+        if state.weights_hash != expected:
+            raise CoreStateInvalid(
+                "state weights_hash does not match this core's weights "
+                f"({state.weights_hash[:19]}… != {expected[:19]}…); "
+                "reset the state instead of attaching it"
+            )
         tensors: Dict[str, Any] = {}
         for name, value in state.tensors.items():
             if hasattr(value, "detach"):

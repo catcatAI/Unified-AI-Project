@@ -41,6 +41,8 @@ Usage
                                                           # L_al semigroup loss)
     python3 scripts/probe_state_cycles.py --round 4       # registered round 4 (S40,
                                                           # SSM arm)
+    python3 scripts/probe_state_cycles.py --cost          # §40.6 cost only (idle
+                                                          # machine; scores nothing)
     python3 scripts/probe_state_cycles.py --seeds 0 --epochs 1 \
         --train-sessions 256 --eval-sessions 64           # smoke only
 """
@@ -50,6 +52,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import random
 import sys
 import tempfile
@@ -308,6 +311,118 @@ def run_sessions(
     }
 
 
+def build_core(
+    arch: str,
+    *,
+    seed: int,
+    hidden: int,
+    emb: int,
+    chunk_seconds: float,
+) -> Any:
+    """Construct one arm; the only place that knows the registered model sizes."""
+    torch = model_torch()
+    torch.manual_seed(seed)
+    if arch == "gru":
+        return GRUCore(
+            TOKEN_COUNT,
+            hidden=hidden,
+            emb=emb,
+            chunk_seconds=chunk_seconds,
+            seed=seed,
+        )
+    if arch == "ssm":
+        return SSMCore(
+            TOKEN_COUNT,
+            hidden=hidden,
+            emb=emb,
+            chunk_seconds=chunk_seconds,
+            seed=seed,
+        )
+    raise ValueError(f"unknown arch {arch!r}")
+
+
+def _train_step(
+    model: Any,
+    optimiser: Any,
+    batch: Sequence[Session],
+    *,
+    arm: str,
+    grad_clip: float,
+    l_al_weight: float = 0.0,
+    l_al_train: Tuple[float, float] = (25.0, 25.0),
+) -> None:
+    """One registered-shaped optimiser step (teach → gaps → two queries).
+
+    Kept as its own function so the cost measurement times **this** work rather
+    than a look-alike: ``train_arm`` and ``run_cost`` call the same body.
+    """
+    torch = model_torch()
+    gap_count = len(batch[0].gaps)
+    state = model.init_state(len(batch), session_id="train")
+    device = model.device
+    teach = torch.stack(
+        [
+            torch.full((len(batch),), REMEMBER, device=device),
+            _tensor(batch, "key", torch, device),
+            _tensor(batch, "value", torch, device),
+        ],
+        dim=1,
+    )
+    talk = torch.full((len(batch), 1), TALK, device=device)
+    _, state = model.ai_step(teach, state)
+    for index in range(gap_count - 1):
+        if arm == "core":
+            state = model.al_step(
+                _gap_tensor(batch, index, torch, device),
+                state,
+            )
+        _, state = model.ai_step(talk, state)
+    if arm == "core":
+        state = model.al_step(
+            _gap_tensor(batch, gap_count - 1, torch, device),
+            state,
+        )
+
+    l_al_value = None
+    if l_al_weight > 0.0 and arm == "core":
+        # §39.2: the same h advanced as dt1+dt2 vs dt2(dt1(h)).
+        # Only the training pair is taught; the held-out pairs are
+        # measured, never optimised.
+        hidden0 = state.tensors["h"]
+        sequential = model.init_state(len(batch), session_id="l_al_seq")
+        sequential.tensors["h"] = hidden0
+        model.al_step(l_al_train[0], sequential)
+        model.al_step(l_al_train[1], sequential)
+        joined = model.init_state(len(batch), session_id="l_al_join")
+        joined.tensors["h"] = hidden0
+        model.al_step(l_al_train[0] + l_al_train[1], joined)
+        l_al_value = ((sequential.tensors["h"] - joined.tensors["h"]) ** 2).mean()
+
+    bucket = _bucket_tokens(batch, arm, torch, device)
+    time_logits, state = model.ai_step(
+        torch.stack([bucket, torch.full_like(bucket, Q_TIME)], dim=1), state
+    )
+    key_logits, state = model.ai_step(
+        torch.stack([bucket, torch.full_like(bucket, Q_KEY)], dim=1), state
+    )
+
+    time_target = _tensor(batch, "time_target", torch, device)
+    key_target = _tensor(batch, "key_target", torch, device)
+    loss = torch.nn.functional.cross_entropy(
+        time_logits[:, -1, :], time_target
+    ) + torch.nn.functional.cross_entropy(key_logits[:, -1, :], key_target)
+    if l_al_value is not None:
+        loss = loss + l_al_weight * l_al_value
+
+    optimiser.zero_grad()
+    loss.backward()
+    torch.nn.utils.clip_grad_norm_(list(model.parameters()), grad_clip)
+    optimiser.step()
+    model.invalidate_hash()
+    if l_al_value is not None:
+        model.last_l_al_value = float(l_al_value.detach())
+
+
 def train_arm(
     sessions: Sequence[Session],
     *,
@@ -325,25 +440,7 @@ def train_arm(
     arch: str = "gru",
 ) -> Any:
     torch = model_torch()
-    torch.manual_seed(seed)
-    if arch == "gru":
-        model = GRUCore(
-            TOKEN_COUNT,
-            hidden=hidden,
-            emb=emb,
-            chunk_seconds=chunk_seconds,
-            seed=seed,
-        )
-    elif arch == "ssm":
-        model = SSMCore(
-            TOKEN_COUNT,
-            hidden=hidden,
-            emb=emb,
-            chunk_seconds=chunk_seconds,
-            seed=seed,
-        )
-    else:
-        raise ValueError(f"unknown arch {arch!r}")
+    model = build_core(arch, seed=seed, hidden=hidden, emb=emb, chunk_seconds=chunk_seconds)
     model.train()
     optimiser = torch.optim.Adam(model.parameters(), lr=lr)
     rng = random.Random(seed * 7919 + 13)
@@ -353,70 +450,15 @@ def train_arm(
         rng.shuffle(order)
         for start in range(0, len(order), batch_size):
             batch = [sessions[i] for i in order[start : start + batch_size]]
-            gap_count = len(batch[0].gaps)
-            state = model.init_state(len(batch), session_id="train")
-            device = model.device
-            teach = torch.stack(
-                [
-                    torch.full((len(batch),), REMEMBER, device=device),
-                    _tensor(batch, "key", torch, device),
-                    _tensor(batch, "value", torch, device),
-                ],
-                dim=1,
+            _train_step(
+                model,
+                optimiser,
+                batch,
+                arm=arm,
+                grad_clip=grad_clip,
+                l_al_weight=l_al_weight,
+                l_al_train=l_al_train,
             )
-            talk = torch.full((len(batch), 1), TALK, device=device)
-            _, state = model.ai_step(teach, state)
-            for index in range(gap_count - 1):
-                if arm == "core":
-                    state = model.al_step(
-                        _gap_tensor(batch, index, torch, device),
-                        state,
-                    )
-                _, state = model.ai_step(talk, state)
-            if arm == "core":
-                state = model.al_step(
-                    _gap_tensor(batch, gap_count - 1, torch, device),
-                    state,
-                )
-
-            l_al_value = None
-            if l_al_weight > 0.0 and arm == "core":
-                # §39.2: the same h advanced as dt1+dt2 vs dt2(dt1(h)).
-                # Only the training pair is taught; the held-out pairs are
-                # measured, never optimised.
-                hidden0 = state.tensors["h"]
-                sequential = model.init_state(len(batch), session_id="l_al_seq")
-                sequential.tensors["h"] = hidden0
-                model.al_step(l_al_train[0], sequential)
-                model.al_step(l_al_train[1], sequential)
-                joined = model.init_state(len(batch), session_id="l_al_join")
-                joined.tensors["h"] = hidden0
-                model.al_step(l_al_train[0] + l_al_train[1], joined)
-                l_al_value = ((sequential.tensors["h"] - joined.tensors["h"]) ** 2).mean()
-
-            bucket = _bucket_tokens(batch, arm, torch, device)
-            time_logits, state = model.ai_step(
-                torch.stack([bucket, torch.full_like(bucket, Q_TIME)], dim=1), state
-            )
-            key_logits, state = model.ai_step(
-                torch.stack([bucket, torch.full_like(bucket, Q_KEY)], dim=1), state
-            )
-
-            time_target = _tensor(batch, "time_target", torch, device)
-            key_target = _tensor(batch, "key_target", torch, device)
-            loss = torch.nn.functional.cross_entropy(
-                time_logits[:, -1, :], time_target
-            ) + torch.nn.functional.cross_entropy(key_logits[:, -1, :], key_target)
-            if l_al_value is not None:
-                loss = loss + l_al_weight * l_al_value
-
-            optimiser.zero_grad()
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(list(model.parameters()), grad_clip)
-            optimiser.step()
-            model.invalidate_hash()
-            if l_al_value is not None:
-                model.last_l_al_value = float(l_al_value.detach())
 
     model.eval()
     return model
@@ -938,6 +980,204 @@ def print_report(report: Dict[str, Any]) -> None:
     print(f"\n  all_pass = {report['all_pass']}")
 
 
+# -- cost measurement (§40.6) -------------------------------------------------
+
+COST = {
+    "batch_size": 64,
+    "gap_count": 8,
+    "warmup": 5,
+    "reps": 30,
+    "alternations": 3,
+    "seed": 4242,
+}
+
+
+def _median(values: Sequence[float]) -> float:
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[middle]
+    return 0.5 * (ordered[middle - 1] + ordered[middle])
+
+
+def _time_phase(call: Any, *, warmup: int, reps: int) -> Dict[str, float]:
+    """Warm up, then time ``reps`` calls; return median/min/max in seconds."""
+    for _ in range(warmup):
+        call()
+    samples = []
+    for _ in range(reps):
+        start = time.perf_counter()
+        call()
+        samples.append(time.perf_counter() - start)
+    samples.sort()
+    return {"median": _median(samples), "min": samples[0], "max": samples[-1]}
+
+
+def _checkpoint_bytes(model: Any) -> int:
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "weights.pt"
+        model.save_weights(str(path))
+        return int(path.stat().st_size)
+
+
+def _aggregate(entries: Sequence[Dict[str, float]]) -> Dict[str, Any]:
+    return {
+        "median_ms": 1e3 * _median([entry["median"] for entry in entries]),
+        "min_ms": 1e3 * min(entry["min"] for entry in entries),
+        "max_ms": 1e3 * max(entry["max"] for entry in entries),
+        "alternations": len(entries),
+    }
+
+
+def run_cost(args: argparse.Namespace) -> Dict[str, Any]:
+    """Time the two arms on the same work, alternating the order.
+
+    §38's 99.4 s and §40's 74.0 s are **not** comparable (one of them ran while
+    the full test suite was running). This measures one forward pass and one
+    optimiser step on an idle process, alternating GRU/SSM so a drift in machine
+    load lands on both arms rather than on one, and repeats the alternation.
+
+    What it does **not** measure: process RSS (shared with torch, not
+    attributable per arm), GPU, or end-to-end latency. Checkpoint bytes and
+    parameter counts are facts about the weights, not throughput claims.
+    """
+    torch = model_torch()
+    load_start = os.getloadavg() if hasattr(os, "getloadavg") else (float("nan"),) * 3
+    batch = generate_sessions(
+        COST["batch_size"],
+        seed=COST["seed"],
+        gap_count=COST["gap_count"],
+        gap_mode="equal",
+    )
+    arms = ("gru", "ssm")
+    models = {
+        arch: build_core(
+            arch,
+            seed=COST["seed"],
+            hidden=args.hidden,
+            emb=args.emb,
+            chunk_seconds=REGISTERED["chunk_seconds"],
+        )
+        for arch in arms
+    }
+    optimisers = {arch: torch.optim.Adam(models[arch].parameters(), lr=args.lr) for arch in arms}
+
+    timings: Dict[str, Dict[str, List[Dict[str, float]]]] = {
+        arch: {"forward": [], "train_step": []} for arch in arms
+    }
+    for alternation in range(COST["alternations"]):
+        order = arms if alternation % 2 == 0 else tuple(reversed(arms))
+        for arch in order:
+            model = models[arch]
+            optimiser = optimisers[arch]
+
+            model.eval()
+
+            def _forward(model=model):
+                with torch.no_grad():
+                    run_sessions(model, batch, arm="core")
+
+            model.train()
+
+            def _step(model=model, optimiser=optimiser):
+                _train_step(model, optimiser, batch, arm="core", grad_clip=REGISTERED["grad_clip"])
+
+            forward = _time_phase(_forward, warmup=COST["warmup"], reps=COST["reps"])
+            step = _time_phase(_step, warmup=COST["warmup"], reps=COST["reps"])
+
+            timings[arch]["forward"].append(forward)
+            timings[arch]["train_step"].append(step)
+            print(
+                f"  {arch} #{alternation}: forward {forward['median'] * 1e3:.2f} ms | "
+                f"train step {step['median'] * 1e3:.2f} ms",
+                flush=True,
+            )
+
+    arms_report = {}
+    for arch in arms:
+        model = models[arch]
+        arms_report[arch] = {
+            "parameters": model.parameter_count(),
+            "checkpoint_bytes": _checkpoint_bytes(model),
+            "state_bytes_per_batch": int(COST["batch_size"]) * int(model.hidden) * 4,
+            "forward": _aggregate(timings[arch]["forward"]),
+            "train_step": _aggregate(timings[arch]["train_step"]),
+        }
+
+    ratio = {
+        "parameters": arms_report["ssm"]["parameters"] / arms_report["gru"]["parameters"],
+        "checkpoint_bytes": (
+            arms_report["ssm"]["checkpoint_bytes"] / arms_report["gru"]["checkpoint_bytes"]
+        ),
+        "forward": (
+            arms_report["ssm"]["forward"]["median_ms"] / arms_report["gru"]["forward"]["median_ms"]
+        ),
+        "train_step": (
+            arms_report["ssm"]["train_step"]["median_ms"]
+            / arms_report["gru"]["train_step"]["median_ms"]
+        ),
+    }
+
+    return {
+        "kind": "cost",
+        "registered": False,
+        "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "cost": dict(COST),
+        "config": {
+            "hidden": args.hidden,
+            "emb": args.emb,
+            "chunk_seconds": REGISTERED["chunk_seconds"],
+            "token_count": TOKEN_COUNT,
+            "lr": args.lr,
+            "grad_clip": REGISTERED["grad_clip"],
+            "torch_threads": int(torch.get_num_threads()),
+            "torch_version": torch.__version__,
+            "cpu_count": os.cpu_count(),
+            "load_avg_start": [round(value, 2) for value in load_start],
+            "load_avg_end": [
+                round(value, 2)
+                for value in (os.getloadavg() if hasattr(os, "getloadavg") else (float("nan"),) * 3)
+            ],
+        },
+        "arms": arms_report,
+        "ratio": ratio,
+        "caveats": [
+            "single process, CPU only, PyTorch eager; no GPU / no inductor",
+            "the machine is a desktop, not a dedicated benchmark host: desktop apps and "
+            "one unrelated background process keep the load average above 1, so read the "
+            "medians and the alternating order, not the absolute milliseconds",
+            "process RSS is shared and is not attributed per arm",
+            "state_bytes_per_batch counts the hidden state only (no allocator overhead)",
+            "a smaller parameter count is not by itself 'cheaper' until both arms "
+            "are wired into the same production call path (P4)",
+        ],
+    }
+
+
+def print_cost_report(report: Dict[str, Any]) -> None:
+    config = report["config"]
+    print(
+        f"\n== 成本量測（同一進程、交替順序；沒有其它量測在跑）== "
+        f"threads={config['torch_threads']} cpus={config['cpu_count']} "
+        f"load={config['load_avg_start']}→{config['load_avg_end']}"
+    )
+    for arch, entry in report["arms"].items():
+        print(
+            f"  {arch:4s} params {entry['parameters']:6d} | "
+            f"ckpt {entry['checkpoint_bytes'] / 1024:7.1f} KiB | "
+            f"forward {entry['forward']['median_ms']:7.2f} ms "
+            f"[{entry['forward']['min_ms']:.2f}–{entry['forward']['max_ms']:.2f}] | "
+            f"train {entry['train_step']['median_ms']:7.2f} ms "
+            f"[{entry['train_step']['min_ms']:.2f}–{entry['train_step']['max_ms']:.2f}]"
+        )
+    ratio = report["ratio"]
+    print(
+        f"  SSM/GRU  params {ratio['parameters']:.3f} | ckpt {ratio['checkpoint_bytes']:.3f} | "
+        f"forward {ratio['forward']:.3f} | train {ratio['train_step']:.3f}"
+    )
+    print("  注意：這不是能力，也不是端到端延遲；P4 接上生產前不宣稱「成本可接受」。")
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -967,7 +1207,25 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         default=None,
     )
     parser.add_argument("--json", action="store_true", help="print the full report as JSON")
+    parser.add_argument(
+        "--cost",
+        action="store_true",
+        help="measure the cost of both arms (§40.6); trains nothing, scores nothing",
+    )
     args = parser.parse_args(argv)
+
+    if args.cost:
+        report = run_cost(args)
+        print_cost_report(report)
+        out = args.out or (
+            REPO_ROOT / "data" / "intelligence_reports" / "probe_state_cycles_cost.json"
+        )
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"\nreport: {out}")
+        if args.json:
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
 
     if args.out is None:
         name = {

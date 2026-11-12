@@ -957,6 +957,11 @@
       "referenced": true,
       "purpose": "T1–T6 for the single-core state contract, on a controlled synthetic task."
     },
+    "probe_state_restart.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "Cross-process restart of the single core (contract T4, `CORE_GAP_ANALYSIS` §40.6)."
+    },
     "probe_training_readiness.py": {
       "category": "probe",
       "referenced": true,
