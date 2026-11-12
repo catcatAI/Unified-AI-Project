@@ -15,19 +15,28 @@ WHAT IS STORED
 --------------
 One JSONL line per answer, **structure only**::
 
-    {v, turn_id, session, day, state, user_move, source, out_len,
-     out_len_bucket, skeleton, skeleton_sig, consent}
+    {v, turn_id, session, day, state, user_move, source, in_len,
+     in_len_bucket, topic, out_len, out_len_bucket, skeleton, skeleton_sig,
+     consent}
 
 `user_move` labels the *user* message of that turn (question / request / repair /
 statement / empty). Read it as the next action for the *previous* answer, so
 continue / repair / end is derivable at analysis time without rewriting an
 append-only log.
 
+`in_len_bucket` × `topic` is the stratum §6.1 pre-registers ("輸入長度桶 ×
+主題桶") for the conditional entropy. Both fields were added before the first
+turn was recorded: the original schema stored only the *answer's* length, so
+even 2,000 turns could not have been stratified, and there is no way to backfill
+them. `topic` is the coarse bucket of the production `QueryClassifier` label,
+not a new classifier — see `topic_bucket()`; when classification fails the field
+is `"unknown"` (the label is missing, not invented).
+
 WHAT IS NOT STORED
 ------------------
-Neither the user's text nor the answer's text is written. Length, skeleton flags
-and their hash are all the metric needs; a leak of this file cannot reconstruct
-a conversation.
+Neither the user's text nor the answer's text is written. Two lengths, bucket
+labels, skeleton flags and their hash are all the metric needs; a leak of this
+file cannot reconstruct a conversation.
 
 DEFAULT OFF
 -----------
@@ -51,7 +60,7 @@ from typing import Any, Dict, Mapping, Optional
 
 logger = logging.getLogger(__name__)
 
-VERSION = 1
+VERSION = 2
 
 _ENV_ENABLED = "ANGELA_TURN_OBSERVATION"
 _ENV_DIR = "ANGELA_TURN_OBSERVATION_DIR"
@@ -199,6 +208,53 @@ def classify_user_move(text: str) -> str:
     return "statement"
 
 
+# Coarse stratum labels, not a new taxonomy: each entry is a group of the
+# production QueryClassifier's own QueryType values (ai/core/query_classifier.py).
+# Kept deliberately few — §6.1 needs every (length × topic) cell to reach 200
+# turns, and a finer split only multiplies the corpus that does not exist yet.
+_TOPIC_BUCKETS = {
+    "math": "math",  # MATH, LOGIC
+    "logic": "math",
+    "knowledge": "knowledge",  # KNOWLEDGE, SEARCH
+    "search": "knowledge",
+    "code": "code",  # CODE, EXECUTE, FILE
+    "execute": "code",
+    "file": "code",
+    "task": "task",  # TASK, COMMAND, SYSTEM
+    "command": "task",
+    "system": "task",
+    "creative": "creative",  # CREATIVE, OPINION
+    "opinion": "creative",
+    "greeting": "social",  # GREETING, REFLEX
+    "reflex": "social",
+    "vision": "media",  # VISION, AUDIO
+    "audio": "media",
+    # "civil" stays its own bucket: it is a domain, not a phrasing style.
+    "civil": "civil",
+}
+
+
+def topic_bucket(text: str) -> str:
+    """The coarse topic of the user's message, or ``"unknown"``.
+
+    Uses the existing deterministic `QueryClassifier` (its ``_ed3n`` attribute is
+    stored but never consulted), so this adds no model and no second opinion
+    about what the message is. A classifier failure is a missing label: the
+    caller writes ``"unknown"`` rather than guessing one from the text.
+    """
+    stripped = (text or "").strip()
+    if not stripped:
+        return "unknown"
+    try:
+        from ai.core.query_classifier import QueryClassifier
+
+        label = QueryClassifier().classify(stripped).primary_type.value
+    except Exception as exc:  # a missing label must not cost a served answer
+        logger.debug("turn observation: topic unavailable: %s", exc)
+        return "unknown"
+    return _TOPIC_BUCKETS.get(label, "other")
+
+
 def state_vector() -> Optional[Dict[str, Any]]:
     """The observable AL state at this moment, or None when it cannot be read.
 
@@ -232,6 +288,7 @@ def build_record(
     """One appendable record. Pure: no I/O, so it can be asserted in tests."""
     moment = now or datetime.now()
     structure = structure_signature(response_text)
+    in_len = len((user_message or "").strip())
     return {
         "v": VERSION,
         "turn_id": uuid.uuid4().hex,
@@ -240,6 +297,9 @@ def build_record(
         "state": dict(state) if state is not None else state_vector(),
         "user_move": classify_user_move(user_message),
         "source": source or "unknown",
+        "in_len": in_len,
+        "in_len_bucket": length_bucket(in_len),
+        "topic": topic_bucket(user_message),
         "out_len": structure["chars"],
         "out_len_bucket": structure["bucket"],
         "skeleton": structure["skeleton"],

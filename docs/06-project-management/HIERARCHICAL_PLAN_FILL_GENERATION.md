@@ -139,6 +139,31 @@ A2 是整份設計的關鍵。A1 贏 A0 可能只因為多了一個條件變數�
 **這輪不做**：不改 `core_model.py`、不動主推論路徑、不進
 `docs/STATUS_MATRIX.md`、不把結果寫成 L0–L3 或核心分。這份量的是「訊號有沒有效」，不是「智能幾分」。
 
+### 6.1a 觀察 schema 修訂（2026-11-12，在任何資料寫入之前）
+
+第一版寫入器只存**答案**的長度與骨架，沒有存**輸入**的長度與主題；而 6.1
+的主要指標是「在**輸入長度桶 × 主題桶**同一分層內」計算。結果是：即使累積到
+2,000 回合，那份語料也無法做預註冊的分析，而且**無法事後回填**（輸入原文沒有
+被保存，這是刻意的）。因此在第一筆資料寫入之前把兩個欄位補上（schema `v=2`）：
+
+- `in_len` / `in_len_bucket`：使用者訊息去空白後的字元數與桶號（桶界與輸出共用
+  `length_bucket()`）。
+- `topic`：把**既有** `QueryClassifier` 的 `primary_type` 映到粗桶
+  （`math`／`knowledge`／`code`／`task`／`creative`／`social`／`media`／
+  `civil`／`other`／`unknown`）。沒有新分類器、沒有第二個意見；分類失敗就是
+  `unknown`（缺標籤，不猜）。
+
+兩個欄位都只是標籤與長度，仍然不含原文；契約測試
+（`tests/ai/lifecycle/test_turn_observation.py`）釘住「記錄的鍵集合」裡沒有
+任何可以放文字的欄位。
+
+**算術後果（照實寫）**：6.1 的「每格 ≥ 200 回合」在 5 個長度桶 × 最多 10 個
+主題桶下，**最壞情況是 50 格、約 10,000 回合**；實際分布會更偏（少數格獨大），
+所以需要的回合數只會更多，不會更少。這個數字不是本輪改規則的理由——規則在跑之前
+寫死，不能因為「要跑很久」就放寬。就緒檢查
+`python3 scripts/observation_readiness.py` 會印出每一格的回合數與
+「insufficient sample」，並把 `v=1` 的舊記錄算成**不可分層**（不丟棄、不假裝）。
+
 ### 6.2 資料可用性稽核（2026-11-11 實測）
 
 P5 需要「每一回合的（狀態，輸出結構）配對」。目前**沒有**這種語料，也不能事後補。
@@ -230,11 +255,16 @@ P5 需要「每一回合的（狀態，輸出結構）配對」。目前**沒有
 
 ```
 {turn_id, session_hash, day, state:{八欄, 缺值 null}, user_move, source,
- out_len, out_len_bucket, skeleton:{lines,paragraphs,sentences,bullets,
- numbered,code_fence,question}, skeleton_sig, consent}
+ in_len, in_len_bucket, topic, out_len, out_len_bucket,
+ skeleton:{lines,paragraphs,sentences,bullets,numbered,code_fence,question},
+ skeleton_sig, consent}
 ```
 
 - 不記原文 → 就算外洩也還原不出對話；P5 的主要指標（長度／骨架）不需要文字。
+- `in_len_bucket` × `topic` 是 6.1 的分層鍵（schema `v=2` 才開始有；見 6.1a）。
+  在此之前寫下的 `v=1` 記錄不可分層，就緒檢查會如實算進去，不會丟掉。
+  就緒檢查：`python3 scripts/observation_readiness.py`（未達每格 200 回合即印
+  「insufficient sample」，並列出狀態欄位的覆蓋率）。
 - `user_move`
   是**這一回合使用者訊息**的標籤（question／request／repair／statement／empty），在分析時讀成「上一個回答的下一步」：因此 continue／repair／end 可以在讀取端算出來，日誌永遠 append-only、不必回頭改寫。
 - `state` 是 `get_al_state()` 的八個可觀測欄位；缺值保持

@@ -201,6 +201,74 @@ def test_unknown_source_is_labelled_not_guessed():
     assert record["source"] == "unknown"
 
 
+def test_input_length_and_topic_are_stored_before_any_data_exists():
+    """§6.1 stratifies by input length × topic; a corpus without them is unusable."""
+    record = obs.build_record(
+        session_id="s",
+        user_message="2加3等於多少",
+        response_text="5.0",
+        source="computed",
+        state={},
+    )
+    assert record["in_len"] == len("2加3等於多少")
+    assert record["in_len_bucket"] == "5-8"
+    assert record["topic"] == "math"
+
+
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("水的沸點是多少?", "knowledge"),
+        ("你好", "social"),
+        ("幫我寫一個 python 函數", "code"),
+        ("今天天氣如何", "knowledge"),
+        ("你覺得呢", "creative"),
+        ("", "unknown"),
+        ("講個笑話", "other"),
+    ],
+)
+def test_topic_is_a_coarse_bucket_of_the_production_classifier(message, expected):
+    assert obs.topic_bucket(message) == expected
+
+
+def test_topic_failure_is_a_missing_label_not_a_guess(monkeypatch):
+    from ai.core.query_classifier import QueryClassifier
+
+    def _boom(self, text):
+        raise RuntimeError("classifier unavailable")
+
+    monkeypatch.setattr(QueryClassifier, "classify", _boom)
+    assert obs.topic_bucket("水的沸點是多少?") == "unknown"
+    record = obs.build_record(
+        session_id="s", user_message="水的沸點是多少?", response_text="100", source="knowledge"
+    )
+    assert record["topic"] == "unknown"
+
+
+def test_the_record_has_no_field_that_could_hold_text(tmp_path, monkeypatch):
+    monkeypatch.setenv("ANGELA_TURN_OBSERVATION", "1")
+    target = tmp_path / "turns.jsonl"
+    _write(target, user="我的生日是 1990-05-04", reply="記住囉，你的生日是 1990-05-04。")
+    record = json.loads(target.read_text(encoding="utf-8").strip())
+    assert set(record) == {
+        "v",
+        "turn_id",
+        "session",
+        "day",
+        "state",
+        "user_move",
+        "source",
+        "in_len",
+        "in_len_bucket",
+        "topic",
+        "out_len",
+        "out_len_bucket",
+        "skeleton",
+        "skeleton_sig",
+        "consent",
+    }
+
+
 def test_chat_response_records_the_route_that_answered(tmp_path, monkeypatch):
     """The wiring point: _format_chat_response must log the derived route."""
     monkeypatch.setenv("ANGELA_TURN_OBSERVATION", "1")
