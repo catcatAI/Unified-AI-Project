@@ -87,10 +87,10 @@ pre-commit run --all-files
 
 > 📌 **NOTE CHAIN IS A HISTORICAL CHANGELOG**: Every test count embedded below
 > (5,085 / 4,717 / 4,734 / … / 5,432 / …) is a dated milestone at the time of
-> that NOTE. The current authoritative count is **9,649 collected (tests/), 0
-> errors** (re-verified 2026-11-12; full testpaths
-> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,411
-> collected / 10,308 passed / 112 skipped**, 0 failed).
+> that NOTE. The current authoritative count is **9,668 collected (tests/), 0
+> errors** (re-verified 2026-11-13; full testpaths
+> `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ scripts/`: **10,430
+> collected / 10,327 passed / 112 skipped**, 0 failed).
 
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun
 > 25–29). Includes §X #34-#54: save_visual_decoder_weights,
