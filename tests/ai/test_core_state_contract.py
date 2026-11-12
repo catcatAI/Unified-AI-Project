@@ -154,6 +154,17 @@ def test_state_version_is_monotonic_across_save_load(tmp_path: Path) -> None:
     assert CoreState.load(tmp_path).state_version == 4
 
 
+def test_save_refuses_non_numpy_tensors(tmp_path: Path) -> None:
+    """A torch tensor with an autograd graph must be exported, not silently saved."""
+    state = _new_state()
+    state.tensors["h"] = [1.0, 2.0, 3.0]
+
+    with pytest.raises(CoreStateInvalid):
+        state.save(tmp_path)
+
+    assert not (tmp_path / META_FILENAME).exists()
+
+
 def test_oversized_state_is_refused_not_truncated(tmp_path: Path) -> None:
     big = np.random.default_rng(0).standard_normal(3_000_000).astype(np.float32)
     state = _new_state(tensors={"h": big})

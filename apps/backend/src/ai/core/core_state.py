@@ -200,7 +200,9 @@ class CoreState:
             ticks=0,
             last_dt_s=0.0,
             state_version=0,
-            tensors={name: np.asarray(value) for name, value in (tensors or {}).items()},
+            # 容器不強制轉 numpy：state 由模型擁有（torch tensor 可能要保留
+            # autograd 圖）。存檔前由 adapter 的 export_state() 轉成 numpy。
+            tensors=dict(tensors or {}),
         )
         return state
 
@@ -230,6 +232,12 @@ class CoreState:
 
     def _tensors_bytes(self) -> bytes:
         buffer = io.BytesIO()
+        for name, value in self.tensors.items():
+            if not isinstance(value, np.ndarray):
+                raise CoreStateInvalid(
+                    f"tensor {name!r} is {type(value).__name__}, not numpy; "
+                    "call the adapter's export_state() before saving"
+                )
         # ``**payload`` 以 Any 展開：numpy 的 stub 把第一個 keyword 當成
         # ``allow_pickle``，直接展開 ndarray 映射會被判成型別錯誤。
         payload: Any = {name: value for name, value in self.tensors.items()}

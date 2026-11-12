@@ -305,8 +305,10 @@ T5 對照組也變 → 先把實驗做乾淨。
 
 - `apps/backend/src/ai/core/core_state.py`：schema、save/load、hash、版本
   ——**P0 已建立**（見下方「P0 現況」）。
-- `apps/backend/src/ai/core/core_step.py`：`ai_step`／`al_step` protocol 與 registry。
-- `apps/backend/src/ai/core/stateful_decoder.py`：GRU／SNN 的 adapter。
+- `apps/backend/src/ai/core/core_step.py`：`ai_step`／`al_step` protocol、時間切段、registry
+  ——**P1 已建立**（純 stdlib，不含模型）。
+- `apps/backend/src/ai/core/stateful_decoder.py`：GRU adapter（同一個 `GRUCell` 兩個入口）
+  ——**P1 第一臂已建立**；SNN 臂仍未接。
 
 **修改**
 
@@ -320,9 +322,12 @@ T5 對照組也變 → 先把實驗做乾淨。
 
 - `tests/ai/test_core_state_contract.py`：schema、hash、版本、原子寫入、拒絕載入
   ——**P0 已建立，14 條通過**。
-- `tests/ai/test_state_cycles.py`：`dt=0` no-op、半群、ablation、restart。
-- `scripts/probe_state_cycles.py`：T1–T6 的合成多回合 probe。
-- `scripts/probe_state_restart.py`：跨進程 save/load。
+- `tests/ai/test_state_cycles.py`：`dt=0` 恆等、per-sample 更新、save/load 同 logits、
+  weights hash、半群**只量不判**——**P1 已建立，17 條**。
+- `scripts/probe_state_cycles.py`：T1–T6 的合成多回合 probe——**P1 已建立**；預登記在
+  `CORE_GAP_ANALYSIS.md` §37，結果見 §37.6。
+- `scripts/probe_state_restart.py`：跨進程 save/load（**尚未建立**；T4 目前用同進程的
+  `CoreState.save`／`load`，跨進程版是後續）。
 
 ### P0 現況（2026-11-12，已實作，未改任何行為）
 
@@ -340,12 +345,11 @@ T5 對照組也變 → 先把實驗做乾淨。
 **指令**
 
 ```bash
-# P0：已可執行
-./.venv/bin/python -m pytest tests/ai/test_core_state_contract.py -q
+# P0／P1 第一臂：已可執行
+./.venv/bin/python -m pytest tests/ai/test_core_state_contract.py tests/ai/test_state_cycles.py -q
+./.venv/bin/python scripts/probe_state_cycles.py --seeds 0 1 2 3 4
 
-# P1 建立 core_step + 兩支 probe 之後才可執行（現在檔案不存在）
-# ./.venv/bin/python -m pytest tests/ai/test_state_cycles.py -q
-# ./.venv/bin/python scripts/probe_state_cycles.py --seeds 0 1 2 3 4
+# 尚未建立（跨進程重啟版；T4 目前用同進程 CoreState.save／load）
 # ./.venv/bin/python scripts/probe_state_restart.py
 ```
 
