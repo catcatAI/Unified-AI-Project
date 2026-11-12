@@ -7,8 +7,11 @@
 Findings this script acts on (2026-10-25 diagnostics):
   * The mixed 30k four-operator set plateaus at loss ~1.70 / 0% exact when
     trained from scratch — too hard, too diverse for the first objective.
-  * 10k single-operator pairs (a+b, a,b 0..99) reach 77% exact on unseen
-    pairs in 87 s: the architecture *can* learn a generalizing algorithm.
+  * 10k single-operator pairs (a+b, a,b 0..99) reach ~68% exact on unseen
+    pairs in ~90 s (seeds 0/1/2: 0.677/0.683/0.677): the architecture *can*
+    learn a generalizing algorithm. The earlier "77%" was a single run with an
+    unseeded initialisation (an unseeded re-run gave 58.7%), which is why
+    ``--seed`` now fixes the weights as well as the batch order.
   * A naive hard-jump stage (40 epochs, no replay) underfits and catastrophically
     forgets (held-out 0-99 drops 68% -> 4%).
 
@@ -33,6 +36,7 @@ sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from ai.ed3n.token_snn import CharVocab, TokenConfig, TokenSNN  # noqa: E402
+from arithmetic_task import parse_plain, problem_key, test_keys  # noqa: E402
 from train_token_snn import exact_match, fits, read_pairs  # noqa: E402
 
 EVAL_CSV = REPO_ROOT / "apps" / "backend" / "data" / "raw_datasets" / "arithmetic_test_dataset.csv"
@@ -41,17 +45,40 @@ OUT_DIR = REPO_ROOT / "apps" / "backend" / "data" / "models"
 
 
 def eval_pool() -> tuple[set, list]:
-    """Held-out distribution: full problem-text pool + its '+' rows."""
-    texts, plus = set(), []
-    for prompt, answer in read_pairs(EVAL_CSV):
-        texts.add(prompt.strip())
-        if re.fullmatch(r"\d+ \+ \d+", prompt.strip()):
-            plus.append((prompt.strip(), answer.strip()))
-    return texts, plus
+    """Held-out distribution: leak keys + its '+' rows."""
+    rows = _eval_rows()
+    keys = test_keys(rows)
+    plus = []
+    for row in rows:
+        prompt = str(row.get("problem") or row.get("input") or "").strip()
+        answer = str(row.get("answer") or row.get("output") or "").strip()
+        if prompt and answer and re.fullmatch(r"\d+ \+ \d+", prompt):
+            plus.append((prompt, answer))
+    return keys, plus
 
 
-def leak_guard(pairs, texts: set) -> list:
-    return [(p, a) for p, a in pairs if p.strip() not in texts]
+def _eval_rows() -> list:
+    if EVAL_CSV.suffix.lower() == ".csv":
+        import csv
+
+        with EVAL_CSV.open(encoding="utf-8", newline="") as handle:
+            return [dict(row) for row in csv.DictReader(handle)]
+    return [{"problem": p, "answer": a} for p, a in read_pairs(EVAL_CSV)]
+
+
+def leak_guard(pairs, keys: set) -> list:
+    """Drop any pair whose exercise (commutative for ``+``) occurs in the test.
+
+    Matching the prompt string is not enough: ``4 + 3`` and ``3 + 4`` are the
+    same exercise, and the test set contains both orders.
+    """
+    kept = []
+    for prompt, answer in pairs:
+        problem = parse_plain(prompt)
+        if problem is not None and problem_key(problem) in keys:
+            continue
+        kept.append((prompt, answer))
+    return kept
 
 
 def main() -> int:
@@ -61,6 +88,14 @@ def main() -> int:
     ap.add_argument("--stage-b", type=int, default=30000, help="stage-B pair count (0..999)")
     ap.add_argument("--replay", type=int, default=10000, help="stage-A pairs replayed in stage B")
     ap.add_argument("--batch", type=int, default=64)
+    ap.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="seeds the initial weights and the batch order. Without it, two "
+        "runs differ by a random initialisation, which is larger than the "
+        "effect a curriculum comparison is trying to see.",
+    )
     ap.add_argument("--d-hidden", type=int, default=192)
     ap.add_argument("--max-len", type=int, default=24)
     ap.add_argument("--device", default="cpu")
@@ -112,6 +147,12 @@ def main() -> int:
         flush=True,
     )
 
+    import torch
+
+    # Seed *before* construction, and pass the same seed to the batch order:
+    # TokenSNN() initialises from the global RNG, so a run without this is not
+    # reproducible even when the data order is.
+    torch.manual_seed(int(args.seed))
     model = TokenSNN(vocab, cfg, device=args.device)
     started = time.time()
     curve: list[dict] = []
@@ -131,6 +172,7 @@ def main() -> int:
         epochs=args.epochs_a,
         batch_size=args.batch,
         lr=5e-3,
+        seed=int(args.seed),
         log=lambda r: (
             print(f"  A ep{r['epoch'] + 1}: loss={r['loss']:.4f}", flush=True)
             if (r["epoch"] + 1) % 25 == 0
@@ -145,6 +187,7 @@ def main() -> int:
         epochs=args.epochs_b,
         batch_size=args.batch,
         lr=3e-3,
+        seed=int(args.seed),
         log=lambda r: (
             print(
                 f"  B ep{r['epoch'] + 1}: loss={r['loss']:.4f} {time.time() - started:.0f}s",

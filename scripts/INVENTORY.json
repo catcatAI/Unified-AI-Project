@@ -777,6 +777,11 @@
       "referenced": false,
       "purpose": "下一輪 Phase 1 — 10000 真實 MSE 0.08→0.05（硬件規格自適應，分批+sleep，<1GB）"
     },
+    "observation_readiness.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Is the turn-observation corpus big enough to run P5? (readiness, not a score)"
+    },
     "parse_correct.py": {
       "category": "tool",
       "referenced": true,
@@ -1299,7 +1304,7 @@
     },
     "train_token_snn_curriculum.py": {
       "category": "training",
-      "referenced": false,
+      "referenced": true,
       "purpose": "Graduated curriculum for the token-SNN arithmetic learner (CPU-friendly)."
     },
     "train_unified.py": {
