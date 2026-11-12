@@ -877,6 +877,11 @@
       "referenced": true,
       "purpose": "Core vs control vs performance layer — which failures are intelligence problems."
     },
+    "probe_core_turns.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "P5: drive the stateful core through real turns, in volume, and record them."
+    },
     "probe_deep_chain.py": {
       "category": "probe",
       "referenced": true,

@@ -2040,7 +2040,9 @@ def _format_chat_response(
     }
 
 
-def _advance_stateful_core(user_message: str, session_id: str) -> Optional[Dict[str, Any]]:
+def _advance_stateful_core(
+    user_message: str, session_id: str, user_id: str = ""
+) -> Optional[Dict[str, Any]]:
     """Advance the opt-in core by one turn (contract P4); None when it refuses.
 
     Default off: with ``ANGELA_STATEFUL_CORE`` unset this returns immediately
@@ -2048,13 +2050,16 @@ def _advance_stateful_core(user_message: str, session_id: str) -> Optional[Dict[
     different weights) also returns None — and leaves the saved state
     byte-identical, because a silent reset is indistinguishable from a
     successful resume to every later reader.
+
+    ``user_id`` is recorded on the state so it can say whose it is; a state
+    whose owner disagrees with the caller is refused rather than shared.
     """
     if not _stateful_core_enabled():
         return None
     try:
         from ai.core.stateful_runtime import get_runtime
 
-        return get_runtime().advance(user_message, session_id=session_id)
+        return get_runtime().advance(user_message, session_id=session_id, user_id=user_id)
     except Exception as e:
         # Infrastructure, not the reply: never take the turn down with it.
         logger.warning(f"Stateful core advance failed: {e}", exc_info=True)
@@ -2120,7 +2125,7 @@ async def _handle_chat_request(
     _user_token = _bind_current_user((extra_context or {}).get("user_id") or user_name)
     # Contract P4: the state object is advanced once per turn, by the turn loop
     # — not by the prompt builder, and not by the reply. Opt-in; None when off.
-    core_provenance = _advance_stateful_core(user_message, session_id)
+    core_provenance = _advance_stateful_core(user_message, session_id, user_name)
     try:
         result = await _run_chat_pipeline(
             user_message,

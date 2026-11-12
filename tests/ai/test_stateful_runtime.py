@@ -329,3 +329,258 @@ async def test_the_turn_loop_does_nothing_when_off(monkeypatch, tmp_path) -> Non
     assert "state_source" not in result
     assert "core_state" not in result
     assert _runtime(directory).state_root.exists() is False
+
+
+# -- R3: one writer per session ---------------------------------------------
+
+
+def test_availability_reports_the_writer_guarantee(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("ANGELA_STATEFUL_CORE", "1")
+    report = _runtime(_checkpoint(tmp_path / "core")).availability()
+
+    assert report["lock"] in {"flock", "msvcrt", "none"}
+    # The claim must match the primitive: a host without a file lock is safe
+    # for exactly one worker, and it says so instead of assuming.
+    assert report["multi_writer_safe"] is (report["lock"] != "none")
+
+
+def test_one_session_has_one_lock_and_other_sessions_do_not_share_it() -> None:
+    from ai.core.stateful_runtime import _SessionLocks
+
+    locks = _SessionLocks(stripes=64)
+    assert locks.for_key("session-a") is locks.for_key("session-a")
+    # A fixed stripe set: it cannot grow, so a session's lock never changes
+    # identity (an evictable dict would let a second thread in).
+    assert len({id(locks.for_key(f"s{i}")) for i in range(200)}) <= 64
+
+
+def test_concurrent_turns_on_one_session_are_serialised(monkeypatch, tmp_path) -> None:
+    import threading
+
+    monkeypatch.setenv("ANGELA_STATEFUL_CORE", "1")
+    runtime = _runtime(_checkpoint(tmp_path / "core"))
+    results = []
+    errors = []
+
+    def _turn(index: int) -> None:
+        try:
+            results.append(runtime.advance(f"turn {index}", session_id="s1", now=1000.0 + index))
+        except Exception as exc:  # pragma: no cover - the assertion is that none happen
+            errors.append(exc)
+
+    threads = [threading.Thread(target=_turn, args=(i,)) for i in range(12)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert errors == []
+    # No turn may be lost: losing one would be two writers reading the same
+    # version and the later save overwriting the earlier one.
+    assert all(item is not None for item in results)
+    versions = sorted(int(item["state_version"]) for item in results)
+    assert versions == list(range(1, 13))
+
+
+def test_a_stale_expected_version_is_refused(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("ANGELA_STATEFUL_CORE", "1")
+    runtime = _runtime(_checkpoint(tmp_path / "core"))
+    first = runtime.advance("hello", session_id="s1", now=1000.0)
+    assert first is not None
+    before = (runtime.state_path_for("s1") / "meta.json").read_bytes()
+
+    assert runtime.advance("stale", session_id="s1", expected_version=999) is None
+    assert "expected version 999" in (runtime.last_refusal or "")
+    assert (runtime.state_path_for("s1") / "meta.json").read_bytes() == before
+
+    resumed = runtime.advance(
+        "fresh", session_id="s1", expected_version=first["state_version"], now=1120.0
+    )
+    assert resumed is not None
+
+
+def test_a_writer_that_bypasses_the_lock_is_detected(monkeypatch, tmp_path) -> None:
+    """The version check is the only guard that sees an unlocked writer.
+
+    Reproduced faithfully: the interfering write is a *legitimate* save (valid
+    checksum) that took no lock, so only the counter can reveal it.
+    """
+    monkeypatch.setenv("ANGELA_STATEFUL_CORE", "1")
+    runtime = _runtime(_checkpoint(tmp_path / "core"))
+    first = runtime.advance("hello", session_id="s1", now=1000.0)
+    assert first is not None
+
+    core = runtime._core
+    state_path = Path(first["state_path"])
+    real_ai_step = core.ai_step
+
+    def _interfere(tokens, state):
+        other = core.attach_state(
+            CoreState.load(state_path, expected_weights_hash=core.weights_hash())
+        )
+        other.bump()
+        core.export_state(other).save(state_path)
+        return real_ai_step(tokens, state)
+
+    monkeypatch.setattr(core, "ai_step", _interfere)
+
+    assert runtime.advance("second", session_id="s1", now=1120.0) is None
+    assert "version conflict" in (runtime.last_refusal or "")
+    # The other writer's state is still the one on disk — refusing means not
+    # overwriting, not rolling back somebody else's turn.
+    assert CoreState.load(state_path).state_version == first["state_version"] + 1
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the holder process uses fcntl")
+def test_the_cross_process_lock_blocks_then_times_out(monkeypatch, tmp_path) -> None:
+    import subprocess
+    import sys
+
+    from ai.core import stateful_runtime
+
+    monkeypatch.setenv("ANGELA_STATEFUL_CORE", "1")
+    runtime = _runtime(_checkpoint(tmp_path / "core"))
+    first = runtime.advance("hello", session_id="s1", now=1000.0)
+    assert first is not None
+    lock_path = Path(first["state_path"]) / stateful_runtime.LOCK_FILENAME
+    assert lock_path.is_file()
+
+    holder = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            "import fcntl, os, time\n"
+            f"fd = os.open({str(lock_path)!r}, os.O_RDWR | os.O_CREAT)\n"
+            "fcntl.flock(fd, fcntl.LOCK_EX)\n"
+            "print('held', flush=True)\n"
+            "time.sleep(1.5)\n",
+        ],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert holder.stdout is not None and holder.stdout.readline().strip() == "held"
+        monkeypatch.setattr(stateful_runtime, "LOCK_TIMEOUT_S", 0.25)
+
+        assert runtime.advance("blocked", session_id="s1", now=1120.0) is None
+        assert "held by another writer" in (runtime.last_refusal or "")
+    finally:
+        holder.wait(timeout=30)
+        if holder.stdout is not None:
+            holder.stdout.close()
+
+    # Released, so the next turn is not punished for the earlier contention.
+    assert runtime.advance("after release", session_id="s1", now=1240.0) is not None
+
+
+def test_a_state_says_whose_it_is(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("ANGELA_STATEFUL_CORE", "1")
+    runtime = _runtime(_checkpoint(tmp_path / "core"))
+
+    first = runtime.advance("hello", session_id="s1", user_id="alice")
+    assert first is not None
+    assert first["user_id"] == "alice"
+    assert CoreState.load(runtime.state_path_for("s1")).user_id == "alice"
+
+
+def test_another_users_state_is_refused_not_shared(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("ANGELA_STATEFUL_CORE", "1")
+    runtime = _runtime(_checkpoint(tmp_path / "core"))
+    assert runtime.advance("hello", session_id="s1", user_id="alice") is not None
+    before = (runtime.state_path_for("s1") / "meta.json").read_bytes()
+
+    # Session ids are guessable; the owner is what decides. Sharing the state
+    # here would let one user's turn advance another user's continuity.
+    assert runtime.advance("hi", session_id="s1", user_id="bob") is None
+    assert "belongs to 'alice'" in (runtime.last_refusal or "")
+    assert (runtime.state_path_for("s1") / "meta.json").read_bytes() == before
+
+
+def test_an_ownerless_state_is_adopted_not_rejected(monkeypatch, tmp_path) -> None:
+    """States written before the owner was recorded must still resume.
+
+    §41's measured run created its state with ``user_id=""``; refusing those
+    would retroactively invalidate every state on disk.
+    """
+    monkeypatch.setenv("ANGELA_STATEFUL_CORE", "1")
+    runtime = _runtime(_checkpoint(tmp_path / "core"))
+    first = runtime.advance("hello", session_id="s1")
+    assert first is not None
+    assert first["user_id"] == ""
+
+    resumed = runtime.advance("second", session_id="s1", user_id="alice", now=1120.0)
+    assert resumed is not None
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the workers use fcntl-backed locks")
+def test_two_processes_advance_one_state_without_losing_a_turn(monkeypatch, tmp_path) -> None:
+    """The cross-process claim, measured rather than inferred from the lock.
+
+    Ten turns spread over two real processes. Accounting is exact: the creating
+    turn bumps once, every later turn bumps twice (al_step then ai_step), so the
+    final version must be ``1 + 2 * 9`` whatever the interleaving. A lost update
+    shows up as a smaller number and the run fails.
+    """
+    import subprocess
+    import sys
+    import textwrap
+
+    monkeypatch.setenv("ANGELA_STATEFUL_CORE", "1")
+    directory = _checkpoint(tmp_path / "core")
+    runtime = _runtime(directory)
+
+    worker = textwrap.dedent(f"""
+        import os, sys
+        sys.path.insert(0, {str(Path("apps/backend/src").resolve())!r})
+        os.environ["ANGELA_STATEFUL_CORE"] = "1"
+        os.environ["ANGELA_STATEFUL_CORE_DIR"] = {str(directory)!r}
+        from ai.core.stateful_runtime import ChatCoreRuntime
+        runtime = ChatCoreRuntime(directory={str(directory)!r}, arch="ssm")
+        results = [
+            runtime.advance(f"turn {{i}}", session_id="shared", user_id="alice")
+            for i in range(5)
+        ]
+        refused = [i for i, item in enumerate(results) if item is None]
+        print("refused", refused)
+        sys.exit(1 if refused else 0)
+        """)
+
+    workers = [
+        subprocess.run([sys.executable, "-c", worker], capture_output=True, text=True)
+        for _ in range(2)
+    ]
+
+    assert [worker.returncode for worker in workers] == [0, 0], [
+        worker.stderr[-500:] for worker in workers
+    ]
+    final = CoreState.load(runtime.state_path_for("shared"))
+    assert final.state_version == 1 + 2 * 9
+    assert final.user_id == "alice"
+
+
+def test_an_unreadable_state_file_is_refused_rather_than_resurrected(monkeypatch, tmp_path) -> None:
+    """If the counter cannot be read, writing would recreate a lost history.
+
+    The state was loadable a moment ago, so this is not "first turn": the file
+    that says which version we are continuing vanished mid-turn. Saving anyway
+    would put a fresh meta.json where the previous history used to be, which
+    every later reader would see as a normal resume.
+    """
+    monkeypatch.setenv("ANGELA_STATEFUL_CORE", "1")
+    runtime = _runtime(_checkpoint(tmp_path / "core"))
+    first = runtime.advance("hello", session_id="s1", now=1000.0)
+    assert first is not None
+
+    core = runtime._core
+    state_path = Path(first["state_path"])
+    real_ai_step = core.ai_step
+
+    def _remove_meta(tokens, state):
+        (state_path / "meta.json").unlink()
+        return real_ai_step(tokens, state)
+
+    monkeypatch.setattr(core, "ai_step", _remove_meta)
+
+    assert runtime.advance("second", session_id="s1", now=1120.0) is None
+    assert "cannot verify the version on disk" in (runtime.last_refusal or "")
+    assert not (state_path / "meta.json").exists()
