@@ -8,6 +8,14 @@ P7: DictionaryClassifier (dictionary-enhanced intent classification).
 P28: TrainingCoordinator (domain training orchestration).
 """
 
+from ai.core.core_state import (
+    CoreState,
+    CoreStateCorrupt,
+    CoreStateError,
+    CoreStateInvalid,
+    CoreStateTooLarge,
+    CoreStateVersionMismatch,
+)
 from ai.core.dictionary_classifier import DictionaryClassifier, get_dictionary_classifier
 from ai.core.eda_episode import EDA_EPISODE_SCHEMA_VERSION, build_eda_episode, evaluate_eda_result
 from ai.core.execution_gate import ExecutionGate, GateDecision
@@ -27,6 +35,12 @@ __all__ = [
     "EDA_EPISODE_SCHEMA_VERSION",
     "build_eda_episode",
     "evaluate_eda_result",
+    "CoreState",
+    "CoreStateCorrupt",
+    "CoreStateError",
+    "CoreStateInvalid",
+    "CoreStateTooLarge",
+    "CoreStateVersionMismatch",
     "DictionaryClassifier",
     "get_dictionary_classifier",
     "GateDecision",
