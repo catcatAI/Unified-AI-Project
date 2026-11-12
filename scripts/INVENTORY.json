@@ -462,6 +462,11 @@
       "referenced": false,
       "purpose": "Three-Layer Architecture: Compare PCA dimensions (128/256/512/3072)."
     },
+    "compare_snn_gru.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Pre-registered SNN vs GRU comparison on addition 0-99 (CORE_GAP §36)."
+    },
     "complexity_budget_gate.py": {
       "category": "tool",
       "referenced": true,

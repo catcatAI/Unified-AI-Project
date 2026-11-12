@@ -251,6 +251,7 @@ T5 對照組也變 → 先把實驗做乾淨。
 | 階段 | 做什麼 | Gate（沒過就不進下一階） |
 | --- | --- | --- |
 | **P0** | 凍結本契約＋schema＋測試骨架（不改行為） | 文件與 schema 審查通過；T1–T6 的定義寫定 |
+| — | **P0 狀態（2026-11-12）**：完成。`ai/core/core_state.py` ＋ 14 條 schema／拒絕載入測試；**行為未改**。 | `pytest tests/ai/test_core_state_contract.py` 綠；`mypy` 0 error |
 | **P1** | 用 GRU 實作 `CoreState`＋`ai_step`／`al_step`；合成多回合資料；跑 T1–T6 | T1 有顯著下降、T4 一致、T5 對照組不變 |
 | **P2** | 把同一契約接到 SNN（先修梯度帶）；與 GRU 同預算比較 | 同參數同步數下可訓練；T1–T6 過 |
 | **P3** | SSM 原型（dt 原生） | 在 T3／T5 上優於或等於 GRU；成本可接受 |
@@ -302,7 +303,8 @@ T5 對照組也變 → 先把實驗做乾淨。
 
 **新增（P1）**
 
-- `apps/backend/src/ai/core/core_state.py`：schema、save/load、hash、鎖、版本。
+- `apps/backend/src/ai/core/core_state.py`：schema、save/load、hash、版本
+  ——**P0 已建立**（見下方「P0 現況」）。
 - `apps/backend/src/ai/core/core_step.py`：`ai_step`／`al_step` protocol 與 registry。
 - `apps/backend/src/ai/core/stateful_decoder.py`：GRU／SNN 的 adapter。
 
@@ -316,20 +318,33 @@ T5 對照組也變 → 先把實驗做乾淨。
 
 **測試／量測**
 
-- `tests/ai/test_core_state_contract.py`：schema、hash、版本、原子寫入、拒絕載入。
+- `tests/ai/test_core_state_contract.py`：schema、hash、版本、原子寫入、拒絕載入
+  ——**P0 已建立，14 條通過**。
 - `tests/ai/test_state_cycles.py`：`dt=0` no-op、半群、ablation、restart。
 - `scripts/probe_state_cycles.py`：T1–T6 的合成多回合 probe。
 - `scripts/probe_state_restart.py`：跨進程 save/load。
 
-**指令（P1 之後才存在；現在刻意不可執行）**
+### P0 現況（2026-11-12，已實作，未改任何行為）
 
-上面列出的檔案是 **P1 的產物，尚未建立**。在那之前下面的指令會直接 404，所以先以註解
-形式留在這裡，避免有人抄去跑、也避免文件宣稱一個不存在的入口（`tests/test_documented_paths.py`
-對「可執行指令」與「提案」的分界就是這條：未建立的入口必須是註解並寫明原因）。
+`ai/core/core_state.py` 只做「一個 state 怎麼被描述、存、驗、載」：
+
+- `CoreState.create()` 是唯一重置點（契約 R5）；`bump()` 讓 `state_version` 單調遞增。
+- `save()` 先張量、後 `meta.json`；checksum 同時涵蓋兩者，崩潰殘檔會在載入時被拒絕。
+- `load()` 在檔案缺失、schema 不符、`weights_hash` 不符、checksum 不符時**一律拋錯**，
+  不建立空狀態。張量用 `.npz`＋`allow_pickle=False`，meta 用 JSON。
+- `derived` 不落盤（meta 的鍵集合被測試釘住）；單一 session ≤ 10 MB，超過拋錯不截斷。
+
+**尚未做（P1 才做）**：per-session 鎖與樂觀鎖（R3 的並發部分）、`ai_step`／`al_step`、
+跨回合訓練、T1–T6。所以 P0 綠燈**不代表**「模型在用 state」。
+
+**指令**
 
 ```bash
-# P1 建立 core_state/core_step + 兩支 probe 之後才可執行（現在檔案不存在）
-# ./.venv/bin/python -m pytest tests/ai/test_core_state_contract.py tests/ai/test_state_cycles.py -q
+# P0：已可執行
+./.venv/bin/python -m pytest tests/ai/test_core_state_contract.py -q
+
+# P1 建立 core_step + 兩支 probe 之後才可執行（現在檔案不存在）
+# ./.venv/bin/python -m pytest tests/ai/test_state_cycles.py -q
 # ./.venv/bin/python scripts/probe_state_cycles.py --seeds 0 1 2 3 4
 # ./.venv/bin/python scripts/probe_state_restart.py
 ```
@@ -341,3 +356,5 @@ T5 對照組也變 → 先把實驗做乾淨。
 - 2026-11-12：建立。動機：§36 的 SNN/GRU 對照只量了單回合 mapping；使用者指出
   「狀態走上下文」與「AI/AL 分成兩個實體」會重複狀態問題。本契約把核心定義為
   **同一份權重＋同一個 state＋兩個 step**，並把 observable 降為投影。
+- 2026-11-12（P0）：`ai/core/core_state.py` ＋ `tests/ai/test_core_state_contract.py`
+  （14 條）。只定 schema 與拒絕規則，不接生產、不改行為；`ai_step`／`al_step` 仍是 P1。
