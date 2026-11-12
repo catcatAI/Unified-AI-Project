@@ -1582,6 +1582,7 @@ tests/
 | Paraphrase generalisation probe (frozen splits + learning effect)                         | `python3 scripts/probe_paraphrase.py`                                                                                                                                |
 | Offline knowledge corpus (dump → FTS5 index, then the general layer)                      | `python3 scripts/download_knowledge_corpus.py && python3 scripts/build_knowledge_index.py`                                                                           |
 | Where the pass lines come from (external benchmarks, never self-set)                      | `docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md`                                                                                                           |
+| AI+AL core contract (one substrate, one state, two step functions; state never in context) | `docs/06-project-management/AI_AL_SINGLE_CORE_CONTRACT.md`                                                                                                           |
 
 > 🔎 **單一檢查入口**：所有「非編譯器」檢查集中在
 > `scripts/check_fact_gates.py`（edge/al/audit/chat/cluster/config/version/docs/matrix/modules/gates/hygiene/intelligence/benchmarks/layers/placement/definitions）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。其中

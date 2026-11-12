@@ -3,9 +3,10 @@
 > **這份文件的用途**：上下文被壓縮、換 session、或換人接手時，**先讀這一頁**。它記的是「已量到的數字 + 決策 + 檔案地圖 + 下一步」，不是願景。詳細推導在
 > `AL_LADDER_ROADMAP.md`；偽智能標準在 §7；路線差異在 §8。
 
-- 版本：7.5.0-dev　｜　最後更新：2026-11-06
+- 版本：7.5.0-dev　｜　最後更新：2026-11-12
 - ANGELA-MATRIX：`[L3-L4] [αβγ] [B] [L3]`
 - 量測工具（都可重跑，不需 GPU）：`scripts/al_ladder.py`、`scripts/al_forgery.py`、`scripts/al_channel_audit.py`
+- **核心契約**（改 state／生成路徑前先讀）：`AI_AL_SINGLE_CORE_CONTRACT.md`
 
 ---
 
@@ -18,7 +19,12 @@
 2. **行為測試有天花板：`clone`（獨立重寫同一條規則）通過全部階。**
    所以「偽與真」的分野只能是**機制 + provenance**，不能是觀感或行為。
 3. **「AI+AL 在同一個模型」目前是 0。**
-   現有通道是 B（提示詞，10,001 值）＋ C-param（溫度，2,001 級）＋ routing（2 模式）；C-logit 與 C-state 未實作。
+   現有通道是 B（提示詞，10,001 值）＋ C-param（溫度，2,001 級）＋ routing（2 模式）；
+   C-logit 已實作但未接生產，C-state／C-learn 只在自有 GARDEN 上成立（參數級）。
+   **C-state 的現有實作（`al_snn_modulation.py` 改 GARDEN 發火閾值）是 C-state-lite**：
+   它調的是**參數**，跨回合不保存、重啟即消失，所以**不是**持久核心狀態。真正的核心狀態
+   是「同一份權重＋同一個 state 物件＋`ai_step`／`al_step` 兩個入口」，定義與門檻見
+   `AI_AL_SINGLE_CORE_CONTRACT.md`。狀態**不得**以文字／數字寫進 prompt 充當連續性。
 
 ---
 
@@ -67,6 +73,11 @@
 | logit_bias     | C-logit | 0                     | —        | —      | —              | 未實作                                                                     |
 | model_state    | C-state | 0                     | —        | —      | —              | 未實作                                                                     |
 | routing        | 路由    | 2 模式                | ❌       | ❌     | ✅             | `router.py:4434`                                                           |
+
+> 這張表是 **2026-11-06 的快照**：`logit_bias`／`model_state` 當時是 0。之後
+> 2026-11-07 續四／續五 實作了 C-state（GARDEN 發火閾值）與 C-learn（可塑性增益），
+> 但那兩者調的是**參數**、不跨回合保存，屬 **C-state-lite**，不是持久核心狀態；
+> 核心狀態的定義見 `AI_AL_SINGLE_CORE_CONTRACT.md`。
 
 ### 2.4 神經核心（決定「不要再訓」的證據）
 
