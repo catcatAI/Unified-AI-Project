@@ -3134,23 +3134,109 @@ lr 5e-3、8 個等長 gap、chunk 60 s、`hidden=64`／`emb=32`），**沒有** 
    中位數落在 167–243 s（正好覆蓋 200／280 s 的判定邊界），最小 τ 貼在 20 s 下限
    （chunk 尺度）。這表示模型自己把通道分配到「段」與「session」兩個尺度；區間是跑之前
    寫定的，沒有因為結果改動。
-5. **成本沒有結論。** 參數 4,634 vs GRU 21,402（0.22×），但這一輪 wall time（74.0 s）
+5. **成本當時沒有結論。** 參數 4,634 vs GRU 21,402（0.22×），但這一輪 wall time（74.0 s）
    是在全量測試同時跑的時候量的，§38 的 99.4 s 是機器閒置時量的，**兩者不可比**。
-   契約 P3 的「成本可接受」需要一次乾淨計時，不能拿這兩個數字宣稱 SSM 更快。
+   乾淨計時後來補做，見 §40.7。
 6. **順序偏離要寫出來**：契約 §9 寫 P2（SNN）→ P3（SSM），這一輪先做 P3。原因是 SNN 的
    token 表徵／梯度問題（`CORE_GAP_ANALYSIS` §七、§X #276）是另一條工作，不是這個介面能
    修的。**這不表示 P2 完成**；SNN 臂仍未接，P2 的 gate 未動。
-7. **仍然是合成任務、同進程 restart、單一線性讀出、沒有接生產**；核心分不變
+7. **仍然是合成任務、同進程 restart（跨進程版見 §40.8）、單一線性讀出、沒有接生產**；核心分不變
    （**0.00/10**），`state_for_llm` 仍在。這一輪只證明「同一契約下，dt 原生的遞歸可以
    用更少參數達到同樣的 T1／T3／T5，且半群不必訓練」。
 
 ### 40.6 下一步
 
-1. **乾淨的成本量測**（同一台機器、同一時間、交替跑 GRU 與 SSM 各 3 次，量 forward／
-   train step／記憶體），才有 P3 的「成本可接受」結論。
-2. **跨進程 restart**（`scripts/probe_state_restart.py` 尚未建立）：T4 目前是同進程
-   `CoreState.save`／`load`；跨進程才是生產要的形状。
+1. ✅ **乾淨的成本量測**（同一台機器、同一時間、交替跑 GRU 與 SSM 各 3 次，量 forward／
+   train step／記憶體）——見 §40.7。
+2. ✅ **跨進程 restart**（`scripts/probe_state_restart.py`）：新解釋器只靠權重檔＋狀態檔
+   重跑，兩臂 Δp = 0；順手抓到並修掉 `attach_state()` 不檢查 `model_kind`／
+   `weights_hash` 的真缺陷——見 §40.8。
 3. **SNN 臂**（P2）：先解決 token 表徵與梯度帶，再用同一組 T1–T6；不要用 SSM 的結果
    代替它。
 4. **P4 接生產**：`generation_gate` 加 `stateful`、`chat_routes` 傳 state 物件、
    `state_for_llm` 只留 fallback；在那之前，核心分仍是 0.00/10。
+
+### 40.7 成本（2026-11-12，`--cost`；三次獨立 run）
+
+§38 的 99.4 s 與 §40.4 的 74.0 s 不可比（其中一次有全量測試同時在跑）。要回答 P3 的
+「成本可接受」，量的是**同一條路徑上的同一份工作**，不是兩次訓練的 wall time：
+
+- **工作**：batch 64、8 個等長 gap 的一整回合（teach → 7 次 `al_step`＋8 次 `ai_step`
+  → `Q_TIME`／`Q_KEY` 兩個查詢）。訓練步就是 `train_arm` 呼叫的**同一個**
+  `_train_step()`——為了讓它可被單獨計時，把它從迴圈裡抽成函式（行為不變：登記 run 重跑
+  逐位相同，見下）。
+- **計時**：每臂 **warmup 5 + 30 reps**，取中位數；**交替順序**三次（gru→ssm、
+  ssm→gru、gru→ssm），這樣機器負載漂移會落在兩臂上而不是只落在其中一臂。
+- **環境**：同一進程、CPU、PyTorch 2.14.1+xpu（eager，6 threads／12 cores）；沒有 GPU、
+  沒有 inductor。三次獨立 run 各自完整重跑。
+
+| 臂 | 參數 | checkpoint | forward（中位數） | 一個訓練步（中位數） |
+| --- | --- | --- | --- | --- |
+| GRU | 21,402 | 86.9 KiB | **2.02–2.07 ms** | **6.31–6.42 ms** |
+| SSM | 4,634 | 20.8 KiB | **1.14–1.15 ms** | **2.82–3.01 ms** |
+| SSM／GRU | **0.217** | **0.239** | **0.552–0.566** | **0.445–0.468** |
+
+可重現性：三次獨立 run 的差 ≤ ~3%（forward 0.55–0.57×、訓練步 0.45–0.47×），中位數的
+min–max 區間也窄（例：GRU forward 1.91–3.14 ms，SSM 1.10–1.57 ms）。
+
+**能說什麼、不能說什麼**：
+
+1. 能說：在這個合成任務尺寸上，SSM 的**計算量**約為 GRU 的 **0.55×**（單次 forward）／
+   **0.45×**（一個訓練步），參數 0.22×、checkpoint 0.24×。
+2. 不能說：「SSM 更快」若指的是生產延遲——這不是端到端量測，模型只有 26 個 token、
+   `hidden=64`；生產路徑（P4）根本還沒接。也不能說「成本可接受」：可接受是對某個
+   服務目標而言，而系統還沒有那個目標。
+3. 不能說：RSS／記憶體佔用。進程 RSS 由 torch 共享，無法按臂歸因；表裡的
+   `state_bytes_per_batch` 只算 hidden state（64×64×4 B），不含配置器開銷。
+4. **量測機不是專用 benchmark 機**：這是桌面環境，load average 3.6–4.7（12 cores），
+   有桌面程式與一個無關的背景程序在跑。所以照實寫成「交替順序＋中位數」，不是
+   「絕對毫秒」；三次獨立 run 的一致性就是它的可信度來源。
+
+輸出：`data/intelligence_reports/probe_state_cycles_cost.json`（gitignored）。指令：
+`python3 scripts/probe_state_cycles.py --cost`。
+
+### 40.8 跨進程 restart（2026-11-12，新解釋器；T4 的第二半）
+
+§37.5 的 T4 是在**同一個行程**裡量的（`CoreState.save` → `load` → `attach_state`）。生產會
+重啟行程，所以真正的問題是：**權重檔＋狀態檔單獨存在時夠不夠**——新解釋器、沒有共享
+記憶體、沒有把時間或上下文寫進提示詞。
+
+方法（`scripts/probe_state_restart.py`，判定在跑之前寫定）：
+
+- 兩個獨立的 Python 行程。`--phase capture` 先訓練核心（2,000 sessions、10 epochs、與 §38
+  同一個等長 gap 生成器），打一個回合（教 → 8 × 50 s → 查詢），存下**權重檔**、**查詢
+  之前**的 state、查詢 token 與參考機率；`--phase resume` 在**新行程**裡**從檔案載入權重**
+  （不是靠同一個種子重建），再用 `expected_weights_hash` 載入 state、只重跑查詢。
+- 為什麼要訓練：未訓練的 GRU，查詢輸出由輸入 token 主導，**歸零的 state 看起來一樣**，
+  那 1e-5 的比較就沒有意義。這一點是實測到的（煙霧預算下敏感度檢查會 FAIL），所以登記
+  版本先訓練核心；訓練預算寫在檔案的 `REGISTERED` 裡，不是看到結果才加。
+
+判定與結果（`all_pass = True`）：
+
+| 檢查 | 條件 | GRU | SSM |
+| --- | --- | --- | --- |
+| max abs Δp（capture vs resume） | ≤ 1e-5 | **0.000e+00** | **0.000e+00** |
+| `weights_hash`／`model_kind` | 一致 | PASS | PASS |
+| `ticks`（8）／`last_dt_s`／`state_version` | 一致 | PASS | PASS |
+| 歸零 state 的 Δp（敏感度） | ≥ 1e-2 | **0.9063** | **0.9904** |
+| 另一臂的 state | 拒絕 | PASS | PASS |
+| 把 state 接到錯的臂 | 拒絕 | PASS | PASS |
+| 位元組被改寫的 state | 拒絕 | PASS | PASS |
+
+**過程中抓到的真缺陷（已修）**：`StatefulCore.attach_state()` 原本只把 numpy 轉回 tensor，
+**不檢查 `model_kind`、也不檢查 `weights_hash`**。GRU 與 SSM 的 `hidden` 都是 64，所以把
+`gru` 的 state 接上 `ssm` 核心會**安靜地成功**，模型於是用一個對它從不存在的 state 回答。
+修法：`attach_state()` 兩項都驗，不符就丟 `CoreStateInvalid`（`CoreState.load(
+expected_weights_hash=…)` 守檔案路徑，這個守記憶體路徑），並加 2 條測試。附帶記錄一個分類
+細節：權重不符時 `CoreState.load` 拋的是 `CoreStateVersionMismatch`（`CoreStateError` 的
+另一支，不是 `CoreStateInvalid`），所以探針的拒絕檢查要接 `CoreStateError`——第一版接
+`CoreStateInvalid` 會漏掉。
+
+限制照實記：
+
+1. 同一台機器、同一個 torch build：測的是**行程邊界＋檔案**，不是重開機、不是換機器。
+2. 只打**一個回合**；生產是長 session（P4）。
+3. 敏感度檢查需要**訓練過**的核心才成立。用 64 sessions × 1 epoch 的煙霧預算跑，它會照實
+   FAIL（`tests/ai/test_state_restart.py` 因此只驗機制，不驗這一項），這不是探針壞了，是
+   那個預算下的 GRU 本來就幾乎不看 state。
+4. 核心分不變（**0.00/10**），生產路徑仍走 prompt／`state_for_llm`。

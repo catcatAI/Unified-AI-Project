@@ -257,7 +257,7 @@ T5 對照組也變 → 先把實驗做乾淨。
 固定 8 個 chunk，排除「數更新次數」的捷徑）**18/18 通過**，主臂 1.0000、歸零 0.4986。 | `probe_state_cycles.py` 的 `all_pass=True`；`tests/ai/test_state_cycles.py` 17 條綠 |
 | **P2** | 把同一契約接到 SNN（先修梯度帶）；與 GRU 同預算比較 | 同參數同步數下可訓練；T1–T6 過 |
 | **P3** | SSM 原型（dt 原生） | 在 T3／T5 上優於或等於 GRU；成本可接受 |
-| — | **P3 狀態（2026-11-12）**：SSM 臂**21/21 預登記檢查通過**（主臂 1.0000、歸零 0.0000＝常數錯答而非 chance、不跑 `al_step` 0.4970、打亂 0.4948、假時鐘 0.0000、restart 0）。半群 **1.9–3.8e-6**（登記 ≤1e-2）——但這是**架構保證**（指數相乘），不是學到的連續性。T3 1.0000（與 GRU 相同）；不跑 `al_step` 0.4970 vs GRU 0.4988（差 0.0018，在 ±0.0123 半寬內，不下降）。**成本尚未乾淨量測**（參數 4,634 vs 21,402；這一輪量測時有其它測試同時在跑，wall time 不可用）。 | `probe_state_cycles.py --round 4` 的 `all_pass=True`；`tests/ai/test_ssm_core.py` 9 條綠 |
+| — | **P3 狀態（2026-11-12）**：SSM 臂**21/21 預登記檢查通過**（主臂 1.0000、歸零 0.0000＝常數錯答而非 chance、不跑 `al_step` 0.4970、打亂 0.4948、假時鐘 0.0000、restart 0）。半群 **1.9–3.8e-6**（登記 ≤1e-2）——但這是**架構保證**（指數相乘），不是學到的連續性。T3 1.0000（與 GRU 相同）；不跑 `al_step` 0.4970 vs GRU 0.4988（差 0.0018，在 ±0.0123 半寬內，不下降）。**成本已乾淨量測**（`--cost`，三次獨立 run、交替順序、每次 30 reps 取中位數）：參數 4,634 vs 21,402（0.217×）、checkpoint 20.8 vs 86.9 KiB（0.239×）、forward 1.14–1.15 vs 2.02–2.07 ms（**0.55×**）、訓練步 2.82–3.01 vs 6.31–6.42 ms（**0.45×**）。這是**合成任務尺寸**的計算量，不是生產延遲；P4 未接線前不宣稱「成本可接受」（見 `CORE_GAP_ANALYSIS.md` §40.7）。 | `probe_state_cycles.py --round 4` 的 `all_pass=True`；`tests/ai/test_ssm_core.py` 9 條綠 |
 | **P4** | 接生產：`generation_gate` 加 `stateful`；`chat_routes` 傳 state 物件；`state_for_llm` 只給 fallback | 生產路徑不再把 state 寫進 core prompt；provenance 正確 |
 | **P5** | 量產級：per-user 持久化、重啟、版本遷移、成本 | 文件與分數同步；核心分只在模型產生時變動 |
 
@@ -330,8 +330,12 @@ T5 對照組也變 → 先把實驗做乾淨。
   weights hash、半群**只量不判**、等段數產生器——**P1 已建立，21 條**。
 - `scripts/probe_state_cycles.py`：T1–T6 的合成多回合 probe——**P1 已建立**；`--round 2`
   是等段數重跑。預登記在 `CORE_GAP_ANALYSIS.md` §37／§38，結果見 §37.6／§38.4。
-- `scripts/probe_state_restart.py`：跨進程 save/load（**尚未建立**；T4 目前用同進程的
-  `CoreState.save`／`load`，跨進程版是後續）。
+- `scripts/probe_state_restart.py`：**跨進程** restart（P3 的 T4 第二半）——`--phase
+  capture` 在新行程存權重＋查詢前的 state，`--phase resume` 在**另一個**新行程只靠檔案
+  重跑；同時驗「另一臂的 state／被改寫的 state／接到錯的臂」三種拒絕。結果見
+  `CORE_GAP_ANALYSIS.md` §40.8：兩臂 Δp = 0、歸零 state 差 0.91（GRU）／0.99（SSM）。
+- `tests/ai/test_state_restart.py`：上面那條的機制測試（煙霧預算，驗 Δp、hash、ticks、
+  三種拒絕；**不**驗「歸零 state 差異」，那需要訓練過的核心）。
 
 ### P0 現況（2026-11-12，已實作，未改任何行為）
 
@@ -353,8 +357,9 @@ T5 對照組也變 → 先把實驗做乾淨。
 ./.venv/bin/python -m pytest tests/ai/test_core_state_contract.py tests/ai/test_state_cycles.py -q
 ./.venv/bin/python scripts/probe_state_cycles.py --seeds 0 1 2 3 4
 
-# 尚未建立（跨進程重啟版；T4 目前用同進程 CoreState.save／load）
-# ./.venv/bin/python scripts/probe_state_restart.py
+# 跨進程 restart（T4 的第二半；兩臂 Δp = 0，三個拒絕檢查全過）
+./.venv/bin/python scripts/probe_state_restart.py
+./.venv/bin/python -m pytest tests/ai/test_state_restart.py -q
 ```
 
 ---
@@ -378,10 +383,18 @@ T5 對照組也變 → 先把實驗做乾淨。
   12–24 倍（1.66–1.88 → 0.069–0.140），但未達登記的 1e-2，**3 項 FAIL**。最後 batch 的
   loss 1.4e-5 與 held-out 的 6.9e-2 並列，說明約束只作用在當前狀態分布。否定結果照實記，
   不調 λ；P3（SSM）是下一步。
+  2026-11-12（§40.8 跨進程 restart）：新的 `probe_state_restart.py` 在**兩個新行程**之間
+  傳遞權重檔＋狀態檔，兩臂 Δp = 0.000e+00、`ticks`／`state_version`／`last_dt_s`／hash
+  全部保留、歸零 state 差 0.9063（GRU）／0.9904（SSM）。順手修掉真缺陷：
+  `attach_state()` 原本**不檢查** `model_kind`／`weights_hash`，同尺寸（hidden=64）時會
+  安靜接受另一臂的 state；現在兩項都驗並丟 `CoreStateInvalid`（+2 測試）。
+  2026-11-12（§40.7 成本）：`train_arm` 的單步抽成 `_train_step()`（登記 run 重跑逐位
+  相同），`--cost` 量同一份工作；SSM/GRU = 0.217 參數、0.239 checkpoint、0.55 forward、
+  0.45 訓練步（三次獨立 run，差 ≤3%）。桌面機、負載 3.6–4.7，不是專用 benchmark 機。
   2026-11-12（§40 SSM 臂）：`StatefulCore` 收攏 state／hash／checkpoint；`SSMCore`
   （對角 decay、per-dim log-spaced `τ`、線性讀出）在**沒有** `L_al` 下 21/21 通過，
   半群 1.9–3.8e-6（架構保證）、T3／T5 與 GRU 同分。**這是 P3 候選，不是能力提升**；
   成本未乾淨量測，P4 未開始。
-  **限制照實記**：合成任務、同進程 restart；§37／§38 的半群未成立（0.7588／0.9180），
+  **限制照實記**：合成任務、同進程 restart（§40.8 已補上跨進程）；§37／§38 的半群未成立（0.7588／0.9180），
   §39 把它縮小 12–24 倍但仍未達 1e-2，§40 靠架構讓它精確；核心分不變（0.00/10），
   生產路徑未接。
