@@ -39,6 +39,8 @@ Usage
                                                           # equal step counts)
     python3 scripts/probe_state_cycles.py --round 3       # registered round 3 (S39,
                                                           # L_al semigroup loss)
+    python3 scripts/probe_state_cycles.py --round 4       # registered round 4 (S40,
+                                                          # SSM arm)
     python3 scripts/probe_state_cycles.py --seeds 0 --epochs 1 \
         --train-sessions 256 --eval-sessions 64           # smoke only
 """
@@ -63,7 +65,7 @@ if str(BACKEND_SRC) not in sys.path:
 
 from ai.core.core_state import CoreState  # noqa: E402
 from ai.core.core_step import chunk_dt  # noqa: E402
-from ai.core.stateful_decoder import GRUCore  # noqa: E402
+from ai.core.stateful_decoder import GRUCore, SSMCore  # noqa: E402
 
 # -- vocabulary (fixed; changing it invalidates §37) -------------------------
 PAD = 0
@@ -102,6 +104,15 @@ ROUNDS = {
         "l_al_weight": 0.5,
         "l_al_train": SEMIGROUP_TRAIN_PAIR,
         "l_al_eval": SEMIGROUP_HELDOUT_PAIRS,
+    },
+    # Same task, data and answer thresholds as round 2; only the recurrence
+    # changes.  The semigroup is gated here because the diagonal decay makes it
+    # exact by construction (an architectural property, not a learned one).
+    4: {
+        "gap_count": 8,
+        "gap_mode": "equal",
+        "arch": "ssm",
+        "semigroup_gate": True,
     },
 }
 
@@ -311,16 +322,28 @@ def train_arm(
     chunk_seconds: float,
     l_al_weight: float = 0.0,
     l_al_train: Tuple[float, float] = (25.0, 25.0),
-) -> GRUCore:
+    arch: str = "gru",
+) -> Any:
     torch = model_torch()
     torch.manual_seed(seed)
-    model = GRUCore(
-        TOKEN_COUNT,
-        hidden=hidden,
-        emb=emb,
-        chunk_seconds=chunk_seconds,
-        seed=seed,
-    )
+    if arch == "gru":
+        model = GRUCore(
+            TOKEN_COUNT,
+            hidden=hidden,
+            emb=emb,
+            chunk_seconds=chunk_seconds,
+            seed=seed,
+        )
+    elif arch == "ssm":
+        model = SSMCore(
+            TOKEN_COUNT,
+            hidden=hidden,
+            emb=emb,
+            chunk_seconds=chunk_seconds,
+            seed=seed,
+        )
+    else:
+        raise ValueError(f"unknown arch {arch!r}")
     model.train()
     optimiser = torch.optim.Adam(model.parameters(), lr=lr)
     rng = random.Random(seed * 7919 + 13)
@@ -577,6 +600,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     round_config = ROUNDS[args.round]
     gap_count = int(round_config["gap_count"])
     gap_mode = str(round_config["gap_mode"])
+    arch = str(round_config.get("arch", "gru"))
     l_al_weight = float(round_config.get("l_al_weight", 0.0))
     if args.l_al_weight is not None:
         l_al_weight = float(args.l_al_weight)
@@ -591,6 +615,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         and args.hidden == REGISTERED["hidden"]
         and args.emb == REGISTERED["emb"]
         and l_al_weight == float(round_config.get("l_al_weight", 0.0))
+        and arch == str(round_config.get("arch", "gru"))
         and tuple(args.seeds) == tuple(REGISTERED["seeds"])
     )
 
@@ -631,8 +656,10 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
             l_al_weight=l_al_weight,
             l_al_train=l_al_train,
         )
-        core = train_arm(train, arm="core", **shared)
-        hand = train_arm(train, arm="hand", **shared)
+        core = train_arm(train, arm="core", arch=arch, **shared)
+        # The hand-state control is always the GRU arm: it exists to show that
+        # the same T1 does *not* detect a state that lives in the context.
+        hand = train_arm(train, arm="hand", arch="gru", **shared)
 
         hash_before = core.weights_hash()
         rng = random.Random(seed * 104729 + 7)
@@ -783,6 +810,10 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
             "per_seed": values,
         }
 
+    if round_config.get("semigroup_gate"):
+        for key, entry in semigroup_report.items():
+            checks[f"SEMIGROUP_{key}"] = entry["max"] <= L_AL_MAX_DELTA
+
     l_al_report: Dict[str, Any] = {}
     if l_al_weight > 0.0:
         for key, entry in semigroup_report.items():
@@ -833,6 +864,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
             "train_sessions": args.train_sessions,
             "eval_sessions": args.eval_sessions,
             "seeds": list(args.seeds),
+            "arch": arch,
             "token_count": TOKEN_COUNT,
             "expiry_seconds": EXPIRY_S,
         },
@@ -860,7 +892,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
 
 
 def print_report(report: Dict[str, Any]) -> None:
-    section = {1: "§37", 2: "§38", 3: "§39"}.get(report.get("round", 1), "§?")
+    section = {1: "§37", 2: "§38", 3: "§39", 4: "§40"}.get(report.get("round", 1), "§?")
     if not report["registered"]:
         print(f"\n⚠️  非登記參數：這不是 {section} 的登記結果，只可當煙霧測試。\n")
     step_counts = report["config"]["step_counts"]["distinct_totals"]
@@ -932,6 +964,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             1: "probe_state_cycles.json",
             2: "probe_state_cycles_round2.json",
             3: "probe_state_cycles_round3.json",
+            4: "probe_state_cycles_round4.json",
         }[args.round]
         args.out = REPO_ROOT / "data" / "intelligence_reports" / name
 

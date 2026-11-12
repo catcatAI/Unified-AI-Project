@@ -324,3 +324,31 @@ def test_semigroup_eval_covers_every_registered_pair(probe) -> None:
     expected = {f"{pair[0]:g}+{pair[1]:g}" for pair in pairs}
     assert set(deltas) == expected
     assert all(value >= 0.0 and value == value for value in deltas.values())
+
+
+# -- round 4: the SSM arm is registered with the same answer thresholds --------
+
+
+def test_round4_registers_the_ssm_arm(probe) -> None:
+    round4 = probe.ROUNDS[4]
+
+    assert round4["arch"] == "ssm"
+    assert round4["semigroup_gate"] is True
+    assert round4["gap_count"] == probe.ROUNDS[2]["gap_count"]
+    assert round4["gap_mode"] == probe.ROUNDS[2]["gap_mode"]
+    # No L_al in this arm: the semigroup is architectural, not trained.
+    assert "l_al_weight" not in round4
+    assert probe.L_AL_MAX_DELTA == 1e-2
+
+
+def test_probe_semigroup_eval_is_exact_for_the_ssm(probe) -> None:
+    from ai.core.stateful_decoder import SSMCore
+
+    model = SSMCore(probe.TOKEN_COUNT, hidden=8, emb=4, seed=0).eval()
+    sessions = probe.generate_sessions(8, seed=3, gap_count=8, gap_mode="equal")
+    pairs = (probe.SEMIGROUP_TRAIN_PAIR, *probe.SEMIGROUP_HELDOUT_PAIRS)
+
+    deltas = probe.semigroup_eval(model, sessions, pairs)
+
+    assert set(deltas) == {f"{dt1:g}+{dt2:g}" for dt1, dt2 in pairs}
+    assert max(deltas.values()) <= 1e-5
