@@ -17,6 +17,11 @@ It also checks the two ways a corpus can look big and still be unusable:
 * records from schema v1, which carry neither ``in_len_bucket`` nor ``topic``
   and therefore cannot be stratified at all (they are counted, not discarded).
 
+A field with a single distinct value is reported too, but only as a diagnostic:
+§6.1's stop conditions do not mention it, so it does not decide readiness here.
+It is printed because a constant field cannot carry information no matter how
+many turns are collected, and that should be visible before the run.
+
 Usage:
     python scripts/observation_readiness.py
     python scripts/observation_readiness.py --dir /path/to/observations
@@ -114,6 +119,7 @@ def summarize(
     fields = tuple(state_fields)
     strata: Dict[Tuple[str, str], int] = {}
     state_present: Dict[str, int] = {}
+    state_values: Dict[str, set] = {field: set() for field in fields}
     state_missing_records = 0
     legacy = 0
     versions: Dict[str, int] = {}
@@ -136,8 +142,10 @@ def summarize(
             state_missing_records += 1
             continue
         for field in fields:
-            if state.get(field) is not None:
+            value = state.get(field)
+            if value is not None:
                 state_present[field] = state_present.get(field, 0) + 1
+                state_values[field].add(json.dumps(value, sort_keys=True, default=str))
 
     deficits = [
         {"in_len_bucket": length, "topic": topic, "turns": count, "missing": min_per_cell - count}
@@ -145,6 +153,7 @@ def summarize(
         if count < min_per_cell
     ]
     uncovered = [field for field in fields if state_present.get(field, 0) == 0]
+    constant = [field for field in fields if len(state_values[field]) == 1]
 
     reasons: List[str] = []
     if total == 0:
@@ -173,6 +182,8 @@ def summarize(
         "min_per_cell": min_per_cell,
         "deficits": deficits,
         "state_present": {field: state_present.get(field, 0) for field in fields},
+        "state_distinct": {field: len(state_values[field]) for field in fields},
+        "constant_state_fields": constant,
         "state_missing_records": state_missing_records,
         "uncovered_state_fields": uncovered,
         "ready": not reasons,
@@ -196,11 +207,16 @@ def print_report(summary: Dict[str, Any], problems: List[str]) -> None:
         for row in summary["strata"]:
             print(f"    {row['in_len_bucket']:>5} × {row['topic']:<10} " f"{row['turns']:>6} turns")
 
-    print("\n  state coverage (non-null turns per field)")
+    print("\n  state coverage (non-null turns / distinct values)")
     for field, count in summary["state_present"].items():
-        print(f"    {field:<18} {count:>6}")
+        print(f"    {field:<18} {count:>6} / {summary['state_distinct'][field]:>4} distinct")
     if summary["state_missing_records"]:
         print(f"    (state object absent in {summary['state_missing_records']} turn(s))")
+    if summary["constant_state_fields"]:
+        print(
+            "    constant (cannot carry information; diagnostic only): "
+            + ", ".join(summary["constant_state_fields"])
+        )
 
     if problems:
         print("\n  schema problems")

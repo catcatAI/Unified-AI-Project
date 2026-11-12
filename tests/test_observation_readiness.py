@@ -71,6 +71,18 @@ def test_a_full_cell_becomes_ready_but_an_uncovered_state_field_does_not():
     assert summary["deficits"] == []
 
 
+def test_a_constant_state_field_is_reported_but_does_not_decide_readiness():
+    records = [_record(state={"health": 0.5, "emotion": 0.2}) for _ in range(200)]
+    summary = tool.summarize(records, state_fields=STATE_FIELDS)
+    assert summary["constant_state_fields"] == ["health", "emotion"]
+    assert summary["ready"] is True  # §6.1 lists no constant-field stop condition
+
+    varied = [_record(state={"health": 0.5 if i % 2 else 0.4, "emotion": 0.2}) for i in range(200)]
+    summary = tool.summarize(varied, state_fields=STATE_FIELDS)
+    assert summary["constant_state_fields"] == ["emotion"]
+    assert summary["state_distinct"]["health"] == 2
+
+
 def test_one_turn_short_of_the_bar_is_still_insufficient():
     summary = tool.summarize([_record() for _ in range(199)], state_fields=("health",))
     assert summary["deficits"] == [
