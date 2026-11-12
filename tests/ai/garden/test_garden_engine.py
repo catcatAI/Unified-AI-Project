@@ -590,3 +590,33 @@ class TestScheduledGlobalDecay:
         )
         assert engine._updates_since_scheduled_decay >= 1
         assert calls == []
+
+
+class TestKeyRecency:
+    """The recency signal scalar decay cannot provide (roadmap §70)."""
+
+    def test_learning_stamps_the_written_keys(self, engine):
+        info = engine.learn_from_interaction("the tide turns at dusk", "I will note the tide.")
+        assert engine._key_last_used
+        assert info["output_keys"]
+        for key in info["output_keys"]:
+            assert engine.key_age(key) == 0
+
+    def test_reading_stamps_the_keys_it_used(self, engine):
+        text = "weather report for the harbour today"
+        engine.learn_from_interaction(text, "sunny with light wind")
+        engine._key_last_used.clear()
+        engine._use_ticks = 0
+        engine._single_step_process(text)
+        assert engine._key_last_used
+
+    def test_unknown_key_has_no_age(self, engine):
+        assert engine.key_age("never-seen-key") is None
+
+    def test_budget_drops_the_older_half(self, engine):
+        engine._KEY_USE_BUDGET = 8
+        for i in range(12):
+            engine._note_key_use([f"k{i}"])
+        assert len(engine._key_last_used) <= 8
+        assert engine.key_age("k11") == 0
+        assert engine.key_age("k0") is None

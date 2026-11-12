@@ -838,6 +838,12 @@ class GARDENEngine:
         # Scheduled global forgetting counts across calls, not within one
         # (roadmap §68).
         self._updates_since_scheduled_decay = 0
+        # Per-key recency: the signal that scalar weight decay cannot
+        # supply (roadmap §69/§70). Learned keys are stamped on write and
+        # top-ranked keys on read, so "how long since this was used" is
+        # answerable instead of inferred.
+        self._key_last_used: Dict[str, int] = {}
+        self._use_ticks = 0
         self._learning_enabled = True
         self._last_confidence = 0.0
         self._last_network_output: Dict[str, float] = {}
@@ -1522,6 +1528,11 @@ class GARDENEngine:
             return ""
 
         network_output = self._ranked_readout(input_keys, context)
+        self._note_key_use(input_keys)
+        top_keys = [
+            k for k, _ in sorted(network_output.items(), key=lambda kv: kv[1], reverse=True)[:3]
+        ]
+        self._note_key_use(top_keys)
         response = _anchored_decode(network_output, input_keys, self.dictionary, original_text=text)
 
         if not response:
@@ -1812,6 +1823,11 @@ class GARDENEngine:
                 # behaviour until something can tell the two families apart.
             )
             self._maybe_scheduled_decay()
+            # Stamp both sides: the cue is as much a part of the
+            # association as the target, and a recency policy needs the
+            # cue's age to decide whether the association is still reachable.
+            self._note_key_use(input_keys)
+            self._note_key_use(output_keys)
 
         return {
             "interaction": self._learn_count,
@@ -2017,6 +2033,32 @@ class GARDENEngine:
     # never decayed at all -- a long-running agent forgot nothing.
     _DECAY_EVERY_UPDATES = 1000
     _DECAY_WEIGHT_DECAY = 0.002
+
+    _KEY_USE_BUDGET = 4096
+
+    def _note_key_use(self, keys) -> None:
+        """Stamp ``keys`` with the current use tick (roadmap §70).
+
+        Bounded: once more than ``_KEY_USE_BUDGET`` keys are tracked, the older
+        half is dropped, so a long session cannot grow this without limit. A
+        dropped key simply reads as never-used, which is what a forgetting
+        policy should assume anyway.
+        """
+        if not keys:
+            return
+        self._use_ticks += 1
+        tick = self._use_ticks
+        for key in keys:
+            self._key_last_used[key] = tick
+        if len(self._key_last_used) > self._KEY_USE_BUDGET:
+            keep = self._KEY_USE_BUDGET // 2
+            recent = sorted(self._key_last_used.items(), key=lambda kv: kv[1])[-keep:]
+            self._key_last_used = dict(recent)
+
+    def key_age(self, key: str) -> Optional[int]:
+        """Ticks since ``key`` was last written or read; ``None`` if never used."""
+        tick = self._key_last_used.get(key)
+        return None if tick is None else self._use_ticks - tick
 
     def _maybe_scheduled_decay(self, updates: int = 1) -> bool:
         """Count Hebbian updates across calls; run one global pass per 1000.
