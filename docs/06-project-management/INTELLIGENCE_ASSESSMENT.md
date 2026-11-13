@@ -85,6 +85,17 @@ historical score inflation.**
 [`CORE_GAP_ANALYSIS.md`](CORE_GAP_ANALYSIS.md)（ED3N 在 20,000 對上訓練到 acc=0.9997，生成仍 0%；`encode()`
 把詞變成字典釋義，輸入不可區分）。
 
+**核心這條線在 2026-11-13 走到哪裡（不是分數，是設備）**：契約 R1–R5 的單一載體已可量測。①
+內容：同一個 `GRUCore` 跨一個 `al_step(120 s)` 把沒見過的值帶過去、生成回來，exact
+**0.995**，歸零 state 或跳過教學 **0.000**（`train_state_content.py`）。② 兩組：同一個
+state 放**兩組**配對並由查詢選一組**做不到**（0.0033／0.0100），可定址的槽（round 7）把
+值存進去了（線性 probe 0.589／0.593）但兩個問題**讀同一格**（distinct 0.0、cosine
+0.9998），而且比沒有 store 更差（消融 0.1233 vs 0.0000）。③ 語言：byte 階段的 L1–L7
+全過（英文 BPC 2.2201 vs trigram 2.9739；證詞 0.2480 是**模板格式**，不是中文能力）。
+**這三件都不改變上面兩個 0.00**：核心還沒在任何凍結題目上產生正確答案。它們改變的是「下一
+個問題問得出來」——詳見 `CORE_GAP_ANALYSIS.md` §43–§48 與
+`AI_AL_SINGLE_CORE_CONTRACT.md` §9。
+
 **對照組（LLM）分辨「智能問題」與「表層假象」**（`scripts/probe_core_control.py`，同一題組、同一評分；LLM 是對照，不是分數）：
 
 | suite | 表現層 | GARDEN | ED3N（訓練後） | TOK-SNN |
