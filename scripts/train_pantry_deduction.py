@@ -1229,6 +1229,18 @@ def verdict(checks: Dict[str, Any]) -> bool:
 # --------------------------------------------------------------------------- #
 # check
 # --------------------------------------------------------------------------- #
+def updates_per_session(steps: int, batch: int, sessions: int) -> float:
+    """Rehearsals per session: a step touches ``min(batch, N)`` of the N rows.
+
+    §54: holding *steps* fixed while N grows divides rehearsal by N, so two arms
+    with the same step budget are not the same optimisation effort. Kept as a
+    named function so the report and the tests cannot compute it differently.
+    """
+    if sessions <= 0:
+        return 0.0
+    return round(steps * min(batch, sessions) / sessions, 4)
+
+
 def check_report(path: Path) -> List[str]:
     """Re-verify a finished run without retraining (§49.10)."""
     problems: List[str] = []
@@ -1494,6 +1506,14 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         "training": {
             "epochs_run": len(history),
             "steps": sum(row["batches"] for row in history),
+            # §54: "fixed steps" is not "fixed rehearsal". With batch 8, a step
+            # touches min(batch, N) of the N sessions, so updates per session is
+            # steps * min(batch, N) / N and falls as 1/N when the budget is held
+            # fixed. Recorded so a capacity comparison can never mix the two
+            # again.
+            "updates_per_session": updates_per_session(
+                sum(row["batches"] for row in history), args.batch, len(train_sessions)
+            ),
             "seconds": round(time.time() - started, 1),
             "history": history,
         },

@@ -961,3 +961,16 @@ def test_cli_rejects_a_malformed_width_rung(stage):
     ):
         with pytest.raises(SystemExit):
             stage.main(argv)
+
+
+def test_updates_per_session_records_rehearsal_not_steps(stage):
+    """§54: a fixed step budget is not a fixed rehearsal count when N changes."""
+    assert stage.updates_per_session(400, 8, 1) == 400.0
+    assert stage.updates_per_session(400, 8, 4) == 400.0
+    assert stage.updates_per_session(400, 8, 8) == 400.0
+    assert stage.updates_per_session(400, 8, 16) == 200.0
+    assert stage.updates_per_session(400, 8, 32) == 100.0
+    assert stage.updates_per_session(1600, 8, 8) == 1600.0
+    assert stage.updates_per_session(1600, 8, 32) == 400.0
+    assert stage.updates_per_session(6400, 8, 32) == 1600.0
+    assert stage.updates_per_session(400, 8, 0) == 0.0
