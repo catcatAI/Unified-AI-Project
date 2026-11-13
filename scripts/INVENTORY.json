@@ -1325,7 +1325,7 @@
     "train_state_binding.py": {
       "category": "training",
       "referenced": true,
-      "purpose": "Round 6: one value is not a memory. Can the state hold two *bindings*?"
+      "purpose": "Round 6: one value is not a memory. Round 7: a store that can be addressed."
     },
     "train_state_content.py": {
       "category": "training",

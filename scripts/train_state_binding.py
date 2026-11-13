@@ -823,13 +823,19 @@ def addressing_diagnostics(
                 for index in range(asks):
                     state = cores.init_state(len(rows))
                     _teach(cores, rows, state, device_arg)
-                    cores.ai_step(
-                        _tensor([row["both"][index]["query"] for row in rows], device_arg), state
+                    # ``return_trace`` gives the read and the addressing weights
+                    # *at the question token*, i.e. the ones the answer was
+                    # decoded from. Reading the state afterwards would measure
+                    # the store after the question had written itself into it.
+                    _, _, trace = cores.ai_step(
+                        _tensor([row["both"][index]["query"] for row in rows], device_arg),
+                        state,
+                        return_trace=True,
                     )
-                    weights = cores.attention(state)
+                    weights = trace["attention"][:, -1]
                     slots.append(weights.argmax(dim=-1))
                     max_probs.extend(float(v) for v in weights.max(dim=-1).values)
-                    reads.append(cores.read_vector(state))
+                    reads.append(trace["read"][:, -1])
                 distinct += int((slots[0] != slots[1]).sum())
                 cosines.extend(
                     float(v)

@@ -43,7 +43,7 @@ from __future__ import annotations
 
 import hashlib
 import math
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from ai.core.core_state import CoreState, CoreStateInvalid
@@ -643,7 +643,10 @@ class SlotMemoryCore(StatefulCore):
       ``g = sigmoid(W_g h)`` and ``new`` from ``W_k h`` / ``W_v h``.
 
     Read happens *before* the write at the same token, so the question reads
-    what was taught and only then may (if ``g`` allows) add itself. Nothing
+    what was taught and only then may (if ``g`` allows) add itself. The read is
+    also an input to the **next** step of the controller, not only to the output
+    head: without that, the store could influence one decoded character and an
+    eight-character value could never survive the eight steps that spell it. Nothing
     here is a dictionary bolted on the side: the write distribution, the
     strength, the key and the value are all functions of ``h`` under the same
     weights, and ``al_step`` mutates the same object. The ablation
@@ -699,7 +702,7 @@ class SlotMemoryCore(StatefulCore):
 
         nn = torch.nn
         self.embedding = nn.Embedding(token_count, emb)
-        self.cell = nn.GRUCell(emb, hidden)
+        self.cell = nn.GRUCell(emb + self.value_dim, hidden)
         self.dt_proj = nn.Linear(1, emb)
         self.key_proj = nn.Linear(hidden, self.slot_dim)
         self.value_proj = nn.Linear(hidden, self.value_dim)
@@ -784,18 +787,27 @@ class SlotMemoryCore(StatefulCore):
 
     # -- the memory ---------------------------------------------------------
 
-    def read_vector_tensors(self, hidden: Any, keys: Any, values: Any) -> Any:
-        """Content-addressed read: ``softmax(scale * q·slot_k) · slot_v``.
+    def _address(self, hidden: Any, keys: Any, values: Any) -> Tuple[Any, Any]:
+        """``(addressing weights, read)`` - the one place addressing happens.
 
-        Takes the tensors directly so ``ai_step`` can read the pre-write store
-        without constructing a second ``CoreState`` per token.
+        Returning the weights too is what lets the diagnostic report the slot
+        that *produced* the answer instead of the one that would be read after
+        the same token's write.
         """
         torch = self._torch
         query = self.query_proj(hidden)
         scores = torch.bmm(keys, query.unsqueeze(2)).squeeze(2)
         scores = scores / math.sqrt(float(self.slot_dim))
         weights = torch.softmax(torch.exp(self.log_read_scale) * scores, dim=-1)
-        return torch.bmm(weights.unsqueeze(1), values).squeeze(1)
+        return weights, torch.bmm(weights.unsqueeze(1), values).squeeze(1)
+
+    def read_vector_tensors(self, hidden: Any, keys: Any, values: Any) -> Any:
+        """Content-addressed read: ``softmax(scale * q·slot_k) · slot_v``.
+
+        Takes the tensors directly so ``ai_step`` can read the pre-write store
+        without constructing a second ``CoreState`` per token.
+        """
+        return self._address(hidden, keys, values)[1]
 
     def read_vector(self, state: CoreState) -> Any:
         """The content the current ``h`` addresses, read-only (no write).
@@ -810,18 +822,19 @@ class SlotMemoryCore(StatefulCore):
 
     def attention(self, state: CoreState) -> Any:
         """The addressing distribution (diagnostic: which slot is being read)."""
-        torch = self._torch
         hidden = self._hidden(state)
-        keys, _ = self._slots(state)
-        query = self.query_proj(hidden)
-        scores = torch.bmm(keys, query.unsqueeze(2)).squeeze(2)
-        scores = scores / math.sqrt(float(self.slot_dim))
-        return torch.softmax(torch.exp(self.log_read_scale) * scores, dim=-1)
+        keys, values = self._slots(state)
+        return self._address(hidden, keys, values)[0]
 
     # -- the two cycles -----------------------------------------------------
 
-    def ai_step(self, tokens: Any, state: CoreState) -> Tuple[Any, CoreState]:
-        """``tokens``: LongTensor ``[B, L]`` → ``(logits [B, L, V], state)``."""
+    def ai_step(self, tokens: Any, state: CoreState, *, return_trace: bool = False) -> Any:
+        """``tokens``: LongTensor ``[B, L]`` → ``(logits [B, L, V], state)``.
+
+        ``return_trace=True`` adds ``{"read": [B, L, Dv], "attention": [B, L, K]}``
+        so a diagnostic can look at what a given token addressed *at the time*,
+        before that token's own write. Tracing never changes the state.
+        """
         torch = self._torch
         if tokens.ndim != 2:
             raise ValueError(f"tokens must be [B, L], got shape {tuple(tokens.shape)}")
@@ -831,18 +844,30 @@ class SlotMemoryCore(StatefulCore):
             raise ValueError("batch size of tokens and state disagree")
 
         write_scale = torch.exp(self.log_write_scale)
+        context = torch.zeros(
+            hidden.shape[0], self.value_dim, dtype=hidden.dtype, device=hidden.device
+        )
         outputs = []
+        trace_read: List[Any] = []
+        trace_attention: List[Any] = []
         for position in range(tokens.shape[1]):
             inputs = self.embedding(tokens[:, position])
-            hidden = self.cell(inputs, hidden)
+            hidden = self.cell(torch.cat([inputs, context], dim=-1), hidden)
 
             read = torch.zeros(
                 hidden.shape[0], self.value_dim, dtype=hidden.dtype, device=hidden.device
             )
             if self.memory:
                 # Read first: the question sees what was taught, not itself.
-                read = self.read_vector_tensors(hidden, keys, values)
+                weights, read = self._address(hidden, keys, values)
+                if return_trace:
+                    trace_attention.append(weights)
+            if return_trace:
+                trace_read.append(read)
             outputs.append(self.head(torch.cat([hidden, read], dim=-1)))
+            # What was read becomes part of the next step's input, so the value
+            # can survive the tokens that spell it out.
+            context = read
 
             if self.memory:
                 # Write with the *same* projections the read uses, so the key
@@ -861,7 +886,13 @@ class SlotMemoryCore(StatefulCore):
         state.tensors["slot_k"] = keys
         state.tensors["slot_v"] = values
         state.bump()
-        return logits, state
+        if not return_trace:
+            return logits, state
+        trace = {
+            "read": torch.stack(trace_read, dim=1),
+            "attention": torch.stack(trace_attention, dim=1) if trace_attention else None,
+        }
+        return logits, state, trace
 
     def al_step(self, dt_s: Any, state: CoreState) -> CoreState:
         """Advance the controller by ``dt_s``; the slots are content, not time.
@@ -901,7 +932,21 @@ class SlotMemoryCore(StatefulCore):
                 continue
             chunks = count_tensor[active].to(hidden.dtype)
             feature = (dt[active] / chunks / self.chunk_seconds).unsqueeze(1)
-            updated = self.cell(self.dt_proj(feature), hidden[active])
+            # No token and nothing read during the gap: the controller input is
+            # the time feature plus a zero read.
+            inputs = torch.cat(
+                [
+                    self.dt_proj(feature),
+                    torch.zeros(
+                        int(active.numel()),
+                        self.value_dim,
+                        dtype=hidden.dtype,
+                        device=hidden.device,
+                    ),
+                ],
+                dim=-1,
+            )
+            updated = self.cell(inputs, hidden[active])
             hidden = hidden.index_copy(0, active, updated)
 
         state.tensors["h"] = hidden

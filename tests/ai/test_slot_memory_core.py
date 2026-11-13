@@ -143,3 +143,39 @@ def test_the_weights_hash_covers_the_store_parameters():
         core.value_proj.weight[0, 0] += 1.0
     core.invalidate_hash()
     assert core.weights_hash() != before
+
+
+def test_the_trace_reports_the_read_before_that_token_writes():
+    """The diagnostic must measure the read the answer was decoded from.
+
+    Reading the state *after* ``ai_step`` would report the store once the
+    question had already written itself into it - a different number, and the
+    wrong one for "which slot did this answer come from".
+    """
+    torch = pytest.importorskip("torch")
+    core = _model()
+    with torch.no_grad():
+        state = core.init_state(2)
+        core.ai_step(_tokens(2, 4), state)
+        logits, traced_state, trace = core.ai_step(_tokens(2, 1), state, return_trace=True)
+        assert trace["read"].shape == (2, 1, core.value_dim)
+        assert trace["attention"].shape == (2, 1, core.slots)
+        assert torch.allclose(trace["attention"].sum(dim=-1), torch.ones(2, 1), atol=1e-6)
+        # The flag must not change the computation itself.
+        plain_state = core.init_state(2)
+        core.ai_step(_tokens(2, 4), plain_state)
+        plain, _ = core.ai_step(_tokens(2, 1), plain_state)
+        assert torch.allclose(logits, plain, atol=1e-6)
+        assert torch.allclose(traced_state.tensors["slot_v"], plain_state.tensors["slot_v"])
+        # The post-hoc read has moved on, because the token wrote itself first.
+        assert not torch.allclose(trace["read"][:, -1], core.read_vector(traced_state))
+
+
+def test_the_ablation_traces_a_zero_read():
+    torch = pytest.importorskip("torch")
+    core = _model(memory=False)
+    with torch.no_grad():
+        state = core.init_state(2)
+        _, _, trace = core.ai_step(_tokens(2, 3), state, return_trace=True)
+    assert float(trace["read"].abs().sum()) == 0.0
+    assert trace["attention"] is None
