@@ -135,6 +135,7 @@ TOP_SHARE_MAX = 0.35
 # 0.0 is stage P's behaviour, and OVERFIT_FLOOR is an instrument check on 32
 # training sessions, never a generalisation rate.
 AUX_LAMBDA_DEFAULT = 0.0
+AUX_MODE_DEFAULT = "all"
 OVERFIT_FLOOR = 0.90
 
 SAMPLE_ROWS = 3
@@ -182,7 +183,9 @@ def _round(value: Optional[float], digits: int = 4) -> Optional[float]:
     return None if value is None else round(float(value), digits)
 
 
-def _find_control_report(folder: Path, aux_lambda: Optional[float] = None) -> Optional[Path]:
+def _find_control_report(
+    folder: Path, aux_lambda: Optional[float] = None, aux_mode: Optional[str] = None
+) -> Optional[Path]:
     """The newest finished F-rand report in ``folder``, ignoring smoke/overfit runs.
 
     §49.10 requires the control to finish first. Picking the newest scored run
@@ -193,6 +196,9 @@ def _find_control_report(folder: Path, aux_lambda: Optional[float] = None) -> Op
     §50.4 additionally requires the control to use the *same* auxiliary loss, so
     ``aux_lambda`` filters by it; otherwise a stage-P control (λ=0) could quietly
     stand in for a stage-Q arm and Q7 would compare two different trainings.
+    §51.4 extends that to ``aux_mode``: "supervise every boundary" and
+    "supervise only resolvable boundaries" are different objectives, and a
+    control trained under one cannot validate the other.
     """
     if not folder.is_dir():
         return None
@@ -211,6 +217,10 @@ def _find_control_report(folder: Path, aux_lambda: Optional[float] = None) -> Op
         if aux_lambda is not None:
             recorded = float((payload.get("config") or {}).get("aux_lambda") or 0.0)
             if abs(recorded - float(aux_lambda)) > 1e-12:
+                continue
+        if aux_mode is not None:
+            recorded_mode = str((payload.get("config") or {}).get("aux_mode") or AUX_MODE_DEFAULT)
+            if recorded_mode != aux_mode:
                 continue
         candidates.append(path)
     if not candidates:
@@ -488,18 +498,41 @@ def _training_loss(
     boundaries: Sequence[Any],
     answers: Sequence[Sequence[int]],
     aux_lambda: float,
+    prefix_answers: Optional[Sequence[Sequence[Optional[Sequence[int]]]]] = None,
 ) -> Tuple[Any, Any, Optional[Any]]:
     """The registered §50.2 objective: main CE plus the mean CE at earlier turns.
 
     Each auxiliary term starts *at that boundary*, so turn k's evidence is one
     turn away from the answer loss rather than 11−k (§49.16). With λ=0 no extra
     term is computed at all, which is what keeps stage P bitwise unchanged.
+
+    ``prefix_answers`` (stage R, §51.2) changes *what* the earlier boundaries are
+    asked, never how many: entry ``[sample][k]`` is that boundary's own unique
+    ``derive()`` answer, or ``None`` where the prefix has no unique answer. The
+    auxiliary term then averages only over the (boundary, sample) pairs that
+    have an answer, so the model is never asked to answer a question that is not
+    yet answerable - the failure §50.13 measured in stage Q's arm.
     """
     main = _answer_loss(core, boundaries[-1], answers)
     earlier = list(boundaries[:-1])
     if aux_lambda <= 0.0 or not earlier:
         return main, main, None
-    auxiliary = sum(_answer_loss(core, hidden, answers) for hidden in earlier) / len(earlier)
+    if prefix_answers is None:
+        auxiliary = sum(_answer_loss(core, hidden, answers) for hidden in earlier) / len(earlier)
+        return main + aux_lambda * auxiliary, main, auxiliary
+
+    terms = []
+    for index, hidden in enumerate(earlier):
+        rows = [prefix_answers[sample][index] for sample in range(len(answers))]
+        keep = [position for position, answer in enumerate(rows) if answer is not None]
+        if not keep:
+            continue
+        picked = [rows[position] for position in keep]
+        index_tensor = hidden.new_tensor(keep).long()
+        terms.append(_answer_loss(core, hidden.index_select(0, index_tensor), picked))
+    if not terms:
+        return main, main, None
+    auxiliary = sum(terms) / len(terms)
     return main + aux_lambda * auxiliary, main, auxiliary
 
 
@@ -569,19 +602,46 @@ def random_answer_ids(session: Dict[str, Any], seed: int) -> List[int]:
 
 
 def build_samples(
-    sessions: Sequence[Dict[str, Any]], *, seed: int, control: Optional[str]
+    sessions: Sequence[Dict[str, Any]],
+    *,
+    seed: int,
+    control: Optional[str],
+    prefix_module: Any = None,
 ) -> List[Dict[str, Any]]:
+    """Turn sessions into training rows.
+
+    ``prefix_module`` (stage R, §51.2) additionally records, for every earlier
+    turn boundary, that boundary's own ``derive()`` answer - ``None`` where the
+    prefix does not yet determine one. It costs nothing at λ=0 and is ignored
+    there, so stage P/Q reports stay reproducible from this function.
+    """
     picker = random_answer_ids if control == "rand" else answer_ids
-    return [
-        {
+    rows = []
+    for session in sessions:
+        row = {
             "turns": turn_tokens(session),
             "gaps": turn_gaps(session),
             "answer": picker(session, seed),
             "index": int(session["session_meta"]["index"]),
             "session": session,
         }
-        for session in sessions
-    ]
+        if prefix_module is not None:
+            boundaries = len(session["turns"]) - 1
+            if control == "rand":
+                # the format-only arm must not see the real answer even as an
+                # auxiliary target, or the control would leak what it controls
+                row["prefix_answers"] = [row["answer"]] * boundaries
+            else:
+                row["prefix_answers"] = []
+                for upto in range(boundaries):
+                    candidates = prefix_candidates(prefix_module, session, upto)
+                    if len(candidates) != 1:
+                        row["prefix_answers"].append(None)
+                        continue
+                    payload = (candidates[0] + "\n").encode("utf-8")
+                    row["prefix_answers"].append([BYTE_OFFSET + byte for byte in payload])
+        rows.append(row)
+    return rows
 
 
 def train(
@@ -593,6 +653,7 @@ def train(
     lr: float,
     seed: int,
     aux_lambda: float = AUX_LAMBDA_DEFAULT,
+    aux_mode: str = AUX_MODE_DEFAULT,
 ) -> List[Dict[str, Any]]:
     torch = core._torch
     optimiser = torch.optim.Adam(list(core.parameters()), lr=lr)
@@ -619,6 +680,11 @@ def train(
                 boundaries if boundaries is not None else [hidden],
                 [row["answer"] for row in rows],
                 aux_lambda,
+                (
+                    [row["prefix_answers"] for row in rows]
+                    if aux_mode == "resolvable" and boundaries is not None
+                    else None
+                ),
             )
             optimiser.zero_grad(set_to_none=True)
             total.backward()
@@ -918,7 +984,7 @@ def _aux_lambda_of(report: Dict[str, Any]) -> float:
 
 
 def _aux_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
-    """§50.4's Q1-Q9, recomputed from the recorded numbers.
+    """§50.4's Q1-Q9 (and §51.4's R1-R9), recomputed from the recorded numbers.
 
     The numbers are stage P's where the registration says they are: Q2 = G3,
     Q3-Q8 = G4-G9, Q9 extends G10 with the auxiliary loss and the per-turn
@@ -999,6 +1065,10 @@ def _aux_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
         and all(row.get("mean_aux_loss") is not None for row in history)
         and bool(readout.get("turns"))
     )
+    # stage R (§51) keeps the same nine conditions and only renames them, so a
+    # report cannot claim R's name while being graded by Q's rules or vice versa
+    if (report.get("config") or {}).get("aux_mode") == "resolvable":
+        checks = {("R" + name[1:]): value for name, value in checks.items()}
     return checks
 
 
@@ -1201,7 +1271,9 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
 
     control_block: Optional[Dict[str, Any]] = None
     if args.control != "rand" and not args.smoke and not args.overfit:
-        control_path = _find_control_report(Path(args.out), aux_lambda=args.aux_loss)
+        control_path = _find_control_report(
+            Path(args.out), aux_lambda=args.aux_loss, aux_mode=args.aux_mode
+        )
         if control_path is None:
             raise SystemExit(
                 f"no F-rand control report under {args.out} trained with the same auxiliary "
@@ -1241,11 +1313,18 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
     start_hash = load_stage_l(core, Path(args.start))
 
     arm = "rand" if args.control == "rand" else "answer"
-    samples = build_samples(train_sessions, seed=args.seed, control=args.control)
+    module = corpus["module"]
+    samples = build_samples(
+        train_sessions,
+        seed=args.seed,
+        control=args.control,
+        prefix_module=module if args.aux_mode == "resolvable" else None,
+    )
     print(
         f"stage P: device={device} params={core.parameter_count()} "
         f"train={len(samples)} holdout={len(heldout)} arm={arm}"
-        + (f" aux_lambda={args.aux_loss}" if args.aux_loss > 0.0 else ""),
+        + (f" aux_lambda={args.aux_loss}" if args.aux_loss > 0.0 else "")
+        + (f" aux_mode={args.aux_mode}" if args.aux_loss > 0.0 else ""),
         flush=True,
     )
     history = train(
@@ -1256,9 +1335,9 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         lr=args.lr,
         seed=args.seed,
         aux_lambda=args.aux_loss,
+        aux_mode=args.aux_mode,
     )
 
-    module = corpus["module"]
     raw = {
         name: evaluate(core, heldout, name, module=module)
         for name in ("full", "reset", "no_correction", "no_roster", "no_bounds", "skip_al")
@@ -1299,6 +1378,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "max_answer_bytes": MAX_ANSWER_BYTES,
             "arm": arm,
             "aux_lambda": args.aux_loss,
+            "aux_mode": args.aux_mode,
             "overfit_sessions": args.overfit,
         },
         "corpus": {
@@ -1380,6 +1460,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="§50.2 auxiliary readout weight; 0.0 is stage P's objective",
     )
     parser.add_argument(
+        "--aux-mode",
+        default=AUX_MODE_DEFAULT,
+        choices=("all", "resolvable"),
+        help=(
+            "what the earlier boundaries are asked (§50.2 'all' vs §51.2 'resolvable': "
+            "only where the prefix already has a unique derive() answer)"
+        ),
+    )
+    parser.add_argument(
         "--overfit",
         type=int,
         default=0,
@@ -1388,6 +1477,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
     if args.aux_loss < 0.0:
         parser.error("--aux-loss must be >= 0; 0.0 is stage P and is never negative")
+    if args.aux_mode == "resolvable" and args.aux_loss <= 0.0:
+        parser.error("--aux-mode resolvable only matters with --aux-loss > 0")
     if args.overfit < 0:
         parser.error("--overfit must be >= 0")
 
@@ -1424,7 +1515,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if report.get("overfit"):
         print(
             f"overfit   : {report['config']['overfit_sessions']} train sessions "
-            "(Q1 calibration, not a score)"
+            "(calibration arm, not a score)"
         )
     print(
         f"corpus    : train {report['corpus']['train_bytes']} B / "

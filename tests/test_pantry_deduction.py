@@ -735,3 +735,82 @@ def test_control_lookup_skips_overfit_and_matches_the_auxiliary_loss(stage, tmp_
     assert stage._find_control_report(tmp_path, aux_lambda=1.0) == q_control
     assert stage._find_control_report(tmp_path, aux_lambda=0.0).name.endswith("0001.json")
     assert stage._find_control_report(tmp_path, aux_lambda=0.5) is None
+
+
+# --------------------------------------------------------------------------- #
+# stage R (§51): supervise only the boundaries that already have an answer
+# --------------------------------------------------------------------------- #
+def test_resolvable_prefixes_start_at_the_roster(stage, corpus):
+    """§50.13 measured where an answer exists; the loss must agree with it."""
+    module = stage._load_generator()
+    rows = stage.build_samples(
+        corpus["train"][:32], seed=20261118, control=None, prefix_module=module
+    )
+    counts = [
+        sum(1 for row in rows if row["prefix_answers"][boundary] is not None)
+        for boundary in range(10)
+    ]
+    # turns 0-5 are a roll call: nobody is decidable yet, so nothing is asked
+    assert counts[:6] == [0] * 6
+    # turn 6 resolves to the pre-correction name on half of them, 7-9 to the culprit
+    assert counts[6] == 16
+    assert counts[7:] == [32, 32, 32]
+
+
+def test_resolvable_loss_skips_boundaries_that_have_no_answer(stage, corpus):
+    torch = pytest.importorskip("torch")
+    session = corpus["heldout"][0]
+    core = stage.build_core(hidden=8, emb=4, device="cpu", seed=67)
+    boundaries: list = []
+    stage.run_session(
+        core, [stage.turn_tokens(session)], [stage.turn_gaps(session)], boundaries=boundaries
+    )
+    answers = [stage.answer_ids(session)]
+
+    # every earlier boundary is ambiguous: the auxiliary term is not a loss at
+    # all, it is "nothing to supervise" - not a zero that pulls the head
+    empty = [[None] * len(boundaries[:-1])]
+    total, main, aux = stage._training_loss(core, boundaries, answers, 1.0, empty)
+    assert aux is None
+    assert torch.equal(total, main)
+
+    # one resolvable boundary supervises exactly that boundary
+    one = [[None] * len(boundaries[:-1])]
+    one[0][6] = answers[0]
+    total, main, aux = stage._training_loss(core, boundaries, answers, 1.0, one)
+    assert torch.allclose(aux, stage._answer_loss(core, boundaries[6], answers), atol=1e-6)
+    assert torch.allclose(total, main + aux, atol=1e-6)
+
+
+def test_format_control_prefix_never_carries_the_real_answer(stage, corpus):
+    """The control must stay format-only at every boundary, or R7 is void."""
+    module = stage._load_generator()
+    rows = stage.build_samples(
+        corpus["train"][:4], seed=20261118, control="rand", prefix_module=module
+    )
+    for row in rows:
+        truth = stage.answer_ids(row["session"])
+        assert row["answer"] != truth
+        assert all(entry == row["answer"] for entry in row["prefix_answers"])
+        assert all(entry != truth for entry in row["prefix_answers"])
+
+
+def test_resolvable_reports_are_graded_as_r_not_q(stage):
+    report = _aux_report(stage)
+    report["config"]["aux_mode"] = "resolvable"
+    checks = stage.gate_values(report)
+    assert set(checks) == {("R" + name[1:]) for name in stage.gate_values(_aux_report(stage))}
+    assert "R1_overfit_calibration" in checks and "Q1_overfit_calibration" not in checks
+
+
+def test_control_lookup_does_not_cross_aux_modes(stage, tmp_path):
+    payload = {
+        "task_version": stage.TASK_VERSION,
+        "control_arm": "rand",
+        "corpus": {"heldout_digest": stage.HOLDOUT_DIGEST},
+        "config": {"aux_lambda": 1.0, "aux_mode": "all"},
+        "overfit": False,
+    }
+    (tmp_path / "pantry_deduction_0001.json").write_text(json.dumps(payload), encoding="utf-8")
+    assert stage._find_control_report(tmp_path, aux_lambda=1.0, aux_mode="all") is not None
+    assert stage._find_control_report(tmp_path, aux_lambda=1.0, aux_mode="resolvable") is None
