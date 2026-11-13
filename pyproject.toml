@@ -13,6 +13,14 @@ requires-python = ">=3.10"
 line-length = 100
 target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
+# NOTE: `black --check .` is a documented CI gate (README). The regex is matched
+# against "/" + path relative to the root, and `exclude` is wrapped in a single
+# leading `/` + group, so `^` cannot be used inside it. `extend-exclude` below is
+# a separate, self-anchored regex used for the gitignored trees that can contain
+# .py files but that nobody may reformat. Both `.xpu_runtime/` and the repo-root
+# `data/` contain 0 tracked files (verified with `git ls-files`), so excluding
+# them cannot hide real source; the `^/` anchor keeps
+# `apps/backend/src/data/` (real source) inside the check.
 exclude = '''
 /(
     \.git
@@ -28,6 +36,9 @@ exclude = '''
     | node_modules
     | \.pytest_cache
 )/
+'''
+extend-exclude = '''
+^/(data|\.xpu_runtime)/
 '''
 
 [tool.isort]
