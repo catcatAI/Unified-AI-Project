@@ -675,7 +675,7 @@
     "gen_pantry_ecosystem.py": {
       "category": "generation",
       "referenced": true,
-      "purpose": "The pantry-ecosystem corpus: multi-turn sessions that cannot be memorised."
+      "purpose": "The pantry-ecosystem corpus, v2: four chains, and no turn gives the answer."
     },
     "gen_project_map.py": {
       "category": "generation",
@@ -1336,6 +1336,11 @@
       "category": "training",
       "referenced": true,
       "purpose": "Round 5: does the state carry content, and does generation read it back?"
+    },
+    "train_text_stage.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "Stage L: can the core compress and *generate* text before it reasons?"
     },
     "train_three_layer.py": {
       "category": "training",
