@@ -42,13 +42,19 @@
 | -------------------------------- | --------- | ---------------------------- | ------------------------------------ | ------------------------------------------------------------------- |
 | 對話中教的事實可回想             | memory    | `ai/memory/taught_facts.py`  | `scripts/probe_dialogue_teaching.py` | 7/7 每階段；冷問 7/7 棄權；回答標 `source=memory`                   |
 | 原生引擎（GARDEN）從對話學會事實 | learning  | `ai/garden/garden_engine.py` | `scripts/probe_neural_learning.py`   | **fail**：冷 0%／教後 0%／刪來源後 0%；物件明碼在 `dictionary.json` |
-| 核心狀態同時持兩組配對 | learning | `scripts/train_state_binding.py` | 同一支（零狀態／冷啟／`wrong_name`／同 seed 的單組對照 C1） | **fail**：held-out exact 0.0033／0.0100（門檻 0.30），零狀態與冷啟 0.000；`h` 對兩個槽都只有 0.32–0.41 字元，而同一個臂的單組任務（C1）是 1.000／probe 0.87 → 不是選不出來，是**沒寫進去**；換目標、加寬度都救不回 |
+| 核心狀態同時持兩組配對 | learning | `scripts/train_state_binding.py` | 同一支（零狀態／零 h／零 store／冷啟／`wrong_name`／同參數 GRU／同參數消融） | **fail，而且比第 6 輪更精確**：① 第 6 輪（單一 128 維 state）0.0033／0.0100，`h` 對兩個槽都讀不出來 → 沒寫進去；② 第 7 輪（可定址 store，134,124 參數）held-out **0.0000**，但 `read` 線性探針對兩組各 **0.589／0.593** 字元（chance 0.1333）→ **寫進去了**；失敗點改成選取（`distinct_read_slot_rate` 0.0／0.0003、`read_cosine_between_asks` 0.9998）**與接線**（同參數的消融臂 0.1233，B7 差 −0.1233）。不是容量、不是寬度、不是目標 |
 | 核心狀態跨回合攜帶內容         | learning  | `scripts/train_state_content.py` | 同一支（內建零狀態／冷啟／`wrong_name` 對照） | **pass（機制，非知識）**：未見過的名字＋值 exact 0.995；零狀態 0.000、冷啟 0.000。邊界：`wrong_name` 0.994（單槽攜帶，名字沒被使用）、拿掉 `al_step` 0.003（非間隙不變）、封閉 CV 音節（不是語言）、未接生產 |
 | 策展事實回想                     | knowledge | `ai/knowledge_base.py`       | `scripts/run_benchmarks.py`          | knowledge 53.3%（8/15）、knowledge_mc 100%（40/40）                 |
 | 離線百科抽取                     | knowledge | `ai/knowledge/wiki_facts.py` | `scripts/run_benchmarks.py`          | 8/15 答案句含正確關鍵詞，其餘棄權                                   |
 | 路由／模板                       | surface   | `services/llm/router.py`     | `scripts/probe_native_dialogue.py`   | 只記來源分佈，不作正確性宣稱                                        |
 
 數字與日期同步在登記簿；門禁會擋「模組標記 ≠ 登記層」「記憶走知識路徑」「學習宣稱沒有刪除來源的證據」。
+
+**文字階段 L 為什麼不在這張表**：`scripts/train_text_stage.py` 量的是**載體**（未見文字的
+BPC、續寫、跨視窗 state），不是「學會一個事實」。它沒有「刪掉文字來源仍答對」的命題可
+驗——語言模型的權重本來就來自那些文字——所以硬把它登記成 learning 宣稱會讓
+`source_deleted` 這道門禁失去意義。它的結果記在 `CORE_GAP_ANALYSIS.md` §48，並且**不進
+任何層的分數**（核心分 0.00/10 不變）。
 
 ## 三個結構性防線（不是靠自律）
 
