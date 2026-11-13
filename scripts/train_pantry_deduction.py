@@ -1065,10 +1065,16 @@ def _aux_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
         and all(row.get("mean_aux_loss") is not None for row in history)
         and bool(readout.get("turns"))
     )
-    # stage R (§51) keeps the same nine conditions and only renames them, so a
-    # report cannot claim R's name while being graded by Q's rules or vice versa
-    if (report.get("config") or {}).get("aux_mode") == "resolvable":
-        checks = {("R" + name[1:]): value for name, value in checks.items()}
+    # stage R (§51) keeps the same nine conditions and only renames them, and
+    # stage S (§52) does the same under its own letter, so a report cannot claim
+    # one stage's name while being graded by another stage's rules
+    prefix = (report.get("config") or {}).get("gate_prefix")
+    if prefix is None:
+        prefix = "R" if (report.get("config") or {}).get("aux_mode") == "resolvable" else "Q"
+    prefix = str(prefix)
+    if len(prefix) != 1 or not prefix.isalpha() or prefix != prefix.upper():
+        raise SystemExit(f"gate_prefix must be a single A-Z letter, got {prefix!r}")
+    checks = {(prefix + name[1:]): value for name, value in checks.items()}
     return checks
 
 
@@ -1379,6 +1385,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "arm": arm,
             "aux_lambda": args.aux_loss,
             "aux_mode": args.aux_mode,
+            "gate_prefix": args.gate_prefix,
             "overfit_sessions": args.overfit,
         },
         "corpus": {
@@ -1469,6 +1476,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--gate-prefix",
+        default=None,
+        metavar="LETTER",
+        help=(
+            "grade this report's conditions under LETTER1-LETTER9 instead of Q/R "
+            "(a stage labels its own variable; --check recomputes the same prefix)"
+        ),
+    )
+    parser.add_argument(
         "--overfit",
         type=int,
         default=0,
@@ -1479,6 +1495,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         parser.error("--aux-loss must be >= 0; 0.0 is stage P and is never negative")
     if args.aux_mode == "resolvable" and args.aux_loss <= 0.0:
         parser.error("--aux-mode resolvable only matters with --aux-loss > 0")
+    if args.gate_prefix is not None and (
+        len(args.gate_prefix) != 1
+        or not args.gate_prefix.isalpha()
+        or args.gate_prefix != args.gate_prefix.upper()
+    ):
+        parser.error("--gate-prefix must be a single A-Z letter")
     if args.overfit < 0:
         parser.error("--overfit must be >= 0")
 

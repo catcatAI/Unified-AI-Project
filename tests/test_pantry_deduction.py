@@ -814,3 +814,34 @@ def test_control_lookup_does_not_cross_aux_modes(stage, tmp_path):
     (tmp_path / "pantry_deduction_0001.json").write_text(json.dumps(payload), encoding="utf-8")
     assert stage._find_control_report(tmp_path, aux_lambda=1.0, aux_mode="all") is not None
     assert stage._find_control_report(tmp_path, aux_lambda=1.0, aux_mode="resolvable") is None
+
+
+def test_gate_prefix_labels_a_stage_with_its_own_letter(stage):
+    """§52: a stage that changes a different variable gets its own S1-S9."""
+    report = _aux_report(stage)
+    report["config"]["aux_mode"] = "resolvable"
+    report["config"]["gate_prefix"] = "S"
+    checks = stage.gate_values(report)
+    assert len(checks) == 9
+    assert all(name.startswith("S") for name in checks)
+    assert "S1_overfit_calibration" in checks
+
+
+def test_gate_prefix_defaults_by_aux_mode(stage):
+    report = _aux_report(stage)
+    assert "Q1_overfit_calibration" in stage.gate_values(report)
+    report["config"]["aux_mode"] = "resolvable"
+    assert "R1_overfit_calibration" in stage.gate_values(report)
+
+
+def test_gate_prefix_must_be_one_upper_letter(stage):
+    for bad in ("SS", "s", "1", ""):
+        report = _aux_report(stage)
+        report["config"]["gate_prefix"] = bad
+        with pytest.raises(SystemExit):
+            stage.gate_values(report)
+
+
+def test_cli_rejects_a_bad_gate_prefix_before_running(stage):
+    with pytest.raises(SystemExit):
+        stage.main(["--overfit", "1", "--gate-prefix", "ss"])
