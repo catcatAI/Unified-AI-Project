@@ -810,6 +810,17 @@ def check_report(path: Path) -> List[str]:
             state = core.init_state(1)
             if state.schema_version != 1:
                 problems.append(f"state schema_version {state.schema_version} != 1")
+            recorded_hash = report.get("weights_hash")
+            if recorded_hash and core.weights_hash() != recorded_hash:
+                problems.append(
+                    "checkpoint weights_hash does not match the report "
+                    f"({core.weights_hash()[:19]}… != {recorded_hash[:19]}…)"
+                )
+            recorded_file = report.get("checkpoint_sha256")
+            if recorded_file:
+                actual = hashlib.sha256(Path(checkpoint).read_bytes()).hexdigest()
+                if actual != recorded_file:
+                    problems.append("checkpoint file sha256 does not match the report")
         except Exception as exc:  # a check must report, not crash
             problems.append(f"L5 reload failed: {exc}")
 
@@ -969,7 +980,10 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
 
     core = build_core(hidden=args.hidden, emb=args.emb, device=device)
     report["params"] = core.parameter_count()
-    report["weights_hash"] = core.weights_hash()
+    # §48.7 erratum: this used to be called ``weights_hash`` and was recorded
+    # before training, so it named the seed's initialisation, not the artifact.
+    # The trained hash is recorded after ``train`` and before the checkpoint.
+    report["init_weights_hash"] = core.weights_hash()
     print(
         f"text stage: device={device} params={report['params']} "
         f"train={len(train_bytes)} B holdout={len(combined_holdout)} B",
@@ -1049,8 +1063,10 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         out_dir = REPO_ROOT / out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     checkpoint = out_dir / f"text_stage_{stamp}.pt"
+    report["weights_hash"] = core.weights_hash()
     core.save_weights(str(checkpoint))
     report["checkpoint"] = str(checkpoint)
+    report["checkpoint_sha256"] = hashlib.sha256(checkpoint.read_bytes()).hexdigest()
 
     # L5: the same class and the same state schema, verified by loading it back.
     l5_ok = True
