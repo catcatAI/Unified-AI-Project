@@ -3,21 +3,26 @@
 # =============================================================================
 """Core adapters for the single-core contract: one recurrence, two step functions.
 
-Two arms live here, and they differ **only** in the recurrence:
+Three arms live here, and they differ **only** in what the state is:
 
 * :class:`GRUCore` — the P1 first arm (non-linear, learned recurrence);
 * :class:`SSMCore` — the P3 arm (diagonal linear recurrence, time enters as
-  decay, so the semigroup holds by construction rather than by training).
+  decay, so the semigroup holds by construction rather than by training);
+* :class:`SlotMemoryCore` — the round-7 arm (round 6's design requirement): the
+  same recurrence plus a key-addressed store, so the state can hold two
+  bindings instead of one vector's worth of "the most recent value".
 
 Everything a core needs in order to obey the contract (state object, weights
 hash, checkpointing) is in :class:`StatefulCore`, so a new arm cannot quietly
-grow its own state format. Neither arm is wired into production: they exist to
-make the contract measurable. The rule they have to satisfy (contract R1) is
-that ``ai_step`` and ``al_step`` share one set of weights and one state object:
+grow its own state format. None of these arms is wired into production: they
+exist to make the contract measurable. The rule they have to satisfy (contract
+R1) is that ``ai_step`` and ``al_step`` share one set of weights and one state
+object:
 
-* both mutate the ``h`` tensor inside the same :class:`~ai.core.core_state.CoreState`
-  (``ai_step`` feeds token embeddings into the recurrence, ``al_step`` advances
-  the same recurrence by elapsed time with no external token);
+* both mutate the state tensors inside the same
+  :class:`~ai.core.core_state.CoreState` (``ai_step`` feeds token embeddings
+  into the recurrence, ``al_step`` advances the same recurrence by elapsed time
+  with no external token);
 
 There is deliberately no second trunk, no second model, and no clock module
 that "knows" the time on the model's behalf: if ``al_step`` is not called, the
@@ -147,6 +152,17 @@ class StatefulCore:
 
     # -- state --------------------------------------------------------------
 
+    def state_tensors(self, batch_size: int) -> Dict[str, Any]:
+        """The tensors a fresh state starts with.
+
+        One tensor is the default (``h``, the working memory of every arm so
+        far). An arm whose capacity is *addressed* rather than recurrent
+        overrides this, so a second storage tensor cannot be smuggled in by a
+        caller: the schema of the state stays the core's business.
+        """
+        torch = self._torch
+        return {"h": torch.zeros(batch_size, self.hidden, device=self.device)}
+
     def init_state(
         self,
         batch_size: int,
@@ -156,13 +172,12 @@ class StatefulCore:
         born_at: Optional[str] = None,
     ) -> CoreState:
         """A new persistent state; only for a new session (contract R5)."""
-        torch = self._torch
         return CoreState.create(
             model_kind=self.model_kind,
             weights_hash=self.weights_hash(),
             user_id=user_id,
             session_id=session_id,
-            tensors={"h": torch.zeros(batch_size, self.hidden, device=self.device)},
+            tensors=self.state_tensors(batch_size),
             now=born_at,
         )
 
@@ -606,4 +621,306 @@ class SSMCore(StatefulCore):
         return payload
 
 
-__all__ = ["GRUCore", "SSMCore", "StatefulCore"]
+class SlotMemoryCore(StatefulCore):
+    """A key-addressed store: the state is a set of slots, not one vector.
+
+    Round 6 (§45) closed with a design requirement rather than a score: the
+    state held *one* value because ``h`` is one vector that the recurrence
+    overwrites, and a linear readout could not recover either taught value
+    (0.28-0.41 characters, chance 0.027). Two bindings need an address, not a
+    bigger buffer.
+
+    This arm changes the **structure** and nothing else. The working memory is
+    still a :class:`torch.nn.GRUCell` ``h``; alongside it the state carries
+    ``slot_k`` ``[B, K, D]`` and ``slot_v`` ``[B, K, Dv]``. At every token the
+    controller (``h``) does three things with learned projections:
+
+    * **address** - ``q = W_q h`` and ``a = softmax(scale * q·slot_k / sqrt(D))``;
+      the read ``r = Σ_k a_k slot_v[k]`` is what the output head sees;
+    * **select** - ``w = softmax(scale_w * W_w h)`` says which slot this token
+      belongs to;
+    * **write** - ``slot <- slot * (1 - g w) + (g w) * new`` with
+      ``g = sigmoid(W_g h)`` and ``new`` from ``W_k h`` / ``W_v h``.
+
+    Read happens *before* the write at the same token, so the question reads
+    what was taught and only then may (if ``g`` allows) add itself. Nothing
+    here is a dictionary bolted on the side: the write distribution, the
+    strength, the key and the value are all functions of ``h`` under the same
+    weights, and ``al_step`` mutates the same object. The ablation
+    (``memory=False``) keeps every parameter and every other operation and sets
+    ``r ≡ 0`` with no writes, so the contribution of the store is measured
+    rather than assumed (contract R4).
+
+    ``al_step`` advances ``h`` exactly as :class:`GRUCore` does and leaves the
+    slots alone: addresses are content, and time acts on the controller that
+    reads them. That is a design choice, written here before the run, and it is
+    why T5 (skip ``al_step``) is *not* used as evidence in this round.
+    """
+
+    model_kind = "slots"
+
+    def __init__(
+        self,
+        token_count: int,
+        *,
+        hidden: int = 64,
+        emb: int = 32,
+        chunk_seconds: float = DEFAULT_MAX_CHUNK_S,
+        seed: Optional[int] = None,
+        device: str = "cpu",
+        slots: int = 4,
+        slot_dim: int = 64,
+        value_dim: int = 64,
+        memory: bool = True,
+    ) -> None:
+        if token_count <= 1:
+            raise ValueError("token_count must be > 1")
+        if hidden <= 0 or emb <= 0:
+            raise ValueError("hidden and emb must be > 0")
+        if slots <= 0 or slot_dim <= 0 or value_dim <= 0:
+            raise ValueError("slots, slot_dim and value_dim must be > 0")
+        if chunk_seconds <= 0 or not math.isfinite(chunk_seconds):
+            raise ValueError("chunk_seconds must be finite and > 0")
+
+        torch = _require_torch()
+        self._torch = torch
+        self.token_count = token_count
+        self.hidden = hidden
+        self.emb = emb
+        self.chunk_seconds = float(chunk_seconds)
+        self.device = device
+        self.slots = int(slots)
+        self.slot_dim = int(slot_dim)
+        self.value_dim = int(value_dim)
+        self.memory = bool(memory)
+
+        if seed is not None:
+            torch.manual_seed(seed)
+
+        nn = torch.nn
+        self.embedding = nn.Embedding(token_count, emb)
+        self.cell = nn.GRUCell(emb, hidden)
+        self.dt_proj = nn.Linear(1, emb)
+        self.key_proj = nn.Linear(hidden, self.slot_dim)
+        self.value_proj = nn.Linear(hidden, self.value_dim)
+        self.query_proj = nn.Linear(hidden, self.slot_dim)
+        self.write_logits = nn.Linear(hidden, self.slots)
+        self.write_gate = nn.Linear(hidden, 1)
+        self.head = nn.Linear(hidden + self.value_dim, token_count)
+        # A write is an exponential moving average: ``slot <- slot(1-s) + s*new``.
+        # With the default bias the initial rate is sigmoid(0) = 0.5 per token, so
+        # the store forgets in ~2 tokens - measured on the dev seed, the read was
+        # identical for both questions because turn 1 had been erased. A memory
+        # controller should start by writing slowly and learn when to commit;
+        # bias -2.0 gives 0.12 per token (~68% of a nine-token turn retained, both
+        # turns still present). This is an initialisation prior, declared before
+        # the registered run, not a fitted value: what to write, where, and how to
+        # address it are still learned.
+        nn.init.constant_(self.write_gate.bias, -2.0)
+        # Sharpness of addressing and of slot selection. Stored as a log so it
+        # stays positive under any step; initialised to 4.0 (a soft but not
+        # uniform choice) rather than fitted to the task.
+        self.log_read_scale = nn.Parameter(torch.tensor(math.log(4.0)))
+        self.log_write_scale = nn.Parameter(torch.tensor(math.log(4.0)))
+        if device != "cpu":
+            self.to(device)
+
+        self._weights_hash: Optional[str] = None
+        self._parameter_count: Optional[int] = None
+
+    # -- introspection ------------------------------------------------------
+
+    def modules(self) -> Tuple[Any, ...]:
+        """The trainable modules; one optimizer covers all of them."""
+        return (
+            self.embedding,
+            self.cell,
+            self.dt_proj,
+            self.key_proj,
+            self.value_proj,
+            self.query_proj,
+            self.write_logits,
+            self.write_gate,
+            self.head,
+        )
+
+    def _modules_by_name(self) -> Tuple[Tuple[str, Any], ...]:
+        return (
+            ("embedding", self.embedding),
+            ("cell", self.cell),
+            ("dt_proj", self.dt_proj),
+            ("key_proj", self.key_proj),
+            ("value_proj", self.value_proj),
+            ("query_proj", self.query_proj),
+            ("write_logits", self.write_logits),
+            ("write_gate", self.write_gate),
+            ("head", self.head),
+        )
+
+    def extra_parameters(self) -> Tuple[Tuple[str, Any], ...]:
+        return (
+            ("log_read_scale", self.log_read_scale),
+            ("log_write_scale", self.log_write_scale),
+        )
+
+    # -- state --------------------------------------------------------------
+
+    def state_tensors(self, batch_size: int) -> Dict[str, Any]:
+        torch = self._torch
+        return {
+            "h": torch.zeros(batch_size, self.hidden, device=self.device),
+            "slot_k": torch.zeros(batch_size, self.slots, self.slot_dim, device=self.device),
+            "slot_v": torch.zeros(batch_size, self.slots, self.value_dim, device=self.device),
+        }
+
+    def _slots(self, state: CoreState) -> Tuple[Any, Any]:
+        keys = state.tensors.get("slot_k")
+        values = state.tensors.get("slot_v")
+        if keys is None or values is None:
+            raise CoreStateInvalid("state has no 'slot_k'/'slot_v' tensors")
+        if not hasattr(keys, "detach") or not hasattr(values, "detach"):
+            raise CoreStateInvalid("slots must be torch tensors; call attach_state()")
+        return keys, values
+
+    # -- the memory ---------------------------------------------------------
+
+    def read_vector_tensors(self, hidden: Any, keys: Any, values: Any) -> Any:
+        """Content-addressed read: ``softmax(scale * q·slot_k) · slot_v``.
+
+        Takes the tensors directly so ``ai_step`` can read the pre-write store
+        without constructing a second ``CoreState`` per token.
+        """
+        torch = self._torch
+        query = self.query_proj(hidden)
+        scores = torch.bmm(keys, query.unsqueeze(2)).squeeze(2)
+        scores = scores / math.sqrt(float(self.slot_dim))
+        weights = torch.softmax(torch.exp(self.log_read_scale) * scores, dim=-1)
+        return torch.bmm(weights.unsqueeze(1), values).squeeze(1)
+
+    def read_vector(self, state: CoreState) -> Any:
+        """The content the current ``h`` addresses, read-only (no write).
+
+        Public so a probe can ask "is the answer in the store?" separately from
+        "did the decoder say it?" - the distinction §45 needed and could not
+        make with a single vector.
+        """
+        hidden = self._hidden(state)
+        keys, values = self._slots(state)
+        return self.read_vector_tensors(hidden, keys, values)
+
+    def attention(self, state: CoreState) -> Any:
+        """The addressing distribution (diagnostic: which slot is being read)."""
+        torch = self._torch
+        hidden = self._hidden(state)
+        keys, _ = self._slots(state)
+        query = self.query_proj(hidden)
+        scores = torch.bmm(keys, query.unsqueeze(2)).squeeze(2)
+        scores = scores / math.sqrt(float(self.slot_dim))
+        return torch.softmax(torch.exp(self.log_read_scale) * scores, dim=-1)
+
+    # -- the two cycles -----------------------------------------------------
+
+    def ai_step(self, tokens: Any, state: CoreState) -> Tuple[Any, CoreState]:
+        """``tokens``: LongTensor ``[B, L]`` → ``(logits [B, L, V], state)``."""
+        torch = self._torch
+        if tokens.ndim != 2:
+            raise ValueError(f"tokens must be [B, L], got shape {tuple(tokens.shape)}")
+        hidden = self._hidden(state)
+        keys, values = self._slots(state)
+        if tokens.shape[0] != hidden.shape[0]:
+            raise ValueError("batch size of tokens and state disagree")
+
+        write_scale = torch.exp(self.log_write_scale)
+        outputs = []
+        for position in range(tokens.shape[1]):
+            inputs = self.embedding(tokens[:, position])
+            hidden = self.cell(inputs, hidden)
+
+            read = torch.zeros(
+                hidden.shape[0], self.value_dim, dtype=hidden.dtype, device=hidden.device
+            )
+            if self.memory:
+                # Read first: the question sees what was taught, not itself.
+                read = self.read_vector_tensors(hidden, keys, values)
+            outputs.append(self.head(torch.cat([hidden, read], dim=-1)))
+
+            if self.memory:
+                # Write with the *same* projections the read uses, so the key
+                # that a turn stores and the key a question asks for live in one
+                # space (that is the whole point of "addressed").
+                weight = torch.softmax(write_scale * self.write_logits(hidden), dim=-1)
+                strength = torch.sigmoid(self.write_gate(hidden))
+                share = (strength * weight).unsqueeze(-1)
+                new_keys = self.key_proj(hidden).unsqueeze(1)
+                new_values = self.value_proj(hidden).unsqueeze(1)
+                keys = keys * (1.0 - share) + share * new_keys
+                values = values * (1.0 - share) + share * new_values
+
+        logits = torch.stack(outputs, dim=1)
+        state.tensors["h"] = hidden
+        state.tensors["slot_k"] = keys
+        state.tensors["slot_v"] = values
+        state.bump()
+        return logits, state
+
+    def al_step(self, dt_s: Any, state: CoreState) -> CoreState:
+        """Advance the controller by ``dt_s``; the slots are content, not time.
+
+        Identical arithmetic to :class:`GRUCore` (this is the same recurrence
+        with the same ``dt_proj``), so a run can be compared with §44/§45
+        without a second time model entering as a confound.
+        """
+        torch = self._torch
+        hidden = self._hidden(state)
+        batch = int(hidden.shape[0])
+
+        if isinstance(dt_s, (int, float)) and not isinstance(dt_s, bool):
+            dt = torch.full((batch,), float(dt_s), dtype=hidden.dtype, device=hidden.device)
+        else:
+            dt = torch.as_tensor(dt_s, dtype=hidden.dtype, device=hidden.device).reshape(-1)
+            if int(dt.shape[0]) != batch:
+                raise ValueError(f"dt batch {int(dt.shape[0])} != state batch {batch}")
+
+        if not bool(torch.isfinite(dt).all()):
+            raise ValueError("dt must be finite")
+        if bool((dt < 0).any()):
+            raise ValueError("dt must be >= 0")
+
+        counts = [
+            int(math.ceil(float(value) / self.chunk_seconds)) if float(value) > 0.0 else 0
+            for value in dt.detach().to("cpu").tolist()
+        ]
+        max_chunks = max(counts) if counts else 0
+        if max_chunks == 0:
+            return state
+
+        count_tensor = torch.as_tensor(counts, dtype=torch.int64, device=hidden.device)
+        for step in range(max_chunks):
+            active = (count_tensor > step).nonzero(as_tuple=False).reshape(-1)
+            if int(active.numel()) == 0:
+                continue
+            chunks = count_tensor[active].to(hidden.dtype)
+            feature = (dt[active] / chunks / self.chunk_seconds).unsqueeze(1)
+            updated = self.cell(self.dt_proj(feature), hidden[active])
+            hidden = hidden.index_copy(0, active, updated)
+
+        state.tensors["h"] = hidden
+        state.ticks += max_chunks
+        state.last_dt_s = float(dt.detach().max().to("cpu"))
+        state.bump()
+        return state
+
+    def config(self) -> Dict[str, Any]:
+        payload = super().config()
+        payload.update(
+            {
+                "slots": self.slots,
+                "slot_dim": self.slot_dim,
+                "value_dim": self.value_dim,
+                "memory": self.memory,
+            }
+        )
+        return payload
+
+
+__all__ = ["GRUCore", "SSMCore", "SlotMemoryCore", "StatefulCore"]

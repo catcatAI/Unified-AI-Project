@@ -4083,3 +4083,154 @@ c1 = json.load(open(sorted(glob.glob("data/state_content/state_content_20261113-
 print("C1 heldout", c1["results"]["heldout_names"]["exact"], "pass", c1["all_pass"])
 EOF
 ```
+
+## 四十六、換結構：可定址的槽（2026-11-13，量測前寫定）
+
+§45 的結論不是分數，是**設計要求**：addressability（鍵定址的槽，或對教學回合做
+attention）不會從「同一個 128 維向量被覆寫兩次」裡長出來。這一輪就改**結構**，
+其餘一律不動——任務、字母表、間隔、目標函數、seed、預算、寬度、學習率、batch 全部
+沿用 §45，讓「結構」是唯一的變數。
+
+### 46.1 任務：與 §45 完全相同（不是新題目）
+
+兩個教學回合（各自 `ai_step` ＋ `al_step(120 s)`）→ 問其中一組 → 生成該組的值。
+單槽的上限仍是 0.5。`build_splits(seed=20261115)` 的切分、digest、`wrong_name`
+控制全部重合，所以 §45 的 `both` 臂（held-out **0.0100**）就是這一輪的**同任務、
+同資料、同預算**對照。
+
+### 46.2 唯一的變數：state 由「一個向量」變成「向量 ＋ 可定址的槽」
+
+| | §45（`GRUCore`） | §46（`SlotMemoryCore`） |
+| --- | --- | --- |
+| state 張量 | `h` | `h`、`slot_k [4,64]`、`slot_v [4,64]` |
+| 寫入 | 只有遞歸覆寫 `h` | **讀先於寫**；寫入是 `slot ← slot(1-gw) + gw·new` |
+| key／value 哪來 | 無 | `W_k h`／`W_v h`，與讀取同一個 `h` |
+| 讀取 | 無 | `softmax(scale·W_q h · slot_kᵀ)` 加權 `slot_v` |
+| 誰決定寫哪格 | 無 | `softmax(scale_w·W_w h)`（學習得來） |
+| 參數 | 81,765 | 109,548（+34%） |
+
+**不是外掛的字典**：寫入分布、寫入強度、key、value、查詢向量全部是 `h` 的函數，
+共用同一組權重，由 `ai_step` 寫、由 `al_step` 推進同一個狀態物件；沒有任何
+`store(key, value)` API 讓訓練器繞過模型。讀取在**寫入之前**發生，所以問題讀到的
+是「教過的內容」，不是它自己。
+
+`al_step` 只推進 `h`（與 `GRUCore` 同一條算式、同一個 `dt_proj`），**槽不隨時間
+衰減**：位址是內容，時間作用在控制器上。這是先寫定的設計選擇，代價是這一輪**不能**
+拿「跳過 `al_step`」（T5）當證據。
+
+### 46.3 開發證據（seed 777；**這不是結果**，只確認管線會動）
+
+3,000 訓練 episodes、12 epochs、`both`、寬度 128；不進任何表格、不改任何門檻。
+
+| | 寫入閘初始 bias 0（`sigmoid(0)=0.5`） | bias −2（`0.12`） |
+| --- | --- | --- |
+| dev loss（ep 1 → 12） | 1.5168 → 1.1038 | 1.5171 → 1.1709 |
+| `distinct_read_slot_rate` | **0.000** | 0.188 |
+| `read_cosine_between_asks` | 1.000 | 1.000 |
+| 讀取注意力最大機率（平均） | 0.948 | 0.448 |
+
+**兩個機制觀察，先講清楚**：
+
+1. `slot ← slot(1-s) + s·new` 是移動平均。bias 0 時每一步寫掉 50%，**記憶視窗約 2 個
+   token**——實測就是「兩個問題讀到一模一樣的東西」（`distinct_read_slot_rate` 0），
+   也就是說那個初始值讓「記住兩組」**在結構上不可能**，量到的會是初始值而不是設計。
+   bias −2 讓每個 token 寫 12%（九個 token 的回合約留下 68%），兩個回合都還在，
+   於是位址開始分開（0.188）。這是**初始化的先驗**，不是擬合：寫什麼、寫哪格、
+   怎麼定址仍然全部要學。**在跑任何計分 run 之前改的，記錄在此。**
+2. 讀取**確實**依賴 `h`：未訓練模型上，兩個不同查詢的 `h` cosine 0.75–0.79、讀取
+   cosine 0.89–0.93，所以「兩個問題讀到一樣」不是接線錯誤。dev 上 cosine 仍顯示
+   1.000 是四捨五入（>0.99995）：兩個查詢的讀取向量幾乎相同，正是這一輪要解決的事。
+
+開發曲線兩者都還在下降（12 epochs 只走了登記預算的 1/8 資料量），所以「收斂不夠」
+不是這一輪的結論，登記 run 仍用 §45 的 100 epochs。
+
+### 46.4 預算（跑之前寫定）
+
+| 項目 | 值 | 理由 |
+| --- | --- | --- |
+| seed | 20261115 | 與 §45 登記 run 相同，切分與 digest 重合 |
+| 目標函數 | `both` | §45 的兩個目標同類；`both` 的 dev loss 較低且是登記臂 |
+| epochs | 100 | 與 §45 相同；不因這一輪較慢而縮短 |
+| 選檔 | 最低 dev answer loss，`--patience 0` | 與 §45 相同（exact 是階梯函數） |
+| 寬度／嵌入／間隔／lr／batch | 128／64／120 s／3e-3／128 | 全部沿用 §45 |
+
+**參數對照規則（先寫定，構模型即可知，不必等結果）**：若新臂參數超過 §45 的 81,765
+的 20%，就必須跑 C3——**同樣參數量的純 GRU**。新臂 109,548（+34%）→ **C3 成立**，
+寬度取「≥109,548 的最小 GRU 寬度」＝**hidden 154（109,871 參數）**。
+
+### 46.5 門檻（跑之前寫定，不得事後改）
+
+B1–B6 的**數字完全不動**（不是為這一輪重訂的），只把 B3 的「zero」說清楚：
+
+| 門檻 | 條件 |
+| --- | --- |
+| B1 | `dev` exact ≥ 0.60 |
+| B2 | `heldout_names` exact ≥ 0.30 |
+| B3 | `zero_state` ≤ 0.05 且 `heldout − zero_state` ≥ 0.25 |
+| B4 | `cold` ≤ 0.02 |
+| B5 | 兩個切分的 `by_ask` 皆 ≥ 0.50，且 `other_value_rate` ≤ 0.25 |
+| B6 | 成本（參數、訓練秒數）已記錄 |
+| **B7** | 同結構、**拿掉 store** 的消融（R4）：`heldout − 消融 heldout` ≥ **0.20** |
+| **B8** | C3（參數 ≥ 本臂的純 GRU）的 `heldout` < **0.30** |
+
+**B3 的措辭修訂（跑之前，且更嚴）**：§45 的 state 只有一個張量，所以「zero state」
+等於「zero `h`」。現在 state 有三個張量，只清 `h` 會把答案留在槽裡——那會讓一個
+**正確**的狀態看起來違反 B3。所以 B3 定義為**清空 state 的所有張量**。這不是放寬：
+清的比 §45 多。逐張量的結果另外列為**診斷**（`zero_h_only`、`zero_store_only`），
+不是門檻。
+
+B7／B8 是門檻而非註記，理由和 §43–§45 一致：沒有消融，「是 store 在做事」是宣稱；
+沒有參數對照，「是結構」也可能是「是參數」。**兩個對照報告都必須存在**（缺一個
+`B7_control_present`／`B8_control_present` 直接 FAIL），且 digest 必須與本 run 相同
+（`*_control_same_splits`），否則對照不算數。
+
+### 46.6 對照組（都需要，且在計分 run 之前跑完）
+
+| | 內容 | 期望 |
+| --- | --- | --- |
+| **C2** | `--core slots --no-memory`：參數一個不少，讀取恆為 0、不寫入 | 掉回 §45 那一類（B7 差 ≥ 0.20） |
+| **C3** | `--core gru --width 154`：109,871 參數 ≥ 本臂 | 仍不足 B2（< 0.30），否則「是參數」 |
+| （參考）| §45 `both`（81,765 參數，held-out 0.0100） | 不重跑：digest 與預算相同 |
+
+### 46.7 每一個分支要怎麼讀（先寫定）
+
+| 結果 | 讀法 |
+| --- | --- |
+| B1–B8 全過 | 可定址的 state 讓同一個核心持有兩組並依查詢選取；**核心分不因此改變**（這是 state 的結構，不是語言能力），下一步才是把它接到生成 |
+| B1/B2 過、B7 不過 | 值是真的，但消融也做得到 → 不是 store 的功勞（多半只是參數變多）→ 這一輪不算證明 |
+| B1/B2 過、B8 不過 | 純 GRU 在同等參數下也過 → 是參數量，不是「可定址」 |
+| B2 不過、`distinct_read_slot_rate` 明顯 > 0 | 位址分開了但讀到的內容對不上 → 問題在寫入的 key/value，不在定址 |
+| B2 不過、`distinct_read_slot_rate` ≈ 0 | 兩個問題仍讀同一格 → 學習沒有把槽分開，下一步是對教學回合做 attention（把整個回合的表示留在 state 裡，由查詢去 attend），不是再調這一臂 |
+| B3 不過 | 答案不是從 state 來的 → 整個裝置有問題，先修裝置 |
+
+### 46.8 預測（寫在跑之前）
+
+**B1 過**（同一個任務、單槽 0.5 上限，dev 是訓練過的切分）；**B2 邊緣**（dev 曲線
+在 12 epochs 仍陡，但 100 epochs 是 55 倍的資料量，且位址才剛開始分開）；**B5 可能
+不過**（若讀取仍不夠果斷，`by_ask` 會有一邊偏低）；**B7 預期過**（消融就是 §45 的
+那一類，0.01 附近）；**B8 預期過**（§45 已量到參數不是瓶頸）。若 B2 落在 0.10–0.30，
+這一輪的結論會是「位址需要更強的結構」，而不是「記憶不可能」。
+
+### 46.9 診斷（不是門檻）
+
+* `zero_h_only`／`zero_store_only`：答案住在控制器還是槽裡（B3 只要求「全部清空」）。
+* probe 兩個特徵：`h`（控制器）與 `read`（實際定址到的內容），各對第一組、第二組、
+  被問的那組做線性讀出。§45 只有 `h`，所以分不出「沒存」與「存了但選不出來」。
+* `addressing_*`：`distinct_read_slot_rate`（兩個問題讀到同不同格）、
+  `read_cosine_between_asks`、`attention_max_prob_mean`。
+* `both_sequential`：同一 state 依序問兩組（訓練形狀），與單問的差距。
+
+### 46.10 指令（順序固定：對照先，計分 run 最後）
+
+```bash
+# C3：同樣參數量的純 GRU（109,871 ≥ 109,548）
+./.venv/bin/python scripts/train_state_binding.py --core gru --width 154 \
+    --objective both --seed 20261115 --epochs 100 --patience 0 --out data/state_binding
+# C2：同結構、拿掉 store（參數一個不少）
+./.venv/bin/python scripts/train_state_binding.py --core slots --no-memory \
+    --objective both --seed 20261115 --epochs 100 --patience 0 --out data/state_binding
+# 計分 run（帶兩個對照，B7／B8 才算得出來）
+./.venv/bin/python scripts/train_state_binding.py --core slots \
+    --objective both --seed 20261115 --epochs 100 --patience 0 --out data/state_binding \
+    --control <C2 report>.json --control <C3 report>.json
+```

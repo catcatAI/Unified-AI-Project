@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ANGELA-MATRIX: L3 [βγδ] [A] [L2]
 # LAYER: learning
-"""Round 6: one value is not a memory. Can the state hold two *bindings*?
+"""Round 6: one value is not a memory. Round 7: a store that can be addressed.
 
 ``CORE_GAP_ANALYSIS.md`` §44 measured a single-slot carrier: teach one pair, ask
 it back, and removing ``h`` removes the answer. The limitation it recorded was
@@ -31,8 +31,12 @@ write path is overwriting.
 
 Usage::
 
+    # round 6 (the arm that failed): one objective is the only variable
     ./.venv/bin/python scripts/train_state_binding.py --objective both \\
         --seed 20261115 --epochs 100 --out data/state_binding
+    # round 7: same task, same objective, the structure is the variable
+    ./.venv/bin/python scripts/train_state_binding.py --core slots --objective both \\
+        --seed 20261115 --epochs 100 --control data/.../ablate.json --control data/.../gru156.json
     ./.venv/bin/python scripts/train_state_binding.py --smoke --objective both
 """
 
@@ -339,7 +343,36 @@ def _git_head() -> str:
         return ""
 
 
-def build_core(table: CharTable, device: str, hidden: int = HIDDEN, emb: int = EMB):
+def build_core(
+    table: CharTable,
+    device: str,
+    hidden: int = HIDDEN,
+    emb: int = EMB,
+    *,
+    core: str = "gru",
+    memory: bool = True,
+):
+    """The arm under test. ``core`` is the *structure*, the single variable.
+
+    ``gru`` is §44/§45's arm (unchanged, so a control is a like-for-like
+    comparison). ``slots`` is round 7's arm: the same recurrence plus a
+    key-addressed store. ``memory=False`` keeps every parameter of ``slots`` and
+    removes only the read/write, which is the ablation contract R4 requires.
+    """
+    if core == "slots":
+        from ai.core.stateful_decoder import SlotMemoryCore
+
+        return SlotMemoryCore(
+            len(table),
+            hidden=hidden,
+            emb=emb,
+            chunk_seconds=CHUNK_SECONDS,
+            seed=SEED,
+            device=device,
+            memory=memory,
+        )
+    if core != "gru":
+        raise ValueError(f"unknown core {core!r}")
     from ai.core.stateful_decoder import GRUCore
 
     return GRUCore(
@@ -350,6 +383,22 @@ def build_core(table: CharTable, device: str, hidden: int = HIDDEN, emb: int = E
         seed=SEED,
         device=device,
     )
+
+
+def zero_tensors(state: Any, keys: Optional[Sequence[str]] = None) -> Any:
+    """Zero the named state tensors (default: every tensor) in place.
+
+    Round 6 had one tensor, so "zero the state" was unambiguous. With a store
+    alongside ``h``, zeroing only ``h`` would leave the answer in the store and
+    make B3 look violated by a *correct* state. The gate is therefore defined on
+    the whole state, and the per-tensor variants are diagnostics.
+    """
+    import torch
+
+    names = list(state.tensors) if keys is None else list(keys)
+    for name in names:
+        state.tensors[name] = torch.zeros_like(state.tensors[name])
+    return state
 
 
 def _batches(items: Sequence[Any], size: int) -> List[Sequence[Any]]:
@@ -377,7 +426,7 @@ def evaluate(
     *,
     device: str,
     teach: bool = True,
-    zero_state: bool = False,
+    zero_keys: Optional[Sequence[str]] = None,
     batch_size: int = BATCH,
 ) -> Dict[str, Any]:
     """Ask one key from a fresh state; report exact, per-position and hedging.
@@ -404,9 +453,9 @@ def evaluate(
                 state = core.init_state(batch)
                 if teach:
                     _teach(core, rows, state, device)
-                if zero_state:
-                    # Same object, same weights, same prompt: only ``h`` differs.
-                    state.tensors["h"] = torch.zeros_like(state.tensors["h"])
+                if zero_keys is not None:
+                    # Same object, same weights, same prompt: only the state differs.
+                    zero_tensors(state, zero_keys)
                 logits, state = core.ai_step(_tensor([row["query"] for row in rows], device), state)
                 generated: List[List[int]] = [[] for _ in range(batch)]
                 for _ in range(max_new):
@@ -661,6 +710,37 @@ def train(
     }
 
 
+def state_features(
+    core: Any, table: CharTable, episodes: Sequence[Dict[str, Any]], *, device: str
+) -> Dict[str, Any]:
+    """Read the state after teaching, once per feature source.
+
+    ``h`` is the controller. When the arm has an addressed store, ``read`` is
+    what ``h`` actually addresses, and it is the honest "is the answer in the
+    state?" feature: §45 could only look at ``h`` and therefore could not tell
+    "stored nothing" from "stored both, cannot select".
+    """
+    import torch
+
+    encoded = [encode_episode(table, episode) for episode in episodes]
+    hidden: List[Any] = []
+    read: List[Any] = []
+    has_read = hasattr(core, "read_vector")
+    core.eval()
+    with torch.no_grad():
+        for start in range(0, len(encoded), BATCH):
+            rows = encoded[start : start + BATCH]
+            state = core.init_state(len(rows))
+            _teach(core, rows, state, device)
+            hidden.append(state.tensors["h"].detach())
+            if has_read:
+                read.append(core.read_vector(state).detach())
+    out = {"h": torch.cat(hidden, dim=0)}
+    if has_read:
+        out["read"] = torch.cat(read, dim=0)
+    return out
+
+
 def state_probe(
     core: Any,
     table: CharTable,
@@ -670,21 +750,12 @@ def state_probe(
     steps: int = 600,
     lr: float = 1e-2,
 ) -> Dict[str, Any]:
-    """Linear readouts of ``h``: first-taught, second-taught, and asked value."""
+    """Linear readouts of the state: first-taught, second-taught, asked value."""
     import torch
 
-    encoded = [encode_episode(table, episode) for episode in episodes]
-    features: List[Any] = []
-    core.eval()
-    with torch.no_grad():
-        for start in range(0, len(encoded), BATCH):
-            rows = encoded[start : start + BATCH]
-            state = core.init_state(len(rows))
-            _teach(core, rows, state, device)
-            features.append(state.tensors["h"].detach())
-    matrix = torch.cat(features, dim=0)
+    features = state_features(core, table, episodes, device=device)
 
-    def probe(targets: Sequence[str]) -> Dict[str, Any]:
+    def probe(matrix: Any, targets: Sequence[str]) -> Dict[str, Any]:
         width = len(targets[0])
         gold = torch.tensor(
             [[table.stoi.get(ch, table.unk_id) for ch in text] for text in targets],
@@ -710,11 +781,121 @@ def state_probe(
             "full_exact": round(float(match.all(dim=1).float().mean()), 4),
         }
 
+    out: Dict[str, Any] = {}
+    for feature_name, matrix in features.items():
+        out[feature_name] = {
+            "slot0_first_taught": probe(matrix, [e["taught"][0][1] for e in episodes]),
+            "slot1_second_taught": probe(matrix, [e["taught"][1][1] for e in episodes]),
+            "asked": probe(matrix, [e["taught"][e["ask"]][1] for e in episodes]),
+        }
+    return out
+
+
+def addressing_diagnostics(
+    core: Any, table: CharTable, episodes: Sequence[Dict[str, Any]], *, device: str
+) -> Optional[Dict[str, Any]]:
+    """Mechanism, not score: does asking two different keys read two things?
+
+    A store that answers both questions by returning the same slot is a
+    single-slot buffer with extra steps. Two numbers say which it is: how often
+    the addressed slot *differs* between the two questions, and how similar the
+    two reads are (cosine). Neither is a gate; they explain a pass or a failure.
+    """
+    import torch
+
+    if not hasattr(core, "attention"):
+        return None
+    encoded = [encode_episode(table, episode) for episode in episodes]
+    device_arg = device
+    cores = core
+    was_training = cores.modules()[0].training
+    cores.eval()
+    distinct = 0
+    cosines: List[float] = []
+    max_probs: List[float] = []
+    try:
+        with torch.no_grad():
+            for start in range(0, len(encoded), BATCH):
+                rows = encoded[start : start + BATCH]
+                asks = len(rows[0]["both"])
+                reads: List[Any] = []
+                slots: List[Any] = []
+                for index in range(asks):
+                    state = cores.init_state(len(rows))
+                    _teach(cores, rows, state, device_arg)
+                    cores.ai_step(
+                        _tensor([row["both"][index]["query"] for row in rows], device_arg), state
+                    )
+                    weights = cores.attention(state)
+                    slots.append(weights.argmax(dim=-1))
+                    max_probs.extend(float(v) for v in weights.max(dim=-1).values)
+                    reads.append(cores.read_vector(state))
+                distinct += int((slots[0] != slots[1]).sum())
+                cosines.extend(
+                    float(v)
+                    for v in torch.nn.functional.cosine_similarity(reads[0], reads[1], dim=-1)
+                )
+    finally:
+        if was_training:
+            cores.train()
     return {
-        "slot0_first_taught": probe([episode["taught"][0][1] for episode in episodes]),
-        "slot1_second_taught": probe([episode["taught"][1][1] for episode in episodes]),
-        "asked": probe([episode["taught"][episode["ask"]][1] for episode in episodes]),
+        "n": len(episodes),
+        "distinct_read_slot_rate": round(distinct / max(1, len(episodes)), 4),
+        "read_cosine_between_asks": round(sum(cosines) / max(1, len(cosines)), 4),
+        "attention_max_prob_mean": round(sum(max_probs) / max(1, len(max_probs)), 4),
     }
+
+
+def load_control(path: str) -> Dict[str, Any]:
+    """A previous report used as a control; the data must be the same data."""
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    return {
+        "path": str(path),
+        "task_version": payload.get("task_version"),
+        "core": payload.get("config", {}).get("core"),
+        "memory": payload.get("config", {}).get("memory"),
+        "hidden": payload.get("config", {}).get("hidden"),
+        "params": payload.get("params"),
+        "digests": payload.get("digests"),
+        "heldout_exact": (payload.get("results", {}).get("heldout_names", {}) or {}).get("exact"),
+        "all_pass": payload.get("all_pass"),
+    }
+
+
+def compare_controls(report: Dict[str, Any], controls: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    """B7/B8: the two confounds that would make a pass meaningless.
+
+    B7 (contract R4) - the same structure with the store ablated must lose at
+    least 0.20 absolute held-out; otherwise the store is decoration.
+    B8 - a plain GRU given at least as many parameters must still fail B2;
+    otherwise the result is "more parameters", not "an addressed state".
+    Both controls must be present and run on identical splits, so a missing or
+    differently-sampled control is a failure rather than a silent skip.
+    """
+    held = report["results"]["heldout_names"]["exact"]
+    out: Dict[str, Any] = {}
+    ablation = next((c for c in controls if c["memory"] is False and c["core"] == "slots"), None)
+    matched = next((c for c in controls if c["core"] == "gru"), None)
+    same_data = report["digests"]
+    for name, control in (("B7", ablation), ("B8", matched)):
+        if control is None:
+            out[f"{name}_control_present"] = False
+            continue
+        out[f"{name}_control_same_splits"] = control.get("digests") == same_data
+        out[f"{name}_control_params"] = control.get("params")
+    if ablation is not None:
+        out["B7_memory_ablation_gap_ge_0.20"] = (
+            held is not None
+            and ablation.get("heldout_exact") is not None
+            and (held - float(ablation["heldout_exact"])) >= 0.20
+        )
+        out["B7_ablation_heldout"] = ablation.get("heldout_exact")
+    if matched is not None:
+        out["B8_matched_params_heldout_lt_0.30"] = (
+            matched.get("heldout_exact") is not None and float(matched["heldout_exact"]) < 0.30
+        )
+        out["B8_matched_params_heldout"] = matched.get("heldout_exact")
+    return out
 
 
 def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
@@ -722,6 +903,9 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
 
     device = _device()
     table = CharTable()
+    memory = not bool(getattr(args, "no_memory", False))
+    if not memory and args.core != "slots":
+        raise SystemExit("--no-memory ablates the store, so it only applies to --core slots")
     sizes = dict(SMOKE if args.smoke else DEFAULTS)
     epochs_budget = 2 if args.smoke else args.epochs
     splits = build_splits(seed=args.seed, sizes=sizes)
@@ -734,6 +918,8 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         "device": device,
         "config": {
             "hidden": args.width,
+            "core": args.core,
+            "memory": bool(memory),
             "emb": EMB,
             "chunk_seconds": CHUNK_SECONDS,
             "lr": LEARNING_RATE,
@@ -758,7 +944,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         report["aborted"] = "leak check failed"
         return report
 
-    core = build_core(table, device, hidden=args.width)
+    core = build_core(table, device, hidden=args.width, core=args.core, memory=memory)
     report["params"] = core.parameter_count()
     report["weights_hash"] = core.weights_hash()
 
@@ -777,21 +963,39 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
     )
 
     started = time.time()
+    all_tensors = list(core.init_state(1).tensors)
+    store_tensors = [name for name in all_tensors if name != "h"]
     results = {
         "dev": evaluate(core, table, splits["dev"], device=device),
         "heldout_names": evaluate(core, table, splits["heldout_names"], device=device),
+        # B3: the whole state, not just ``h`` - with a store, zeroing ``h`` alone
+        # would leave the answer exactly where it is supposed to be.
         "zero_state": evaluate(
-            core, table, splits["heldout_names"], device=device, zero_state=True
+            core, table, splits["heldout_names"], device=device, zero_keys=all_tensors
         ),
         "cold": evaluate(core, table, splits["cold"], device=device, teach=False),
         "wrong_name": evaluate(core, table, splits["wrong_name"], device=device),
         "both_sequential": evaluate_both(core, table, splits["dev"], device=device),
     }
+    if store_tensors:
+        # Diagnostics: *where* the answer lived. Not gates - a correct state may
+        # legitimately need both the controller and the store.
+        results["zero_h_only"] = evaluate(
+            core, table, splits["heldout_names"], device=device, zero_keys=["h"]
+        )
+        results["zero_store_only"] = evaluate(
+            core, table, splits["heldout_names"], device=device, zero_keys=store_tensors
+        )
     elapsed = time.time() - started
     report["results"] = results
     report["diagnostics"] = {
         "probe_dev": state_probe(core, table, splits["dev"], device=device),
         "probe_heldout": state_probe(core, table, splits["heldout_names"], device=device),
+        "addressing_dev": addressing_diagnostics(core, table, splits["dev"], device=device),
+        "addressing_heldout": addressing_diagnostics(
+            core, table, splits["heldout_names"], device=device
+        ),
+        "state_tensors": all_tensors,
     }
     report["cost"] = {
         "params": report["params"],
@@ -825,14 +1029,23 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             report["cost"][key] not in (None, 0) for key in ("params", "train_seconds")
         ),
     }
+    if args.core == "slots" and memory:
+        # Round 7 adds the two confounds that would make a pass meaningless, and
+        # they are gates rather than notes: an ablated store that still passes
+        # (R4) or a plain GRU with at least as many parameters that also passes
+        # would each make "the state is addressed" unearned.
+        controls = [load_control(path) for path in (getattr(args, "control", None) or [])]
+        report["controls"] = controls
+        checks.update(compare_controls(report, controls))
     report["checks"] = checks
-    report["all_pass"] = all(checks.values())
+    report["all_pass"] = all(value is True for value in checks.values())
 
     out_dir = Path(args.out)
     if not out_dir.is_absolute():
         out_dir = REPO_ROOT / out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
-    checkpoint = out_dir / f"state_binding_{args.objective}_{stamp}.pt"
+    arm = args.core if memory else f"{args.core}-ablate"
+    checkpoint = out_dir / f"state_binding_{arm}_{args.objective}_{stamp}.pt"
     torch.save(
         {
             "task_version": TASK_VERSION,
@@ -848,9 +1061,28 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="Round 6: can the state hold two bindings?")
+    parser = argparse.ArgumentParser(
+        description="Rounds 6-7: can the state hold two bindings, and does a store fix it?"
+    )
     parser.add_argument("--out", default="data/state_binding")
     parser.add_argument("--objective", choices=("single", "both"), default="both")
+    parser.add_argument(
+        "--core",
+        choices=("gru", "slots"),
+        default="gru",
+        help="structure under test (gru = §44/§45 arm, slots = round 7)",
+    )
+    parser.add_argument(
+        "--no-memory",
+        action="store_true",
+        help="ablate the store (same parameters, read forced to zero, no writes)",
+    )
+    parser.add_argument(
+        "--control",
+        action="append",
+        metavar="REPORT.json",
+        help="a previous report used as a control (B7 ablation / B8 matched params)",
+    )
     parser.add_argument("--width", type=int, default=HIDDEN)
     parser.add_argument("--epochs", type=int, default=MAX_EPOCHS)
     parser.add_argument(
@@ -870,11 +1102,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if not out_dir.is_absolute():
         out_dir = REPO_ROOT / out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / f"state_binding_{args.objective}_{stamp}.json"
+    arm = args.core if report["config"]["memory"] else f"{args.core}-ablate"
+    path = out_dir / f"state_binding_{arm}_{args.objective}_{stamp}.json"
     path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
 
     print(
         f"\ntask            : {report['task_version']} objective={report['objective']} "
+        f"core={report['config']['core']} memory={report['config']['memory']} "
         f"width={report['config']['hidden']} device={report['device']}"
     )
     print(f"params          : {report.get('params')}")
@@ -885,7 +1119,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         f"(dev loss {report['training']['best_dev_loss']})"
     )
     print("\n            split            n     exact   other  by_ask")
-    for name in ("dev", "heldout_names", "zero_state", "cold", "wrong_name"):
+    for name in (
+        "dev",
+        "heldout_names",
+        "zero_state",
+        "zero_h_only",
+        "zero_store_only",
+        "cold",
+        "wrong_name",
+    ):
+        if name not in report["results"]:
+            continue
         entry = report["results"][name]
         exact = "   n/a" if entry["exact"] is None else f"{entry['exact']:6.3f}"
         other = (
@@ -896,14 +1140,22 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             extra = f"  taught_value={entry['taught_value_rate']:.3f}"
         print(f"  {name:22s} {entry['n']:5d}  {exact}  {other}  {entry['by_ask']}{extra}")
     print(f"  both_sequential (diag)  {report['results']['both_sequential']}")
-    print("\n  probes (char / full)")
-    for name, entry in report["diagnostics"]["probe_dev"].items():
-        print(f"    dev      {name:22s} {entry['char_accuracy']:6.3f} {entry['full_exact']:6.3f}")
-    for name, entry in report["diagnostics"]["probe_heldout"].items():
-        print(f"    heldout  {name:22s} {entry['char_accuracy']:6.3f} {entry['full_exact']:6.3f}")
+    print("\n  probes (char / full)  [feature: target]")
+    for split in ("probe_dev", "probe_heldout"):
+        for feature, targets in report["diagnostics"][split].items():
+            for name, entry in targets.items():
+                print(
+                    f"    {split[6:]:8s} {feature:5s} {name:22s} "
+                    f"{entry['char_accuracy']:6.3f} {entry['full_exact']:6.3f}"
+                )
+    for split in ("addressing_dev", "addressing_heldout"):
+        entry = report["diagnostics"].get(split)
+        if entry:
+            print(f"  addressing {split[11:]:9s} {entry}")
     print("\n  checks")
     for name, passed in report["checks"].items():
-        print(f"    {'PASS' if passed else 'FAIL'}  {name}")
+        mark = "PASS" if passed is True else ("FAIL" if passed is False else "n/a ")
+        print(f"    {mark}  {name}")
     print(f"\nall_pass        : {report['all_pass']}")
     print(f"report          : {path}")
     print(f"checkpoint      : {report.get('checkpoint')}")

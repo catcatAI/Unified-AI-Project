@@ -332,3 +332,243 @@ def test_answer_loss_is_finite_and_smaller_with_the_answer_than_without(task):
     value = task.answer_loss(core, table, rows["dev"], device=device, batch_size=4)
     assert value > 0.0
     assert value <= task.ANSWER_CHARS * 8.0  # uniform-distribution entropy bound
+
+
+# --------------------------------------------------------------------------- #
+# round 7: the structure (a key-addressed store), and the controls that make a
+# passing number mean anything
+# --------------------------------------------------------------------------- #
+@pytest.fixture(scope="module")
+def slot_core(task):
+    pytest.importorskip("torch")
+    table = task.CharTable()
+    return task.build_core(table, "cpu", hidden=32, emb=16, core="slots")
+
+
+def test_the_store_is_part_of_the_state_not_the_caller(task, slot_core):
+    """R1: the core owns the schema; a caller cannot add a second store."""
+    state = slot_core.init_state(2)
+    assert set(state.tensors) == {"h", "slot_k", "slot_v"}
+    assert state.tensors["slot_k"].shape == (2, slot_core.slots, slot_core.slot_dim)
+    assert state.tensors["slot_v"].shape == (2, slot_core.slots, slot_core.value_dim)
+    assert state.model_kind == "slots"
+    # ``create`` validates the kind, so "slots" has to be a registered state kind
+    from ai.core.core_state import MODEL_KINDS
+
+    assert "slots" in MODEL_KINDS
+
+
+def test_teaching_writes_the_store_and_the_ablation_does_not(task, slot_core, splits):
+    torch = pytest.importorskip("torch")
+    rows = [task.encode_episode(task.CharTable(), e) for e in splits["train"][:3]]
+    state = slot_core.init_state(len(rows))
+    task._teach(slot_core, rows, state, "cpu")
+    assert float(torch.count_nonzero(state.tensors["slot_k"])) > 0
+    assert float(torch.count_nonzero(state.tensors["slot_v"])) > 0
+
+    ablated = task.build_core(
+        task.CharTable(), "cpu", hidden=32, emb=16, core="slots", memory=False
+    )
+    state2 = ablated.init_state(len(rows))
+    task._teach(ablated, rows, state2, "cpu")
+    assert float(torch.count_nonzero(state2.tensors["slot_v"])) == 0
+    assert float(ablated.read_vector(state2).abs().sum()) == 0.0
+
+
+def test_the_ablation_keeps_every_parameter(task):
+    """R4: the ablation removes the store, not capacity."""
+    pytest.importorskip("torch")
+    table = task.CharTable()
+    full = task.build_core(table, "cpu", hidden=32, emb=16, core="slots")
+    ablated = task.build_core(table, "cpu", hidden=32, emb=16, core="slots", memory=False)
+    assert full.parameter_count() == ablated.parameter_count()
+    assert len(full.modules()) == len(ablated.modules())
+
+
+def test_read_depends_on_both_the_controller_and_the_store(task, slot_core):
+    """A read that ignored the store would be ``h`` under another name."""
+    torch = pytest.importorskip("torch")
+    state = slot_core.init_state(2)
+    with torch.no_grad():
+        for name in ("slot_k", "slot_v", "h"):
+            state.tensors[name] = torch.randn_like(state.tensors[name])
+        first = slot_core.read_vector(state).clone()
+        # A different controller addresses the same store differently.
+        state.tensors["h"] = torch.randn_like(state.tensors["h"])
+        other_controller = slot_core.read_vector(state).clone()
+        assert not torch.allclose(first, other_controller)
+        # An empty store returns nothing, whatever the controller says.
+        state.tensors["slot_v"] = torch.zeros_like(state.tensors["slot_v"])
+        empty = slot_core.read_vector(state).clone()
+        assert float(empty.abs().sum()) == 0.0
+        assert not torch.allclose(first, empty)
+
+
+def test_reading_does_not_write(task, slot_core):
+    """The 'single writer' rule: only ``ai_step``/``al_step`` mutate the state."""
+    torch = pytest.importorskip("torch")
+    state = slot_core.init_state(2)
+    rows = torch.randint(0, len(task.CharTable()), (2, 5))
+    slot_core.ai_step(rows, state)
+    before = {name: value.clone() for name, value in state.tensors.items()}
+    version = state.state_version
+    slot_core.read_vector(state)
+    slot_core.attention(state)
+    assert state.state_version == version
+    for name, value in before.items():
+        assert torch.equal(state.tensors[name], value)
+
+
+def test_time_moves_the_controller_and_leaves_the_store(task, slot_core):
+    """``al_step`` is the recurrence; addresses are content and do not decay."""
+    torch = pytest.importorskip("torch")
+    state = slot_core.init_state(1)
+    state.tensors["slot_k"] = torch.ones_like(state.tensors["slot_k"])
+    state.tensors["slot_v"] = torch.ones_like(state.tensors["slot_v"])
+    keys, values = state.tensors["slot_k"].clone(), state.tensors["slot_v"].clone()
+    slot_core.al_step(120.0, state)
+    assert state.ticks >= 1
+    assert torch.equal(state.tensors["slot_k"], keys)
+    assert torch.equal(state.tensors["slot_v"], values)
+
+
+def test_zeroing_the_state_zeroes_every_tensor(task, slot_core):
+    torch = pytest.importorskip("torch")
+    state = slot_core.init_state(2)
+    for name in state.tensors:
+        state.tensors[name] = torch.ones_like(state.tensors[name])
+    task.zero_tensors(state)
+    for name, value in state.tensors.items():
+        assert float(value.abs().sum()) == 0.0, name
+
+
+def test_selective_zeroing_leaves_the_rest_alone(task, slot_core):
+    """The per-tensor diagnostics must not silently zero everything."""
+    torch = pytest.importorskip("torch")
+    state = slot_core.init_state(2)
+    for name in state.tensors:
+        state.tensors[name] = torch.ones_like(state.tensors[name])
+    task.zero_tensors(state, ["h"])
+    assert float(state.tensors["h"].abs().sum()) == 0.0
+    assert float(state.tensors["slot_v"].abs().sum()) > 0.0
+
+
+def test_evaluate_can_zero_the_whole_state(task, slot_core, splits):
+    """B3's path through ``evaluate`` must be the same state, only emptied."""
+    pytest.importorskip("torch")
+    table = task.CharTable()
+    episodes = splits["dev"][:6]
+    both = task.evaluate(
+        slot_core, table, episodes, device="cpu", zero_keys=list(slot_core.init_state(1).tensors)
+    )
+    assert both["n"] == 6
+    assert both["exact"] is not None
+
+
+def test_a_slot_state_survives_export_and_attach(task, slot_core):
+    """R5: a persistent store has to round-trip, or 'persistent state' is a claim."""
+    torch = pytest.importorskip("torch")
+    state = slot_core.init_state(2)
+    for name in state.tensors:
+        state.tensors[name] = torch.randn_like(state.tensors[name])
+    exported = slot_core.export_state(state)
+    assert set(exported.tensors) == {"h", "slot_k", "slot_v"}
+    attached = slot_core.attach_state(exported)
+    for name in state.tensors:
+        assert torch.allclose(attached.tensors[name], state.tensors[name])
+
+
+def test_addressing_diagnostics_exist_only_for_a_store(task, slot_core, splits):
+    episodes = splits["dev"][:4]
+    gru = task.build_core(task.CharTable(), "cpu", hidden=16, emb=8)
+    assert task.addressing_diagnostics(gru, task.CharTable(), episodes, device="cpu") is None
+    report = task.addressing_diagnostics(slot_core, task.CharTable(), episodes, device="cpu")
+    assert set(report) == {
+        "n",
+        "distinct_read_slot_rate",
+        "read_cosine_between_asks",
+        "attention_max_prob_mean",
+    }
+    assert report["n"] == 4
+    assert 0.0 <= report["distinct_read_slot_rate"] <= 1.0
+    assert -1.0 <= report["read_cosine_between_asks"] <= 1.0
+
+
+def _control(core, memory, heldout, params=1, digests=None):
+    return {
+        "path": "x.json",
+        "task_version": "state-binding-v1",
+        "core": core,
+        "memory": memory,
+        "hidden": 32,
+        "params": params,
+        "digests": digests,
+        "heldout_exact": heldout,
+        "all_pass": False,
+    }
+
+
+def test_the_controls_are_gates_not_notes(task):
+    """B7/B8: a pass is unearned without the ablation and the parameter match."""
+    digests = {"train": "a", "dev": "b", "heldout_names": "c"}
+    report = {"results": {"heldout_names": {"exact": 0.5}}, "digests": digests}
+
+    missing = task.compare_controls(report, [])
+    assert missing["B7_control_present"] is False
+    assert missing["B8_control_present"] is False
+
+    good = task.compare_controls(
+        report,
+        [
+            _control("slots", False, 0.1, digests=digests),
+            _control("gru", True, 0.02, digests=digests),
+        ],
+    )
+    assert good["B7_memory_ablation_gap_ge_0.20"] is True
+    assert good["B8_matched_params_heldout_lt_0.30"] is True
+    assert good["B7_control_same_splits"] is True
+
+    weak = task.compare_controls(
+        report,
+        [
+            _control("slots", False, 0.35, digests=digests),
+            _control("gru", True, 0.40, digests=digests),
+        ],
+    )
+    assert weak["B7_memory_ablation_gap_ge_0.20"] is False
+    assert weak["B8_matched_params_heldout_lt_0.30"] is False
+
+    other_data = task.compare_controls(
+        report,
+        [
+            _control("slots", False, 0.1, digests={"train": "z"}),
+            _control("gru", True, 0.02, digests=digests),
+        ],
+    )
+    assert other_data["B7_control_same_splits"] is False
+
+
+def test_a_control_report_is_read_as_written(task, tmp_path):
+    payload = {
+        "task_version": "state-binding-v1",
+        "config": {"core": "slots", "memory": False, "hidden": 32},
+        "params": 7,
+        "digests": {"train": "a"},
+        "results": {"heldout_names": {"exact": 0.125}},
+        "all_pass": False,
+    }
+    path = tmp_path / "control.json"
+    path.write_text(__import__("json").dumps(payload), encoding="utf-8")
+    loaded = task.load_control(str(path))
+    assert loaded["memory"] is False
+    assert loaded["core"] == "slots"
+    assert loaded["heldout_exact"] == 0.125
+    assert loaded["digests"] == {"train": "a"}
+
+
+def test_the_gru_arm_still_has_one_tensor(task):
+    """Round 7 must not rewrite the arm it is being compared against."""
+    pytest.importorskip("torch")
+    gru = task.build_core(task.CharTable(), "cpu", hidden=16, emb=8)
+    assert set(gru.init_state(1).tensors) == {"h"}
+    assert type(gru).__name__ == "GRUCore"
