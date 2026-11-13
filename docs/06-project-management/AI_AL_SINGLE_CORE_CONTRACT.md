@@ -271,7 +271,7 @@ T5 對照組也變 → 先把實驗做乾淨。
 | — | **可定址（2026-11-13）**：**結構改對了，但選取與接線壞了**。`SlotMemoryCore`（同一個 GRU ＋ 四個 gate 寫入、attention 讀取的槽，134,124 參數）在**同一份切分**（digest 相同）上：dev exact **0.0007**、held-out **0.0000**，B1／B2／B3／B5／B7 FAIL，B4／B6／B8 PASS。**這一輪的重點不是分數，是三個讀數**：① store **真的存了兩組值**——`read` 的線性探針對兩組各 **0.589／0.593** 字元（chance 0.1333）、full exact 0.008／0.010（chance 2.4e-6），所以「沒寫進去」已經排除；② **選不出來**——`distinct_read_slot_rate` **0.0000／0.0003**、`read_cosine_between_asks` **0.9998**、`attention_max_prob_mean` **0.97**，兩個問題讀同一格而且很果斷；③ **store 反而更差**——同參數、只把讀寫拿掉的消融臂 held-out **0.1233**，B7 的差是 **−0.1233**（不是 +0.20），`other_value_rate` 0.0 表示吐出來的字串**兩組都不是**（解碼壞了，不是 hedging）。B8 PASS（matched GRU 0.1557 < 0.30）→ 不是參數問題。**下一輪登記的變數是「定址訊號」**（對教學回合做 per-turn keys）**與讀取→控制器的接法**；在登記寫下來之前不開計分 run。**核心分仍 0.00/10**，未接生產。 | `scripts/train_state_binding.py` 的三份報告（A／C2／C3）`all_pass=False`（如實）；`tests/test_state_binding_task.py` 40 條綠；`scripts/check_layer_separation.py` 的 `stateful_core_two_bindings` 仍 `fail` |
 
 | **語言** | 同一個 core 能不能讀進一段 byte 文字、再產生文字（§47 登記、§48 結果） | L1–L7 全過，且**英文與證詞各自**贏過自己的 trigram floor（合併數字不算） |
-| — | **語言（2026-11-13）**：**設備有了，能力沒有跟著宣稱**。同一個 `GRUCore`／`CoreState` v1（**124,611** 參數、259 個 byte token）在 4.01 MB 上訓練 5 epochs（**402.65 s**、xpu），**L1–L7 全 PASS**：留出 BPC **1.3164** vs 插值 bigram 3.4317／trigram 2.1547；L3 100 個 prefix 有 **98** 個不同續寫、平均 LCP **8.14** vs trigram 1.71；L4 帶 state 1.3164 vs 每窗重置 1.4219（**7.4%**）；L5 在 `--check` 裡真的把 checkpoint 載回同一個類別；L6 文字流無 oracle／camera tag；L7 成本已記錄。**分解（§47.9 要求，也是這一輪最重要的讀數）**：英文 general **2.2201**（贏自己的 trigram 2.9739 約 **25%**）、證詞 **0.2480**（贏 1.1892 約 79%）；L3 拆開後英文只比 trigram 多對 **1.1 byte**（1.64 vs 0.55）且是固定填充詞，證詞的 16.09 才是拉高合併數字的原因。**照實記**：證詞低 BPC 是模板格式規律，不是中文能力；英文續寫不是理解。**核心分仍 0.00/10**、系統分 6.41 不動；這一階是 P 的載體，不是結果。 | `scripts/train_text_stage.py` 的報告 `all_pass=True` 且 `--check` 回 `OK`；`tests/test_text_stage.py` 22 條綠 |
+| — | **語言（2026-11-13）**：**設備有了，能力沒有跟著宣稱**。同一個 `GRUCore`／`CoreState` v1（**124,611** 參數、259 個 byte token）在 4.01 MB 上訓練 5 epochs（**402.65 s**、xpu），**L1–L7 全 PASS**：留出 BPC **1.3164** vs 插值 bigram 3.4317／trigram 2.1547；L3 100 個 prefix 有 **98** 個不同續寫、平均 LCP **8.14** vs trigram 1.71；L4 帶 state 1.3164 vs 每窗重置 1.4219（**7.4%**）；L5 在 `--check` 裡真的把 checkpoint 載回同一個類別；L6 文字流無 oracle／camera tag；L7 成本已記錄。**分解（§47.9 要求，也是這一輪最重要的讀數）**：英文 general **2.2201**（贏自己的 trigram 2.9739 約 **25%**）、證詞 **0.2480**（贏 1.1892 約 79%）；L3 拆開後英文只比 trigram 多對 **1.1 byte**（1.64 vs 0.55）且是固定填充詞，證詞的 16.09 才是拉高合併數字的原因。**照實記**：證詞低 BPC 是模板格式規律，不是中文能力；英文續寫不是理解。**核心分仍 0.00/10**、系統分 6.41 不動；這一階是 P 的載體，不是結果。 | `scripts/train_text_stage.py` 的報告 `all_pass=True`；`--check` 在 2026-11-13 之後**會回報 `weights_hash` 不符**——那是 §48.7 的欄位標錯（報告記的是初始化，不是 checkpoint），L1–L7 的判定不讀那個欄位，所以分數不動；`tests/test_text_stage.py` 22 條綠 |
 
 **停損**：
 
@@ -392,6 +392,15 @@ T5 對照組也變 → 先把實驗做乾淨。
 - `tests/test_text_stage.py`（22 條）：詞表對 256 個 byte 可逆、loader 只切整行、floor 是
   機率分布且 λ 只在訓練尾巴選、gate 由記錄的數字重算、`--check` 對竄改／缺 checkpoint
   都會失敗、洩漏的 camera tag 在訓練前就中止。
+- `scripts/train_pantry_deduction.py`：**§49 的 pantry 推理（P）**，從 L 的 checkpoint
+  出發（G1 鎖檔案 sha256 與訓練後 hash）。11 個 turn 逐輪 `ai_step`、輪間
+  `al_step(turn["dt_s"])`，目標只有兇手名字的 4–5 bytes ＋ `\n`；正解、前綴解、每個消融解
+  都由產生器的 `derive()` 算出來，不由人手指定。G8 的格式對照（同文字、同步數、答案換成
+  隨機的另一個人）是**另一支臂**，計分臂在它完成前拒絕啟動。
+- `tests/test_pantry_deduction.py`（30 條）：語料兩份 digest 與 L 相同、逐輪 runner 與
+  `ai_step`＋`al_step` 逐位相同（含 `state_version`／`ticks`）、批次不改變單筆 state、
+  重置臂只看最後一輪、前綴在 **98** 題上是陷阱、格式對照永遠不是兇手、gate 由數字重算、
+  `verdict` 只數布林、smoke 報告不會被當成對照。
 - `tests/test_state_binding_task.py`（40 條）：洩漏偵測器被故意餵壞（重用值／訓練過的名字／
   `wrong_name` 竟然問到教過的 key／`ask` 越界）、`cold` 與 held-out 同題、兩個教學回合是
   **兩個**各自只帶一個值的序列、兩個 `ask` 位置都出現、`_teach` 真的是兩次 `ai_step` 加兩次
