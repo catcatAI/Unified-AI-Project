@@ -877,6 +877,19 @@ def load_control(path: str) -> Dict[str, Any]:
     }
 
 
+def verdict(checks: Dict[str, Any]) -> bool:
+    """True only when every *gate* is true.
+
+    ``checks`` carries both booleans and the numbers behind them (B7's ablation
+    held-out, B8's matched-parameter held-out). Those numbers are diagnostics: a
+    run whose gates all pass would otherwise still report ``all_pass=False``
+    because ``0.1557 is not True``. Only booleans are gates, and a run with no
+    boolean gate at all is not a pass.
+    """
+    gates = [value for value in checks.values() if isinstance(value, bool)]
+    return bool(gates) and all(gates)
+
+
 def compare_controls(report: Dict[str, Any], controls: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     """B7/B8: the two confounds that would make a pass meaningless.
 
@@ -1053,7 +1066,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         report["controls"] = controls
         checks.update(compare_controls(report, controls))
     report["checks"] = checks
-    report["all_pass"] = all(value is True for value in checks.values())
+    report["all_pass"] = verdict(checks)
 
     out_dir = Path(args.out)
     if not out_dir.is_absolute():

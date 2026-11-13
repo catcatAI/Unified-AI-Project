@@ -507,6 +507,13 @@ def test_an_ablated_store_reports_no_addressing_instead_of_crashing(task, splits
     assert "distinct_read_slot_rate" not in report
 
 
+def test_diagnostic_numbers_do_not_make_the_verdict_false(task):
+    """A gate-only verdict; the numbers behind B7/B8 are not booleans."""
+    assert task.verdict({"A": True, "B": True, "B_value": 0.1557}) is True
+    assert task.verdict({"A": True, "B": False, "B_value": 0.1557}) is False
+    assert task.verdict({"B_value": 0.1557}) is False, "no boolean gate is not a pass"
+
+
 def _control(core, memory, heldout, params=1, digests=None):
     return {
         "path": "x.json",
