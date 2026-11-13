@@ -267,6 +267,9 @@ T5 對照組也變 → 先把實驗做乾淨。
 | **兩組** | state 能不能同時持**兩組**配對，並由查詢選一組（§45） | `heldout_names` exact 過線，且兩個問法各自都選對 |
 | — | **兩組狀態（2026-11-13）**：**不能，而且不是預算問題**。同一個 81,765 參數的 `GRUCore`、同一個 seed（20261115）：**一組**配對 held-out exact **1.000**（probe 0.874），**兩組**配對 **0.0033**（`single` 目標）／**0.0100**（`both` 目標，兩組查詢都進損失），門檻 0.30，B1／B2／B3／B5 全 FAIL，零狀態與冷啟 0.000。`h` 的線性 probe 對「第一組教的值／第二組教的值／被問的值」只有 0.319／0.413／0.303（`single`）與 0.351／0.383／0.280（`both`）字元（chance 0.027）——**兩個槽都不可讀**，所以是「根本沒寫進去」，不是「寫進去選不出來」。**兩個已排除的解釋**：目標（兩臂排序在兩個 seed 上翻轉，差別在雜訊內；`both` 只是一致地比較好擬合，dev 損失 0.741 vs 1.007）與寬度（256 寬：訓練損失 0.196、held-out 0.057）。**照實記的一個陷阱**：兩臂的 `other_value_rate` 只有 0.002–0.004，但那是因為它們**兩組的值都沒答出來**，不是「避免賭」——所以 B5 必須同時要求兩個 `by_ask ≥ 0.50`，這一輪剛好是它的反例。結論是一條**設計要求**：可定址性（key 位址化的槽、或對教學回合做注意力）不會從「同一個向量連續覆寫」長出來。**核心分仍 0.00/10**，未接生產。 | `scripts/train_state_binding.py` 的兩份報告 `all_pass=False`（如實）；`tests/test_state_binding_task.py` 24 條綠；同 seed 單組對照 `state_content_20261113-033723` `all_pass=True` |
 
+| **可定址** | 同一個 state 裡開**可寫的槽**，查詢用位址去讀（§46，唯一變數＝結構） | 兩個問法各自選對（`by_ask` 皆 ≥ 0.50），且消融「拿掉 store」真的更差（B7 gap ≥ 0.20） |
+| — | **可定址（2026-11-13）**：**結構改對了，但選取與接線壞了**。`SlotMemoryCore`（同一個 GRU ＋ 四個 gate 寫入、attention 讀取的槽，134,124 參數）在**同一份切分**（digest 相同）上：dev exact **0.0007**、held-out **0.0000**，B1／B2／B3／B5／B7 FAIL，B4／B6／B8 PASS。**這一輪的重點不是分數，是三個讀數**：① store **真的存了兩組值**——`read` 的線性探針對兩組各 **0.589／0.593** 字元（chance 0.1333）、full exact 0.008／0.010（chance 2.4e-6），所以「沒寫進去」已經排除；② **選不出來**——`distinct_read_slot_rate` **0.0000／0.0003**、`read_cosine_between_asks` **0.9998**、`attention_max_prob_mean` **0.97**，兩個問題讀同一格而且很果斷；③ **store 反而更差**——同參數、只把讀寫拿掉的消融臂 held-out **0.1233**，B7 的差是 **−0.1233**（不是 +0.20），`other_value_rate` 0.0 表示吐出來的字串**兩組都不是**（解碼壞了，不是 hedging）。B8 PASS（matched GRU 0.1557 < 0.30）→ 不是參數問題。**下一輪登記的變數是「定址訊號」**（對教學回合做 per-turn keys）**與讀取→控制器的接法**；在登記寫下來之前不開計分 run。**核心分仍 0.00/10**，未接生產。 | `scripts/train_state_binding.py` 的三份報告（A／C2／C3）`all_pass=False`（如實）；`tests/test_state_binding_task.py` 40 條綠；`scripts/check_layer_separation.py` 的 `stateful_core_two_bindings` 仍 `fail` |
+
 **停損**：
 
 - P1 若 T1 沒有下降 → 先修模型／訓練，不是加大 state。
@@ -316,9 +319,10 @@ T5 對照組也變 → 先把實驗做乾淨。
   ——**P0 已建立**（見下方「P0 現況」）。
 - `apps/backend/src/ai/core/core_step.py`：`ai_step`／`al_step` protocol、時間切段、registry
   ——**P1 已建立**（純 stdlib，不含模型）。
-- `apps/backend/src/ai/core/stateful_decoder.py`：兩個臂共用 `StatefulCore`（同一個 state
+- `apps/backend/src/ai/core/stateful_decoder.py`：所有臂共用 `StatefulCore`（同一個 state
   物件／`weights_hash`／checkpoint）——`GRUCore`（**P1 第一臂**）、`SSMCore`（**P3 臂**，
-  `h ← h·exp(-dt/τ)`、線性讀出）；SNN 臂仍未接。
+  `h ← h·exp(-dt/τ)`、線性讀出）、`SlotMemoryCore`（**§46 的第七輪臂**：同一個 GRU ＋
+  四個 gate 寫入、attention 讀取的槽；`model_kind="slots"`）；SNN 臂仍未接。
 
 **修改**
 
@@ -371,11 +375,25 @@ T5 對照組也變 → 先把實驗做乾淨。
   那一組、`both` 兩組都訓練且各自從**全新的 state** 出發，所以兩臂的差別沒有序列佈局）。
   checkpoint 以**最低 dev 答案損失**選，不以 exact 選（exact 是階躍函數，`--patience 0`
   單獨修不好這件事）。診斷：`h` 對兩個槽與「被問的那組」的線性 probe、`by_ask`、
-  `other_value_rate`、`wrong_name.taught_value_rate`、`both_sequential`。
-- `tests/test_state_binding_task.py`（24 條）：洩漏偵測器被故意餵壞（重用值／訓練過的名字／
+  `other_value_rate`、`wrong_name.taught_value_rate`、`both_sequential`。**§46 追加**
+  `--core slots`（可定址 store）／`--no-memory`（同參數的消融）／`--control`（把對照報告
+  讀回來，B7 的消融差與 B8 的參數匹配才可能算得出來；資料 digest 不符就拒絕），以及
+  `addressing_diagnostics`（兩個問題讀到同不同格）——消融臂沒有 attention 權重，回
+  `applicable: false` 而不崩潰。
+- `scripts/train_text_stage.py`：**§47 的文字階段（L）**。byte 詞表（259：`<pad>`／
+  `<bos>`／`<eos>` ＋ 256 bytes）、**同一個** `GRUCore` 與 `CoreState` v1、128-byte 窗、
+  每 4096 bytes 重置 state；floor 是**算出來的**內插 bigram／trigram（權重在訓練尾巴選），
+  L3 比的是同一個 trigram 的貪心續寫，L4 是「同一份權重、每個窗重置 state」，L5 在
+  `--check` 裡也會真的把 checkpoint 載回同一個類別。語料是 core_train／core_val 的前
+  N bytes ＋ pantry v2 證詞（登記的位元組數在執行時比對，不符就中止）。
+- `tests/test_text_stage.py`（22 條）：詞表對 256 個 byte 可逆、loader 只切整行、floor 是
+  機率分布且 λ 只在訓練尾巴選、gate 由記錄的數字重算、`--check` 對竄改／缺 checkpoint
+  都會失敗、洩漏的 camera tag 在訓練前就中止。
+- `tests/test_state_binding_task.py`（40 條）：洩漏偵測器被故意餵壞（重用值／訓練過的名字／
   `wrong_name` 竟然問到教過的 key／`ask` 越界）、`cold` 與 held-out 同題、兩個教學回合是
   **兩個**各自只帶一個值的序列、兩個 `ask` 位置都出現、`_teach` 真的是兩次 `ai_step` 加兩次
-  `al_step`、checkpoint 選擇用的是連續訊號。
+  `al_step`、checkpoint 選擇用的是連續訊號、消融臂的診斷回 `applicable: false` 而不是
+  崩潰、判定只數布林門檻（數字不是門檻）。
 - `tests/ai/test_stateful_runtime.py`（27 條）＋ `tests/services/test_memory_handoff.py`
   的兩條能力邊界測試：開關預設關、沒有 checkpoint 不建目錄、兩回合推進、session 互不
   汙染、restart 續接、三種拒絕（毀損／換權重）且檔案位元組不變、prompt 端不再發布
