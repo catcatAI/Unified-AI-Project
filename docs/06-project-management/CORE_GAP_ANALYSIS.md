@@ -4576,6 +4576,29 @@ BPC 把兩半混在一起**，而兩半的難度差一個數量級。§47.9 要�
   能不能用語言做推理），而且 P 的結果會決定多綁定到底是不是必要條件。先跑能改變後續量測的
   那一階。
 
+### 48.7 更正（2026-11-13，發現於 P 的接線，未改任何 L 的數字）
+
+L 的報告把 **初始化的權重 hash** 記在 `weights_hash` 這個名字底下。`train_text_stage.py`
+在 `train()` **之前**就寫了 `report["weights_hash"] = core.weights_hash()`（第 972 行），
+訓練後直接存 checkpoint，於是：
+
+| | 值 | 這是什麼 |
+| --- | --- | --- |
+| 報告的 `weights_hash` | `sha256:a7843b34…6c4b` | `seed=20261116` 的**初始化**（可重現：同一顆種子建 `GRUCore(259,128,64)` 就得到它） |
+| checkpoint 載入後 | `sha256:77cb6af3…ea825` | **訓練後**的權重 |
+| checkpoint 檔 | `e2a6580ec06b1a8afe886adc5b955d9e7a10bba8996b782383f86b16370efdd4` | 檔案本身 |
+
+**為什麼沒被發現**：L5 只檢查 `model_kind`、`state_schema`、`token_count`；`--check`
+只重算 L1–L4／L6／L7 的數字（那些門檻不讀 `weights_hash`）。所以一個標錯的欄位靜靜地
+跟著報告走了。P 要拿它鎖起點時才撞上：載入檔案得到的 hash 與登記不符，而**錯的是報告的
+欄位，不是檔案**。
+
+**修法**（`train_text_stage.py`）：`init_weights_hash` 記訓練前，`weights_hash` 記訓練後
+（存檔前），另記 `checkpoint_sha256`；`--check` 現在會把載回的 hash 與報告比對。
+**代價照實記**：舊的 L 報告因此**不再通過** `--check`（它會回報 hash 不符）——這是正確
+的，因為那個欄位就是錯的。L1–L7 的分數與判定不受影響（沒有任何一條讀這個欄位），但
+「報告本體可以鎖住起點」這個用法作廢；P 的 G1 改成鎖**檔案**與**訓練後 hash**（§49.12）。
+
 ## 四十九、在 L 的載體上做 pantry 推理：階段 P（2026-11-13，量測前寫定）
 
 ### 49.1 為什麼是 P、它與 L 的關係
@@ -4595,7 +4618,9 @@ P 問的是下一個問題，而且是一個可以被否證的問題：
    輸入結構**。兩句話不衝突：P 不重跑、也不改 L 的 L1–L7 門檻，L 的報告仍是它自己的
    證據。
 3. **起點是 L 的 checkpoint，不是重訓**。順序的重點就是「先有語言載體」；起點用
-   `weights_hash` 鎖住（G1），所以「從哪裡開始」不是我可以事後改的變數。
+   **檔案 sha256 與訓練後權重 hash** 兩層鎖住（G1），所以「從哪裡開始」不是我可以事後
+   改的變數。**L 報告裡的 `weights_hash` 不能用來鎖起點**：那個值是初始化的 hash
+   （§48.7 的更正），不是檔案裡訓練後的權重。
 
 ### 49.2 登記什麼、不登記什麼
 
@@ -4654,7 +4679,7 @@ MMLU／GSM8K 比較；`INTELLIGENCE_PASS_CRITERIA.md` 的外部錨在這裡不�
 | `al_step` | session 自己的 `dt_s`，chunk 60 s；留出的平均 **319.1** chunks／session、最大 dt 14,375.8 s |
 | device | `core.system.config.compute_device.resolve_torch_device()`；報告記錄實際值 |
 | 生成 | greedy，最多 **8 bytes**，遇 `"\n"` 停 |
-| 時間 | 登記前的 CPU smoke（16 個 session、forward+backward、不含 `al_step`）是 **0.55 s**；估 40–60 s／epoch、**15–25 分鐘／臂** |
+| 時間 | 登記前的 CPU smoke：一個 **batch 8、含 `al_step`、forward+backward+step** 是 **1.44 s**（三次 1.45／1.38／1.47），tick 1,630／batch → 100 batch／epoch ≈ **2.4 分鐘／epoch**、CPU 上限約 **48 分鐘／臂**；xpu 應更快。這是估計，不是門檻 |
 
 **量測衛生**：登記 run 進行中，不得有其他 torch／XPU 工作（§46.11 第一件事）。兩臂依序
 跑，對照先（§49.10）。
@@ -4663,7 +4688,7 @@ MMLU／GSM8K 比較；`INTELLIGENCE_PASS_CRITERIA.md` 的外部錨在這裡不�
 
 | 門檻 | 條件 | 這個數字從哪來 |
 | --- | --- | --- |
-| G1 | 起點的 `weights_hash` = `sha256:a7843b34ef1dba6502f07645a0138dd2e3dc1d9af1eb010ccc0aca7c293d6c4b`，參數 **124,611** | L 的報告本體；不符就中止 |
+| G1 | 起點檔案 sha256 = `e2a6580ec06b1a8afe886adc5b955d9e7a10bba8996b782383f86b16370efdd4`，載入後 `weights_hash` = `sha256:77cb6af3cf2a9df9d3e26142ab2092720d99e8b74423f73d250ff942945ea825`，參數 **124,611** | L 的那個 checkpoint 檔（訓練後）；不符就中止。舊登記寫的 `a784…` 是初始化的 hash，見 §48.7／§49.12 |
 | G2 | 語料的兩個 digest 等於 §49.3、800／200、`registered_sizes_match` | 同上；不符就中止 |
 | G3 | **儀器**：train 切分前 200 個 session 的 free exact **> 0.25** | 與 G4 同一條線；這一條問的是「通道能不能把答案說出來」，不是能力 |
 | G4 | 留出 free exact 的 **Wilson 95% 下界 > 0.25** | 0.25 = 語料自己算出的**最強 surface baseline 上界**（見下） |
@@ -4771,3 +4796,11 @@ $PY scripts/train_pantry_deduction.py --check data/pantry_stage/<report>.json
 * **2026-11-13，V6 的讀法（§49.9）**：原本只寫「掉下去＝用時鐘不是時間戳」。這句話把
   「`al_step` 幫了忙」與「`al_step` 洗掉內容」混成一個方向。改成兩個方向都照實讀，並把
   `319.1` chunks／session 寫進來——這不是看到結果才改的，改的時候一趟 P 都還沒跑。
+* **2026-11-13，G1 的鎖（§49.1、§49.6）**：舊登記把起點鎖在 `sha256:a784…`，那是**初始化**
+  的 hash（§48.7），不是 checkpoint 裡的權重。發現時正在把 P 接上 L，一趟 P 都還沒跑；
+  改成同時鎖**檔案 sha256** 與**訓練後 weights_hash**。這不是把門檻放寬：舊值連「檔案裡
+  的權重」都不是，依它判會讓每個 run 在第一步就中止。G1 的其他條件（124,611 參數、同一個
+  `GRUCore` 設定）不變。
+* **2026-11-13，G6 的讀法（§49.6）**：程式把 `flip_rate` 寫成「兩邊都對」（前綴答陷阱、
+  完整答兇手），不是「答案有變」。任何改變都算 flip 會讓「錯兩次」看起來像撤回，所以同時
+  另記 `changed_rate` 當診斷。這一條在第一次 P 執行前就定在程式裡。
