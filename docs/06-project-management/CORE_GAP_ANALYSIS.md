@@ -4265,3 +4265,120 @@ loss 這一階降完 exact 才會跳；同時 `distinct_read_slot_rate` 只有 *
     --objective both --seed 20261115 --epochs 100 --patience 0 --out data/state_binding \
     --control <C2 report>.json --control <C3 report>.json
 ```
+
+## 四十七、先給核心語言能力：byte-level 文字階段（2026-11-13，量測前寫定）
+
+### 47.1 為什麼順序要改
+
+§45／§46 量的是「state 能不能記住兩組綁定」，答案是：128 維的單一向量不行，四個可定址的槽也還不確定。但
+pantry v2 之後出現一個更前面的問題——**如果核心連「把一段話讀進去」都做不到，pantry 就會被迫用一堆約束去補語言**，
+而量到的會是那些約束，不是推理。所以這是最後一次改順序，不是又一次調參：
+
+```
+文字階段 L（本節）  →  推理階段 P（另案登記）
+byte-level 語言模型      在 L 的權重上做 pantry
+```
+
+本節**只**登記 L。P 要另外登記，因為它改的是任務表徵（把 37 個 CV 音節換成 byte），不是同一個任務的變體。
+把 L 和 P 寫在同一份登記裡，等於事前允許「P 不過就說 L 過了」。先分開。
+
+### 47.2 登記什麼、不登記什麼
+
+| | 內容 |
+| --- | --- |
+| **登記** | 一個 byte-level 的 `GRUCore`（同一個類別、同一份 `CoreState`）能不能學會下一個 byte，並且**生成**（不是只會評分） |
+| **不登記** | pantry 的轉移。L 過不代表 P 會過；P 的門檻與指令另外寫 |
+| **不改** | 核心分、系統分、既有門檻、既有評測題。這一節是設備，不是分數 |
+
+### 47.3 語料（跑之前寫定，不得事後改）
+
+| 來源 | 訓練 | 留出 |
+| --- | --- | --- |
+| 一般英文 | `apps/backend/data/processed/core_train.jsonl`，前 **3,000,000 bytes**（整行，不切半行） | `apps/backend/data/processed/core_val.jsonl`，前 **300,000 bytes**（整行） |
+| 茶水間口供 | `scripts/gen_pantry_ecosystem.py --sessions 1000 --seed 20261113` 的 **train** 切分：800 sessions、**1,014,924 bytes** | 同一份的 **held-out** 切分：200 sessions、**254,050 bytes** |
+
+* 一般英文的每一行 = `input + " " + output + "\n"`；口供的每一行 = `"\n".join(turn["user_input"]) + "\n"`。
+* 留出的一般英文是**另一個檔案**（`core_val.jsonl`），不是我從 train 切一段——它是既有的、資料準備腳本已經分好的切分。
+* **偏離（照實記）**：口供的**句型**在 train 與 held-out 之間共用。這是刻意的：L 學的是語言，P 才是用沒見過的
+  答案 tuple 量推理。L 的留出仍然是**沒見過的 200 個 session**，不是同一段文字。
+* 文字流**不得**包含 `ground_truth_oracle` 的任何欄位；L6 會逐 session 掃 `evidence_tag`。
+
+### 47.4 表徵與模型（不新增類別）
+
+| | 值 | 理由 |
+| --- | --- | --- |
+| 詞表 | byte：`0=<pad>`、`1=<bos>`、`2=<eos>`、`3..258 = byte 0..255` | 可逆（`decode(encode(x)) == x`），沒有未登錄詞，也沒有 tokenizer 的訓練/推論不一致 |
+| `token_count` | **259** | 由詞表決定，不是調出來的 |
+| 模型 | `ai.core.stateful_decoder.GRUCore(token_count=259, hidden=128, emb=64, chunk_seconds=60.0)` | **同一個類別**、同一份 `CoreState`（schema v1）。L5 檢查這件事 |
+| 輸出 | 每個位置對 259 個 byte 的 logits | BPC 直接是 byte 的 BPC，沒有「每 token 幾個 byte」的換算空間 |
+
+### 47.5 預算（跑之前寫定）
+
+| | 值 |
+| --- | --- |
+| seed | **20261116** |
+| 優化器 | Adam，lr **1e-3** |
+| batch | **32** 條獨立 stream |
+| window | **L = 128 bytes** |
+| state 重置 | 每 **4096 bytes** 一次（truncated BPTT；不是每個 window 都重置） |
+| epochs | **5**（不做 early stopping） |
+| device | `core.system.config.compute_device.resolve_torch_device()` 決定，報告記錄 |
+
+### 47.6 門檻（跑之前寫定，不得事後改）
+
+| 門檻 | 條件 |
+| --- | --- |
+| **L1** | 留出 BPC **<** 插值 **bigram** 的 BPC（同一批 bytes；λ 在 train 內部最後 5% 上選，留出只用量） |
+| **L2** | 留出 BPC **<** 插值 **trigram** 的 BPC（同上） |
+| **L3** | 100 個留出 prefix 的 greedy 24-byte 續寫：(a) distinct ≥ **90**；(b) 平均最長共同前綴 **>** trigram 的 |
+| **L4** | 帶著 state 的留出 BPC **<** 每個 window 重置 state 的 BPC（同權重、同 bytes） |
+| **L5** | checkpoint 的 `model_kind == "gru"`、`state_schema == 1`，且 `GRUCore.load_weights()` 能載入 |
+| **L6** | 文字流不含任何 session 的 `evidence_tag`，也不含 oracle 欄位 |
+| **L7** | 成本（參數、秒數、device）已記錄 |
+
+L1／L2 的基準是**可計算的**，不是我訂的數字：λ 由 train 決定，留出只拿來量。L3 用 trigram 當對照，不用
+「像不像人話」這種沒有儀器的標準；「distinct ≥ 90」防的是 TOK-SNN 那種模式崩潰（40 題只有 2 個不同答案），
+不是品質分數。L4 的對照是**同一個權重**在「不給 state」下的分數——這和 §45 的 B3 是同一個邏輯：沒有這個對照，
+「state 有用」只是宣稱。
+
+### 47.7 每一個分支要怎麼讀（先寫定）
+
+| 結果 | 讀法 |
+| --- | --- |
+| L1 過、L2 不過 | 模型用了 1–2 個 byte 的上下文，沒用到更多。讀法是「規模/資料不足」，不是「架構壞了」 |
+| L1 不過 | 連 bigram 都沒贏：表徵或訓練有缺陷，**不得**進入 P，先修 L |
+| L3(a) 不過 | 模式崩潰（只會吐少數幾種續寫）——這是生成能力缺失，不是分數低 |
+| L4 不過 | state 沒有被使用；「跨 window 的記憶」是宣稱，不是事實 |
+| L5 不過 | 文字階段與 pantry 不是同一個載體；後續的轉移宣稱一律不成立 |
+| 全過 | 只證明「核心能壓縮並生成文字」。**不證明** pantry、不證明推理、不改變核心分 |
+
+### 47.8 預測（寫在跑之前）
+
+* L1：**會過**。byte bigram 在英文上大約 3.2–3.6 BPC；124k 參數的 GRU 在 4 MB 上應該在 2.0–2.6。
+* L2：**不確定**。trigram 大約 2.8–3.2；這個規模可能只贏一點，甚至不贏。
+* L3(a)：**會過**。L3(b)：**邊緣**。
+* L4：**會過**（否則等於沒學到跨 window 的東西）。
+
+### 47.9 診斷（不是門檻）
+
+* `general` 與 `testimony` **分開**的 BPC（英文與中文混在一起報會把兩件事混為一談）。
+* BPC 對訓練步數（學習曲線）。
+* 前 20 個 greedy 續寫，人工看，記錄但不評分。
+* unigram BPC（0 階），只為了畫出三條線。
+
+### 47.10 指令（先跑完 L，才輪到 P）
+
+```bash
+./.venv/bin/python scripts/train_text_stage.py --seed 20261116 --epochs 5 \
+    --general-bytes 3000000 --general-holdout-bytes 300000 \
+    --pantry-sessions 1000 --out data/text_stage
+# 之後不重訓也能重驗門檻：
+./.venv/bin/python scripts/train_text_stage.py --check data/text_stage/<report>.json
+```
+
+### 47.11 這一節**不會**證明什麼
+
+1. 不會證明 pantry（P）會過。文字階段的權重只是起點；P 換表徵、換目標，要另外量。
+2. 不會證明「智能」。BPC 是壓縮指標；一個只會續寫的模型仍然可能答不出任何問題。
+3. 不會證明中文能力。`general` 是英文、`testimony` 是中文，分開報；加權平均會把兩者混掉。
+4. 不會改變核心分 **0.00/10**。這一輪是設備，不是結果。
