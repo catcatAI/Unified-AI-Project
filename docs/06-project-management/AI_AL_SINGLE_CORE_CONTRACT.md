@@ -264,6 +264,8 @@ T5 對照組也變 → 先把實驗做乾淨。
 | — | **P5 狀態（2026-11-13）**：量產級的三件事完成——**單一寫入者**（R3）、**狀態能說出它是誰的**、**真實回合的量測**。① R3 現在有三道鎖，各補別人的盲點：per-session 執行緒鎖（固定條帶，不會因為淘汰而讓同一 session 出現兩個鎖）、session 目錄裡的 advisory 檔案鎖（POSIX `flock`／Windows `msvcrt`）、以及存檔前的版本比對。第三道不是多餘的——它是唯一會發現「完全沒拿鎖的寫入者」的一道（測試用一次**合法**存檔、有效 checksum 的干擾寫入證明：只靠 checksum 會漏）。等待上限 2 秒，逾時就拒絕該回合而不是讓回覆卡住；`availability()` 回報 `lock`／`multi_writer_safe`，沒有檔案鎖的主機自己說出來。② `advance(user_id=...)`：新狀態記下主人，續接時主人不符就拒絕（session id 可猜，主人不行），空主人的舊狀態（§41 跑出來的那些）接受而不回溯作廢。③ `scripts/probe_core_turns.py` 走真正的 `_handle_chat_request`，把凍結標準集跑 **2,208 回合**（五個 stratum 各一個 session），逐回合寫 JSONL；gate 要求回合數、零拒絕、版本嚴格遞增（一次更新都沒掉）、五個 stratum 都在。**仍然沒變的**：核心不生成回覆，沒有任何東西把 state 讀回生成，核心分仍 **0.00/10**；`schema_version` 只有 v1，不符就拒絕（**沒有** migration 實作，照實記）；§40.7 的成本是合成任務的計算量，不是生產回合延遲。 | `tests/ai/test_stateful_runtime.py` 27 條綠；`scripts/probe_core_turns.py` 的 `all_pass=True`；`multi_writer_safe=True` 時可開多 worker |
 | **內容** | state 裡裝的東西有沒有語言內容、生成會不會讀它（§43–§44） | `heldout_names` exact 過線、零狀態與冷啟掉回 0 |
 | — | **內容狀態（2026-11-13）**：**有內容，但只在合成任務上，而且用法有邊界**。同一個 `GRUCore`（81,765 參數，`hidden=128`／`emb=64`，契約 R1 的那個臂）在 「教一次 `remember <name> = <value> .`（不算損失）→ `al_step(120 s)` → 問 `<name> ?` → 生成 `<value> .`」上，對**沒見過的名字＋沒見過的值** exact **0.995**（`dev` 0.994，3,000 題）；把 `h` 歸零（**同一個 state 物件、同一份權重、同一個 prompt**）**0.000**、跳過教學回合（`cold`，同題）**0.000**。teacher-forced 0.999、只讀 `h` 的線性 probe 0.851 → 失敗與成功都不是量測接錯。**三條邊界照實記**：① `wrong_name` **0.994**——教 A、問沒教過的 B 照樣吐 A 的值，所以是**單槽攜帶**、不是鍵值查詢（名字沒有被使用）；② 拿掉 `al_step` 掉到 **0.003**——不是間隙不變，學到的是「經過**一次** 120 秒」可讀；③ 詞彙是封閉 CV 音節（19 字母）、句型只有一種，這是**機制**不是語言。**核心分仍 0.00/10**：這條路沒有接進生產，`stateful_runtime` 仍是 `hash-bucket` tokenizer，回覆仍由表層產生——把只會講 `remember X = Y` 的 checkpoint 接上去會比不接更糟。 | `scripts/train_state_content.py` 的 `all_pass=True`；`tests/test_state_content_task.py` 13 條綠；checkpoint 重載後 `heldout` 0.995／零狀態 0.000 |
+| **兩組** | state 能不能同時持**兩組**配對，並由查詢選一組（§45） | `heldout_names` exact 過線，且兩個問法各自都選對 |
+| — | **兩組狀態（2026-11-13）**：**不能，而且不是預算問題**。同一個 81,765 參數的 `GRUCore`、同一個 seed（20261115）：**一組**配對 held-out exact **1.000**（probe 0.874），**兩組**配對 **0.0033**（`single` 目標）／**0.0100**（`both` 目標，兩組查詢都進損失），門檻 0.30，B1／B2／B3／B5 全 FAIL，零狀態與冷啟 0.000。`h` 的線性 probe 對「第一組教的值／第二組教的值／被問的值」只有 0.319／0.413／0.303（`single`）與 0.351／0.383／0.280（`both`）字元（chance 0.027）——**兩個槽都不可讀**，所以是「根本沒寫進去」，不是「寫進去選不出來」。**兩個已排除的解釋**：目標（兩臂排序在兩個 seed 上翻轉，差別在雜訊內；`both` 只是一致地比較好擬合，dev 損失 0.741 vs 1.007）與寬度（256 寬：訓練損失 0.196、held-out 0.057）。**照實記的一個陷阱**：兩臂的 `other_value_rate` 只有 0.002–0.004，但那是因為它們**兩組的值都沒答出來**，不是「避免賭」——所以 B5 必須同時要求兩個 `by_ask ≥ 0.50`，這一輪剛好是它的反例。結論是一條**設計要求**：可定址性（key 位址化的槽、或對教學回合做注意力）不會從「同一個向量連續覆寫」長出來。**核心分仍 0.00/10**，未接生產。 | `scripts/train_state_binding.py` 的兩份報告 `all_pass=False`（如實）；`tests/test_state_binding_task.py` 24 條綠；同 seed 單組對照 `state_content_20261113-033723` `all_pass=True` |
 
 **停損**：
 
@@ -364,6 +366,16 @@ T5 對照組也變 → 先把實驗做乾淨。
 - `tests/test_state_content_task.py`（13 條）：那個任務自己的契約——洩漏偵測器被**故意餵壞**
   一次（重用值／訓練過的名字）、`cold` 必須與 held-out 同一批題目、重跑可重現、答案不在
   問句裡、損失從答案的第一個字元開始、零狀態真的把 `h` 歸零而**不換物件也不換權重**。
+- `scripts/train_state_binding.py`：**§45 的兩組配對量測**。兩個教學回合（各一次 `ai_step`／
+  `al_step(120 s)`）、一個查詢、生成該鍵的值；唯一變數是目標（`single` 只訓練被抽中的
+  那一組、`both` 兩組都訓練且各自從**全新的 state** 出發，所以兩臂的差別沒有序列佈局）。
+  checkpoint 以**最低 dev 答案損失**選，不以 exact 選（exact 是階躍函數，`--patience 0`
+  單獨修不好這件事）。診斷：`h` 對兩個槽與「被問的那組」的線性 probe、`by_ask`、
+  `other_value_rate`、`wrong_name.taught_value_rate`、`both_sequential`。
+- `tests/test_state_binding_task.py`（24 條）：洩漏偵測器被故意餵壞（重用值／訓練過的名字／
+  `wrong_name` 竟然問到教過的 key／`ask` 越界）、`cold` 與 held-out 同題、兩個教學回合是
+  **兩個**各自只帶一個值的序列、兩個 `ask` 位置都出現、`_teach` 真的是兩次 `ai_step` 加兩次
+  `al_step`、checkpoint 選擇用的是連續訊號。
 - `tests/ai/test_stateful_runtime.py`（27 條）＋ `tests/services/test_memory_handoff.py`
   的兩條能力邊界測試：開關預設關、沒有 checkpoint 不建目錄、兩回合推進、session 互不
   汙染、restart 續接、三種拒絕（毀損／換權重）且檔案位元組不變、prompt 端不再發布
@@ -484,3 +496,18 @@ ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
   §43 的登記 run 先 FAIL（dev 0.001）並被判定為**協定缺陷**（早停看階躍的 exact），
   §44 只改訓練長度與早停、門檻逐字不動、換一個沒用過的資料 seed 重跑——不是回頭改
   登記的次數。核心分**不變**（0.00/10）。結果見 `CORE_GAP_ANALYSIS.md` §43／§44。
+
+- 2026-11-13（兩組，§45）：上一輪證明了「state 裡有內容」，但它自己量到的 `wrong_name` 0.994
+  說明那只是**單槽緩衝區**（教 A、問沒教過的 B 還是回 A 的值），名字沒有被使用。這一輪問
+  「能不能同時持**兩組**、由查詢選一組」。任務：兩個教學回合（各一次 `ai_step` ＋
+  `al_step(120 s)`）→ 問 `<name A> ?` 或 `<name B> ?` → 生成 `<value> .`；單槽在這個任務上
+  的上限是 0.5，所以高於 0.5 只能來自選對。唯一變數是**目標**（`single` 只算被抽中那組、
+  `both` 兩組都算且各自從全新 state 出發）。
+  **實測**（登記 `d9aacbc5e`、seed 20261115、100 epochs、81,765 參數）：`single`
+  held-out exact **0.0033**、`both` **0.0100**（門檻 0.30）→ **FAIL**；零狀態與冷啟 0.000。
+  **同一個臂、同一個 seed 的單組對照 C1 是 1.000**（probe 0.874），所以不是臂或 seed 壞了。
+  `h` 的線性 probe 對兩個槽都只有 0.32–0.41 字元（chance 0.027）→ **沒寫進去**，不是選不出來。
+  已排除：目標（兩臂排序在兩個 seed 上翻轉）、寬度（256 寬：訓練損失 0.196、held-out 0.057）。
+  **陷阱照實記**：`other_value_rate` 低（0.002–0.004）不代表「不賭」，是因為兩組的值都沒
+  答出來——所以 B5 同時要求兩個 `by_ask ≥ 0.50`。結論是設計要求（可定址的槽／注意力），
+  不是預算。核心分**不變**（0.00/10）。結果見 `CORE_GAP_ANALYSIS.md` §45。

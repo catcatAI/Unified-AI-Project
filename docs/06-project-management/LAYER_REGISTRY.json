@@ -123,6 +123,28 @@
         "language",
         "production_capability"
       ]
+    },
+    {
+      "id": "stateful_core_two_bindings",
+      "claim": "The same trained core holds two taught bindings in its state at once and the query selects which one to answer.",
+      "layer": "learning",
+      "implemented_in": "scripts/train_state_binding.py",
+      "evidence": {
+        "probe": "scripts/train_state_binding.py",
+        "method": "Two teaching turns (`ai_step` + `al_step(120 s)` each), then one query naming either taught key, then generate that key's value; the value never appears in the query turn. Arm, width (81,765 params), alphabet, gap, lr and batch are identical to the passing single-binding round, and the two arms differ only in which queries the loss covers. Evaluation reads only the checkpoint - no training text and no value store - so `source_deleted` is true and the thing being measured is absent rather than hidden. Controls: zero-state ablation, cold (teaching turns skipped, same questions), `wrong_name` (teach two keys, ask a third), and a same-seed single-binding run (C1) that still scores 1.000.",
+        "source_deleted": true
+      },
+      "result": {
+        "status": "fail",
+        "value": "seed 20261115, 100 epochs, 81,765 params: held-out exact 0.0033 (single) / 0.0100 (both), bars 0.60/0.30, so FAIL by one to two orders of magnitude. Zero-state 0.000 and cold 0.000. Linear readouts of `h` for first-taught / second-taught / asked are 0.32/0.41/0.30 and 0.35/0.38/0.28 characters (chance 0.027), against 0.87 for the same arm on ONE binding (C1: 1.000 exact on the same seed). Objective is not the lever (arm ordering flips between seeds), width is not the lever (h256: train loss 0.196, held-out 0.057). Reading: the values were never written into the state, so a fixed-size recurrent state with overwrite-only writes holds one value, not two - addressing is missing, which is a structural change, not a budget one.",
+        "measured_at": "2026-11-13"
+      },
+      "must_not_be_used_as": [
+        "memory",
+        "knowledge",
+        "intelligence",
+        "production_capability"
+      ]
     }
   ]
 }

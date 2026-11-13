@@ -3998,3 +3998,88 @@ exact 跳到 0.994 之前，loss 已經到 **0.008**。從 0.89 到那個量級�
 # checkpoint 用連續訊號選）
 ./.venv/bin/python -m pytest tests/test_state_binding_task.py -q
 ```
+
+### 45.11 結果（2026-11-13，登記 run 實測；門檻未改）
+
+`git_head d9aacbc5e`（= 預登記的那個 commit），資料 seed **20261115**，兩臂同一個
+81,765 參數的 `GRUCore`、同一組初始權重，唯一差別是 `--objective`。
+
+| 量測 | `single` | `both` | 門檻 |
+| --- | --- | --- | --- |
+| `dev` exact | 0.0033 | 0.0097 | B1 ≥ 0.60 |
+| `heldout_names` exact | **0.0033** | **0.0100** | B2 ≥ 0.30 |
+| 零狀態 ablation exact | 0.0000 | 0.0000 | B3 ≤ 0.05 |
+| `cold` exact | 0.0000 | 0.0000 | B4 ≤ 0.02 |
+| `other_value_rate`（held-out） | 0.0020 | 0.0037 | B5 ≤ 0.25 |
+| `by_ask`（held-out） | 0.0019／0.0048 | 0.0110／0.0090 | B5 每個 ≥ 0.50 |
+| `wrong_name.taught_value_rate` | 0.004 | 0.010 | 診斷 |
+| `both_sequential`（診斷） | 0.0023／0.0007 | 0.0107／0.0010 | 診斷 |
+| 訓練秒數／最佳 epoch | 577.6 s／87 | 1,103.9 s／100 | B6 |
+| 最佳 dev 答案損失 | 1.007 | 0.741 | — |
+
+`h` 的線性 probe（held-out，字元準確率；chance ≈ 0.027）：
+
+| | slot0（第一組教的值） | slot1（第二組教的值） | asked（被問的值） |
+| --- | --- | --- | --- |
+| `single` | 0.319 | 0.413 | 0.303 |
+| `both` | 0.351 | 0.383 | 0.280 |
+
+**判定：兩臂都 FAIL**（B1／B2／B3／B5 不過，B4／B6 過）。預測成立。
+
+**C1（對照組，同一個 seed、一組配對、同一個臂）**：
+`data/state_content/state_content_20261113-033723.json`，60 epochs、237.2 秒，
+`dev` **1.000**、`heldout_names` **1.000**、零狀態 **0.000**、`cold` **0.000**、
+`wrong_name` **1.000**、probe 0.874、teacher-forced 1.000——**它自己的五條門檻全過**。
+所以這個 seed、這個臂、這個裝置沒有壞：**一組配對 1.000，兩組配對 0.003–0.010**。
+
+### 45.12 這一輪證明了什麼，以及它**沒有**證明什麼
+
+**證明（登記 run、C1 對照）**：一個 81,765 參數的 GRU 在**同一個 seed** 上
+可以學到「跨回合攜帶一個值」（1.000），**但不能**學到「同時持有兩組、由查詢選一組」
+（0.003／0.010，比門檻低一到兩個數量級，也比一組配對低 100–300 倍）。
+
+**照實記的六點**：
+
+1. **不是「寫進去了但選不出來」**：兩個槽的 probe 都在 0.28–0.41 字元，而一組配對
+   是 0.87。資訊**根本沒有被寫進去**——這是 §45.7 表格的第五列，登記前就寫下來了。
+2. **不是目標的問題**：換了目標，結果類別不變。兩臂的**排序在兩個 seed 上翻轉**
+   （開發 seed：0.0020 vs 0.0013；登記 seed：0.0033 vs 0.0100），所以在這些比率上
+   「三倍」是雜訊。`both` 一致的差別是**比較好擬合**（dev 損失 0.741 vs 1.007，最佳
+   epoch 100 代表還沒收斂），但沒有跨過任何東西。
+3. **不是寬度的問題**：加寬到 256 把訓練損失壓到 0.196，held-out exact 只有 0.057
+   （§45.3）。寬度讓訓練集更可分，沒有讓 state 多一個位址。
+4. **`other_value_rate` 低不是「不賭」**：兩臂的 `other_value_rate` 只有 0.002–0.004，
+   但那是因為模型**兩組的值都沒答出來**（吐出第三個字串），不是因為它選對了。所以
+   B5 必須同時要求 `by_ask ≥ 0.50`，只看「沒有答成另一組」會把一個壞掉的模型讀成
+   很乾淨。這一點登記時就寫進 B5，這一輪剛好是它的反例。
+5. **零狀態與冷啟是 0.000**（同一個 state 物件歸零、同一批題目跳過教學）：不是
+   「剛好猜中」——但也**不代表**答案來自 state（一個什麼都沒學到的模型在任何輸入下
+   都答不出來）。通過 B3／B4 不構成能力證據，B1／B2 才是。
+6. **不是語言，也沒有接進生產**：封閉 CV 音節、單一句型；`stateful_runtime` 仍是
+   `hash-bucket` tokenizer；核心分**不變**（**0.00/10**）。
+
+**這一輪的結論是一條設計要求，不是一個分數**：可定址性（addressing）不能靠
+「同一個 128 維向量連續覆寫兩次」長出來。下一輪要改的是**結構**——key 位址化的槽
+（查詢決定寫／讀哪一格），或對教學回合做注意力——不是預算、不是寬度、不是目標。
+
+### 45.13 驗證指令
+
+```bash
+# 任務本身的契約（24 條）
+./.venv/bin/python -m pytest tests/test_state_binding_task.py -q
+
+# 兩份登記報告與 C1（報告在 gitignored 的 data/；這裡只驗證關鍵欄位與判定）
+./.venv/bin/python - <<'EOF'
+import json, glob
+for path in sorted(glob.glob("data/state_binding/state_binding_*_2026*.json")):
+    d = json.load(open(path))
+    if d["config"]["seed"] != 20261115:
+        continue
+    r = d["results"]
+    print(d["objective"], "heldout", r["heldout_names"]["exact"],
+          "zero", r["zero_state"]["exact"], "cold", r["cold"]["exact"],
+          "pass", d["all_pass"])
+c1 = json.load(open(sorted(glob.glob("data/state_content/state_content_20261113-033723.json"))[-1]))
+print("C1 heldout", c1["results"]["heldout_names"]["exact"], "pass", c1["all_pass"])
+EOF
+```
