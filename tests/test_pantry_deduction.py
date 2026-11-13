@@ -845,3 +845,119 @@ def test_gate_prefix_must_be_one_upper_letter(stage):
 def test_cli_rejects_a_bad_gate_prefix_before_running(stage):
     with pytest.raises(SystemExit):
         stage.main(["--overfit", "1", "--gate-prefix", "ss"])
+
+
+# --------------------------------------------------------------------------- #
+# stage S (§52.4): the width rung must widen, not replace, the carrier
+# --------------------------------------------------------------------------- #
+def _stage_l_and_widened(stage, widened_hidden):
+    path = REPO_ROOT / stage.L_CHECKPOINT
+    if not path.exists():
+        pytest.skip("the stage-L checkpoint is a gitignored artifact")
+    pytest.importorskip("torch")
+    torch = pytest.importorskip("torch")
+    narrow = stage.build_core(device="cpu")
+    assert stage.load_stage_l(narrow, path) == stage.L_WEIGHTS_HASH
+    wide = stage.build_core(hidden=widened_hidden, device="cpu")
+    digest = stage.widen_from_stage_l(wide, path, source_hidden=stage.HIDDEN)
+    return torch, narrow, wide, digest
+
+
+def test_widened_core_is_behaviourally_stage_l(stage):
+    """§52.4: the width rung may add capacity, not change the start point."""
+    torch, narrow, wide, digest = _stage_l_and_widened(stage, 256)
+    assert wide.hidden == 256 and wide.emb == narrow.emb
+    assert digest != stage.L_WEIGHTS_HASH
+
+    tokens = torch.as_tensor([[11, 12, 13, 14, 15], [21, 22, 23, 24, 25]], dtype=torch.long)
+    narrow_state = narrow.init_state(2)
+    wide_state = wide.init_state(2)
+    narrow_logits, narrow_state = narrow.ai_step(tokens, narrow_state)
+    wide_logits, wide_state = wide.ai_step(tokens, wide_state)
+    assert torch.allclose(narrow_logits, wide_logits, atol=1e-6)
+
+    narrow_state = narrow.al_step(180.0, narrow_state)
+    wide_state = wide.al_step(180.0, wide_state)
+    assert torch.allclose(narrow_state.tensors["h"], wide_state.tensors["h"][:, :128], atol=1e-6)
+    follow = torch.as_tensor([[16], [26]], dtype=torch.long)
+    narrow_logits, _ = narrow.ai_step(follow, narrow_state)
+    wide_logits, _ = wide.ai_step(follow, wide_state)
+    assert torch.allclose(narrow_logits, wide_logits, atol=1e-6)
+
+
+def test_widening_keeps_l_block_and_zero_connects_the_new_units(stage):
+    torch, narrow, wide, _ = _stage_l_and_widened(stage, 256)
+    for gate in range(3):
+        # L's rows are copied per gate; the new units' hidden rows never see L's
+        assert torch.equal(
+            wide.cell.weight_ih[gate * 256 : gate * 256 + 128],
+            narrow.cell.weight_ih[gate * 128 : gate * 128 + 128],
+        )
+        assert torch.equal(
+            wide.cell.weight_hh[gate * 256 : gate * 256 + 128, :128],
+            narrow.cell.weight_hh[gate * 128 : gate * 128 + 128, :128],
+        )
+        assert torch.count_nonzero(wide.cell.weight_hh[gate * 256 : gate * 256 + 128, 128:]) == 0
+        assert torch.equal(
+            wide.cell.bias_ih[gate * 256 : gate * 256 + 128],
+            narrow.cell.bias_ih[gate * 128 : gate * 128 + 128],
+        )
+        assert torch.equal(
+            wide.cell.bias_hh[gate * 256 : gate * 256 + 128],
+            narrow.cell.bias_hh[gate * 128 : gate * 128 + 128],
+        )
+    assert torch.equal(wide.head.weight[:, :128], narrow.head.weight)
+    assert torch.count_nonzero(wide.head.weight[:, 128:]) == 0
+    assert torch.equal(wide.embedding.weight, narrow.embedding.weight)
+    assert torch.equal(wide.dt_proj.weight, narrow.dt_proj.weight)
+
+
+def test_widened_start_is_accepted_only_when_it_names_stage_l(stage):
+    ok = {
+        "checkpoint": stage.L_CHECKPOINT,
+        "checkpoint_sha256": stage.L_CHECKPOINT_SHA256,
+        "weights_hash": stage.L_WEIGHTS_HASH,
+        "params": stage.L_PARAMS,
+    }
+    assert stage.start_is_stage_l(ok)
+
+    widened = {
+        "checkpoint": stage.L_CHECKPOINT,
+        "checkpoint_sha256": stage.L_CHECKPOINT_SHA256,
+        "weights_hash": "sha256:" + "0" * 64,
+        "params": stage.L_PARAMS + 1,
+        "widened_from_hidden": 128,
+        "source_weights_hash": stage.L_WEIGHTS_HASH,
+        "hidden": 256,
+    }
+    assert stage.start_is_stage_l(widened)
+
+    for broken in (
+        {**widened, "source_weights_hash": "sha256:" + "f" * 64},
+        {**widened, "widened_from_hidden": 64},
+        {**widened, "hidden": 128},
+        {**widened, "checkpoint_sha256": "0" * 64},
+        {**widened, "params": stage.L_PARAMS},
+        {**ok, "weights_hash": "sha256:" + "0" * 64},
+        {**ok, "params": stage.L_PARAMS + 1},
+        {**ok, "checkpoint": ""},
+    ):
+        assert not stage.start_is_stage_l(broken)
+
+    # G1 is graded from this predicate: a widened start passes, a forged one does not
+    report = _perfect_report(stage)
+    report["start"] = widened
+    assert stage.gate_values(report)["G1_start_is_stage_l"] is True
+    report["start"] = {**widened, "source_weights_hash": "sha256:" + "f" * 64}
+    assert stage.gate_values(report)["G1_start_is_stage_l"] is False
+
+
+def test_cli_rejects_a_malformed_width_rung(stage):
+    for argv in (
+        ["--overfit", "1", "--widen-to", "128"],
+        ["--overfit", "1", "--widen-to", "64"],
+        ["--overfit", "1", "--widen-to", "256", "--hidden", "256"],
+        ["--overfit", "1", "--widen-to", "256", "--emb", "32"],
+    ):
+        with pytest.raises(SystemExit):
+            stage.main(argv)

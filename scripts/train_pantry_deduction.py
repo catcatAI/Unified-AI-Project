@@ -377,6 +377,87 @@ def resolve_device(requested: str) -> str:
     return requested
 
 
+def widen_from_stage_l(core: Any, path: Path, *, source_hidden: int) -> str:
+    """Zero-extend L's weights into ``core``'s width, keeping L's function at 0 steps.
+
+    §52.4's width rung cannot load L into a wider model - ``strict_config``
+    refuses different shapes, and a fresh wide init would silently change the
+    carrier. This copies L's block and zero-connects the new units:
+
+    * embedding / ``dt_proj`` / biases: copied (their shapes do not depend on H);
+    * ``cell.weight_ih``: L's rows copied per gate, new rows keep the seed's init;
+    * ``cell.weight_hh``: old rows x old columns = L, old rows x new columns = 0,
+      so the old units' dynamics are exactly L's (they never see the new units);
+    * ``head.weight``: L's columns copied, new columns zero (so the logits are
+      L's until training writes to the new block).
+
+    The widened model is therefore *behaviourally* L at step 0 while carrying
+    extra capacity, which is what makes the width rung a width rung rather than
+    a different experiment. Returns the widened weights hash.
+    """
+    torch = core._torch
+    file_digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    if file_digest != L_CHECKPOINT_SHA256:
+        raise SystemExit(
+            f"stage-L checkpoint file sha256 {file_digest[:12]}… != registered "
+            f"{L_CHECKPOINT_SHA256[:12]}…; the widened start is not derived from §49.1's file"
+        )
+    payload = torch.load(str(path), map_location="cpu", weights_only=True)
+    config = payload.get("config") or {}
+    if int(config.get("hidden") or 0) != source_hidden:
+        raise SystemExit(
+            f"source checkpoint hidden={config.get('hidden')!r} != expected {source_hidden}"
+        )
+    if int(config.get("emb") or 0) != core.emb:
+        raise SystemExit(
+            f"widening keeps emb fixed: source {config.get('emb')!r} != model {core.emb}"
+        )
+    if core.hidden <= source_hidden:
+        raise SystemExit(f"--widen-to {core.hidden} is not wider than L's {source_hidden}")
+
+    old, new = source_hidden, core.hidden
+    source = payload["state_dict"]
+    live = {
+        "embedding": core.embedding.state_dict(),
+        "cell": core.cell.state_dict(),
+        "dt_proj": core.dt_proj.state_dict(),
+        "head": core.head.state_dict(),
+    }
+    with torch.no_grad():
+        live["embedding"]["weight"].copy_(source["embedding"]["weight"])
+        live["dt_proj"]["weight"].copy_(source["dt_proj"]["weight"])
+        live["dt_proj"]["bias"].copy_(source["dt_proj"]["bias"])
+        for gate in range(3):  # GRUCell order: reset, update, candidate
+            dst, src = gate * new, gate * old
+            for name in ("weight_ih", "bias_ih", "bias_hh"):
+                live["cell"][name][dst : dst + old].copy_(source["cell"][name][src : src + old])
+            hidden_weights = live["cell"]["weight_hh"]
+            hidden_weights[dst : dst + old, :old].copy_(
+                source["cell"]["weight_hh"][src : src + old, :old]
+            )
+            hidden_weights[dst : dst + old, old:].zero_()
+        live["head"]["weight"][:, :old].copy_(source["head"]["weight"])
+        live["head"]["weight"][:, old:].zero_()
+        live["head"]["bias"].copy_(source["head"]["bias"])
+    core.invalidate_hash()
+    return core.weights_hash()
+
+
+def start_is_stage_l(start: Dict[str, Any]) -> bool:
+    """True when the recorded start is L, or a behaviour-preserving widening of L."""
+    if start.get("checkpoint_sha256") != L_CHECKPOINT_SHA256 or not start.get("checkpoint"):
+        return False
+    widened = start.get("widened_from_hidden")
+    if widened is not None:
+        return (
+            int(widened) == HIDDEN
+            and start.get("source_weights_hash") == L_WEIGHTS_HASH
+            and int(start.get("hidden") or 0) > HIDDEN
+            and int(start.get("params") or 0) > L_PARAMS
+        )
+    return start.get("weights_hash") == L_WEIGHTS_HASH and start.get("params") == L_PARAMS
+
+
 def load_stage_l(core: Any, path: Path) -> str:
     """Load L's checkpoint and refuse to start from anything else (§49.1)."""
     if not path.exists():
@@ -1098,12 +1179,7 @@ def gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
     control_ranking = control.get("ranking_exact")
 
     return {
-        "G1_start_is_stage_l": (
-            start.get("weights_hash") == L_WEIGHTS_HASH
-            and start.get("checkpoint_sha256") == L_CHECKPOINT_SHA256
-            and start.get("params") == L_PARAMS
-            and bool(start.get("checkpoint"))
-        ),
+        "G1_start_is_stage_l": start_is_stage_l(start),
         "G2_corpus_is_registered": bool(corpus.get("registered_sizes_match"))
         and bool(corpus.get("registered_digests_match"))
         and corpus.get("train_digest") == TRAIN_DIGEST
@@ -1185,10 +1261,11 @@ def check_report(path: Path) -> List[str]:
     # start/corpus row; run() refuses to start otherwise, and this is the tail
     # that proves the report came from that start)
     start = report.get("start") or {}
-    if start.get("weights_hash") != L_WEIGHTS_HASH:
-        problems.append("the recorded start weights_hash is not the registered stage-L carrier")
-    if start.get("checkpoint_sha256") != L_CHECKPOINT_SHA256:
-        problems.append("the recorded start checkpoint sha256 is not the registered stage-L file")
+    if not start_is_stage_l(start):
+        problems.append(
+            "the recorded start is neither the registered stage-L carrier nor a "
+            "behaviour-preserving widening of it"
+        )
 
     # §50.4 Q9: if the auxiliary loss was on, every epoch must have both parts
     aux_lambda = _aux_lambda_of(report)
@@ -1315,8 +1392,18 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "all_pass": payload.get("all_pass"),
         }
 
-    core = build_core(hidden=args.hidden, emb=args.emb, device=device, seed=args.seed)
-    start_hash = load_stage_l(core, Path(args.start))
+    if args.widen_to:
+        core = build_core(hidden=args.widen_to, emb=args.emb, device=device, seed=args.seed)
+        start_hash = widen_from_stage_l(core, Path(args.start), source_hidden=HIDDEN)
+        widened = {
+            "widened_from_hidden": HIDDEN,
+            "source_weights_hash": L_WEIGHTS_HASH,
+            "hidden": core.hidden,
+        }
+    else:
+        core = build_core(hidden=args.hidden, emb=args.emb, device=device, seed=args.seed)
+        start_hash = load_stage_l(core, Path(args.start))
+        widened = {}
 
     arm = "rand" if args.control == "rand" else "answer"
     module = corpus["module"]
@@ -1374,7 +1461,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         "device": device,
         "config": {
             "token_count": VOCAB_SIZE,
-            "hidden": args.hidden,
+            "hidden": core.hidden,
             "emb": args.emb,
             "chunk_seconds": CHUNK_SECONDS,
             "lr": args.lr,
@@ -1400,6 +1487,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "checkpoint_sha256": L_CHECKPOINT_SHA256,
             "params": core.parameter_count(),
             "stage_l_report": "data/text_stage/text_stage_20261113-212446.json",
+            **widened,
         },
         "params": core.parameter_count(),
         "weights_hash": core.weights_hash(),
@@ -1456,6 +1544,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--lr", type=float, default=LEARNING_RATE)
     parser.add_argument("--hidden", type=int, default=HIDDEN)
     parser.add_argument("--emb", type=int, default=EMB)
+    parser.add_argument(
+        "--widen-to",
+        type=int,
+        default=0,
+        metavar="HIDDEN",
+        help=(
+            "§52.4 width rung: build HIDDEN-wide and zero-extend L's weights into it "
+            "(behavioural identity at step 0; --hidden is ignored)"
+        ),
+    )
     parser.add_argument("--device", default="auto")
     parser.add_argument("--limit", type=int, default=0, help="smoke: training sessions")
     parser.add_argument("--eval-limit", type=int, default=0, help="smoke: held-out sessions")
@@ -1503,6 +1601,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         parser.error("--gate-prefix must be a single A-Z letter")
     if args.overfit < 0:
         parser.error("--overfit must be >= 0")
+    if args.widen_to:
+        if args.widen_to <= HIDDEN:
+            parser.error(
+                f"--widen-to must be > {HIDDEN} (L's width); a narrower model is not a width rung"
+            )
+        if args.hidden != HIDDEN:
+            parser.error("--widen-to replaces --hidden; pass one of the two, not both")
+        if args.emb != EMB:
+            parser.error(f"--widen-to keeps emb fixed at {EMB}; varying both is not §52.4's rung")
 
     if args.smoke:
         if args.device == "auto":
