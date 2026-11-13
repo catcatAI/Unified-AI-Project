@@ -404,6 +404,13 @@ T5 對照組也變 → 先把實驗做乾淨。
   `ai_step`＋`al_step` 逐位相同（含 `state_version`／`ticks`）、批次不改變單筆 state、
   重置臂只看最後一輪、前綴在 **98** 題上是陷阱、格式對照永遠不是兇手、gate 由數字重算、
   `verdict` 只數布林、smoke 報告不會被當成對照。
+- `scripts/probe_credit_assignment.py`：**§49.16 的儀器診斷**（不是能力量測、沒有門檻）。
+  沿用 driver 的 tokenisation 與 `_answer_loss`，逐輪保留 `h`、一次 backward，報每一輪的
+  `|dL/dh|`、最早越過 `1e-6` 的一輪、往回的每輪縮小倍率；兩臂（L 的載體／P 的 checkpoint）
+  同一次執行。
+- `tests/test_credit_assignment.py`（6 條）：前置傳播與 `run_session` 逐位相同、reach 取
+  最早越線的一輪、全在 floor 下時回 `None` 而不是 0、縮小倍率是往回量、floor 必須為正、
+  玩具模型上梯度也到不了前面的輪。
 - `tests/test_state_binding_task.py`（40 條）：洩漏偵測器被故意餵壞（重用值／訓練過的名字／
   `wrong_name` 竟然問到教過的 key／`ask` 越界）、`cold` 與 held-out 同題、兩個教學回合是
   **兩個**各自只帶一個值的序列、兩個 `ask` 位置都出現、`_teach` 真的是兩次 `ai_step` 加兩次
