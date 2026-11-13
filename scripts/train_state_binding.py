@@ -832,6 +832,15 @@ def addressing_diagnostics(
                         state,
                         return_trace=True,
                     )
+                    if trace is None or trace.get("attention") is None:
+                        # The ablated arm keeps every parameter and removes only
+                        # the read/write, so it has no addressing weights. That is
+                        # the control's definition, not a crash: state it.
+                        return {
+                            "n": len(episodes),
+                            "applicable": False,
+                            "reason": "the store is ablated (--no-memory): no addressing weights",
+                        }
                     weights = trace["attention"][:, -1]
                     slots.append(weights.argmax(dim=-1))
                     max_probs.extend(float(v) for v in weights.max(dim=-1).values)

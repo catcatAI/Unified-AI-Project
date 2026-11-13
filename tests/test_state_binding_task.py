@@ -494,6 +494,19 @@ def test_addressing_diagnostics_exist_only_for_a_store(task, slot_core, splits):
     assert -1.0 <= report["read_cosine_between_asks"] <= 1.0
 
 
+def test_an_ablated_store_reports_no_addressing_instead_of_crashing(task, splits):
+    """The control arm must produce a report; a crash after training loses it."""
+    pytest.importorskip("torch")
+    table = task.CharTable()
+    ablated = task.build_core(table, "cpu", hidden=32, emb=16, core="slots", memory=False)
+    report = task.addressing_diagnostics(ablated, table, splits["dev"][:2], device="cpu")
+    assert report is not None
+    assert report["applicable"] is False
+    assert report["n"] == 2
+    assert "no addressing weights" in report["reason"]
+    assert "distinct_read_slot_rate" not in report
+
+
 def _control(core, memory, heldout, params=1, digests=None):
     return {
         "path": "x.json",
