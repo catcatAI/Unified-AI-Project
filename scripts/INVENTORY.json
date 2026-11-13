@@ -672,6 +672,11 @@
       "referenced": true,
       "purpose": "三種讀出的比較：換讀出能不能讓下游任務問得出來？（改生產前先量）"
     },
+    "gen_pantry_ecosystem.py": {
+      "category": "generation",
+      "referenced": true,
+      "purpose": "The pantry-ecosystem corpus: multi-turn sessions that cannot be memorised."
+    },
     "gen_project_map.py": {
       "category": "generation",
       "referenced": true,
