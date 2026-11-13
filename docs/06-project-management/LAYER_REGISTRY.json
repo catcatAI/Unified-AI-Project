@@ -145,6 +145,28 @@
         "intelligence",
         "production_capability"
       ]
+    },
+    {
+      "id": "stateful_core_pantry_deduction",
+      "claim": "The same trained core, started from the stage-L byte carrier, reads an eleven-turn testimony and names the person whose value falls inside the theft window.",
+      "layer": "learning",
+      "implemented_in": "scripts/train_pantry_deduction.py",
+      "evidence": {
+        "probe": "scripts/train_pantry_deduction.py",
+        "method": "Corpus is the same generator call as stage L (seed 20261113, 1000 sessions, 0.2 held out; both digests checked against §49.3 before training): 800 train / 200 held-out, eleven turns each, no turn holds the answer (every naming turn is a roll call, evidence turns name nobody, the first evidence row is retracted later). Each session is fed turn by turn through `ai_step`, with `al_step(turn['dt_s'])` between turns, on the same `CoreState` v1; the target is only the culprit's name bytes plus a newline. Every target - full, pre-correction prefix, and each ablation - comes from the generator's `derive()`, not from the oracle field. Start point is the stage-L checkpoint pinned by file sha256 and trained weights hash; 124,611 params, seed 20261118, lr 5e-4, 20 epochs / 2,000 steps, no early stopping. Evaluation reads only the checkpoint and the turn text. A separate format-only arm trains the same text with a random *other* actor as the answer and must stay at chance; the scored arm refuses to start until that report exists and matches the held-out digest. Gates: held-out free exact and 12-way sequence-likelihood ranking (Wilson lower bound must beat the strongest surface baseline's upper bound, 0.2500; chance 0.1591), a state-reset arm, retraction flip on the 98 sessions where the pre-correction prefix has a unique answer, and own-answer share. `source_deleted` is true in the sense the registry asks for: the checkpoint is the only artifact - no answer table, no retrieval store, no per-session lookup - and the held-out sessions were never trained on.",
+        "source_deleted": true
+      },
+      "result": {
+        "status": "fail",
+        "value": "Stage P (seed 20261118, 20 epochs, xpu, 3,200.6 s): held-out free exact 0.0850 (17/200), ranking 0.1650, against chance 0.1591 and a surface-baseline upper bound of 0.2500; train-split exact 0.1150, so the instrument gate G3 fails - the carrier cannot fit 2,000 steps of training data. G4/G5 (beat the strongest surface baseline), G6 (retraction), G7 (state), G9 (not one constant answer) fail. The format-only control behaves as a null: exact 0.0650, ranking 0.1550, one constant name. The scored arm collapses the same way: one distinct prediction (`Kevin`, share 1.0) for all 200 sessions, and `full`, `reset` (state zeroed before the question) and `skip_al` produce byte-identical predictions (0.0850/0.1650 each). That last equality is the diagnostic, not the score: the state built from the first ten turns contributes nothing to the answer. Per §49.7 the honest reading is the instrument-ceiling branch - no claim about reasoning can be made from this run - and the next variable is addressing/conditioning at the answer point (round 8's per-turn keys and read-into-controller wiring), not width, epochs or multi-binding capacity.",
+        "measured_at": "2026-11-13"
+      },
+      "must_not_be_used_as": [
+        "memory",
+        "knowledge",
+        "intelligence",
+        "production_capability"
+      ]
     }
   ]
 }
