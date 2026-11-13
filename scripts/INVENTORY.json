@@ -887,6 +887,11 @@
       "referenced": true,
       "purpose": "P5: drive the stateful core through real turns, in volume, and record them."
     },
+    "probe_credit_assignment.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "Where the answer's gradient actually reaches (§49.16, apparatus diagnostic)."
+    },
     "probe_deep_chain.py": {
       "category": "probe",
       "referenced": true,
@@ -1296,6 +1301,11 @@
       "category": "training",
       "referenced": true,
       "purpose": "Deprecated: Use train_contrastive_pilot.py (same engine, consolidated). This file kept for history."
+    },
+    "train_pantry_deduction.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "Stage P: pantry deduction on the stage-L byte carrier (§49)."
     },
     "train_pilot_association.py": {
       "category": "training",
