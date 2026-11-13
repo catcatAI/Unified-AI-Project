@@ -515,3 +515,223 @@ def test_baselines_are_below_the_registered_bar(stage):
     upper = max(row["upper95"] for row in audit.values())
     assert math.isclose(upper, stage.SURFACE_BASELINE_UPPER, abs_tol=5e-3)
     assert all(row["upper95"] <= stage.SURFACE_BASELINE_UPPER + 5e-3 for row in audit.values())
+
+
+# --------------------------------------------------------------------------- #
+# stage Q (§50): one auxiliary readout per turn, and one calibration arm
+# --------------------------------------------------------------------------- #
+def _aux_report(stage, *, overfit=False, aux_lambda=1.0, fit_exact=0.55):
+    report = _perfect_report(stage)
+    report["config"] = {"aux_lambda": aux_lambda}
+    report["overfit"] = overfit
+    report["results"]["train_fit"]["exact"] = fit_exact
+    report["training"] = {
+        "history": [
+            {
+                "epoch": 1,
+                "mean_loss": 2.0,
+                "mean_main_loss": 1.5,
+                "mean_aux_loss": 0.5,
+                "aux_lambda": aux_lambda,
+            }
+        ]
+    }
+    report["diagnostics"] = {
+        "readout": {
+            "turns": [
+                {"turn": 0, "n": 0, "correct": 0, "exact": None},
+                {"turn": 10, "n": 200, "correct": 17, "exact": 0.085},
+            ]
+        }
+    }
+    return report
+
+
+def test_aux_loss_zero_keeps_stage_p_bitwise(stage, corpus):
+    """λ=0 must be P's computation, not a numerically similar one."""
+    torch = pytest.importorskip("torch")
+    session = corpus["heldout"][0]
+    core = stage.build_core(hidden=8, emb=4, device="cpu", seed=41)
+    turns = [stage.turn_tokens(session)]
+    gaps = [stage.turn_gaps(session)]
+    answers = [stage.answer_ids(session)]
+
+    _, hidden = stage.run_session(core, turns, gaps)
+    boundaries: list = []
+    _, with_hook = stage.run_session(core, turns, gaps, boundaries=boundaries)
+    assert torch.equal(hidden, with_hook)  # the hook must not change the forward pass
+    assert len(boundaries) == len(session["turns"]) == 11
+    assert boundaries[-1] is with_hook
+
+    main = stage._answer_loss(core, hidden, answers)
+    total, recorded_main, aux = stage._training_loss(core, boundaries, answers, 0.0)
+    assert aux is None
+    assert torch.equal(total, main) and torch.equal(recorded_main, main)
+
+
+def test_auxiliary_term_is_the_mean_of_the_earlier_turns(stage, corpus):
+    torch = pytest.importorskip("torch")
+    session = corpus["heldout"][0]
+    core = stage.build_core(hidden=8, emb=4, device="cpu", seed=43)
+    boundaries: list = []
+    stage.run_session(
+        core, [stage.turn_tokens(session)], [stage.turn_gaps(session)], boundaries=boundaries
+    )
+    answers = [stage.answer_ids(session)]
+
+    main = stage._answer_loss(core, boundaries[-1], answers)
+    manual = sum(stage._answer_loss(core, h, answers) for h in boundaries[:-1]) / len(
+        boundaries[:-1]
+    )
+    total, recorded_main, aux = stage._training_loss(core, boundaries, answers, 1.0)
+    assert torch.equal(recorded_main, main)
+    assert torch.allclose(aux, manual, atol=1e-6)
+    assert torch.allclose(total, main + manual, atol=1e-6)
+    # the last turn is counted once (main), not again as an auxiliary boundary
+    assert len(boundaries[:-1]) == len(session["turns"]) - 1 == 10
+
+
+def test_auxiliary_loss_gives_every_turn_a_gradient(stage, corpus):
+    """The mechanism Q exists for: without it, turn 0 gets nothing (§49.16)."""
+    torch = pytest.importorskip("torch")
+    sessions = corpus["heldout"][:2]
+    turns = [stage.turn_tokens(session) for session in sessions]
+    gaps = [stage.turn_gaps(session) for session in sessions]
+    answers = [stage.answer_ids(session) for session in sessions]
+
+    def profile(aux_lambda):
+        core = stage.build_core(hidden=8, emb=4, device="cpu", seed=47)
+        boundaries: list = []
+        stage.run_session(core, turns, gaps, boundaries=boundaries)
+        for hidden in boundaries:
+            hidden.retain_grad()
+        total, main, aux = stage._training_loss(core, boundaries, answers, aux_lambda)
+        for parameter in core.parameters():
+            parameter.grad = None
+        total.backward()
+        norms = [0.0 if h.grad is None else float(h.grad.norm()) for h in boundaries]
+        return norms, main, aux
+
+    without, main_without, aux_without = profile(0.0)
+    with_aux, main_with, aux_with = profile(1.0)
+    assert aux_without is None and aux_with is not None
+    # the same initialisation and the same forward pass => the main term agrees
+    assert torch.allclose(main_without, main_with, atol=1e-6)
+    # the early turns are exactly what the auxiliary readout changes
+    assert without[0] == 0.0 and without[1] == 0.0
+    assert all(norm > 0.0 for norm in with_aux)
+    assert with_aux[0] > 0.0
+
+
+def test_prefix_candidates_resolve_at_the_roster_and_the_correction(stage, corpus):
+    module = stage._load_generator()
+    session = corpus["heldout"][0]
+    assert stage.prefix_candidates(module, session, 10) == [
+        session["ground_truth_oracle"]["culprit"]
+    ]
+    # before the roster nobody is named by a value, so nothing is decidable
+    assert len(stage.prefix_candidates(module, session, 0)) > 1
+
+
+def test_readout_profile_counts_only_resolved_prefixes(stage, corpus):
+    pytest.importorskip("torch")
+    core = stage.build_core(hidden=8, emb=4, device="cpu", seed=53)
+    sessions = corpus["heldout"][:20]
+    profile = stage.readout_profile(core, sessions, module=stage._load_generator(), batch=8)
+    assert profile["sessions"] == 20
+    assert len(profile["turns"]) == 11
+    # turns 0-5 name everyone (a roll call), so they are not scoreable at all
+    assert all(row["n"] == 0 and row["exact"] is None for row in profile["turns"][:6])
+    # from the roster on, the solver has one answer on every session
+    assert all(row["n"] == 20 for row in profile["turns"][7:])
+    assert "diagnostic" in profile["note"]
+
+
+def test_aux_gates_are_named_and_recomputed_from_numbers(stage):
+    report = _aux_report(stage)
+    checks = stage.gate_values(report)
+    assert set(checks) == {
+        "Q1_overfit_calibration",
+        "Q2_instrument_fits_train",
+        "Q3_heldout_exact_beats_surface",
+        "Q4_heldout_ranking_beats_surface",
+        "Q5_retraction_flips_the_answer",
+        "Q6_answer_lives_in_the_state",
+        "Q7_format_control_at_chance",
+        "Q8_not_a_constant_answer",
+        "Q9_cost_and_auxiliary_recorded",
+    }
+    assert checks["Q1_overfit_calibration"] is None  # not an overfit arm
+    assert all(value is True for value in checks.values() if isinstance(value, bool))
+    assert stage.verdict(checks) is True
+
+    # the same numbers stage P would fail are failed here too (Q3 = G4)
+    leaky = _aux_report(stage)
+    leaky["results"]["full"]["wilson_lower"] = 0.24
+    assert stage.gate_values(leaky)["Q3_heldout_exact_beats_surface"] is False
+
+
+def test_overfit_calibration_is_q1_and_disables_the_score_gates(stage):
+    passing = _aux_report(stage, overfit=True, fit_exact=stage.OVERFIT_FLOOR)
+    checks = stage.gate_values(passing)
+    assert checks["Q1_overfit_calibration"] is True
+    assert all(checks[name] is None for name in checks if not name.startswith(("Q1", "Q9")))
+    assert stage.verdict(checks) is True
+
+    failing = _aux_report(stage, overfit=True, fit_exact=stage.OVERFIT_FLOOR - 0.01)
+    assert stage.gate_values(failing)["Q1_overfit_calibration"] is False
+    assert stage.verdict(stage.gate_values(failing)) is False
+
+
+def test_q9_needs_the_auxiliary_loss_in_every_epoch(stage):
+    missing = _aux_report(stage)
+    missing["training"]["history"][0]["mean_aux_loss"] = None
+    assert stage.gate_values(missing)["Q9_cost_and_auxiliary_recorded"] is False
+
+    no_readout = _aux_report(stage)
+    no_readout["diagnostics"] = {}
+    assert stage.gate_values(no_readout)["Q9_cost_and_auxiliary_recorded"] is False
+
+    no_history = _aux_report(stage)
+    no_history["training"]["history"] = []
+    assert stage.gate_values(no_history)["Q9_cost_and_auxiliary_recorded"] is False
+
+
+def test_aux_lambda_selects_the_gate_set(stage):
+    plain = _perfect_report(stage)
+    assert set(stage.gate_values(plain)) == {
+        "G1_start_is_stage_l",
+        "G2_corpus_is_registered",
+        "G3_instrument_fits_train",
+        "G4_heldout_exact_beats_surface",
+        "G5_heldout_ranking_beats_surface",
+        "G6_retraction_flips_the_answer",
+        "G7_answer_lives_in_the_state",
+        "G8_format_control_at_chance",
+        "G9_not_a_constant_answer",
+        "G10_cost_recorded",
+    }
+    zero = _aux_report(stage, aux_lambda=0.0)
+    assert "G1_start_is_stage_l" in stage.gate_values(zero)
+
+
+def test_control_lookup_skips_overfit_and_matches_the_auxiliary_loss(stage, tmp_path):
+    def write(name, aux_lambda, overfit=False):
+        path = tmp_path / name
+        payload = {
+            "task_version": stage.TASK_VERSION,
+            "control_arm": "rand",
+            "corpus": {"heldout_digest": stage.HOLDOUT_DIGEST},
+            "config": {"aux_lambda": aux_lambda},
+            "overfit": overfit,
+        }
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return path
+
+    write("pantry_deduction_0001.json", 0.0)
+    q_control = write("pantry_deduction_0002.json", 1.0)
+    write("pantry_deduction_0003.json", 1.0, overfit=True)
+
+    assert stage._find_control_report(tmp_path, aux_lambda=1.0) == q_control
+    assert stage._find_control_report(tmp_path, aux_lambda=0.0).name.endswith("0001.json")
+    assert stage._find_control_report(tmp_path, aux_lambda=0.5) is None

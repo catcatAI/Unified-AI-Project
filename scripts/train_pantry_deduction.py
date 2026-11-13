@@ -46,6 +46,18 @@ Usage (registered command is in CORE_GAP_ANALYSIS.md §49.10)::
     ./.venv/bin/python scripts/train_pantry_deduction.py --control rand --out data/pantry_stage
     ./.venv/bin/python scripts/train_pantry_deduction.py --out data/pantry_stage
     ./.venv/bin/python scripts/train_pantry_deduction.py --check data/pantry_stage/<report>.json
+
+Stage Q (§50) adds two flags and changes nothing by default. ``--aux-loss``
+(λ, default 0.0 = stage P) adds ``λ · mean_k CE(head(h_k) → answer)`` over the
+earlier turn boundaries, so each turn is only one turn away from the loss instead
+of 11−k (§49.16 measured ~3 orders of magnitude lost per turn). Evaluation never
+uses the auxiliary readout. ``--overfit N`` is Q1's instrument calibration: the
+first N training sessions, marked ``overfit: true``, ignored when looking for the
+format control::
+
+    ./.venv/bin/python scripts/train_pantry_deduction.py --overfit 32 --epochs 100 \\
+        --aux-loss 1.0 --device cpu --out data/pantry_stage/q_overfit
+    ./.venv/bin/python scripts/train_pantry_deduction.py --aux-loss 1.0 --out data/pantry_stage/q
 """
 
 from __future__ import annotations
@@ -118,6 +130,13 @@ GAP_MIN = 0.25
 FLIP_MIN = 0.50
 TOP_SHARE_MAX = 0.35
 
+# §50 - stage Q changes one thing (an auxiliary readout at each turn boundary)
+# and adds one calibration arm (overfit). Neither number is a capability claim:
+# 0.0 is stage P's behaviour, and OVERFIT_FLOOR is an instrument check on 32
+# training sessions, never a generalisation rate.
+AUX_LAMBDA_DEFAULT = 0.0
+OVERFIT_FLOOR = 0.90
+
 SAMPLE_ROWS = 3
 
 VARIANTS = ("full", "reset", "no_correction", "no_roster", "no_bounds", "skip_al")
@@ -163,13 +182,17 @@ def _round(value: Optional[float], digits: int = 4) -> Optional[float]:
     return None if value is None else round(float(value), digits)
 
 
-def _find_control_report(folder: Path) -> Optional[Path]:
-    """The newest finished F-rand report in ``folder``, ignoring smoke runs.
+def _find_control_report(folder: Path, aux_lambda: Optional[float] = None) -> Optional[Path]:
+    """The newest finished F-rand report in ``folder``, ignoring smoke/overfit runs.
 
     §49.10 requires the control to finish first. Picking the newest scored run
     of the right arm is enough here: this is a single-task driver, not a queue,
     and the digest check in :func:`run` refuses a control measured on a
     different held-out corpus.
+
+    §50.4 additionally requires the control to use the *same* auxiliary loss, so
+    ``aux_lambda`` filters by it; otherwise a stage-P control (λ=0) could quietly
+    stand in for a stage-Q arm and Q7 would compare two different trainings.
     """
     if not folder.is_dir():
         return None
@@ -181,8 +204,14 @@ def _find_control_report(folder: Path) -> Optional[Path]:
             continue
         if payload.get("control_arm") != "rand" or payload.get("smoke"):
             continue
+        if payload.get("overfit"):
+            continue
         if payload.get("task_version") != TASK_VERSION:
             continue
+        if aux_lambda is not None:
+            recorded = float((payload.get("config") or {}).get("aux_lambda") or 0.0)
+            if abs(recorded - float(aux_lambda)) > 1e-12:
+                continue
         candidates.append(path)
     if not candidates:
         return None
@@ -393,8 +422,15 @@ def run_session(
     state: Any = None,
     *,
     reset_before_last: bool = False,
+    boundaries: Optional[List[Any]] = None,
 ) -> Tuple[Any, Any]:
-    """Run whole sessions; ``al_step`` happens *between* turns, never after."""
+    """Run whole sessions; ``al_step`` happens *between* turns, never after.
+
+    ``boundaries`` is the §50.2 hook: when a list is passed, each turn's hidden
+    state is appended to it (the graph is kept, so training can read out from
+    every turn). When it is ``None`` nothing changes - stage P's run is bitwise
+    the same computation.
+    """
     torch = core._torch
     batch = len(batch_turns)
     turns = len(batch_turns[0])
@@ -418,6 +454,8 @@ def run_session(
         # the contract (al_step bumps for chunks; this bumps for the turn)
         state.tensors["h"] = hidden
         state.bump()
+        if boundaries is not None:
+            boundaries.append(hidden)
     return state, hidden
 
 
@@ -443,6 +481,26 @@ def _answer_loss(core: Any, hidden: Any, answers: Sequence[Sequence[int]]) -> An
     return functional.cross_entropy(
         stacked.reshape(-1, VOCAB_SIZE), targets.reshape(-1), ignore_index=-100
     )
+
+
+def _training_loss(
+    core: Any,
+    boundaries: Sequence[Any],
+    answers: Sequence[Sequence[int]],
+    aux_lambda: float,
+) -> Tuple[Any, Any, Optional[Any]]:
+    """The registered §50.2 objective: main CE plus the mean CE at earlier turns.
+
+    Each auxiliary term starts *at that boundary*, so turn k's evidence is one
+    turn away from the answer loss rather than 11−k (§49.16). With λ=0 no extra
+    term is computed at all, which is what keeps stage P bitwise unchanged.
+    """
+    main = _answer_loss(core, boundaries[-1], answers)
+    earlier = list(boundaries[:-1])
+    if aux_lambda <= 0.0 or not earlier:
+        return main, main, None
+    auxiliary = sum(_answer_loss(core, hidden, answers) for hidden in earlier) / len(earlier)
+    return main + aux_lambda * auxiliary, main, auxiliary
 
 
 def generate_bytes(core: Any, hidden: Any, limit: int = MAX_ANSWER_BYTES) -> List[bytes]:
@@ -534,6 +592,7 @@ def train(
     batch: int,
     lr: float,
     seed: int,
+    aux_lambda: float = AUX_LAMBDA_DEFAULT,
 ) -> List[Dict[str, Any]]:
     torch = core._torch
     optimiser = torch.optim.Adam(list(core.parameters()), lr=lr)
@@ -543,31 +602,52 @@ def train(
         order = list(range(len(samples)))
         random.Random(f"{seed}:{epoch}").shuffle(order)
         running = 0.0
+        running_main = 0.0
+        running_aux = 0.0
         seen = 0
         for start in range(0, len(order), batch):
             rows = [samples[index] for index in order[start : start + batch]]
+            boundaries: Optional[List[Any]] = [] if aux_lambda > 0.0 else None
             state, hidden = run_session(
-                core, [row["turns"] for row in rows], [row["gaps"] for row in rows]
+                core,
+                [row["turns"] for row in rows],
+                [row["gaps"] for row in rows],
+                boundaries=boundaries,
             )
-            loss = _answer_loss(core, hidden, [row["answer"] for row in rows])
+            total, main_loss, aux_loss = _training_loss(
+                core,
+                boundaries if boundaries is not None else [hidden],
+                [row["answer"] for row in rows],
+                aux_lambda,
+            )
             optimiser.zero_grad(set_to_none=True)
-            loss.backward()
+            total.backward()
             torch.nn.utils.clip_grad_norm_(list(core.parameters()), 1.0)
             optimiser.step()
             core.invalidate_hash()
-            running += float(loss.detach().cpu())
+            running += float(total.detach().cpu())
+            running_main += float(main_loss.detach().cpu())
+            if aux_loss is not None:
+                running_aux += float(aux_loss.detach().cpu())
             seen += 1
         history.append(
             {
                 "epoch": epoch,
                 "batches": seen,
                 "mean_loss": round(running / max(1, seen), 4),
+                "mean_main_loss": round(running_main / max(1, seen), 4),
+                "mean_aux_loss": (
+                    round(running_aux / max(1, seen), 4) if aux_lambda > 0.0 else None
+                ),
+                "aux_lambda": aux_lambda,
                 "seconds": round(time.time() - started, 1),
             }
         )
         print(
             f"  epoch {epoch}/{epochs}  batches={seen}  "
-            f"loss={history[-1]['mean_loss']:.4f}  elapsed={history[-1]['seconds']:.0f}s",
+            f"loss={history[-1]['mean_loss']:.4f}  "
+            f"main={history[-1]['mean_main_loss']:.4f}  "
+            f"aux={history[-1]['mean_aux_loss']}  elapsed={history[-1]['seconds']:.0f}s",
             flush=True,
         )
     return history
@@ -761,10 +841,171 @@ def flip_summary(full: Sequence[Dict[str, Any]], pre: Sequence[Dict[str, Any]]) 
 
 
 # --------------------------------------------------------------------------- #
+# the auxiliary readout (§50.6) - a diagnostic, never a gate
+# --------------------------------------------------------------------------- #
+def prefix_candidates(module: Any, session: Dict[str, Any], upto: int) -> List[str]:
+    """What ``derive()`` concludes from the turns up to and including ``upto``.
+
+    Used to decide where a per-turn readout is even scoreable: on an ambiguous
+    prefix there is no single right answer, so scoring it would measure luck.
+    """
+    dropped = {int(turn["turn_id"]) for turn in session["turns"] if int(turn["turn_id"]) > upto}
+    return solver_candidates(module, session, dropped)
+
+
+def readout_profile(
+    core: Any,
+    sessions: Sequence[Dict[str, Any]],
+    *,
+    module: Any,
+    batch: int = 32,
+) -> Dict[str, Any]:
+    """Decode the answer at every turn boundary (§50.6).
+
+    §50.2 trains a readout at each boundary, so the model can be asked "who is
+    it?" before the last turn. That is useful as a diagnostic - it says how early
+    an answer exists - but it is not a score and not a gate: only prefixes the
+    solver already resolves to one person are counted, and ``n=0`` means the
+    prefix is ambiguous rather than that the model was wrong.
+    """
+    torch = core._torch
+    turns_total = len(sessions[0]["turns"])
+    totals = [0] * turns_total
+    correct = [0] * turns_total
+    core.eval()
+    with torch.no_grad():
+        for chunk in _chunks(list(sessions), batch):
+            boundaries: List[Any] = []
+            run_session(
+                core,
+                [turn_tokens(session) for session in chunk],
+                [turn_gaps(session) for session in chunk],
+                boundaries=boundaries,
+            )
+            for turn in range(turns_total):
+                targets = [prefix_candidates(module, session, turn) for session in chunk]
+                produced = generate_bytes(core, boundaries[turn])
+                for index, candidates in enumerate(targets):
+                    if len(candidates) != 1:
+                        continue
+                    totals[turn] += 1
+                    correct[turn] += int(_decoded(produced[index]) == candidates[0])
+    return {
+        "sessions": len(sessions),
+        "turns": [
+            {
+                "turn": turn,
+                "n": totals[turn],
+                "correct": correct[turn],
+                "exact": _round(correct[turn] / totals[turn]) if totals[turn] else None,
+            }
+            for turn in range(turns_total)
+        ],
+        "note": (
+            "diagnostic only (§50.6): scored where the solver already has a unique "
+            "answer on that prefix; n=0 means the prefix is ambiguous, not that the "
+            "model answered wrongly"
+        ),
+    }
+
+
+# --------------------------------------------------------------------------- #
 # gates
 # --------------------------------------------------------------------------- #
-def gate_values(report: Dict[str, Any]) -> Dict[str, bool]:
-    """Recompute G1-G10 from the recorded numbers; never read the stored verdict."""
+def _aux_lambda_of(report: Dict[str, Any]) -> float:
+    """0.0 is stage P; anything else is stage Q's objective (§50.2)."""
+    return float((report.get("config") or {}).get("aux_lambda") or 0.0)
+
+
+def _aux_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
+    """§50.4's Q1-Q9, recomputed from the recorded numbers.
+
+    The numbers are stage P's where the registration says they are: Q2 = G3,
+    Q3-Q8 = G4-G9, Q9 extends G10 with the auxiliary loss and the per-turn
+    readout. Q1 exists only on the overfit calibration report, and on that report
+    Q2-Q8 are ``None`` on purpose - 32 memorised sessions are not a score, and a
+    ``None`` gate is ignored by :func:`verdict` instead of quietly passing.
+    Q10 (``--check``) cannot live inside the report it verifies; it is run after
+    the fact and recorded in the result section.
+    """
+    results = report.get("results") or {}
+    full = results.get("full") or {}
+    reset = results.get("reset") or {}
+    fit = results.get("train_fit") or {}
+    flip = results.get("flip") or {}
+    control = report.get("control") or {}
+    cost = report.get("cost") or {}
+    history = (report.get("training") or {}).get("history") or []
+    readout = (report.get("diagnostics") or {}).get("readout") or {}
+    overfit = bool(report.get("overfit"))
+
+    chance = full.get("chance")
+    ceiling = None if chance is None else chance + CHANCE_MARGIN
+    control_exact = control.get("exact")
+    control_ranking = control.get("ranking_exact")
+
+    checks: Dict[str, Any] = {}
+    checks["Q1_overfit_calibration"] = (
+        None if not overfit else (fit.get("exact") is not None and fit["exact"] >= OVERFIT_FLOOR)
+    )
+    if overfit:
+        for name in (
+            "Q2_instrument_fits_train",
+            "Q3_heldout_exact_beats_surface",
+            "Q4_heldout_ranking_beats_surface",
+            "Q5_retraction_flips_the_answer",
+            "Q6_answer_lives_in_the_state",
+            "Q7_format_control_at_chance",
+            "Q8_not_a_constant_answer",
+        ):
+            checks[name] = None
+    else:
+        checks["Q2_instrument_fits_train"] = (
+            fit.get("exact") is not None and fit["exact"] > FIT_FLOOR
+        )
+        checks["Q3_heldout_exact_beats_surface"] = (
+            full.get("wilson_lower") is not None and full["wilson_lower"] > SURFACE_BASELINE_UPPER
+        )
+        checks["Q4_heldout_ranking_beats_surface"] = (
+            full.get("ranking_lower") is not None and full["ranking_lower"] > SURFACE_BASELINE_UPPER
+        )
+        checks["Q5_retraction_flips_the_answer"] = (
+            flip.get("flip_rate") is not None
+            and flip["flip_rate"] >= FLIP_MIN
+            and flip.get("full_exact_on_subset") is not None
+            and flip["full_exact_on_subset"] >= SURFACE_BASELINE_UPPER
+        )
+        checks["Q6_answer_lives_in_the_state"] = (
+            full.get("exact") is not None
+            and reset.get("exact") is not None
+            and ceiling is not None
+            and (full["exact"] - reset["exact"]) >= GAP_MIN
+            and reset["exact"] <= ceiling
+        )
+        checks["Q7_format_control_at_chance"] = (
+            control_exact is not None
+            and control_ranking is not None
+            and ceiling is not None
+            and control_exact <= ceiling
+            and control_ranking <= ceiling
+        )
+        checks["Q8_not_a_constant_answer"] = (
+            full.get("top_share") is not None and full["top_share"] <= TOP_SHARE_MAX
+        )
+    checks["Q9_cost_and_auxiliary_recorded"] = (
+        all(cost.get(key) not in (None, 0) for key in ("params", "train_seconds", "device"))
+        and _aux_lambda_of(report) > 0.0
+        and bool(history)
+        and all(row.get("mean_aux_loss") is not None for row in history)
+        and bool(readout.get("turns"))
+    )
+    return checks
+
+
+def gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
+    """Recompute stage P's G1-G10 from the recorded numbers; never read the stored verdict."""
+    if _aux_lambda_of(report) > 0.0:
+        return _aux_gate_values(report)
     corpus = report.get("corpus") or {}
     start = report.get("start") or {}
     results = report.get("results") or {}
@@ -864,6 +1105,29 @@ def check_report(path: Path) -> List[str]:
             if abs(float(block["exact"]) - expected) > 1e-3:
                 problems.append(f"results.{name}.exact does not equal correct/n")
 
+    # the entry lock is re-verified even though it is not a Q gate (§50.4 has no
+    # start/corpus row; run() refuses to start otherwise, and this is the tail
+    # that proves the report came from that start)
+    start = report.get("start") or {}
+    if start.get("weights_hash") != L_WEIGHTS_HASH:
+        problems.append("the recorded start weights_hash is not the registered stage-L carrier")
+    if start.get("checkpoint_sha256") != L_CHECKPOINT_SHA256:
+        problems.append("the recorded start checkpoint sha256 is not the registered stage-L file")
+
+    # §50.4 Q9: if the auxiliary loss was on, every epoch must have both parts
+    aux_lambda = _aux_lambda_of(report)
+    if aux_lambda > 0.0:
+        for row in (report.get("training") or {}).get("history") or []:
+            main = row.get("mean_main_loss")
+            aux = row.get("mean_aux_loss")
+            if main is None or aux is None or "mean_loss" not in row:
+                problems.append("the auxiliary run does not record main and auxiliary loss")
+                break
+            expected = float(main) + aux_lambda * float(aux)
+            if abs(float(row["mean_loss"]) - expected) > 1e-3:
+                problems.append(f"epoch {row.get('epoch')}: total loss is not main + lambda*aux")
+                break
+
     recorded = report.get("gates") or {}
     recomputed = gate_values(report)
     for name, value in recomputed.items():
@@ -925,28 +1189,42 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
     heldout = corpus["heldout"]
     if args.limit:
         train_sessions = train_sessions[: args.limit]
+    if args.overfit:
+        if args.overfit > len(train_sessions):
+            raise SystemExit(
+                f"--overfit {args.overfit} asks for more sessions than the {len(train_sessions)} "
+                "available; Q1 is defined on the first N training sessions (§50.4)"
+            )
+        train_sessions = train_sessions[: args.overfit]
     if args.eval_limit:
         heldout = heldout[: args.eval_limit]
 
     control_block: Optional[Dict[str, Any]] = None
-    if args.control != "rand" and not args.smoke:
-        control_path = _find_control_report(Path(args.out))
+    if args.control != "rand" and not args.smoke and not args.overfit:
+        control_path = _find_control_report(Path(args.out), aux_lambda=args.aux_loss)
         if control_path is None:
             raise SystemExit(
-                f"no F-rand control report under {args.out}; the format-only arm must "
-                "finish before the scored arm starts (§49.6 G8, §49.10). Run "
-                "`--control rand` first; refusing to score without it"
+                f"no F-rand control report under {args.out} trained with the same auxiliary "
+                "loss; the format-only arm must finish before the scored arm starts "
+                "(§49.6 G8, §50.4 Q7). Run `--control rand` with the same --aux-loss first; "
+                "refusing to score without it"
             )
         payload = json.loads(control_path.read_text(encoding="utf-8"))
         if payload.get("control_arm") != "rand":
             raise SystemExit(
                 f"{control_path} is not the F-rand control (control_arm="
-                f"{payload.get('control_arm')!r}); G8 cannot be computed"
+                f"{payload.get('control_arm')!r}); the format control cannot be computed"
             )
         if payload.get("corpus", {}).get("heldout_digest") != HOLDOUT_DIGEST:
             raise SystemExit(
                 f"{control_path} was scored on a different held-out corpus; "
-                "G8 would compare two different tests"
+                "the format control would compare two different tests"
+            )
+        control_lambda = float((payload.get("config") or {}).get("aux_lambda") or 0.0)
+        if abs(control_lambda - args.aux_loss) > 1e-12:
+            raise SystemExit(
+                f"{control_path} used aux_lambda={control_lambda}, this run uses "
+                f"{args.aux_loss}; §50.4 requires the control to share the auxiliary loss"
             )
         full = (payload.get("results") or {}).get("full") or {}
         control_block = {
@@ -955,6 +1233,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "ranking_exact": full.get("ranking_exact"),
             "chance": full.get("chance"),
             "top_share": full.get("top_share"),
+            "aux_lambda": control_lambda,
             "all_pass": payload.get("all_pass"),
         }
 
@@ -965,7 +1244,8 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
     samples = build_samples(train_sessions, seed=args.seed, control=args.control)
     print(
         f"stage P: device={device} params={core.parameter_count()} "
-        f"train={len(samples)} holdout={len(heldout)} arm={arm}",
+        f"train={len(samples)} holdout={len(heldout)} arm={arm}"
+        + (f" aux_lambda={args.aux_loss}" if args.aux_loss > 0.0 else ""),
         flush=True,
     )
     history = train(
@@ -975,6 +1255,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         batch=args.batch,
         lr=args.lr,
         seed=args.seed,
+        aux_lambda=args.aux_loss,
     )
 
     module = corpus["module"]
@@ -989,6 +1270,11 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
 
     fit_rows = train_sessions[: min(FIT_SESSIONS, len(train_sessions))]
     results["train_fit"] = summarise(evaluate(core, fit_rows, "full", module=module))
+
+    # §50.6: where does an answer exist along the testimony? Diagnostic only.
+    diagnostics: Dict[str, Any] = {}
+    if args.aux_loss > 0.0:
+        diagnostics["readout"] = readout_profile(core, heldout, module=module)
 
     # the data contract behind "the answer is not in the question"
     leak = leak_report(heldout)
@@ -1012,6 +1298,8 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "seed": args.seed,
             "max_answer_bytes": MAX_ANSWER_BYTES,
             "arm": arm,
+            "aux_lambda": args.aux_loss,
+            "overfit_sessions": args.overfit,
         },
         "corpus": {
             **meta,
@@ -1036,8 +1324,10 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         },
         "results": results,
         "control": control_block,
+        "diagnostics": diagnostics,
         "leak_check": leak,
         "checkpoint": str(checkpoint),
+        "overfit": bool(args.overfit),
         "cost": {
             "params": core.parameter_count(),
             "train_seconds": round(time.time() - started, 1),
@@ -1083,7 +1373,23 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--limit", type=int, default=0, help="smoke: training sessions")
     parser.add_argument("--eval-limit", type=int, default=0, help="smoke: held-out sessions")
     parser.add_argument("--smoke", action="store_true", help="tiny run on CPU, no score")
+    parser.add_argument(
+        "--aux-loss",
+        type=float,
+        default=AUX_LAMBDA_DEFAULT,
+        help="§50.2 auxiliary readout weight; 0.0 is stage P's objective",
+    )
+    parser.add_argument(
+        "--overfit",
+        type=int,
+        default=0,
+        help="§50.4 Q1 calibration: first N training sessions only, marked overfit",
+    )
     args = parser.parse_args(argv)
+    if args.aux_loss < 0.0:
+        parser.error("--aux-loss must be >= 0; 0.0 is stage P and is never negative")
+    if args.overfit < 0:
+        parser.error("--overfit must be >= 0")
 
     if args.smoke:
         if args.device == "auto":
@@ -1113,6 +1419,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print()
     print(f"task      : {TASK_VERSION}  device={report['device']}  params={report['params']}")
     print(f"arm       : {report['config']['arm']}")
+    if report["config"].get("aux_lambda"):
+        print(f"aux loss  : lambda={report['config']['aux_lambda']} (training only)")
+    if report.get("overfit"):
+        print(
+            f"overfit   : {report['config']['overfit_sessions']} train sessions "
+            "(Q1 calibration, not a score)"
+        )
     print(
         f"corpus    : train {report['corpus']['train_bytes']} B / "
         f"holdout {report['corpus']['heldout_bytes']} B"
@@ -1132,9 +1445,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         f"full_exact={flip['full_exact_on_subset']}"
     )
     print()
+    readout = (report.get("diagnostics") or {}).get("readout")
+    if readout:
+        cells = " ".join(
+            f"{row['turn']}:"
+            + ("-" if row["exact"] is None else f"{row['exact']:.3f}")
+            + f"(n={row['n']})"
+            for row in readout["turns"]
+        )
+        print(f"  readout (diag, held-out): {cells}")
     print("  gates")
     for name, value in report["gates"].items():
-        print(f"    {'PASS' if value else 'FAIL'}  {name}")
+        label = "n/a " if value is None else ("PASS" if value else "FAIL")
+        print(f"    {label}  {name}")
     print()
     print(f"all_pass : {report['all_pass']}")
     print(f"report    : {outcome['path']}")
