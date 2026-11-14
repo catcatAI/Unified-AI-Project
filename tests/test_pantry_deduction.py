@@ -28,6 +28,7 @@ import importlib.util
 import json
 import math
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -2386,3 +2387,256 @@ def test_cli_order_augmentation_refuses_other_corpora_and_calibrations(stage):
     ):
         with pytest.raises(SystemExit):
             stage.main(argv)
+
+
+# --------------------------------------------------------------------------- #
+# §65: capacity curve (roster size 2/3/4/5, everything else held fixed)
+# --------------------------------------------------------------------------- #
+@pytest.fixture(scope="module")
+def curve(stage):
+    return {
+        size: stage.load_corpus(minimal_binding=True, order_augmented=True, roster_size=size)
+        for size in stage.MINIMAL_ROSTER_SIZES
+    }
+
+
+def test_roster_size_two_is_the_registered_corpus_byte_for_byte(stage, curve):
+    """§65 must not disturb the corpora §62-§64 were graded on."""
+    balanced = stage.load_corpus(minimal_binding=True)
+    augmented = stage.load_corpus(minimal_binding=True, order_augmented=True)
+    assert curve[2]["meta"]["train_digest"] == augmented["meta"]["train_digest"]
+    assert curve[2]["meta"]["heldout_digest"] == augmented["meta"]["heldout_digest"]
+    assert balanced["meta"]["train_digest"] != augmented["meta"]["train_digest"]
+    assert balanced["meta"]["heldout_digest"] == augmented["meta"]["heldout_digest"]
+
+
+def test_roster_sizes_are_the_declared_curve(stage):
+    assert tuple(stage.MINIMAL_ROSTER_SIZES) == (2, 3, 4, 5)
+
+
+def test_each_rung_holds_items_steps_and_split_shape_fixed(stage, curve):
+    for size, corpus in curve.items():
+        meta = corpus["meta"]
+        assert meta["minimal_roster_size"] == size
+        assert meta["minimal_binding"] is True
+        assert meta["minimal_order_augmented"] is True
+        assert meta["minimal_binding_structures"] == stage.MINIMAL_STRUCTURES == 200
+        assert meta["minimal_binding_twins"] == stage.MINIMAL_STRUCTURES == 200
+        assert meta["minimal_order_twins"] == stage.MINIMAL_STRUCTURES == 200
+        assert len(corpus["train"]) == 400
+        assert len(corpus["heldout"]) == 200
+        assert len(corpus["heldout_twins"]) == 200
+        # a guess has k options, and the M2 gate reads this field
+        assert meta["minimal_binding_chance"] == round(1.0 / size, 4)
+
+
+def test_each_rung_lists_exactly_that_many_people(stage, curve):
+    module = stage._load_generator()
+    for size, corpus in curve.items():
+        for session in corpus["train"][:20] + corpus["heldout"][:20]:
+            actors = list(session["environment"]["actors"])
+            mapping = dict(module._roster_item(session)[1]["value"])
+            assert len(actors) == size
+            assert len(mapping) == size
+            assert set(mapping.values()) == set(actors)
+            assert session["session_meta"]["slots"] == len(actors) + 3
+
+
+def test_each_rung_is_position_balanced_in_both_halves(stage, curve):
+    module = stage._load_generator()
+    for size, corpus in curve.items():
+        for rows, label in ((corpus["train"][::2], "train"), (corpus["heldout"], "heldout")):
+            positions = [_culprit_position(module, row) for row in rows]
+            counts = [positions.count(slot) for slot in range(size)]
+            assert sum(counts) == len(rows), label
+            assert max(counts) - min(counts) <= 1, (size, label, counts)
+
+
+def test_each_rung_derives_its_culprit_from_the_roster_only(stage, curve):
+    module = stage._load_generator()
+    for size, corpus in curve.items():
+        for session in corpus["train"][::2][:30] + corpus["heldout"][:30]:
+            actors = list(session["environment"]["actors"])
+            assert module.derive(module._all_asserts(session), actors) == [
+                session["ground_truth_oracle"]["culprit"]
+            ]
+
+
+def test_validator_accepts_every_rung(stage, curve):
+    for size, corpus in curve.items():
+        splits = {
+            "train": corpus["train"],
+            "heldout": corpus["heldout"],
+            "heldout_twins": corpus["heldout_twins"],
+        }
+        module = stage._load_generator()
+        assert (
+            module.validate_minimal_binding(
+                splits,
+                structures=stage.MINIMAL_STRUCTURES,
+                heldout=stage.MINIMAL_HELDOUT_ITEMS,
+                order_augmented=True,
+                roster_size=size,
+            )
+            == []
+        )
+
+
+def test_validator_rejects_a_rung_with_a_free_slot(stage, curve):
+    """The guard §65 rests on: no roster slot may hold the culprit more often."""
+    module = stage._load_generator()
+    corpus = curve[4]
+    # the fixture is module-scoped, so the damage must not leak into later tests
+    splits = {
+        "train": [json.loads(json.dumps(row)) for row in corpus["train"]],
+        "heldout": [json.loads(json.dumps(row)) for row in corpus["heldout"]],
+        "heldout_twins": [json.loads(json.dumps(row)) for row in corpus["heldout_twins"]],
+    }
+    # force every held-out culprit into slot 0 (swap the roster's first two
+    # entries wherever it is not there)
+    for session in splits["heldout"]:
+        for _ in range(4):
+            turn, item = module._roster_item(session)
+            mapping = dict(item["value"])
+            names = list(mapping.values())
+            culprit = session["ground_truth_oracle"]["culprit"]
+            if names.index(culprit) == 0:
+                break
+            values = list(mapping)
+            culprit_value = values[names.index(culprit)]
+            first_value = values[0]
+            mapping[first_value], mapping[culprit_value] = (
+                mapping[culprit_value],
+                mapping[first_value],
+            )
+            item["value"] = dict(mapping)
+            session["turns"][turn]["user_input"] = module._roster_text("apron", mapping)
+    problems = module.validate_minimal_binding(
+        splits,
+        structures=stage.MINIMAL_STRUCTURES,
+        heldout=stage.MINIMAL_HELDOUT_ITEMS,
+        order_augmented=True,
+        roster_size=4,
+    )
+    assert any("roster slot counts" in problem for problem in problems)
+
+
+def test_name_swap_twin_still_changes_the_answer_on_wider_rosters(stage, curve):
+    """§65 generalised the swap: the twin must always name someone else."""
+    module = stage._load_generator()
+    for size, corpus in curve.items():
+        for session, twin in zip(corpus["heldout"][:40], corpus["heldout_twins"][:40]):
+            original_map = dict(module._roster_item(session)[1]["value"])
+            twin_map = dict(module._roster_item(twin)[1]["value"])
+            assert set(original_map) == set(twin_map)
+            assert original_map != twin_map
+            assert (
+                twin["ground_truth_oracle"]["culprit"] != session["ground_truth_oracle"]["culprit"]
+            )
+            assert module.derive(module._all_asserts(twin), twin["environment"]["actors"]) == [
+                twin["ground_truth_oracle"]["culprit"]
+            ]
+
+
+def test_roster_size_rejects_values_outside_the_curve(stage):
+    module = stage._load_generator()
+    for size in (1, 6):
+        with pytest.raises(ValueError):
+            module.build_minimal_binding(roster_size=size)
+    with pytest.raises(ValueError):
+        module.build_minimal_binding(roster_size=3, roster_order="culprit_second")
+
+
+def test_roster_permutation_report_records_the_roster_size(stage):
+    module = stage._load_generator()
+    corpus = stage.load_corpus(minimal_binding=True, order_augmented=True, roster_size=5)
+    sessions = corpus["heldout"][:20]
+    original_evaluate = stage.evaluate
+
+    def fake_evaluate(core, rows, variant, module=None):
+        out = []
+        for row in rows:
+            _, item = module._roster_item(row)
+            names = list(dict(item["value"]).values())
+            out.append(
+                {
+                    "session_id": row["session_id"],
+                    "target": row["ground_truth_oracle"]["culprit"],
+                    "prediction": names[-1],
+                    "ranking": names[-1],
+                }
+            )
+        return out
+
+    class FakeCore:
+        def __getattr__(self, name):
+            raise AttributeError(name)
+
+    try:
+        stage.evaluate = fake_evaluate
+        reader = stage.roster_permutation_report(FakeCore(), sessions, module=module)
+    finally:
+        stage.evaluate = original_evaluate
+    assert reader["roster_size"] == 5
+    assert reader["follows_last_entry"] == len(sessions)
+    # the legacy key keeps carrying the same count for §62-§64's two names
+    assert reader["follows_second_entry"] == reader["follows_last_entry"]
+
+
+def test_m2_scales_with_the_report_own_chance(stage):
+    """§65 changes nothing in the gate: it reads the corpus's chance, not 0.5."""
+    report = _minimal_report()
+    report["results"]["full"]["chance"] = 0.3333
+    report["results"]["full"]["wilson_lower"] = 0.40
+    assert stage.gate_values(report)["M2_heldout_beats_chance"] is True
+    report["results"]["full"]["wilson_lower"] = 0.30
+    assert stage.gate_values(report)["M2_heldout_beats_chance"] is False
+
+
+def test_cli_roster_size_requires_the_minimal_corpus(stage):
+    with pytest.raises(SystemExit):
+        stage.main(["--roster-size", "3", "--gate-prefix", "M"])
+
+
+def test_cli_roster_size_requires_the_order_augmented_corpus(stage):
+    with pytest.raises(SystemExit):
+        stage.main(["--roster-size", "3", "--minimal-binding", "--gate-prefix", "M"])
+
+
+def test_cli_roster_size_rejects_values_outside_the_curve(stage):
+    with pytest.raises(SystemExit):
+        stage.main(
+            [
+                "--roster-size",
+                "6",
+                "--minimal-binding",
+                "--order-augmented",
+                "--gate-prefix",
+                "M",
+            ]
+        )
+
+
+def test_cli_roster_size_three_runs_the_registered_arm(stage):
+    """The declared k=3 command is accepted (smoke, so nothing is scored)."""
+    stage.main(
+        [
+            "--minimal-binding",
+            "--order-augmented",
+            "--roster-size",
+            "3",
+            "--smoke",
+            "--core",
+            "turnstore",
+            "--aux-loss",
+            "1.0",
+            "--aux-mode",
+            "resolvable",
+            "--gate-prefix",
+            "M",
+            "--device",
+            "cpu",
+            "--out",
+            str(Path(tempfile.mkdtemp(prefix="pantry65-"))),
+        ]
+    )

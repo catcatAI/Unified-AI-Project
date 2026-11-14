@@ -125,6 +125,11 @@ COUNTERFACTUAL_TRAIN_ITEMS = 2 * COUNTERFACTUAL_STRUCTURES
 MINIMAL_STRUCTURES = 200
 MINIMAL_TRAIN_ITEMS = 2 * MINIMAL_STRUCTURES
 MINIMAL_HELDOUT_ITEMS = 200
+# §65: the capacity curve reuses the §64 corpus at 2/3/4/5 names. Chance is 1/k,
+# so the M2 gate (held-out Wilson lower bound > the report's own chance) needs
+# no code change - it reads `results.full.chance`, which `summarise` computes
+# from the corpus's own roster size.
+MINIMAL_ROSTER_SIZES = (2, 3, 4, 5)
 MINIMAL_BINDING_CHANCE = 0.5
 # §63 M5: reversing the roster's entry order leaves the answer unchanged, so a
 # model that matches the evidence value through the roster keeps its accuracy
@@ -348,6 +353,7 @@ def load_corpus(
     minimal_binding: bool = False,
     minimal_roster_order: str = "balanced",
     order_augmented: bool = False,
+    roster_size: int = 2,
 ) -> Dict[str, Any]:
     """Generate the registered corpus, run the data gates, and pin the digests.
 
@@ -368,6 +374,10 @@ def load_corpus(
     two entries reversed and the mapping untouched, so the culprit does not
     move. It is still 400 training items and still one item per structure per
     roster order; the held-out split is unchanged.
+
+    ``roster_size`` (§65) is the capacity curve's knob. It changes how many
+    people the roster lists (2/3/4/5), and with it the chance of a guess
+    (``1 / k``); structures, items, steps, objective and reading are held fixed.
     """
     module = _load_generator()
     heldout_twins: List[Dict[str, Any]] = []
@@ -378,6 +388,7 @@ def load_corpus(
             seed=seed,
             roster_order=minimal_roster_order,
             order_augmented=bool(order_augmented),
+            roster_size=int(roster_size),
         )
         problems = module.validate_minimal_binding(
             splits,
@@ -385,6 +396,7 @@ def load_corpus(
             heldout=MINIMAL_HELDOUT_ITEMS,
             roster_order=minimal_roster_order,
             order_augmented=bool(order_augmented),
+            roster_size=int(roster_size),
         )
         if problems:
             head = "; ".join(problems[:5])
@@ -441,7 +453,8 @@ def load_corpus(
             "minimal_binding": bool(minimal_binding),
             "minimal_binding_structures": MINIMAL_STRUCTURES if minimal_binding else 0,
             "minimal_binding_twins": MINIMAL_STRUCTURES if minimal_binding else 0,
-            "minimal_binding_chance": MINIMAL_BINDING_CHANCE if minimal_binding else None,
+            "minimal_roster_size": int(roster_size) if minimal_binding else 0,
+            "minimal_binding_chance": _round(1.0 / roster_size) if minimal_binding else None,
             "minimal_roster_order": minimal_roster_order if minimal_binding else None,
             "minimal_order_augmented": bool(order_augmented) if minimal_binding else False,
             "minimal_order_twins": (
@@ -1565,10 +1578,12 @@ def roster_permutation_report(
 ) -> Dict[str, Any]:
     """§63 M5: re-answer the same held-out sessions with the roster order flipped.
 
-    ``follows_second_entry`` is the positional reading: after the flip, the
-    second entry is the *other* person, so a positional model answers it every
-    time. Run before the flip it would be the culprit every time - which is
-    exactly what §62 could not distinguish (§62.10).
+    ``follows_last_entry`` is the positional reading: after the flip, the last
+    entry is a different person, so a positional model answers it every time.
+    Run before the flip it would be the culprit every time - which is exactly
+    what §62 could not distinguish (§62.10). At §62/§63/§64's two names the last
+    entry is also the second, so the legacy ``follows_second_entry`` key is kept
+    and carries the same count; §65's wider rosters read ``roster_size`` with it.
     """
     original = evaluate(core, sessions, "full", module=module)
     reordered = [reorder_roster(session, module) for session in sessions]
@@ -1587,8 +1602,10 @@ def roster_permutation_report(
         else None
     )
     follows = 0
+    roster_size = 0
     for record, session in zip(records, reordered):
         names = list(dict(module._roster_item(session)[1]["value"]).values())
+        roster_size = len(names)
         if names and record["prediction"] == names[-1]:
             follows += 1
     return {
@@ -1598,6 +1615,9 @@ def roster_permutation_report(
         "original_correct": original_correct,
         "original_exact": original_exact,
         "retention": retention,
+        "roster_size": roster_size,
+        "follows_last_entry": follows,
+        "follows_last_entry_rate": _round(follows / total) if total else None,
         "follows_second_entry": follows,
         "follows_second_entry_rate": _round(follows / total) if total else None,
         "note": (
@@ -1906,6 +1926,7 @@ def _heldout_predictions(report: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         minimal_binding=bool(corpus_block.get("minimal_binding")),
         minimal_roster_order=str(corpus_block.get("minimal_roster_order") or "culprit_second"),
         order_augmented=bool(corpus_block.get("minimal_order_augmented")),
+        roster_size=int(corpus_block.get("minimal_roster_size") or 2),
     )
     kind = str(config.get("core") or "gru")
     core = build_core(
@@ -2341,6 +2362,7 @@ def check_report(path: Path) -> List[str]:
         minimal_binding=bool(corpus_block.get("minimal_binding")),
         minimal_roster_order=str(corpus_block.get("minimal_roster_order") or "culprit_second"),
         order_augmented=bool(corpus_block.get("minimal_order_augmented")),
+        roster_size=int(corpus_block.get("minimal_roster_size") or 2),
     )
     if corpus["meta"]["train_digest"] != (report.get("corpus") or {}).get("train_digest"):
         problems.append("the regenerated train corpus does not match the report")
@@ -2437,6 +2459,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         minimal_binding=bool(args.minimal_binding),
         minimal_roster_order="balanced",
         order_augmented=bool(args.order_augmented),
+        roster_size=int(args.roster_size),
     )
     meta = corpus["meta"]
     if args.minimal_binding:
@@ -2444,6 +2467,11 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             raise SystemExit(
                 "§62's minimal binding arm did not load the minimal corpus; "
                 "the declared 400 items would not be the ones it names"
+            )
+        if int(meta.get("minimal_roster_size") or 0) != int(args.roster_size):
+            raise SystemExit(
+                f"§65 asked for a {args.roster_size}-name roster but the corpus lists "
+                f"{meta.get('minimal_roster_size')}; the declared chance would be wrong"
             )
     elif args.counterfactual:
         if not meta.get("counterfactual") or not meta.get("heldout_digest_registered"):
@@ -2684,6 +2712,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "counterfactual": bool(args.counterfactual),
             "minimal_binding": bool(args.minimal_binding),
             "order_augmented": bool(args.order_augmented),
+            "roster_size": int(args.roster_size),
         },
         "corpus": {
             **meta,
@@ -2839,6 +2868,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--roster-size",
+        type=int,
+        choices=MINIMAL_ROSTER_SIZES,
+        default=2,
+        help=(
+            "§65: how many people the minimal corpus's roster lists (2/3/4/5). "
+            "Chance is 1/k and the M2 gate reads the report's own chance, so the "
+            "curve holds items, steps, objective and reading fixed and changes one "
+            "thing; requires --minimal-binding --order-augmented"
+        ),
+    )
+    parser.add_argument(
         "--widen-to",
         type=int,
         default=0,
@@ -2953,6 +2994,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     "§61 changes only the corpus; keep --core turnstore --aux-loss 1.0 "
                     "--aux-mode weighted-region so §60's objective is held fixed"
                 )
+    if args.roster_size != 2:
+        if not args.minimal_binding:
+            parser.error(
+                "§65's capacity curve is a variant of the §62/§63/§64 minimal corpus; "
+                "pass --minimal-binding too"
+            )
+        if not args.order_augmented:
+            parser.error(
+                "§65 holds the corpus fixed and changes only the roster size, so the "
+                "registered arms are the §64 order-augmented corpus at 2/3/4/5 names; "
+                "pass --order-augmented too"
+            )
     if args.order_augmented:
         if not args.minimal_binding:
             parser.error(

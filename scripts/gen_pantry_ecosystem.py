@@ -1223,6 +1223,9 @@ def validate_counterfactual(
 # §62: the minimal binding corpus - two people, one live value
 # --------------------------------------------------------------------------- #
 MINIMAL_ROSTER_SIZE = 2
+# §65: the capacity curve runs the same corpus at 2/3/4/5 names. The default stays
+# 2 so every §62-§64 digest is unchanged.
+MINIMAL_ROSTER_SIZES = (2, 3, 4, 5)
 MINIMAL_TRAIN_STRUCTURES = 200
 MINIMAL_HELDOUT_STRUCTURES = 200
 MINIMAL_INDEX_OFFSET = 10_000
@@ -1239,6 +1242,7 @@ def _minimal_session(
     seed: int,
     split: str,
     roster_order: str = "balanced",
+    roster_size: int = MINIMAL_ROSTER_SIZE,
 ) -> Dict[str, Any]:
     """Four turns: the crime, a two-name roster, one live value, the question.
 
@@ -1256,22 +1260,40 @@ def _minimal_session(
     culprit equally often and the position cannot stand in for the answer.
     ``culprit_second`` reproduces the §62 corpus byte for byte so that report
     stays checkable.
+
+    ``roster_size`` (§65) is the capacity curve's knob: k actors sampled in the
+    same order and k values, one of which is the live value. The live entry is
+    rotated through the k slots with ``index % k``, so each slot holds the
+    culprit about ``n / k`` times and a fixed-slot rule caps at ``1 / k``. The
+    default of 2 reproduces every earlier corpus byte for byte.
     """
     if roster_order not in {"balanced", "culprit_second"}:
         raise ValueError(f"unknown roster_order {roster_order!r}")
-    actors = rng.sample(ACTORS, MINIMAL_ROSTER_SIZE)
-    culprit, other = actors
+    if roster_size < 2 or roster_size > len(ACTORS) or roster_size > len(COLOURS):
+        raise ValueError(f"roster_size {roster_size} is out of range")
+    if roster_order == "culprit_second" and roster_size != 2:
+        raise ValueError("culprit_second reproduces §62 and is only defined for two names")
+    actors = rng.sample(ACTORS, roster_size)
+    culprit = actors[0]
+    others = actors[1:]
     target_key = rng.choice(sorted(ITEMS))
     target_zh, unit = ITEMS[target_key]
     decoy_key = rng.choice([key for key in sorted(ITEMS) if key != target_key])
     decoy_zh = ITEMS[decoy_key][0]
-    live_value, dead_value = rng.sample(sorted(COLOURS), 2)
+    values = rng.sample(sorted(COLOURS), roster_size)
+    live_value = values[0]
+    dead_values = values[1:]
     if roster_order == "culprit_second":
-        mapping = {dead_value: other, live_value: culprit}
-    elif index % 2:
-        mapping = {dead_value: other, live_value: culprit}
+        mapping = {dead_values[0]: others[0], live_value: culprit}
+    elif roster_size == 2 and index % 2:
+        mapping = {dead_values[0]: others[0], live_value: culprit}
     else:
-        mapping = {live_value: culprit, dead_value: other}
+        slot = index % roster_size
+        ordered: List[Tuple[str, str]] = []
+        dead_iter = iter(zip(dead_values, others))
+        for position in range(roster_size):
+            ordered.append((live_value, culprit) if position == slot else next(dead_iter))
+        mapping = dict(ordered)
     action = rng.randint(17 * 60 + 30, 19 * 60)
     opening = action - rng.randint(55, 70)
     now = action + rng.randint(30, 50)
@@ -1363,20 +1385,28 @@ def _minimal_session(
 
 
 def minimal_twin(session: Dict[str, Any]) -> Dict[str, Any]:
-    """Swap the two names on the roster; everything else is byte-identical.
+    """Swap the culprit's name on the roster; everything else is byte-identical.
 
-    The value the witness saw stays the same, so after the swap it names the
-    other person. That is the smallest possible counterfactual: one roster line
-    with two exchanged names, and a different answer.
+    The value the witness saw stays the same, so after the swap it names another
+    person. That is the smallest possible counterfactual: one roster line with
+    two names exchanged, and a different answer.
     """
     twin = copy.deepcopy(session)
     roster_turn, roster_assert = _roster_item(twin)
     mapping = dict(roster_assert["value"])
-    if len(mapping) != MINIMAL_ROSTER_SIZE:
-        raise ValueError(f"{session['session_id']}: expected a {MINIMAL_ROSTER_SIZE}-entry roster")
+    if len(mapping) < 2:
+        raise ValueError(f"{session['session_id']}: expected a roster of at least two entries")
     names = list(mapping.values())
-    swapped = {value: names[1] if name == names[0] else names[0] for value, name in mapping.items()}
     culprit = session["ground_truth_oracle"]["culprit"]
+    # Swap the culprit's name with the first entry that is not the culprit, so the
+    # answer always changes. With two names this is exactly names[0] <-> names[1];
+    # §65's wider rosters need the general form or the twin would sometimes keep
+    # the same answer.
+    other = next(name for name in names if name != culprit)
+    swapped = {
+        value: (other if name == culprit else culprit if name == other else name)
+        for value, name in mapping.items()
+    }
     acting_value = next(value for value, name in mapping.items() if name == culprit)
     twin["session_id"] = session["session_id"] + MINIMAL_SUFFIX
     twin["session_meta"]["index"] = int(session["session_meta"]["index"]) + MINIMAL_INDEX_OFFSET
@@ -1392,18 +1422,18 @@ def minimal_twin(session: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def minimal_order_twin(session: Dict[str, Any]) -> Dict[str, Any]:
-    """§64: the same session with the roster's two entries in the opposite order.
+    """§64: the same session with the roster's entries in the opposite order.
 
     The mapping is unchanged, so ``derive()`` still names the same culprit; only
-    the two entries' positions in the roster line change. This is the training
+    the entries' positions in the roster line change. This is the training
     counterpart of §63's M5 control: a model that reads the mapping answers both
     copies the same way, a model that reads a position answers them differently.
     """
     twin = copy.deepcopy(session)
     roster_turn, roster_assert = _roster_item(twin)
     mapping = dict(roster_assert["value"])
-    if len(mapping) != MINIMAL_ROSTER_SIZE:
-        raise ValueError(f"{session['session_id']}: expected a {MINIMAL_ROSTER_SIZE}-entry roster")
+    if len(mapping) < 2:
+        raise ValueError(f"{session['session_id']}: expected a roster of at least two entries")
     flipped = dict(reversed(list(mapping.items())))
     twin["session_id"] = session["session_id"] + MINIMAL_ORDER_SUFFIX
     twin["session_meta"]["index"] = (
@@ -1425,6 +1455,7 @@ def build_minimal_binding(
     seed: int = DEFAULT_SEED,
     roster_order: str = "balanced",
     order_augmented: bool = False,
+    roster_size: int = MINIMAL_ROSTER_SIZE,
 ) -> Dict[str, List[Dict[str, Any]]]:
     """``[o0, t0, o1, t1, ...]`` for train, plain structures for held-out.
 
@@ -1432,12 +1463,14 @@ def build_minimal_binding(
     its *order* twin: the same 200 structures, each seen once in each roster
     order, still 400 training items. The held-out split is unchanged.
     """
+    if roster_size not in MINIMAL_ROSTER_SIZES:
+        raise ValueError(f"roster_size {roster_size} is not one of {MINIMAL_ROSTER_SIZES}")
     used: set = set()
 
     def make(index: int, split: str) -> Dict[str, Any]:
         for salt in range(128):
             rng = random.Random(f"{seed}:minimal:{index}:{salt}")
-            session = _minimal_session(index, rng, seed, split, roster_order)
+            session = _minimal_session(index, rng, seed, split, roster_order, roster_size)
             key = PantryEcosystemSynthesizer._answer_key(session)
             if key in used:
                 continue
@@ -1480,6 +1513,7 @@ def validate_minimal_binding(
     heldout: int = MINIMAL_HELDOUT_STRUCTURES,
     roster_order: str = "balanced",
     order_augmented: bool = False,
+    roster_size: int = MINIMAL_ROSTER_SIZE,
 ) -> List[str]:
     """Every §62/§64 invariant, as violations a reader can act on."""
     problems: List[str] = []
@@ -1531,12 +1565,12 @@ def validate_minimal_binding(
         sid = session["session_id"]
         actors = list(session["environment"]["actors"])
         oracle = session["ground_truth_oracle"]
-        if len(actors) != MINIMAL_ROSTER_SIZE:
-            problems.append(f"{label}/{sid}: {len(actors)} actors, expected 2")
+        if len(actors) != roster_size:
+            problems.append(f"{label}/{sid}: {len(actors)} actors, expected {roster_size}")
             return
         roster_turn, roster_assert = _roster_item(session)
         mapping = dict(roster_assert["value"])
-        if len(mapping) != MINIMAL_ROSTER_SIZE:
+        if len(mapping) != roster_size:
             problems.append(f"{label}/{sid}: roster has {len(mapping)} entries")
             return
         rendered = session["turns"][roster_turn]["user_input"]
@@ -1635,12 +1669,11 @@ def validate_minimal_binding(
             ("heldout twins", heldout_twins),
         ):
             positions = [culprit_position(session) for session in rows]
-            first = sum(1 for position in positions if position == 0)
-            second = sum(1 for position in positions if position == 1)
-            if first + second != len(positions) or first != second:
+            counts = [positions.count(slot) for slot in range(roster_size)]
+            if sum(counts) != len(positions) or max(counts) - min(counts) > 1:
                 problems.append(
-                    f"{label}: the culprit is the first roster entry {first} times and the "
-                    f"second {second} of {len(positions)}; a positional shortcut would be free"
+                    f"{label}: the culprit's roster slot counts are {counts} over "
+                    f"{len(positions)} items; a positional shortcut would be free"
                 )
 
     if order_augmented:
