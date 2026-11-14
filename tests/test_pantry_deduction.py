@@ -2159,3 +2159,230 @@ def test_roster_permutation_report_reads_a_positional_model(stage):
     assert report["follows_second_entry"] == 20
     assert report["follows_second_entry_rate"] == 1.0
     assert 0 <= report["correct"] <= 20
+
+
+# --------------------------------------------------------------------------- #
+# §64: order augmentation (the same structure in both roster orders)
+# --------------------------------------------------------------------------- #
+@pytest.fixture(scope="module")
+def order_augmented(stage):
+    return stage.load_corpus(minimal_binding=True, order_augmented=True)
+
+
+def test_order_augmented_corpus_is_the_declared_shape(stage, order_augmented):
+    meta = order_augmented["meta"]
+    assert meta["minimal_binding"] is True
+    assert meta["minimal_order_augmented"] is True
+    assert meta["minimal_roster_order"] == "balanced"
+    assert meta["minimal_binding_structures"] == stage.MINIMAL_STRUCTURES == 200
+    assert meta["minimal_binding_twins"] == stage.MINIMAL_STRUCTURES == 200
+    assert meta["minimal_order_twins"] == stage.MINIMAL_STRUCTURES == 200
+    assert len(order_augmented["train"]) == 400
+    assert len(order_augmented["heldout"]) == 200
+    assert len(order_augmented["heldout_twins"]) == 200
+    # held-out is untouched, so its digest must equal the §63 corpus's digest
+    balanced = stage.load_corpus(minimal_binding=True)
+    assert meta["heldout_digest"] == balanced["meta"]["heldout_digest"]
+    # the training split is a different corpus, not a relabelling
+    assert meta["train_digest"] != balanced["meta"]["train_digest"]
+
+
+def test_order_augmented_twin_reverses_only_the_roster_and_keeps_the_answer(stage, order_augmented):
+    module = stage._load_generator()
+    train = order_augmented["train"]
+    for original, twin in zip(train[::2][:40], train[1::2][:40]):
+        assert twin["session_id"] == original["session_id"] + "_ro"
+        assert twin["session_meta"]["order_augmented_of"] == original["session_id"]
+        original_map = dict(module._roster_item(original)[1]["value"])
+        twin_map = dict(module._roster_item(twin)[1]["value"])
+        assert twin_map == original_map
+        assert list(twin_map) == list(reversed(list(original_map)))
+        assert twin["ground_truth_oracle"]["culprit"] == original["ground_truth_oracle"]["culprit"]
+        assert module.derive(module._all_asserts(twin), twin["environment"]["actors"]) == [
+            twin["ground_truth_oracle"]["culprit"]
+        ]
+        for left, right in zip(original["turns"], twin["turns"]):
+            if int(left["turn_id"]) != int(original["session_meta"]["roster_turn"]):
+                assert left["user_input"] == right["user_input"]
+        assert original["turns"][1]["user_input"] != twin["turns"][1]["user_input"]
+
+
+def test_order_augmented_positions_are_balanced_in_both_halves(stage, order_augmented):
+    module = stage._load_generator()
+    positions = [_culprit_position(module, row) for row in order_augmented["train"]]
+    assert positions[:200].count(0) == 100 and positions[:200].count(1) == 100
+    assert positions[200:].count(0) == 100 and positions[200:].count(1) == 100
+
+
+def test_order_augmented_validator_accepts_the_corpus(stage, order_augmented):
+    module = stage._load_generator()
+    splits = {
+        "train": order_augmented["train"],
+        "heldout": order_augmented["heldout"],
+        "heldout_twins": order_augmented["heldout_twins"],
+    }
+    assert (
+        module.validate_minimal_binding(
+            splits,
+            structures=stage.MINIMAL_STRUCTURES,
+            heldout=stage.MINIMAL_HELDOUT_ITEMS,
+            order_augmented=True,
+        )
+        == []
+    )
+    # the §63 validator must not accept an order-augmented corpus as a name-swap one
+    problems = module.validate_minimal_binding(
+        splits, structures=stage.MINIMAL_STRUCTURES, heldout=stage.MINIMAL_HELDOUT_ITEMS
+    )
+    assert any(
+        "expected 200 twins" in problem or "is not the twin" in problem for problem in problems
+    )
+
+
+def test_order_augmented_validator_rejects_a_twin_that_keeps_the_order(stage, order_augmented):
+    module = stage._load_generator()
+    splits = {
+        "train": list(order_augmented["train"]),
+        "heldout": order_augmented["heldout"],
+        "heldout_twins": order_augmented["heldout_twins"],
+    }
+    original, twin = splits["train"][0], splits["train"][1]
+    turn, item = module._roster_item(twin)
+    # revert the twin to the original order, in the asserts and in the rendered line
+    _, original_item = module._roster_item(original)
+    item["value"] = dict(original_item["value"])
+    twin["turns"][turn]["user_input"] = original["turns"][turn]["user_input"]
+    problems = module.validate_minimal_binding(
+        splits,
+        structures=stage.MINIMAL_STRUCTURES,
+        heldout=stage.MINIMAL_HELDOUT_ITEMS,
+        order_augmented=True,
+    )
+    assert any("did not reverse the roster entries" in problem for problem in problems)
+
+
+def test_m3_accepts_the_order_pair_reading(stage):
+    report = _minimal_report()
+    report["diagnostics"]["minimal_order_pairs"] = report["diagnostics"].pop("minimal_pairs")
+    # the order twin's answer is its structure's, so targets_differ is 0 by design
+    report["diagnostics"]["minimal_order_pairs"]["targets_differ"] = 0
+    gates = stage.gate_values(report)
+    assert gates["M3_pairs_recorded"] is True
+
+
+def test_roster_permutation_report_records_the_order_retention(stage):
+    module = stage._load_generator()
+    corpus = stage.load_corpus(minimal_binding=True)
+    sessions = corpus["heldout"][:20]
+    original_evaluate = stage.evaluate
+
+    def make_fake(literal):
+        """A reader that answers the mapping, or one that memorised its entry order.
+
+        A pure position rule is at chance on a balanced corpus in both orders, so
+        the only model retention can separate is one that learned the literal
+        order: it answers the culprit when the roster is in the order it was
+        trained on and the other person when the entries are reversed.
+        """
+        known_order = {}
+
+        def fake_evaluate(core, rows, variant, module=None):
+            out = []
+            for row in rows:
+                _, item = module._roster_item(row)
+                mapping = dict(item["value"])
+                names = list(mapping.values())
+                culprit = row["ground_truth_oracle"]["culprit"]
+                if not literal:
+                    answer = culprit
+                else:
+                    order = tuple(mapping)
+                    known = known_order.setdefault(row["session_id"], order)
+                    if order == known:
+                        answer = culprit
+                    else:
+                        answer = next(name for name in names if name != culprit)
+                out.append(
+                    {
+                        "session_id": row["session_id"],
+                        "target": culprit,
+                        "prediction": answer,
+                        "ranking": answer,
+                    }
+                )
+            return out
+
+        return fake_evaluate
+
+    class FakeCore:
+        def __getattr__(self, name):
+            raise AttributeError(name)
+
+    try:
+        stage.evaluate = make_fake(literal=False)
+        reader = stage.roster_permutation_report(FakeCore(), sessions, module=module)
+        assert reader["original_exact"] == 1.0
+        assert reader["exact"] == 1.0
+        assert reader["retention"] == 1.0
+
+        stage.evaluate = make_fake(literal=True)
+        literal = stage.roster_permutation_report(FakeCore(), sessions, module=module)
+        assert literal["original_exact"] == 1.0
+        assert literal["exact"] == 0.0
+        assert literal["retention"] == 0.0
+    finally:
+        stage.evaluate = original_evaluate
+
+
+def test_cli_order_augmentation_requires_the_minimal_corpus(stage):
+    with pytest.raises(SystemExit):
+        stage.main(["--order-augmented", "--train-sessions", "400", "--gate-prefix", "M"])
+
+
+def test_cli_order_augmentation_refuses_other_corpora_and_calibrations(stage):
+    objective = ["--core", "turnstore", "--aux-loss", "1.0", "--aux-mode", "resolvable"]
+    for argv in (
+        ["--minimal-binding", "--order-augmented", "--counterfactual", "--gate-prefix", "M"],
+        [
+            "--minimal-binding",
+            "--order-augmented",
+            "--train-sessions",
+            "200",
+            "--gate-prefix",
+            "M",
+            *objective,
+        ],
+        [
+            "--minimal-binding",
+            "--order-augmented",
+            "--train-sessions",
+            "400",
+            "--gate-prefix",
+            "M",
+            *objective,
+            "--overfit",
+            "4",
+        ],
+        [
+            "--minimal-binding",
+            "--order-augmented",
+            "--train-sessions",
+            "400",
+            "--gate-prefix",
+            "M",
+            *objective,
+            "--eval-limit",
+            "8",
+        ],
+        [
+            "--minimal-binding",
+            "--order-augmented",
+            "--train-sessions",
+            "400",
+            "--gate-prefix",
+            "G",
+            *objective,
+        ],
+    ):
+        with pytest.raises(SystemExit):
+            stage.main(argv)

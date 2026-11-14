@@ -347,6 +347,7 @@ def load_corpus(
     counterfactual: bool = False,
     minimal_binding: bool = False,
     minimal_roster_order: str = "balanced",
+    order_augmented: bool = False,
 ) -> Dict[str, Any]:
     """Generate the registered corpus, run the data gates, and pin the digests.
 
@@ -361,6 +362,12 @@ def load_corpus(
     chain needs three or four actors), and the diagnostic §61.9 asks for is
     exactly that small. Its held-out twins are returned too - they are the
     diagnostic the branch needs, never a score.
+
+    ``order_augmented`` (§64) keeps the same 200 structures and replaces each
+    name-swapped twin with an *order* twin: the same session with the roster's
+    two entries reversed and the mapping untouched, so the culprit does not
+    move. It is still 400 training items and still one item per structure per
+    roster order; the held-out split is unchanged.
     """
     module = _load_generator()
     heldout_twins: List[Dict[str, Any]] = []
@@ -370,12 +377,14 @@ def load_corpus(
             heldout=MINIMAL_HELDOUT_ITEMS,
             seed=seed,
             roster_order=minimal_roster_order,
+            order_augmented=bool(order_augmented),
         )
         problems = module.validate_minimal_binding(
             splits,
             structures=MINIMAL_STRUCTURES,
             heldout=MINIMAL_HELDOUT_ITEMS,
             roster_order=minimal_roster_order,
+            order_augmented=bool(order_augmented),
         )
         if problems:
             head = "; ".join(problems[:5])
@@ -434,6 +443,10 @@ def load_corpus(
             "minimal_binding_twins": MINIMAL_STRUCTURES if minimal_binding else 0,
             "minimal_binding_chance": MINIMAL_BINDING_CHANCE if minimal_binding else None,
             "minimal_roster_order": minimal_roster_order if minimal_binding else None,
+            "minimal_order_augmented": bool(order_augmented) if minimal_binding else False,
+            "minimal_order_twins": (
+                MINIMAL_STRUCTURES if minimal_binding and order_augmented else 0
+            ),
             "heldout_twins": len(heldout_twins),
             "registered_sizes_match": (
                 not counterfactual
@@ -1473,7 +1486,9 @@ def flip_summary(full: Sequence[Dict[str, Any]], pre: Sequence[Dict[str, Any]]) 
     }
 
 
-def counterfactual_pair_report(records: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+def counterfactual_pair_report(
+    records: Sequence[Dict[str, Any]], *, suffix: str = "_cf"
+) -> Dict[str, Any]:
     """§61 C3: does the fitted model answer a structure and its twin differently?
 
     Two items in a pair have byte-identical non-roster text and opposite
@@ -1481,13 +1496,18 @@ def counterfactual_pair_report(records: Sequence[Dict[str, Any]]) -> Dict[str, A
     both and can be right at most once. That makes ``same_prediction`` the
     mechanism reading and ``both_correct`` its consequence; neither is a score
     (the held-out split is the score).
+
+    ``suffix`` selects the twin kind: ``_cf`` is §61/§62's name swap (the two
+    answers differ) and ``_ro`` is §64's roster-order twin (the answers are
+    identical by construction, so ``targets_differ`` reads 0 and the same
+    prediction is the *desired* invariant rather than a failure).
     """
     by_id = {row["session_id"]: row for row in records}
     pairs = []
     for sid, row in by_id.items():
-        if sid.endswith("_cf"):
+        if sid.endswith(suffix):
             continue
-        twin = by_id.get(sid + "_cf")
+        twin = by_id.get(sid + suffix)
         if twin is None:
             continue
         pairs.append(
@@ -1550,10 +1570,22 @@ def roster_permutation_report(
     time. Run before the flip it would be the culprit every time - which is
     exactly what §62 could not distinguish (§62.10).
     """
+    original = evaluate(core, sessions, "full", module=module)
     reordered = [reorder_roster(session, module) for session in sessions]
     records = evaluate(core, reordered, "full", module=module)
     total = len(records)
     correct = sum(1 for row in records if row["prediction"] == row["target"])
+    original_correct = sum(1 for row in original if row["prediction"] == row["target"])
+    original_exact = _round(original_correct / total) if total else None
+    exact = _round(correct / total) if total else None
+    # §64 reads this as an order-retention rate: the reordered arm divided by the
+    # original arm. M5's absolute floor is only informative when the original arm
+    # is near 1 (if it is at chance, a reversed arm cannot reach 0.80 either).
+    retention = (
+        _round(exact / original_exact)
+        if exact is not None and original_exact not in (None, 0.0)
+        else None
+    )
     follows = 0
     for record, session in zip(records, reordered):
         names = list(dict(module._roster_item(session)[1]["value"]).values())
@@ -1562,7 +1594,10 @@ def roster_permutation_report(
     return {
         "n": total,
         "correct": correct,
-        "exact": _round(correct / total) if total else None,
+        "exact": exact,
+        "original_correct": original_correct,
+        "original_exact": original_exact,
+        "retention": retention,
         "follows_second_entry": follows,
         "follows_second_entry_rate": _round(follows / total) if total else None,
         "note": (
@@ -1870,6 +1905,7 @@ def _heldout_predictions(report: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         counterfactual=bool(corpus_block.get("counterfactual")),
         minimal_binding=bool(corpus_block.get("minimal_binding")),
         minimal_roster_order=str(corpus_block.get("minimal_roster_order") or "culprit_second"),
+        order_augmented=bool(corpus_block.get("minimal_order_augmented")),
     )
     kind = str(config.get("core") or "gru")
     core = build_core(
@@ -2225,7 +2261,10 @@ def _stage_m_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
     full = results.get("full") or {}
     cost = report.get("cost") or {}
     diagnostics = report.get("diagnostics") or {}
-    pairs = diagnostics.get("minimal_pairs") or {}
+    # §64 replaces the name-swapped twin with an order twin, so the fit-pair
+    # reading is recorded under its own key; M3 only asks that a fit-pair
+    # reading exists, not which corpus produced it.
+    pairs = diagnostics.get("minimal_pairs") or diagnostics.get("minimal_order_pairs") or {}
     heldout_pairs = diagnostics.get("minimal_heldout_pairs") or {}
     permutation = diagnostics.get("minimal_roster_permutation") or {}
     fit_ok = fit.get("exact") is not None and float(fit["exact"]) >= GENERAL_FIT_FLOOR
@@ -2301,6 +2340,7 @@ def check_report(path: Path) -> List[str]:
         counterfactual=bool(corpus_block.get("counterfactual")),
         minimal_binding=bool(corpus_block.get("minimal_binding")),
         minimal_roster_order=str(corpus_block.get("minimal_roster_order") or "culprit_second"),
+        order_augmented=bool(corpus_block.get("minimal_order_augmented")),
     )
     if corpus["meta"]["train_digest"] != (report.get("corpus") or {}).get("train_digest"):
         problems.append("the regenerated train corpus does not match the report")
@@ -2396,6 +2436,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         counterfactual=bool(args.counterfactual),
         minimal_binding=bool(args.minimal_binding),
         minimal_roster_order="balanced",
+        order_augmented=bool(args.order_augmented),
     )
     meta = corpus["meta"]
     if args.minimal_binding:
@@ -2579,8 +2620,16 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
     if args.minimal_binding:
         if fit_subset_records is not None:
             # §62 M3: the mechanism reading, on the fitted pairs and on the held-out
-            # pairs. Neither is a score; the held-out singleton is M2.
-            diagnostics["minimal_pairs"] = counterfactual_pair_report(fit_subset_records)
+            # pairs. Neither is a score; the held-out singleton is M2. §64 replaces
+            # the name-swapped twin with an order twin, so its fit-pair reading is
+            # "did the two orders get the *same* answer" (the answers are equal by
+            # construction) and reads under its own key.
+            if args.order_augmented:
+                diagnostics["minimal_order_pairs"] = counterfactual_pair_report(
+                    fit_subset_records, suffix="_ro"
+                )
+            else:
+                diagnostics["minimal_pairs"] = counterfactual_pair_report(fit_subset_records)
         if heldout_twins:
             twin_records = evaluate(core, heldout_twins, "full", module=module)
             diagnostics["minimal_heldout_pairs"] = counterfactual_pair_report(
@@ -2634,6 +2683,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "train_subset": args.train_sessions or None,
             "counterfactual": bool(args.counterfactual),
             "minimal_binding": bool(args.minimal_binding),
+            "order_augmented": bool(args.order_augmented),
         },
         "corpus": {
             **meta,
@@ -2779,6 +2829,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--order-augmented",
+        action="store_true",
+        help=(
+            "§64: train on the same 200 minimal structures twice - once in the original "
+            "roster order and once with the two entries reversed (mapping and culprit "
+            "unchanged) - still 400 items and the same objective; requires "
+            "--minimal-binding --train-sessions 400 --gate-prefix M"
+        ),
+    )
+    parser.add_argument(
         "--widen-to",
         type=int,
         default=0,
@@ -2893,6 +2953,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     "§61 changes only the corpus; keep --core turnstore --aux-loss 1.0 "
                     "--aux-mode weighted-region so §60's objective is held fixed"
                 )
+    if args.order_augmented:
+        if not args.minimal_binding:
+            parser.error(
+                "§64's order augmentation is a variant of the §62/§63 minimal corpus; "
+                "pass --minimal-binding too"
+            )
+        if args.counterfactual:
+            parser.error(
+                "§64 replaces the name-swapped twin with an order twin; --counterfactual "
+                "is §61's corpus and cannot be combined"
+            )
     if args.minimal_binding:
         if args.counterfactual:
             parser.error(
@@ -2931,6 +3002,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     "§62 changes only the corpus; keep --core turnstore --aux-loss 1.0 "
                     "--aux-mode resolvable so the objective is held fixed"
                 )
+            if args.order_augmented:
+                # §64 holds structures, items, steps, objective and chance fixed; the
+                # only change is that each structure appears in both roster orders.
+                if args.overfit or args.limit or args.eval_limit:
+                    parser.error(
+                        "§64 is a corpus arm on the declared 400 items; --overfit/"
+                        "--limit/--eval-limit are calibration or smoke flags"
+                    )
     if args.train_sessions and args.gate_prefix != "G":
         if not (args.minimal_binding and args.gate_prefix == "M"):
             parser.error(

@@ -1227,6 +1227,10 @@ MINIMAL_TRAIN_STRUCTURES = 200
 MINIMAL_HELDOUT_STRUCTURES = 200
 MINIMAL_INDEX_OFFSET = 10_000
 MINIMAL_SUFFIX = "_cf"
+# §64: an order twin is the same session with the roster's two entries listed in
+# the opposite order; the value -> person mapping and the culprit do not change.
+MINIMAL_ORDER_INDEX_OFFSET = 20_000
+MINIMAL_ORDER_SUFFIX = "_ro"
 
 
 def _minimal_session(
@@ -1387,14 +1391,47 @@ def minimal_twin(session: Dict[str, Any]) -> Dict[str, Any]:
     return twin
 
 
+def minimal_order_twin(session: Dict[str, Any]) -> Dict[str, Any]:
+    """§64: the same session with the roster's two entries in the opposite order.
+
+    The mapping is unchanged, so ``derive()`` still names the same culprit; only
+    the two entries' positions in the roster line change. This is the training
+    counterpart of §63's M5 control: a model that reads the mapping answers both
+    copies the same way, a model that reads a position answers them differently.
+    """
+    twin = copy.deepcopy(session)
+    roster_turn, roster_assert = _roster_item(twin)
+    mapping = dict(roster_assert["value"])
+    if len(mapping) != MINIMAL_ROSTER_SIZE:
+        raise ValueError(f"{session['session_id']}: expected a {MINIMAL_ROSTER_SIZE}-entry roster")
+    flipped = dict(reversed(list(mapping.items())))
+    twin["session_id"] = session["session_id"] + MINIMAL_ORDER_SUFFIX
+    twin["session_meta"]["index"] = (
+        int(session["session_meta"]["index"]) + MINIMAL_ORDER_INDEX_OFFSET
+    )
+    twin["session_meta"]["split"] = "train"
+    twin["session_meta"]["order_augmented_of"] = session["session_id"]
+    for item in twin["turns"][roster_turn]["asserts"]:
+        if item["kind"] == "roster":
+            item["value"] = dict(flipped)
+    twin["turns"][roster_turn]["user_input"] = _roster_text("apron", flipped)
+    return twin
+
+
 def build_minimal_binding(
     *,
     structures: int = MINIMAL_TRAIN_STRUCTURES,
     heldout: int = MINIMAL_HELDOUT_STRUCTURES,
     seed: int = DEFAULT_SEED,
     roster_order: str = "balanced",
+    order_augmented: bool = False,
 ) -> Dict[str, List[Dict[str, Any]]]:
-    """``[o0, t0, o1, t1, ...]`` for train, plain structures for held-out."""
+    """``[o0, t0, o1, t1, ...]`` for train, plain structures for held-out.
+
+    ``order_augmented`` (§64) replaces each structure's name-swapped twin with
+    its *order* twin: the same 200 structures, each seen once in each roster
+    order, still 400 training items. The held-out split is unchanged.
+    """
     used: set = set()
 
     def make(index: int, split: str) -> Dict[str, Any]:
@@ -1413,11 +1450,15 @@ def build_minimal_binding(
 
     train_twins: List[Dict[str, Any]] = []
     for session in train_structures:
-        twin = minimal_twin(session)
-        key = PantryEcosystemSynthesizer._answer_key(twin)
-        if key in used:
-            raise RuntimeError(f"{session['session_id']}: its twin's answer tuple collides")
-        used.add(key)
+        if order_augmented:
+            # the order twin's answer tuple is the original's by construction
+            twin = minimal_order_twin(session)
+        else:
+            twin = minimal_twin(session)
+            key = PantryEcosystemSynthesizer._answer_key(twin)
+            if key in used:
+                raise RuntimeError(f"{session['session_id']}: its twin's answer tuple collides")
+            used.add(key)
         train_twins.append(twin)
 
     interleaved: List[Dict[str, Any]] = []
@@ -1438,8 +1479,9 @@ def validate_minimal_binding(
     structures: int = MINIMAL_TRAIN_STRUCTURES,
     heldout: int = MINIMAL_HELDOUT_STRUCTURES,
     roster_order: str = "balanced",
+    order_augmented: bool = False,
 ) -> List[str]:
-    """Every §62 invariant, as violations a reader can act on."""
+    """Every §62/§64 invariant, as violations a reader can act on."""
     problems: List[str] = []
     train = list(splits.get("train") or [])
     heldout_sessions = list(splits.get("heldout") or [])
@@ -1454,19 +1496,34 @@ def validate_minimal_binding(
 
     structures_of: Dict[str, Dict[str, Any]] = {}
     twins: List[Dict[str, Any]] = []
+    order_twins: List[Dict[str, Any]] = []
+    link_key = "order_augmented_of" if order_augmented else "counterfactual_of"
     for position, session in enumerate(train):
         if session["session_meta"].get("counterfactual_of"):
             twins.append(session)
+        elif session["session_meta"].get("order_augmented_of"):
+            order_twins.append(session)
         else:
             structures_of[session["session_id"]] = session
-    if len(twins) != structures:
+    if order_augmented:
+        if twins:
+            problems.append(f"order-augmented train carries {len(twins)} counterfactual twins")
+        if len(order_twins) != structures:
+            problems.append(f"expected {structures} order twins, found {len(order_twins)}")
+    elif len(twins) != structures:
         problems.append(f"expected {structures} twins, found {len(twins)}")
     for position in range(0, len(train) - 1, 2):
         original, twin = train[position], train[position + 1]
-        if twin["session_meta"].get("counterfactual_of") != original["session_id"]:
+        if twin["session_meta"].get(link_key) != original["session_id"]:
             problems.append(f"train[{position + 1}] is not the twin of train[{position}]")
 
-    keys = [PantryEcosystemSynthesizer._answer_key(session) for session in train + heldout_sessions]
+    # an order twin's answer tuple is its structure's by construction, so only
+    # the structures and the held-out split must be pairwise unique
+    unique_rows = [session for session in train if not session["session_meta"].get(link_key)]
+    keys = [
+        PantryEcosystemSynthesizer._answer_key(session)
+        for session in unique_rows + heldout_sessions
+    ]
     if len(keys) != len(set(keys)):
         problems.append("answer tuples are not unique across the minimal corpus")
 
@@ -1482,6 +1539,12 @@ def validate_minimal_binding(
         if len(mapping) != MINIMAL_ROSTER_SIZE:
             problems.append(f"{label}/{sid}: roster has {len(mapping)} entries")
             return
+        rendered = session["turns"][roster_turn]["user_input"]
+        if rendered != _roster_text(session["session_meta"]["chain"], mapping):
+            problems.append(
+                f"{label}/{sid}: the roster line does not match the roster mapping, so the "
+                "text and the asserts disagree"
+            )
         if set(mapping.values()) != set(actors):
             problems.append(f"{label}/{sid}: the roster does not name both actors")
         evidence = [
@@ -1531,7 +1594,9 @@ def validate_minimal_binding(
             problems.append(f"{label}/{sid}: the oracle tag appears in the text")
 
     for session in train:
-        if not session["session_meta"].get("counterfactual_of"):
+        if not session["session_meta"].get("counterfactual_of") and not session["session_meta"].get(
+            "order_augmented_of"
+        ):
             check_structure(session, "train")
     for session in heldout_sessions:
         check_structure(session, "heldout")
@@ -1553,11 +1618,12 @@ def validate_minimal_binding(
             return names.index(culprit) if culprit in names else None
 
         train_structures = [
-            session for session in train if not session["session_meta"].get("counterfactual_of")
+            session
+            for session in train
+            if not session["session_meta"].get("counterfactual_of")
+            and not session["session_meta"].get("order_augmented_of")
         ]
-        train_twins = [
-            session for session in train if session["session_meta"].get("counterfactual_of")
-        ]
+        train_twins = [twin for twin in train if twin["session_meta"].get(link_key)]
         # A "second entry" reader is right on a structure exactly when the culprit
         # sits second, and the twin keeps the live value's key (only the name
         # changes), so the twin's culprit sits in the same slot. Both splits must
@@ -1576,6 +1642,42 @@ def validate_minimal_binding(
                     f"{label}: the culprit is the first roster entry {first} times and the "
                     f"second {second} of {len(positions)}; a positional shortcut would be free"
                 )
+
+    if order_augmented:
+        heldout_ids = {session["session_id"] for session in heldout_sessions}
+        for twin in order_twins:
+            sid = twin["session_id"]
+            if not sid.endswith(MINIMAL_ORDER_SUFFIX):
+                problems.append(f"{sid}: order twin id does not end in {MINIMAL_ORDER_SUFFIX}")
+            original = structures_of.get(twin["session_meta"].get("order_augmented_of"))
+            if original is None:
+                problems.append(f"{sid}: order_augmented_of does not name a structure")
+                continue
+            if twin["ground_truth_oracle"]["culprit"] != original["ground_truth_oracle"]["culprit"]:
+                problems.append(f"{sid}: the order twin changed the culprit")
+            if derive(_all_asserts(twin), twin["environment"]["actors"]) != [
+                twin["ground_truth_oracle"]["culprit"]
+            ]:
+                problems.append(f"{sid}: the order twin's testimony no longer derives the culprit")
+            old_map = dict(_roster_item(original)[1]["value"])
+            new_map = dict(_roster_item(twin)[1]["value"])
+            if old_map != new_map:
+                problems.append(f"{sid}: the order twin changed the roster mapping")
+            if list(old_map) == list(new_map):
+                problems.append(f"{sid}: the order twin did not reverse the roster entries")
+            twin_turn = int(twin["session_meta"]["roster_turn"])
+            if twin["turns"][twin_turn]["user_input"] != _roster_text(
+                twin["session_meta"]["chain"], new_map
+            ):
+                problems.append(f"{sid}: the order twin's roster line does not match its mapping")
+            roster_turn = int(original["session_meta"]["roster_turn"])
+            for left, right in zip(original["turns"], twin["turns"]):
+                if (
+                    int(left["turn_id"]) != roster_turn
+                    and left["user_input"] != right["user_input"]
+                ):
+                    problems.append(f"{sid}: non-roster turn {left['turn_id']} differs")
+        return problems
 
     heldout_ids = {session["session_id"] for session in heldout_sessions}
     for twin in twins + heldout_twins:
