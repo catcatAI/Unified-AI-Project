@@ -1481,3 +1481,33 @@ def test_cli_refuses_weighted_region_combinations_that_change_the_arm(stage):
     ):
         with pytest.raises(SystemExit):
             stage.main(argv)
+
+
+def test_summarise_records_the_in_roster_rate_and_its_content_free_expectation(stage):
+    """§60.3 W3: "the prediction came from this session's roster" must be readable."""
+    records = [
+        {
+            "session_id": "a",
+            "chain": "ledger",
+            "actors": 2,
+            "roster": ["Alex", "Kevin"],
+            "target": "Alex",
+            "prediction": "Alex",
+            "ranking": "Alex",
+        },
+        {
+            "session_id": "b",
+            "chain": "ledger",
+            "actors": 2,
+            "roster": ["Kevin", "Lena"],
+            "target": "Kevin",
+            "prediction": "Alex",  # a global name that is not in this roster
+            "ranking": "Kevin",
+        },
+    ]
+    block = stage.summarise(records)
+    assert block["in_roster"] == 1
+    assert block["in_roster_exact"] == 0.5
+    # three names in the corpus, two per roster -> 2/3 by chance
+    assert block["in_roster_chance"] == 0.6667
+    assert "roster" not in block["samples"][0]

@@ -1233,15 +1233,19 @@ def evaluate(
             final = dict(state.tensors)
             produced = generate_bytes(core, final)
             for index, session in enumerate(chunk):
-                ranked = rank_actor(
-                    core, _slice(final, index, index + 1), session["environment"]["actors"]
-                )
+                actors = list(session["environment"]["actors"])
+                ranked = rank_actor(core, _slice(final, index, index + 1), actors)
                 prediction = _decoded(produced[index])
                 records.append(
                     {
                         "session_id": session["session_id"],
                         "chain": session["session_meta"]["chain"],
-                        "actors": len(session["environment"]["actors"]),
+                        "actors": len(actors),
+                        # §56/§57/§59's diagnostic: does the answer even come
+                        # from this session's roster, or is it a globally
+                        # frequent name? `summarise` turns this into a rate and
+                        # compares it with the content-free expectation.
+                        "roster": actors,
                         "target": targets[index],
                         "prediction": prediction,
                         "ranking": ranked,
@@ -1258,6 +1262,17 @@ def summarise(records: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     correct = sum(1 for row in targeted if row["prediction"] == row["target"])
     ranked = sum(1 for row in targeted if row["ranking"] == row["target"])
     chance = sum(1.0 / row["actors"] for row in targeted) / total if total else 0.0
+    roster_of = {row["session_id"]: row.get("roster") or [] for row in records}
+    names = {name for roster in roster_of.values() for name in roster}
+    in_roster = sum(1 for row in targeted if row["prediction"] in roster_of[row["session_id"]])
+    # "content-free": answering from the corpus-wide name distribution without
+    # reading the session, i.e. P(name in this roster) under a uniform choice
+    # over the names the corpus uses
+    roster_chance = (
+        sum(len(roster_of[row["session_id"]]) / len(names) for row in targeted) / total
+        if total and names
+        else 0.0
+    )
     low, high = wilson(correct, total)
     rank_low, rank_high = wilson(ranked, total)
     counts: Dict[str, int] = {}
@@ -1286,6 +1301,9 @@ def summarise(records: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
         "chance": _round(chance),
         "wilson_lower": _round(low),
         "wilson_upper": _round(high),
+        "in_roster": in_roster,
+        "in_roster_exact": _round(in_roster / total) if total else None,
+        "in_roster_chance": _round(roster_chance),
         "ranking_correct": ranked,
         "ranking_exact": _round(ranked / total) if total else None,
         "ranking_lower": _round(rank_low),
