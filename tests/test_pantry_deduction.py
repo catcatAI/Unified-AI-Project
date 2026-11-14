@@ -1566,3 +1566,182 @@ def test_summarise_records_the_in_roster_rate_and_its_content_free_expectation(s
     # three names in the corpus, two per roster -> 2/3 by chance
     assert block["in_roster_chance"] == 0.6667
     assert "roster" not in block["samples"][0]
+
+
+# --------------------------------------------------------------------------- #
+# §61: the counterfactual corpus
+# --------------------------------------------------------------------------- #
+@pytest.fixture(scope="module")
+def counterfactual(stage):
+    return stage.load_corpus(counterfactual=True)
+
+
+def test_counterfactual_twin_changes_only_the_roster_turn(stage, counterfactual):
+    """The claim §61 rests on: same text everywhere except the roster line.
+
+    If a twin differed in a witness account or a badge id, the difference could
+    come from the text the model reads; that is exactly what this arm must rule
+    out, so the equality is asserted byte-for-byte rather than sampled.
+    """
+    module = stage._load_generator()
+    twins = [row for row in counterfactual["train"] if row["session_meta"].get("counterfactual_of")]
+    originals = {row["session_id"]: row for row in counterfactual["train"]}
+    assert len(twins) == stage.COUNTERFACTUAL_STRUCTURES == 200
+
+    for twin in twins:
+        original = originals[twin["session_meta"]["counterfactual_of"]]
+        roster_turn = int(original["session_meta"]["roster_turn"])
+        assert twin["session_id"].endswith("_cf")
+        assert twin["session_meta"]["index"] == original["session_meta"]["index"] + 10_000
+        assert twin["session_meta"]["split"] == "train"
+        assert twin["environment"] == original["environment"]
+        assert twin["session_meta"]["timeline"] == original["session_meta"]["timeline"]
+        assert len(twin["turns"]) == len(original["turns"])
+        for left, right in zip(original["turns"], twin["turns"]):
+            if int(left["turn_id"]) != roster_turn:
+                assert left["user_input"] == right["user_input"]
+        old_map = dict(module._roster_item(original)[1]["value"])
+        new_map = dict(module._roster_item(twin)[1]["value"])
+        assert set(old_map) == set(new_map)
+        assert set(old_map.values()) == set(new_map.values())
+        assert sum(old_map[key] != new_map[key] for key in old_map) == 2
+
+
+def test_counterfactual_twin_is_derived_by_the_solver_and_keeps_the_trap(stage, counterfactual):
+    """The swap must move the derived answer without moving the pre-correction trap."""
+    module = stage._load_generator()
+    twins = [row for row in counterfactual["train"] if row["session_meta"].get("counterfactual_of")]
+    originals = {row["session_id"]: row for row in counterfactual["train"]}
+    changed_chains = set()
+    for twin in twins:
+        original = originals[twin["session_meta"]["counterfactual_of"]]
+        actors = twin["environment"]["actors"]
+        assert module.derive(module._all_asserts(twin), actors) == [
+            twin["ground_truth_oracle"]["culprit"]
+        ]
+        assert twin["turns"][-1]["expected_final_deduction"] == (
+            twin["ground_truth_oracle"]["culprit"]
+        )
+        assert twin["ground_truth_oracle"]["culprit"] != (
+            original["ground_truth_oracle"]["culprit"]
+        )
+        assert module.derive(module._pre_correction(twin), actors) == module.derive(
+            module._pre_correction(original), actors
+        )
+        changed_chains.add(twin["ground_truth_oracle"]["chain"])
+    # the twins are not all one chain: the effect is not a chain artefact
+    assert changed_chains == {"apron", "badge", "ledger", "window"}
+
+
+def test_counterfactual_corpus_keeps_the_registered_heldout_split(stage, counterfactual):
+    """§61 must be graded on §60's held-out items, not a regenerated set."""
+    meta = counterfactual["meta"]
+    assert meta["counterfactual"] is True
+    assert meta["heldout_digest_registered"] is True
+    assert meta["heldout_digest"] == stage.HOLDOUT_DIGEST
+    assert len(counterfactual["heldout"]) == stage.HOLDOUT_SESSIONS == 200
+    # the original 800 structures are still there behind the pair head
+    originals = [
+        row for row in counterfactual["train"] if not row["session_meta"].get("counterfactual_of")
+    ]
+    assert len(originals) == stage.TRAIN_SESSIONS == 800
+
+
+def test_counterfactual_corpus_head_is_the_interleaved_pairs(stage, counterfactual):
+    head = counterfactual["train"][: stage.COUNTERFACTUAL_TRAIN_ITEMS]
+    assert len(head) == 400
+    for position in range(0, len(head), 2):
+        original, twin = head[position], head[position + 1]
+        assert twin["session_meta"]["counterfactual_of"] == original["session_id"]
+        assert not original["session_meta"].get("counterfactual_of")
+
+
+def test_counterfactual_corpus_passes_its_own_gates(stage, counterfactual):
+    module = stage._load_generator()
+    assert (
+        module.validate_counterfactual(counterfactual, structures=stage.COUNTERFACTUAL_STRUCTURES)
+        == []
+    )
+    # and the shortcut audit §49.3 already runs on the original corpus
+    assert module._validate_shortcuts(counterfactual["train"] + counterfactual["heldout"]) == []
+
+
+def test_counterfactual_gate_catches_a_twin_that_kept_the_culprit(stage, counterfactual):
+    """A silent no-op twin would make the arm measure nothing; the gate must fire."""
+    import copy
+
+    # the corpus dict also carries the generator module, which is not deepcopyable
+    broken = {
+        "train": copy.deepcopy(counterfactual["train"]),
+        "heldout": copy.deepcopy(counterfactual["heldout"]),
+    }
+    twin = broken["train"][1]
+    original = broken["train"][0]
+    twin["ground_truth_oracle"]["culprit"] = original["ground_truth_oracle"]["culprit"]
+    problems = stage._load_generator().validate_counterfactual(
+        broken, structures=stage.COUNTERFACTUAL_STRUCTURES
+    )
+    assert any("did not change the culprit" in problem for problem in problems)
+
+
+def test_counterfactual_pair_report_counts_same_predictions_and_both_correct(stage):
+    records = [
+        {"session_id": "x", "target": "Alex", "prediction": "Alex"},
+        {"session_id": "x_cf", "target": "Betty", "prediction": "Betty"},
+        {"session_id": "y", "target": "Alex", "prediction": "Kevin"},
+        {"session_id": "y_cf", "target": "Betty", "prediction": "Kevin"},
+    ]
+    report = stage.counterfactual_pair_report(records)
+    assert report["n_pairs"] == 2
+    assert report["targets_differ"] == 2
+    assert report["same_prediction"] == 1
+    assert report["same_prediction_rate"] == 0.5
+    assert report["both_correct"] == 1
+    assert report["both_correct_rate"] == 0.5
+    assert report["structure_correct"] == 1
+    assert report["twin_correct"] == 1
+
+
+def test_cli_refuses_counterfactual_combinations_that_change_the_arm(stage):
+    for argv in (
+        ["--counterfactual", "--train-sessions", "200"],
+        [
+            "--counterfactual",
+            "--train-sessions",
+            "400",
+            "--core",
+            "turnstore",
+            "--aux-loss",
+            "1.0",
+            "--aux-mode",
+            "weighted-region",
+            "--eval-limit",
+            "8",
+        ],
+        ["--counterfactual", "--overfit", "1"],
+        ["--counterfactual", "--smoke", "--control", "rand"],
+        [
+            "--counterfactual",
+            "--train-sessions",
+            "400",
+            "--core",
+            "gru",
+            "--aux-loss",
+            "1.0",
+            "--aux-mode",
+            "all",
+        ],
+        [
+            "--counterfactual",
+            "--train-sessions",
+            "400",
+            "--core",
+            "turnstore",
+            "--aux-loss",
+            "0.0",
+            "--aux-mode",
+            "all",
+        ],
+    ):
+        with pytest.raises(SystemExit):
+            stage.main(argv)

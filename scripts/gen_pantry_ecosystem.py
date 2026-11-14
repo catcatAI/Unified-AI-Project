@@ -83,6 +83,7 @@ Deviations from the spec as handed in (recorded, not silent)
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import math
@@ -938,6 +939,284 @@ class PantryEcosystemSynthesizer:
         if everything:
             problems.extend(_validate_shortcuts(everything))
         return problems
+
+
+# --------------------------------------------------------------------------- #
+# §61: counterfactual twins
+# --------------------------------------------------------------------------- #
+COUNTERFACTUAL_SUFFIX = "_cf"
+COUNTERFACTUAL_INDEX_OFFSET = 10_000
+COUNTERFACTUAL_STRUCTURES = 200
+
+
+def _roster_item(session: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
+    """The roster turn and its assert; every chain has exactly one."""
+    turn_id = int(session["session_meta"]["roster_turn"])
+    for item in session["turns"][turn_id]["asserts"]:
+        if item["kind"] == "roster":
+            return turn_id, item
+    raise ValueError(f"{session['session_id']}: roster turn has no roster assert")
+
+
+def _roster_text(chain: str, mapping: Dict[str, str]) -> str:
+    """Render the roster turn from a value -> name mapping.
+
+    Rebuilding (instead of patching two names in the old string) keeps the
+    insertion order and the separators identical to the generator's own
+    rendering, so a twin's roster line differs only in the two swapped names.
+    """
+    if chain == "apron":
+        body = "、".join(f"{COLOURS[key]}是 {actor}" for key, actor in mapping.items())
+        return "今天值班表上寫著：" + body + "。"
+    prefix = {
+        "badge": "人事那邊的卡號對照：",
+        "ledger": "登記簿上的編號對照：",
+        "window": "訪客系統的卡號對照：",
+    }[chain]
+    return prefix + "、".join(f"{value} 是 {name}" for value, name in mapping.items()) + "。"
+
+
+def _pre_correction(session: Dict[str, Any]) -> List[Tuple[int, Dict[str, Any]]]:
+    """Every assert a reader has before the correction turn."""
+    limit = int(session["session_meta"]["correction_turn"])
+    return [
+        (turn["turn_id"], item)
+        for turn in session["turns"]
+        if int(turn["turn_id"]) < limit
+        for item in turn["asserts"]
+    ]
+
+
+def counterfactual_twin(
+    session: Dict[str, Any],
+    partner: str | None = None,
+    *,
+    forbidden_keys: Sequence[str] = (),
+) -> Dict[str, Any]:
+    """§61: the same structure with the roster's value -> name map swapped.
+
+    Everything except the roster turn, the oracle culprit and the final expected
+    deduction is copied verbatim. The culprit's live evidence value and a
+    *non-live* actor's value exchange the people they name, so the surviving
+    evidence now identifies the partner while the text the model reads (witness
+    accounts, badge ids, times) is byte-identical. That is the point: session
+    identity is no longer a sufficient statistic for the answer, because two
+    items with the same non-roster text have different answers.
+
+    A twin is only accepted if the solver agrees with it (full testimony ->
+    partner), the pre-correction candidate set is unchanged (the trap stays the
+    trap), every data gate passes, and its answer tuple is free. If no actor
+    works, this raises instead of silently skipping: a skipped structure would
+    quietly change the registered corpus.
+    """
+    actors = list(session["environment"]["actors"])
+    culprit = session["ground_truth_oracle"]["culprit"]
+    chain = session["ground_truth_oracle"]["chain"]
+    roster_turn, roster_assert = _roster_item(session)
+    mapping = dict(roster_assert["value"])
+    value_of = {name: value for value, name in mapping.items()}
+    if culprit not in value_of:
+        raise ValueError(f"{session['session_id']}: the culprit has no roster value")
+
+    pre_original = derive(_pre_correction(session), actors)
+    if partner is not None:
+        candidates = [partner]
+    else:
+        # A position-ordered scan would make the first actor the twin culprit
+        # far too often, and the corpus's "most mentioned" shortcut baseline
+        # tie-breaks on that same position - a surface cue the original corpus
+        # is gated against. Shuffle deterministically from the session id so the
+        # partner is uniform over the roster and independent of turn order.
+        candidates = [a for a in actors if a != culprit]
+        random.Random(f"{session['session_id']}:counterfactual").shuffle(candidates)
+    tried: List[Tuple[str, str]] = []
+    forbidden = set(forbidden_keys)
+
+    for candidate in candidates:
+        if candidate == culprit:
+            continue
+        if candidate not in value_of:
+            tried.append((candidate, "not on the roster"))
+            continue
+        live_value = value_of[culprit]
+        partner_value = value_of[candidate]
+        new_mapping = dict(mapping)
+        new_mapping[live_value] = candidate
+        new_mapping[partner_value] = culprit
+
+        twin = copy.deepcopy(session)
+        twin["session_id"] = session["session_id"] + COUNTERFACTUAL_SUFFIX
+        twin["session_meta"]["index"] = (
+            int(session["session_meta"]["index"]) + COUNTERFACTUAL_INDEX_OFFSET
+        )
+        twin["session_meta"]["split"] = "train"
+        twin["session_meta"]["counterfactual_of"] = session["session_id"]
+        twin["ground_truth_oracle"]["culprit"] = candidate
+        twin["turns"][-1]["expected_final_deduction"] = candidate
+        for item in twin["turns"][roster_turn]["asserts"]:
+            if item["kind"] == "roster":
+                item["value"] = dict(new_mapping)
+        twin["turns"][roster_turn]["user_input"] = _roster_text(chain, new_mapping)
+
+        # the solver must agree, and the correction must still be the pivot
+        if derive(_all_asserts(twin), actors) != [candidate]:
+            tried.append((candidate, "derive does not yield the partner"))
+            continue
+        if derive(_pre_correction(twin), actors) != pre_original:
+            tried.append((candidate, "the pre-correction answer changed"))
+            continue
+        problems = (
+            _validate_necessity(twin)
+            + _validate_retraction(twin)
+            + _validate_name_balance(twin)
+            + _validate_session(twin, "train")
+        )
+        if problems:
+            tried.append((candidate, problems[0]))
+            continue
+        key = PantryEcosystemSynthesizer._answer_key(twin)
+        if key in forbidden:
+            tried.append((candidate, "answer tuple collides"))
+            continue
+
+        # the claim this experiment rests on: only the roster turn differs
+        for left, right in zip(session["turns"], twin["turns"]):
+            if int(left["turn_id"]) != roster_turn and left["user_input"] != right["user_input"]:
+                raise AssertionError(
+                    f"{twin['session_id']}: twin changed a non-roster turn " f"({left['turn_id']})"
+                )
+        return twin
+
+    head = "; ".join(f"{name}: {why}" for name, why in tried[:4])
+    raise RuntimeError(
+        f"{session['session_id']}: no counterfactual partner works ({len(tried)} tried; {head})"
+    )
+
+
+def build_counterfactual(
+    splits: Dict[str, List[Dict[str, Any]]],
+    *,
+    structures: int = COUNTERFACTUAL_STRUCTURES,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Interleave the first ``structures`` train items with their twins.
+
+    The result is ``[o0, t0, o1, t1, ...] + train[structures:]``, so a
+    ``--train-sessions 2*structures`` arm gets exactly the pairs while the
+    original 800-session corpus stays in place behind them.
+    """
+    train = list(splits["train"])
+    heldout = list(splits["heldout"])
+    if structures <= 0 or structures > len(train):
+        raise ValueError(f"structures={structures} is outside 1..{len(train)}")
+
+    used = {PantryEcosystemSynthesizer._answer_key(session) for session in heldout}
+    used |= {session["session_id"] for session in heldout}
+    twins: List[Dict[str, Any]] = []
+    for session in train[:structures]:
+        twin = counterfactual_twin(session, forbidden_keys=sorted(used))
+        used.add(PantryEcosystemSynthesizer._answer_key(twin))
+        used.add(twin["session_id"])
+        twins.append(twin)
+
+    interleaved: List[Dict[str, Any]] = []
+    for original, twin in zip(train[:structures], twins):
+        interleaved.extend([original, twin])
+    interleaved.extend(train[structures:])
+    return {"train": interleaved, "heldout": heldout}
+
+
+def validate_counterfactual(
+    splits: Dict[str, List[Dict[str, Any]]],
+    *,
+    structures: int = COUNTERFACTUAL_STRUCTURES,
+) -> List[str]:
+    """Every §61 invariant, as violations a reader can act on."""
+    problems: List[str] = []
+    train = list(splits.get("train") or [])
+    heldout = list(splits.get("heldout") or [])
+    originals: Dict[str, Dict[str, Any]] = {}
+    twins: List[Dict[str, Any]] = []
+    for session in train:
+        if session["session_meta"].get("counterfactual_of"):
+            twins.append(session)
+        else:
+            originals[session["session_id"]] = session
+
+    if len(twins) != structures:
+        problems.append(f"expected {structures} twins, found {len(twins)}")
+    ids = [session["session_id"] for session in train + heldout]
+    if len(ids) != len(set(ids)):
+        problems.append("session ids are not unique")
+    keys = [PantryEcosystemSynthesizer._answer_key(session) for session in train + heldout]
+    if len(keys) != len(set(keys)):
+        problems.append("answer tuples are not unique across the counterfactual corpus")
+    heldout_keys = {PantryEcosystemSynthesizer._answer_key(session) for session in heldout}
+
+    seen: set = set()
+    for twin in twins:
+        sid = twin["session_id"]
+        if not sid.endswith(COUNTERFACTUAL_SUFFIX):
+            problems.append(f"{sid}: twin id does not end in {COUNTERFACTUAL_SUFFIX}")
+        original = originals.get(twin["session_meta"].get("counterfactual_of"))
+        if original is None:
+            problems.append(f"{sid}: counterfactual_of does not name a train structure")
+            continue
+        if twin["ground_truth_oracle"]["culprit"] == original["ground_truth_oracle"]["culprit"]:
+            problems.append(f"{sid}: the twin did not change the culprit")
+        if PantryEcosystemSynthesizer._answer_key(twin) in heldout_keys:
+            problems.append(f"{sid}: the twin's answer tuple is in the held-out split")
+        if twin["session_meta"].get("counterfactual_of") in seen:
+            problems.append(f"{sid}: structure has more than one twin")
+        seen.add(twin["session_meta"].get("counterfactual_of"))
+
+        for field in ("actors", "items"):
+            if twin["environment"][field] != original["environment"][field]:
+                problems.append(f"{sid}: environment.{field} differs from its structure")
+        if twin["ground_truth_oracle"]["chain"] != original["ground_truth_oracle"]["chain"]:
+            problems.append(f"{sid}: chain differs from its structure")
+        if twin["session_meta"].get("timeline") != original["session_meta"].get("timeline"):
+            problems.append(f"{sid}: timeline differs from its structure")
+        if len(twin["turns"]) != len(original["turns"]):
+            problems.append(f"{sid}: turn count differs from its structure")
+            continue
+        roster_turn = int(twin["session_meta"]["roster_turn"])
+        for left, right in zip(original["turns"], twin["turns"]):
+            if int(left["turn_id"]) != roster_turn and left["user_input"] != right["user_input"]:
+                problems.append(f"{sid}: non-roster turn {left['turn_id']} differs")
+        _, old_roster = _roster_item(original)
+        _, new_roster = _roster_item(twin)
+        old_map, new_map = dict(old_roster["value"]), dict(new_roster["value"])
+        if set(old_map) != set(new_map):
+            problems.append(f"{sid}: roster value set changed")
+        if set(old_map.values()) != set(new_map.values()):
+            problems.append(f"{sid}: roster name set changed")
+        changed = [value for value in old_map if old_map[value] != new_map.get(value)]
+        if len(changed) != 2:
+            problems.append(f"{sid}: roster changed {len(changed)} entries, expected 2")
+        old_culprit = original["ground_truth_oracle"]["culprit"]
+        new_culprit = twin["ground_truth_oracle"]["culprit"]
+        live_value = next(v for v, name in old_map.items() if name == old_culprit)
+        partner_value = next(v for v, name in old_map.items() if name == new_culprit)
+        if new_map.get(live_value) != new_culprit or new_map.get(partner_value) != old_culprit:
+            problems.append(f"{sid}: the roster swap is not the registered one")
+        if twin["turns"][-1].get("expected_final_deduction") != new_culprit:
+            problems.append(f"{sid}: final deduction does not match the twin culprit")
+        if derive(_all_asserts(twin), twin["environment"]["actors"]) != [new_culprit]:
+            problems.append(f"{sid}: testimony does not derive the twin culprit")
+        problems.extend(_validate_session(twin, "train"))
+
+    # the first 2*structures items must be the interleaved pairs
+    head = train[: 2 * structures]
+    if len(head) == 2 * structures:
+        for position in range(0, len(head), 2):
+            original, twin = head[position], head[position + 1]
+            if twin["session_meta"].get("counterfactual_of") != original["session_id"]:
+                problems.append(f"train[{position + 1}] is not the twin of train[{position}]")
+    else:
+        problems.append(
+            f"the train split has {len(train)} items, fewer than the {2 * structures} pair head"
+        )
+    return problems
 
 
 def _validate_timeline(

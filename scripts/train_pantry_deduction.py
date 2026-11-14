@@ -117,6 +117,9 @@ PANTRY_SESSIONS = 1000
 HELDOUT_FRACTION = 0.2
 TRAIN_SESSIONS = 800
 HOLDOUT_SESSIONS = 200
+# §61: 200 training structures + 200 counterfactual twins = 400 items.
+COUNTERFACTUAL_STRUCTURES = 200
+COUNTERFACTUAL_TRAIN_ITEMS = 2 * COUNTERFACTUAL_STRUCTURES
 TRAIN_BYTES = 1_014_924
 HOLDOUT_BYTES = 254_050
 TRAIN_DIGEST = "cbbe5265b2f065b15c170116d277c20eb508d822929e6f8865e59c19997d0179"
@@ -327,8 +330,19 @@ def solver_candidates(module: Any, session: Dict[str, Any], dropped: set) -> Lis
     return module.derive(asserts, session["environment"]["actors"])
 
 
-def load_corpus(*, sessions: int = PANTRY_SESSIONS, seed: int = PANTRY_SEED) -> Dict[str, Any]:
-    """Generate the registered corpus, run the data gates, and pin the digests."""
+def load_corpus(
+    *,
+    sessions: int = PANTRY_SESSIONS,
+    seed: int = PANTRY_SEED,
+    counterfactual: bool = False,
+) -> Dict[str, Any]:
+    """Generate the registered corpus, run the data gates, and pin the digests.
+
+    ``counterfactual`` (§61) keeps the original 800/200 corpus and inserts one
+    twin after each of the first 200 training structures, so
+    ``[o0, t0, o1, t1, ...]`` is the head of the train split. The held-out split
+    is untouched: the test is the same one §60 was graded on.
+    """
     module = _load_generator()
     synthesizer = module.PantryEcosystemSynthesizer(
         seed=seed, sessions=sessions, heldout_fraction=HELDOUT_FRACTION
@@ -338,6 +352,15 @@ def load_corpus(*, sessions: int = PANTRY_SESSIONS, seed: int = PANTRY_SEED) -> 
     if problems:
         head = "; ".join(problems[:5])
         raise SystemExit(f"the corpus fails its own gates ({len(problems)}): {head}")
+
+    if counterfactual:
+        splits = module.build_counterfactual(splits, structures=COUNTERFACTUAL_STRUCTURES)
+        twin_problems = module.validate_counterfactual(splits, structures=COUNTERFACTUAL_STRUCTURES)
+        if twin_problems:
+            head = "; ".join(twin_problems[:5])
+            raise SystemExit(
+                f"the counterfactual corpus fails its own gates " f"({len(twin_problems)}): {head}"
+            )
 
     train = list(splits["train"])
     heldout = list(splits["heldout"])
@@ -359,12 +382,20 @@ def load_corpus(*, sessions: int = PANTRY_SESSIONS, seed: int = PANTRY_SEED) -> 
             "heldout_bytes": len(heldout_bytes),
             "train_digest": _digest(train_bytes),
             "heldout_digest": _digest(heldout_bytes),
+            "counterfactual": bool(counterfactual),
+            "counterfactual_structures": COUNTERFACTUAL_STRUCTURES if counterfactual else 0,
+            "counterfactual_twins": COUNTERFACTUAL_STRUCTURES if counterfactual else 0,
             "registered_sizes_match": (
-                len(train) == TRAIN_SESSIONS and len(heldout) == HOLDOUT_SESSIONS
+                not counterfactual
+                and len(train) == TRAIN_SESSIONS
+                and len(heldout) == HOLDOUT_SESSIONS
             ),
             "registered_digests_match": (
-                _digest(train_bytes) == TRAIN_DIGEST and _digest(heldout_bytes) == HOLDOUT_DIGEST
+                not counterfactual
+                and _digest(train_bytes) == TRAIN_DIGEST
+                and _digest(heldout_bytes) == HOLDOUT_DIGEST
             ),
+            "heldout_digest_registered": _digest(heldout_bytes) == HOLDOUT_DIGEST,
         },
     }
 
@@ -1390,6 +1421,53 @@ def flip_summary(full: Sequence[Dict[str, Any]], pre: Sequence[Dict[str, Any]]) 
     }
 
 
+def counterfactual_pair_report(records: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    """§61 C3: does the fitted model answer a structure and its twin differently?
+
+    Two items in a pair have byte-identical non-roster text and opposite
+    answers, so a model that ignores the roster must answer the same name for
+    both and can be right at most once. That makes ``same_prediction`` the
+    mechanism reading and ``both_correct`` its consequence; neither is a score
+    (the held-out split is the score).
+    """
+    by_id = {row["session_id"]: row for row in records}
+    pairs = []
+    for sid, row in by_id.items():
+        if sid.endswith("_cf"):
+            continue
+        twin = by_id.get(sid + "_cf")
+        if twin is None:
+            continue
+        pairs.append(
+            {
+                "structure": sid,
+                "structure_target": row["target"],
+                "twin_target": twin["target"],
+                "structure_prediction": row["prediction"],
+                "twin_prediction": twin["prediction"],
+                "same_prediction": row["prediction"] == twin["prediction"],
+                "structure_correct": row["prediction"] == row["target"],
+                "twin_correct": twin["prediction"] == twin["target"],
+            }
+        )
+    total = len(pairs)
+    same = sum(1 for pair in pairs if pair["same_prediction"])
+    both = sum(1 for pair in pairs if pair["structure_correct"] and pair["twin_correct"])
+    return {
+        "n_pairs": total,
+        "same_prediction": same,
+        "same_prediction_rate": _round(same / total) if total else None,
+        "both_correct": both,
+        "both_correct_rate": _round(both / total) if total else None,
+        "structure_correct": sum(1 for pair in pairs if pair["structure_correct"]),
+        "twin_correct": sum(1 for pair in pairs if pair["twin_correct"]),
+        "targets_differ": sum(
+            1 for pair in pairs if pair["structure_target"] != pair["twin_target"]
+        ),
+        "examples": pairs[:SAMPLE_ROWS],
+    }
+
+
 # --------------------------------------------------------------------------- #
 # the auxiliary readout (§50.6) - a diagnostic, never a gate
 # --------------------------------------------------------------------------- #
@@ -1684,6 +1762,7 @@ def _heldout_predictions(report: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     corpus = load_corpus(
         sessions=int(corpus_block.get("sessions", PANTRY_SESSIONS)),
         seed=int(corpus_block.get("seed", PANTRY_SEED)),
+        counterfactual=bool(corpus_block.get("counterfactual")),
     )
     kind = str(config.get("core") or "gru")
     core = build_core(
@@ -2052,9 +2131,11 @@ def check_report(path: Path) -> List[str]:
         problems.append(f"task_version {report.get('task_version')!r} != {TASK_VERSION!r}")
 
     # the corpus is regenerated, so G2 is not taken on trust
+    corpus_block = report.get("corpus") or {}
     corpus = load_corpus(
-        sessions=int((report.get("corpus") or {}).get("sessions", PANTRY_SESSIONS)),
-        seed=int((report.get("corpus") or {}).get("seed", PANTRY_SEED)),
+        sessions=int(corpus_block.get("sessions", PANTRY_SESSIONS)),
+        seed=int(corpus_block.get("seed", PANTRY_SEED)),
+        counterfactual=bool(corpus_block.get("counterfactual")),
     )
     if corpus["meta"]["train_digest"] != (report.get("corpus") or {}).get("train_digest"):
         problems.append("the regenerated train corpus does not match the report")
@@ -2144,9 +2225,19 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
     device = resolve_device(args.device)
     started = time.time()
 
-    corpus = load_corpus(sessions=args.sessions, seed=args.pantry_seed)
+    corpus = load_corpus(
+        sessions=args.sessions,
+        seed=args.pantry_seed,
+        counterfactual=bool(args.counterfactual),
+    )
     meta = corpus["meta"]
-    if not meta["registered_sizes_match"] or not meta["registered_digests_match"]:
+    if args.counterfactual:
+        if not meta.get("counterfactual") or not meta.get("heldout_digest_registered"):
+            raise SystemExit(
+                "§61's counterfactual arm must keep the registered held-out split; "
+                "the regenerated corpus does not"
+            )
+    elif not meta["registered_sizes_match"] or not meta["registered_digests_match"]:
         raise SystemExit(
             "the generated corpus is not the registered one "
             f"({meta['train_bytes']}/{meta['heldout_bytes']} bytes, "
@@ -2290,20 +2381,22 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
 
     fit_rows = train_sessions[: min(FIT_SESSIONS, len(train_sessions))]
     results["train_fit"] = summarise(evaluate(core, fit_rows, "full", module=module))
+    fit_subset_records: Optional[List[Dict[str, Any]]] = None
     if len(train_sessions) > FIT_SESSIONS:
         # §49.6 capped the fit readout at 200 sessions for stage-P cost, but §56's
         # G1 (and §57's H1) is "the arm fits the sessions it was *trained on*". On
         # a 400-session subset those are different sets, so the declared subset is
         # measured too and the gate reads it; the capped number stays for the
         # stage-P comparison it was introduced for.
-        results["train_fit_subset"] = summarise(
-            evaluate(core, train_sessions, "full", module=module)
-        )
+        fit_subset_records = evaluate(core, train_sessions, "full", module=module)
+        results["train_fit_subset"] = summarise(fit_subset_records)
 
     # §50.6: where does an answer exist along the testimony? Diagnostic only.
     diagnostics: Dict[str, Any] = {}
     if args.aux_loss > 0.0:
         diagnostics["readout"] = readout_profile(core, heldout, module=module)
+    if args.counterfactual and fit_subset_records is not None:
+        diagnostics["counterfactual_pairs"] = counterfactual_pair_report(fit_subset_records)
 
     # the data contract behind "the answer is not in the question"
     leak = leak_report(heldout)
@@ -2341,6 +2434,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "gate_prefix": args.gate_prefix,
             "overfit_sessions": args.overfit,
             "train_subset": args.train_sessions or None,
+            "counterfactual": bool(args.counterfactual),
         },
         "corpus": {
             **meta,
@@ -2467,6 +2561,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--counterfactual",
+        action="store_true",
+        help=(
+            "§61: insert a twin after each of the first 200 training structures "
+            "(same roster set, swapped value -> person map, different culprit); "
+            "the arm is 400 items = 200 structures + 200 twins"
+        ),
+    )
+    parser.add_argument(
         "--widen-to",
         type=int,
         default=0,
@@ -2553,6 +2656,34 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         parser.error("--train-sessions and --limit both subset the training split; pass one")
     if args.train_sessions and args.smoke:
         parser.error("--train-sessions is not a smoke flag")
+    if args.counterfactual:
+        if args.overfit:
+            parser.error("§61 is a corpus arm, not a Q1 overfit calibration")
+        if args.control == "rand":
+            parser.error(
+                "§61's twins are built from the real culprit; a format control has no twin"
+            )
+        if not args.smoke:
+            if args.train_sessions != COUNTERFACTUAL_TRAIN_ITEMS:
+                parser.error(
+                    f"§61 registers {COUNTERFACTUAL_TRAIN_ITEMS} training items "
+                    f"({COUNTERFACTUAL_STRUCTURES} structures + {COUNTERFACTUAL_STRUCTURES} "
+                    "twins); --train-sessions must be exactly that"
+                )
+            if args.limit or args.eval_limit:
+                parser.error(
+                    "§61's scored arm uses the whole pair head and the registered held-out "
+                    "split; --limit/--eval-limit are smoke-only"
+                )
+            if (
+                args.core != "turnstore"
+                or args.aux_mode != "weighted-region"
+                or args.aux_loss <= 0.0
+            ):
+                parser.error(
+                    "§61 changes only the corpus; keep --core turnstore --aux-loss 1.0 "
+                    "--aux-mode weighted-region so §60's objective is held fixed"
+                )
     if args.train_sessions and args.gate_prefix != "G":
         parser.error(
             "a --train-sessions arm is capped by its subset and must be graded under "
