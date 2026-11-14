@@ -1219,6 +1219,333 @@ def validate_counterfactual(
     return problems
 
 
+# --------------------------------------------------------------------------- #
+# §62: the minimal binding corpus - two people, one live value
+# --------------------------------------------------------------------------- #
+MINIMAL_ROSTER_SIZE = 2
+MINIMAL_TRAIN_STRUCTURES = 200
+MINIMAL_HELDOUT_STRUCTURES = 200
+MINIMAL_INDEX_OFFSET = 10_000
+MINIMAL_SUFFIX = "_cf"
+
+
+def _minimal_session(index: int, rng: random.Random, seed: int, split: str) -> Dict[str, Any]:
+    """Four turns: the crime, a two-name roster, one live value, the question.
+
+    No trap, no correction, no time filter. The only thing that can turn the
+    evidence value into a person is the roster line - which is exactly the
+    binding §61 showed the carrier only does for part of its pairs. The
+    dead value never appears in the testimony; it exists so the roster is a real
+    choice of two rather than a one-entry lookup.
+    """
+    actors = rng.sample(ACTORS, MINIMAL_ROSTER_SIZE)
+    culprit, other = actors
+    target_key = rng.choice(sorted(ITEMS))
+    target_zh, unit = ITEMS[target_key]
+    decoy_key = rng.choice([key for key in sorted(ITEMS) if key != target_key])
+    decoy_zh = ITEMS[decoy_key][0]
+    live_value, dead_value = rng.sample(sorted(COLOURS), 2)
+    mapping = {dead_value: other, live_value: culprit}
+    action = rng.randint(17 * 60 + 30, 19 * 60)
+    opening = action - rng.randint(55, 70)
+    now = action + rng.randint(30, 50)
+    missing = rng.randint(2, 4)
+    witness = rng.choice(WITNESSES)
+
+    turns: List[Dict[str, Any]] = []
+
+    def add(
+        text: str,
+        asserts: Sequence[Dict[str, Any]] = (),
+        tags: Sequence[str] = (),
+    ) -> int:
+        turn_id = len(turns)
+        turns.append(
+            {
+                "turn_id": turn_id,
+                "dt_s": 0.0,
+                "user_input": text,
+                "asserts": [dict(item, turn=turn_id) for item in asserts],
+                "expected_internal_focus": list(tags) or ["no_focus"],
+            }
+        )
+        return turn_id
+
+    add(
+        f"下午 {_fmt(opening)} 點{target_zh}放茶水間，順便冰了{decoy_zh}。"
+        f"現在 {_fmt(now)}，{target_zh}少了 {missing} {unit}。",
+        tags=[f"{target_key}_missing_{missing}"],
+    )
+    roster_turn = add(
+        _roster_text("apron", mapping),
+        [{"kind": "roster", "value": mapping}],
+        ["roster_lookup"],
+    )
+    evidence_turn = add(
+        f"{witness} 說 {_fmt(action)} 看到一個人從茶水間出來，"
+        f"穿著{COLOURS[live_value]}的圍裙，手裡拿著紙巾擦嘴。",
+        [{"kind": "seen", "value": live_value, "t": _fmt(action)}],
+        ["apron_evidence"],
+    )
+    question_turn = add(
+        "好，根據目前的口供和時間線交叉比對，"
+        f"你認為誰是吃掉{target_zh}的人？請給出你的最終推論。",
+        tags=["final_deduction"],
+    )
+    turns[question_turn]["expected_final_deduction"] = culprit
+    for position, turn in enumerate(turns):
+        turn["dt_s"] = 0.0 if position == 0 else _sample_dt(rng)
+
+    return {
+        "session_id": f"minimal_pantry_{index:03d}",
+        "schema_version": SCHEMA_VERSION,
+        "session_meta": {
+            "seed": seed,
+            "index": index,
+            "split": split,
+            "chain": "apron",
+            "chain_turns": sorted({roster_turn, evidence_turn}),
+            "evidence_turn": evidence_turn,
+            "roster_turn": roster_turn,
+            # the live value is stated once; dropping that turn removes the only
+            # evidence, which is what the no_correction variant means here
+            "correction_turn": evidence_turn,
+            "slots": len(actors) + 3,
+            "minimal_binding": True,
+            "timeline": {
+                "opening": _fmt(opening),
+                "action": _fmt(action),
+                "now": _fmt(now),
+            },
+        },
+        "environment": {
+            "actors": list(actors),
+            "items": [target_key, decoy_key],
+            "badges": {},
+        },
+        "ground_truth_oracle": {
+            "chain": "apron",
+            "target_item": target_key,
+            "culprit": culprit,
+            "action_time": _fmt(action),
+            "window": f"{_fmt(opening)}-{_fmt(now)}",
+            "window_bounds": f"{_fmt(opening)}-{_fmt(now)}",
+            "evidence_tag": f"chain=apron|value={live_value}|t={_fmt(action)}",
+        },
+        "turns": turns,
+    }
+
+
+def minimal_twin(session: Dict[str, Any]) -> Dict[str, Any]:
+    """Swap the two names on the roster; everything else is byte-identical.
+
+    The value the witness saw stays the same, so after the swap it names the
+    other person. That is the smallest possible counterfactual: one roster line
+    with two exchanged names, and a different answer.
+    """
+    twin = copy.deepcopy(session)
+    roster_turn, roster_assert = _roster_item(twin)
+    mapping = dict(roster_assert["value"])
+    if len(mapping) != MINIMAL_ROSTER_SIZE:
+        raise ValueError(f"{session['session_id']}: expected a {MINIMAL_ROSTER_SIZE}-entry roster")
+    names = list(mapping.values())
+    swapped = {value: names[1] if name == names[0] else names[0] for value, name in mapping.items()}
+    culprit = session["ground_truth_oracle"]["culprit"]
+    acting_value = next(value for value, name in mapping.items() if name == culprit)
+    twin["session_id"] = session["session_id"] + MINIMAL_SUFFIX
+    twin["session_meta"]["index"] = int(session["session_meta"]["index"]) + MINIMAL_INDEX_OFFSET
+    twin["session_meta"]["split"] = "train"
+    twin["session_meta"]["counterfactual_of"] = session["session_id"]
+    twin["ground_truth_oracle"]["culprit"] = swapped[acting_value]
+    twin["turns"][-1]["expected_final_deduction"] = twin["ground_truth_oracle"]["culprit"]
+    for item in twin["turns"][roster_turn]["asserts"]:
+        if item["kind"] == "roster":
+            item["value"] = dict(swapped)
+    twin["turns"][roster_turn]["user_input"] = _roster_text("apron", swapped)
+    return twin
+
+
+def build_minimal_binding(
+    *,
+    structures: int = MINIMAL_TRAIN_STRUCTURES,
+    heldout: int = MINIMAL_HELDOUT_STRUCTURES,
+    seed: int = DEFAULT_SEED,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """``[o0, t0, o1, t1, ...]`` for train, plain structures for held-out."""
+    used: set = set()
+
+    def make(index: int, split: str) -> Dict[str, Any]:
+        for salt in range(128):
+            rng = random.Random(f"{seed}:minimal:{index}:{salt}")
+            session = _minimal_session(index, rng, seed, split)
+            key = PantryEcosystemSynthesizer._answer_key(session)
+            if key in used:
+                continue
+            used.add(key)
+            return session
+        raise RuntimeError(f"could not make minimal session {index} unique after 128 attempts")
+
+    train_structures = [make(index, "train") for index in range(structures)]
+    heldout_structures = [make(structures + index, "heldout") for index in range(heldout)]
+
+    train_twins: List[Dict[str, Any]] = []
+    for session in train_structures:
+        twin = minimal_twin(session)
+        key = PantryEcosystemSynthesizer._answer_key(twin)
+        if key in used:
+            raise RuntimeError(f"{session['session_id']}: its twin's answer tuple collides")
+        used.add(key)
+        train_twins.append(twin)
+
+    interleaved: List[Dict[str, Any]] = []
+    for original, twin in zip(train_structures, train_twins):
+        interleaved.extend([original, twin])
+
+    heldout_twins = [minimal_twin(session) for session in heldout_structures]
+    return {
+        "train": interleaved,
+        "heldout": heldout_structures,
+        "heldout_twins": heldout_twins,
+    }
+
+
+def validate_minimal_binding(
+    splits: Dict[str, List[Dict[str, Any]]],
+    *,
+    structures: int = MINIMAL_TRAIN_STRUCTURES,
+    heldout: int = MINIMAL_HELDOUT_STRUCTURES,
+) -> List[str]:
+    """Every §62 invariant, as violations a reader can act on."""
+    problems: List[str] = []
+    train = list(splits.get("train") or [])
+    heldout_sessions = list(splits.get("heldout") or [])
+    heldout_twins = list(splits.get("heldout_twins") or [])
+
+    if len(train) != 2 * structures:
+        problems.append(f"expected {2 * structures} train items, found {len(train)}")
+    if len(heldout_sessions) != heldout:
+        problems.append(f"expected {heldout} held-out structures, found {len(heldout_sessions)}")
+    if len(heldout_twins) != heldout:
+        problems.append(f"expected {heldout} held-out twins, found {len(heldout_twins)}")
+
+    structures_of: Dict[str, Dict[str, Any]] = {}
+    twins: List[Dict[str, Any]] = []
+    for position, session in enumerate(train):
+        if session["session_meta"].get("counterfactual_of"):
+            twins.append(session)
+        else:
+            structures_of[session["session_id"]] = session
+    if len(twins) != structures:
+        problems.append(f"expected {structures} twins, found {len(twins)}")
+    for position in range(0, len(train) - 1, 2):
+        original, twin = train[position], train[position + 1]
+        if twin["session_meta"].get("counterfactual_of") != original["session_id"]:
+            problems.append(f"train[{position + 1}] is not the twin of train[{position}]")
+
+    keys = [PantryEcosystemSynthesizer._answer_key(session) for session in train + heldout_sessions]
+    if len(keys) != len(set(keys)):
+        problems.append("answer tuples are not unique across the minimal corpus")
+
+    def check_structure(session: Dict[str, Any], label: str) -> None:
+        sid = session["session_id"]
+        actors = list(session["environment"]["actors"])
+        oracle = session["ground_truth_oracle"]
+        if len(actors) != MINIMAL_ROSTER_SIZE:
+            problems.append(f"{label}/{sid}: {len(actors)} actors, expected 2")
+            return
+        roster_turn, roster_assert = _roster_item(session)
+        mapping = dict(roster_assert["value"])
+        if len(mapping) != MINIMAL_ROSTER_SIZE:
+            problems.append(f"{label}/{sid}: roster has {len(mapping)} entries")
+            return
+        if set(mapping.values()) != set(actors):
+            problems.append(f"{label}/{sid}: the roster does not name both actors")
+        evidence = [
+            item
+            for turn in session["turns"]
+            for item in turn.get("asserts", [])
+            if item["kind"] in {"seen", "entry", "checkout", "access"}
+        ]
+        if len(evidence) != 1:
+            problems.append(f"{label}/{sid}: {len(evidence)} evidence values, expected 1")
+        else:
+            if evidence[0]["kind"] != "seen":
+                problems.append(f"{label}/{sid}: the live value is not a seen assert")
+            live = evidence[0].get("value")
+            if live not in mapping:
+                problems.append(f"{label}/{sid}: the live value is not on the roster")
+            dead = [value for value in mapping if value != live]
+            if any(value in str(item.get("id")) for value in dead for item in evidence):
+                problems.append(f"{label}/{sid}: a dead value appears as evidence")
+        if derive(_all_asserts(session), actors) != [oracle["culprit"]]:
+            problems.append(f"{label}/{sid}: the testimony does not derive the culprit")
+        before = [
+            (turn["turn_id"], item)
+            for turn in session["turns"]
+            if int(turn["turn_id"]) < roster_turn
+            for item in turn.get("asserts", [])
+        ]
+        roster_only = [
+            (turn["turn_id"], item)
+            for turn in session["turns"]
+            if int(turn["turn_id"]) <= roster_turn
+            for item in turn.get("asserts", [])
+        ]
+        if derive(roster_only, actors) != sorted(actors):
+            problems.append(f"{label}/{sid}: the roster alone already answers the question")
+        if before and derive(before, actors) != sorted(actors):
+            problems.append(f"{label}/{sid}: the crime alone already narrows the roster")
+        if session["turns"][-1].get("expected_final_deduction") != oracle["culprit"]:
+            problems.append(f"{label}/{sid}: the final deduction is not the culprit")
+        text = "\n".join(turn["user_input"] for turn in session["turns"])
+        for name in actors:
+            if text.count(name) != 1:
+                problems.append(f"{label}/{sid}: {name} is named {text.count(name)} times")
+            if name in session["turns"][-1]["user_input"]:
+                problems.append(f"{label}/{sid}: {name} appears in the question")
+        if oracle["evidence_tag"] in text:
+            problems.append(f"{label}/{sid}: the oracle tag appears in the text")
+
+    for session in train:
+        if not session["session_meta"].get("counterfactual_of"):
+            check_structure(session, "train")
+    for session in heldout_sessions:
+        check_structure(session, "heldout")
+    for session, twin in zip(heldout_sessions, heldout_twins):
+        if twin["session_meta"].get("counterfactual_of") != session["session_id"]:
+            problems.append(f"{twin['session_id']}: held-out twin is not linked")
+
+    heldout_ids = {session["session_id"] for session in heldout_sessions}
+    for twin in twins + heldout_twins:
+        sid = twin["session_id"]
+        if not sid.endswith(MINIMAL_SUFFIX):
+            problems.append(f"{sid}: twin id does not end in {MINIMAL_SUFFIX}")
+        original = structures_of.get(twin["session_meta"].get("counterfactual_of"))
+        if original is None and twin["session_meta"].get("counterfactual_of") in heldout_ids:
+            original = next(
+                session
+                for session in heldout_sessions
+                if session["session_id"] == twin["session_meta"]["counterfactual_of"]
+            )
+        if original is None:
+            problems.append(f"{sid}: counterfactual_of does not name a structure")
+            continue
+        if twin["ground_truth_oracle"]["culprit"] == original["ground_truth_oracle"]["culprit"]:
+            problems.append(f"{sid}: the twin did not change the culprit")
+        roster_turn = int(original["session_meta"]["roster_turn"])
+        if len(twin["turns"]) != len(original["turns"]):
+            problems.append(f"{sid}: turn count differs from its structure")
+            continue
+        for left, right in zip(original["turns"], twin["turns"]):
+            if int(left["turn_id"]) != roster_turn and left["user_input"] != right["user_input"]:
+                problems.append(f"{sid}: non-roster turn {left['turn_id']} differs")
+        if derive(_all_asserts(twin), twin["environment"]["actors"]) != [
+            twin["ground_truth_oracle"]["culprit"]
+        ]:
+            problems.append(f"{sid}: the testimony does not derive the twin culprit")
+    return problems
+
+
 def _validate_timeline(
     meta: Dict[str, Any], oracle: Dict[str, Any], split: str, sid: str
 ) -> List[str]:

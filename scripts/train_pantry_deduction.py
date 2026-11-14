@@ -120,6 +120,12 @@ HOLDOUT_SESSIONS = 200
 # §61: 200 training structures + 200 counterfactual twins = 400 items.
 COUNTERFACTUAL_STRUCTURES = 200
 COUNTERFACTUAL_TRAIN_ITEMS = 2 * COUNTERFACTUAL_STRUCTURES
+# §62: the minimal binding corpus: 200 structures + 200 twins, 200 held-out
+# structures + 200 held-out twins. Two actors means chance is exactly 0.5.
+MINIMAL_STRUCTURES = 200
+MINIMAL_TRAIN_ITEMS = 2 * MINIMAL_STRUCTURES
+MINIMAL_HELDOUT_ITEMS = 200
+MINIMAL_BINDING_CHANCE = 0.5
 TRAIN_BYTES = 1_014_924
 HOLDOUT_BYTES = 254_050
 TRAIN_DIGEST = "cbbe5265b2f065b15c170116d277c20eb508d822929e6f8865e59c19997d0179"
@@ -335,6 +341,7 @@ def load_corpus(
     sessions: int = PANTRY_SESSIONS,
     seed: int = PANTRY_SEED,
     counterfactual: bool = False,
+    minimal_binding: bool = False,
 ) -> Dict[str, Any]:
     """Generate the registered corpus, run the data gates, and pin the digests.
 
@@ -342,25 +349,50 @@ def load_corpus(
     twin after each of the first 200 training structures, so
     ``[o0, t0, o1, t1, ...]`` is the head of the train split. The held-out split
     is untouched: the test is the same one §60 was graded on.
+
+    ``minimal_binding`` (§62) is a separate corpus, not a variant of the
+    registered one: a two-person roster, one live value, four turns. It exists
+    because the registered generator cannot render a two-name roster (every
+    chain needs three or four actors), and the diagnostic §61.9 asks for is
+    exactly that small. Its held-out twins are returned too - they are the
+    diagnostic the branch needs, never a score.
     """
     module = _load_generator()
-    synthesizer = module.PantryEcosystemSynthesizer(
-        seed=seed, sessions=sessions, heldout_fraction=HELDOUT_FRACTION
-    )
-    splits = synthesizer.generate()
-    problems = module.PantryEcosystemSynthesizer.validate(splits)
-    if problems:
-        head = "; ".join(problems[:5])
-        raise SystemExit(f"the corpus fails its own gates ({len(problems)}): {head}")
-
-    if counterfactual:
-        splits = module.build_counterfactual(splits, structures=COUNTERFACTUAL_STRUCTURES)
-        twin_problems = module.validate_counterfactual(splits, structures=COUNTERFACTUAL_STRUCTURES)
-        if twin_problems:
-            head = "; ".join(twin_problems[:5])
+    heldout_twins: List[Dict[str, Any]] = []
+    if minimal_binding:
+        splits = module.build_minimal_binding(
+            structures=MINIMAL_STRUCTURES, heldout=MINIMAL_HELDOUT_ITEMS, seed=seed
+        )
+        problems = module.validate_minimal_binding(
+            splits, structures=MINIMAL_STRUCTURES, heldout=MINIMAL_HELDOUT_ITEMS
+        )
+        if problems:
+            head = "; ".join(problems[:5])
             raise SystemExit(
-                f"the counterfactual corpus fails its own gates " f"({len(twin_problems)}): {head}"
+                f"the minimal binding corpus fails its own gates ({len(problems)}): {head}"
             )
+        heldout_twins = list(splits.get("heldout_twins") or [])
+    else:
+        synthesizer = module.PantryEcosystemSynthesizer(
+            seed=seed, sessions=sessions, heldout_fraction=HELDOUT_FRACTION
+        )
+        splits = synthesizer.generate()
+        problems = module.PantryEcosystemSynthesizer.validate(splits)
+        if problems:
+            head = "; ".join(problems[:5])
+            raise SystemExit(f"the corpus fails its own gates ({len(problems)}): {head}")
+
+        if counterfactual:
+            splits = module.build_counterfactual(splits, structures=COUNTERFACTUAL_STRUCTURES)
+            twin_problems = module.validate_counterfactual(
+                splits, structures=COUNTERFACTUAL_STRUCTURES
+            )
+            if twin_problems:
+                head = "; ".join(twin_problems[:5])
+                raise SystemExit(
+                    f"the counterfactual corpus fails its own gates "
+                    f"({len(twin_problems)}): {head}"
+                )
 
     train = list(splits["train"])
     heldout = list(splits["heldout"])
@@ -370,6 +402,7 @@ def load_corpus(
         "module": module,
         "train": train,
         "heldout": heldout,
+        "heldout_twins": heldout_twins,
         "meta": {
             "source": PANTRY_SCRIPT,
             "generated": True,
@@ -385,13 +418,20 @@ def load_corpus(
             "counterfactual": bool(counterfactual),
             "counterfactual_structures": COUNTERFACTUAL_STRUCTURES if counterfactual else 0,
             "counterfactual_twins": COUNTERFACTUAL_STRUCTURES if counterfactual else 0,
+            "minimal_binding": bool(minimal_binding),
+            "minimal_binding_structures": MINIMAL_STRUCTURES if minimal_binding else 0,
+            "minimal_binding_twins": MINIMAL_STRUCTURES if minimal_binding else 0,
+            "minimal_binding_chance": MINIMAL_BINDING_CHANCE if minimal_binding else None,
+            "heldout_twins": len(heldout_twins),
             "registered_sizes_match": (
                 not counterfactual
+                and not minimal_binding
                 and len(train) == TRAIN_SESSIONS
                 and len(heldout) == HOLDOUT_SESSIONS
             ),
             "registered_digests_match": (
                 not counterfactual
+                and not minimal_binding
                 and _digest(train_bytes) == TRAIN_DIGEST
                 and _digest(heldout_bytes) == HOLDOUT_DIGEST
             ),
@@ -1763,6 +1803,7 @@ def _heldout_predictions(report: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         sessions=int(corpus_block.get("sessions", PANTRY_SESSIONS)),
         seed=int(corpus_block.get("seed", PANTRY_SEED)),
         counterfactual=bool(corpus_block.get("counterfactual")),
+        minimal_binding=bool(corpus_block.get("minimal_binding")),
     )
     kind = str(config.get("core") or "gru")
     core = build_core(
@@ -2136,6 +2177,7 @@ def check_report(path: Path) -> List[str]:
         sessions=int(corpus_block.get("sessions", PANTRY_SESSIONS)),
         seed=int(corpus_block.get("seed", PANTRY_SEED)),
         counterfactual=bool(corpus_block.get("counterfactual")),
+        minimal_binding=bool(corpus_block.get("minimal_binding")),
     )
     if corpus["meta"]["train_digest"] != (report.get("corpus") or {}).get("train_digest"):
         problems.append("the regenerated train corpus does not match the report")
@@ -2229,9 +2271,16 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         sessions=args.sessions,
         seed=args.pantry_seed,
         counterfactual=bool(args.counterfactual),
+        minimal_binding=bool(args.minimal_binding),
     )
     meta = corpus["meta"]
-    if args.counterfactual:
+    if args.minimal_binding:
+        if not meta.get("minimal_binding"):
+            raise SystemExit(
+                "§62's minimal binding arm did not load the minimal corpus; "
+                "the declared 400 items would not be the ones it names"
+            )
+    elif args.counterfactual:
         if not meta.get("counterfactual") or not meta.get("heldout_digest_registered"):
             raise SystemExit(
                 "§61's counterfactual arm must keep the registered held-out split; "
@@ -2247,6 +2296,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
 
     train_sessions = corpus["train"]
     heldout = corpus["heldout"]
+    heldout_twins = list(corpus.get("heldout_twins") or [])
     if args.limit:
         train_sessions = train_sessions[: args.limit]
     if args.overfit:
@@ -2397,6 +2447,16 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         diagnostics["readout"] = readout_profile(core, heldout, module=module)
     if args.counterfactual and fit_subset_records is not None:
         diagnostics["counterfactual_pairs"] = counterfactual_pair_report(fit_subset_records)
+    if args.minimal_binding and fit_subset_records is not None:
+        # §62 M3: the mechanism reading, on the fitted pairs and on the held-out
+        # pairs. Neither is a score; the held-out singleton is M2.
+        diagnostics["minimal_pairs"] = counterfactual_pair_report(fit_subset_records)
+        if heldout_twins:
+            twin_records = evaluate(core, heldout_twins, "full", module=module)
+            diagnostics["minimal_heldout_pairs"] = counterfactual_pair_report(
+                list(raw["full"]) + twin_records
+            )
+            diagnostics["minimal_heldout_twins"] = summarise(twin_records)
 
     # the data contract behind "the answer is not in the question"
     leak = leak_report(heldout)
@@ -2435,11 +2495,13 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "overfit_sessions": args.overfit,
             "train_subset": args.train_sessions or None,
             "counterfactual": bool(args.counterfactual),
+            "minimal_binding": bool(args.minimal_binding),
         },
         "corpus": {
             **meta,
             "train_sessions_used": len(train_sessions),
             "heldout_sessions_used": len(heldout),
+            "heldout_twins_used": len(heldout_twins),
         },
         "start": {
             "checkpoint": str(args.start),
@@ -2570,6 +2632,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--minimal-binding",
+        action="store_true",
+        help=(
+            "§62: the minimal binding diagnostic - a two-person roster, one live "
+            "value, four turns; 400 training items = 200 structures + 200 twins, "
+            "200 held-out structures + 200 held-out twins (chance 0.5)"
+        ),
+    )
+    parser.add_argument(
         "--widen-to",
         type=int,
         default=0,
@@ -2683,6 +2754,39 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 parser.error(
                     "§61 changes only the corpus; keep --core turnstore --aux-loss 1.0 "
                     "--aux-mode weighted-region so §60's objective is held fixed"
+                )
+    if args.minimal_binding:
+        if args.counterfactual:
+            parser.error(
+                "--minimal-binding is §62's corpus and --counterfactual is §61's; "
+                "the two corpora have different chances (0.5 vs 0.1591)"
+            )
+        if args.overfit:
+            parser.error("§62 is a binding diagnostic, not a Q1 overfit calibration")
+        if args.control == "rand":
+            parser.error(
+                "§62's twins are built from the real culprit; a format control has no twin"
+            )
+        if args.sessions != PANTRY_SESSIONS:
+            parser.error(
+                "--minimal-binding builds its own four-turn corpus; --sessions does not apply"
+            )
+        if not args.smoke:
+            if args.train_sessions != MINIMAL_TRAIN_ITEMS:
+                parser.error(
+                    f"§62 registers {MINIMAL_TRAIN_ITEMS} training items "
+                    f"({MINIMAL_STRUCTURES} structures + {MINIMAL_STRUCTURES} twins); "
+                    "--train-sessions must be exactly that"
+                )
+            if args.limit or args.eval_limit:
+                parser.error(
+                    "§62's scored arm uses the whole pair head and the 200 held-out "
+                    "structures (+200 twins); --limit/--eval-limit are smoke-only"
+                )
+            if args.core != "turnstore" or args.aux_mode != "resolvable" or args.aux_loss <= 0.0:
+                parser.error(
+                    "§62 changes only the corpus; keep --core turnstore --aux-loss 1.0 "
+                    "--aux-mode resolvable so the objective is held fixed"
                 )
     if args.train_sessions and args.gate_prefix != "G":
         parser.error(

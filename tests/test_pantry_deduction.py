@@ -1745,3 +1745,182 @@ def test_cli_refuses_counterfactual_combinations_that_change_the_arm(stage):
     ):
         with pytest.raises(SystemExit):
             stage.main(argv)
+
+
+# --------------------------------------------------------------------------- #
+# §62: the minimal binding corpus (two people, one live value)
+# --------------------------------------------------------------------------- #
+@pytest.fixture(scope="module")
+def minimal(stage):
+    return stage.load_corpus(minimal_binding=True)
+
+
+def test_minimal_corpus_is_the_declared_shape(stage, minimal):
+    meta = minimal["meta"]
+    assert meta["minimal_binding"] is True
+    assert meta["minimal_binding_structures"] == stage.MINIMAL_STRUCTURES == 200
+    assert meta["minimal_binding_twins"] == stage.MINIMAL_STRUCTURES == 200
+    assert meta["minimal_binding_chance"] == 0.5
+    assert meta["heldout_twins"] == stage.MINIMAL_HELDOUT_ITEMS == 200
+    assert len(minimal["train"]) == stage.MINIMAL_TRAIN_ITEMS == 400
+    assert len(minimal["heldout"]) == stage.MINIMAL_HELDOUT_ITEMS == 200
+    assert len(minimal["heldout_twins"]) == stage.MINIMAL_HELDOUT_ITEMS == 200
+    # it is a separate corpus, never the registered one
+    assert meta["registered_sizes_match"] is False
+    assert meta["registered_digests_match"] is False
+    assert meta["heldout_digest_registered"] is False
+
+
+def test_minimal_corpus_is_deterministic(stage, minimal):
+    again = stage.load_corpus(minimal_binding=True)
+    assert again["meta"]["train_digest"] == minimal["meta"]["train_digest"]
+    assert again["meta"]["heldout_digest"] == minimal["meta"]["heldout_digest"]
+
+
+def test_minimal_corpus_passes_its_own_gates(stage, minimal):
+    module = stage._load_generator()
+    splits = {
+        "train": minimal["train"],
+        "heldout": minimal["heldout"],
+        "heldout_twins": minimal["heldout_twins"],
+    }
+    assert (
+        module.validate_minimal_binding(
+            splits, structures=stage.MINIMAL_STRUCTURES, heldout=stage.MINIMAL_HELDOUT_ITEMS
+        )
+        == []
+    )
+
+
+def test_minimal_structure_has_two_actors_one_live_value_and_no_trap(stage, minimal):
+    module = stage._load_generator()
+    for session in minimal["train"][:40] + minimal["heldout"][:40]:
+        actors = session["environment"]["actors"]
+        assert len(actors) == 2
+        assert len(session["turns"]) == 4
+        roster_turn, roster_assert = module._roster_item(session)
+        assert roster_turn == 1
+        assert set(roster_assert["value"].values()) == set(actors)
+        evidence = [
+            item
+            for turn in session["turns"]
+            for item in turn.get("asserts", [])
+            if item["kind"] in {"seen", "entry", "checkout", "access"}
+        ]
+        assert len(evidence) == 1 and evidence[0]["kind"] == "seen"
+        live = evidence[0]["value"]
+        assert list(roster_assert["value"])[1] == live
+        # without the evidence turn the roster cannot answer: the question is
+        # genuinely a choice between the two people
+        prefix = [
+            (turn["turn_id"], item)
+            for turn in session["turns"]
+            if int(turn["turn_id"]) <= roster_turn
+            for item in turn.get("asserts", [])
+        ]
+        assert module.derive(prefix, actors) == sorted(actors)
+
+
+def test_minimal_dead_value_never_appears_as_evidence(stage, minimal):
+    for session in minimal["train"] + minimal["heldout"]:
+        evidence_values = {
+            item["value"]
+            for turn in session["turns"]
+            for item in turn.get("asserts", [])
+            if item["kind"] == "seen"
+        }
+        roster = dict(stage._load_generator()._roster_item(session)[1]["value"])
+        assert evidence_values <= set(roster)
+        dead = set(roster) - evidence_values
+        assert len(dead) == 1
+
+
+def test_minimal_twin_differs_only_on_the_roster_line(stage, minimal):
+    module = stage._load_generator()
+    for original in minimal["train"][::2][:50]:
+        twin = next(
+            row
+            for row in minimal["train"]
+            if row["session_meta"].get("counterfactual_of") == original["session_id"]
+        )
+        assert twin["session_id"] == original["session_id"] + "_cf"
+        assert twin["session_meta"]["index"] == original["session_meta"]["index"] + 10_000
+        assert twin["ground_truth_oracle"]["culprit"] != original["ground_truth_oracle"]["culprit"]
+        for left, right in zip(original["turns"], twin["turns"]):
+            if left["turn_id"] == original["session_meta"]["roster_turn"]:
+                assert left["user_input"] != right["user_input"]
+            else:
+                assert left["user_input"] == right["user_input"]
+        old_map = dict(module._roster_item(original)[1]["value"])
+        new_map = dict(module._roster_item(twin)[1]["value"])
+        assert old_map != new_map
+        assert set(old_map) == set(new_map)
+        assert sorted(old_map.values()) == sorted(new_map.values())
+        assert module.derive(module._all_asserts(twin), twin["environment"]["actors"]) == [
+            twin["ground_truth_oracle"]["culprit"]
+        ]
+
+
+def test_minimal_heldout_twins_are_linked_and_swap_the_answer(stage, minimal):
+    module = stage._load_generator()
+    for structure, twin in zip(minimal["heldout"], minimal["heldout_twins"]):
+        assert twin["session_meta"]["counterfactual_of"] == structure["session_id"]
+        assert twin["session_id"].endswith("_cf")
+        assert twin["ground_truth_oracle"]["culprit"] != structure["ground_truth_oracle"]["culprit"]
+        roster_turn = structure["session_meta"]["roster_turn"]
+        for left, right in zip(structure["turns"], twin["turns"]):
+            if left["turn_id"] != roster_turn:
+                assert left["user_input"] == right["user_input"]
+        assert module.derive(module._all_asserts(twin), twin["environment"]["actors"]) == [
+            twin["ground_truth_oracle"]["culprit"]
+        ]
+
+
+def test_minimal_pair_report_reads_two_person_pairs(stage):
+    records = [
+        {"session_id": "m", "target": "Hana", "prediction": "Hana"},
+        {"session_id": "m_cf", "target": "Grace", "prediction": "Hana"},
+        {"session_id": "n", "target": "Hana", "prediction": "Grace"},
+        {"session_id": "n_cf", "target": "Grace", "prediction": "Hana"},
+    ]
+    report = stage.counterfactual_pair_report(records)
+    assert report["n_pairs"] == 2
+    assert report["same_prediction"] == 1
+    assert report["both_correct"] == 0
+    assert report["structure_correct"] == 1
+    assert report["twin_correct"] == 0
+
+
+def test_cli_refuses_minimal_binding_combinations_that_change_the_arm(stage):
+    for argv in (
+        # §61 and §62 are different corpora with different chance levels
+        ["--minimal-binding", "--counterfactual", "--gate-prefix", "G"],
+        # the registered arm is 400 items
+        ["--minimal-binding", "--train-sessions", "200", "--gate-prefix", "G"],
+        # the whole pair head and the whole held-out set are the test
+        [
+            "--minimal-binding",
+            "--train-sessions",
+            "400",
+            "--gate-prefix",
+            "G",
+            "--core",
+            "turnstore",
+            "--aux-loss",
+            "1.0",
+            "--aux-mode",
+            "resolvable",
+            "--eval-limit",
+            "8",
+        ],
+        # §62 holds the objective fixed
+        ["--minimal-binding", "--train-sessions", "400", "--gate-prefix", "G"],
+        # a format control has no twin
+        ["--minimal-binding", "--control", "rand", "--gate-prefix", "G"],
+        # not a Q1 calibration
+        ["--minimal-binding", "--overfit", "4", "--gate-prefix", "G"],
+        # the corpus builds itself; --sessions does not apply
+        ["--minimal-binding", "--sessions", "800", "--gate-prefix", "G"],
+    ):
+        with pytest.raises(SystemExit):
+            stage.main(argv)
