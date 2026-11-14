@@ -3,7 +3,7 @@
 # =============================================================================
 """Core adapters for the single-core contract: one recurrence, two step functions.
 
-Three arms live here, and they differ **only** in what the state is:
+Five arms live here, and they differ **only** in what the state is:
 
 * :class:`GRUCore` — the P1 first arm (non-linear, learned recurrence);
 * :class:`SSMCore` — the P3 arm (diagonal linear recurrence, time enters as
@@ -14,6 +14,9 @@ Three arms live here, and they differ **only** in what the state is:
 * :class:`TurnStoreCore` — the §55 arm: the GRU recurrence plus a store written
   once per turn and read only into the output head, so credit does not have to
   travel back through every token (the measured obstacle in §49.16-§54).
+* :class:`TokenCacheCore` — the §59 arm: the same store, but written once per
+  **token**, because §58 showed the per-turn write averages the roster's eight
+  value -> name pairs into one vector before any readout can address them.
 
 Everything a core needs in order to obey the contract (state object, weights
 hash, checkpointing) is in :class:`StatefulCore`, so a new arm cannot quietly
@@ -280,6 +283,16 @@ class StatefulCore:
 
     def end_turn(self, tensors: Dict[str, Any]) -> Dict[str, Any]:
         """Optional turn-end hook; cores without a store return the state as is."""
+        return dict(tensors)
+
+    def cache_write(self, tensors: Dict[str, Any], states: Any, valid: Any) -> Dict[str, Any]:
+        """Optional per-token write hook; cores without a token cache ignore it.
+
+        §59 needs the write to happen from the *same* stacked states the turn
+        was computed from, so the trainer calls this unconditionally and a core
+        without a cache inherits this no-op (rather than the trainer probing for
+        the method, which would silently skip a core that renamed it).
+        """
         return dict(tensors)
 
     # -- checkpointing ------------------------------------------------------
@@ -698,6 +711,208 @@ class TurnStoreCore(GRUCore):
         outputs = []
         for position in range(tokens.shape[1]):
             tensors = self.consume(tokens[:, position], tensors)
+            outputs.append(self.token_logits(tensors))
+        logits = torch.stack(outputs, dim=1)
+
+        for name, value in tensors.items():
+            state.tensors[name] = value
+        state.bump()
+        return logits, state
+
+
+class TokenCacheCore(GRUCore):
+    """§59 stage B: the same recurrence, plus one addressable slot per token.
+
+    §58 measured the binding this arm is built for. The probe could fit the
+    training states (in-sample 0.9725) but the held-out states decoded at 0.1100
+    against a chance of 0.1591: :class:`TurnStoreCore` memorises the sessions it
+    was trained on and carries nothing transferable. The reason is visible in
+    the task: the roster turn states eight value -> name pairs in one turn, and
+    a per-turn write averages all eight into a single vector before any readout
+    can address them (its in-roster rate was 0.61 / 0.535, i.e. barely above the
+    content-free 0.5457).
+
+    So the write granularity is the one variable. Everything the contract pins
+    stays: ``embedding`` -> ``cell``, ``dt_proj``, ``al_step``, ``chunk_seconds``,
+    ``h``. The state gains a bounded token cache:
+
+    * ``ck [B, S, D]``, ``cv [B, S, D]``, ``mask [B, S]`` alongside ``h``;
+    * a token's entry is ``W_k h_t`` / ``W_v h_t`` appended at position ``t``,
+      truncated to the **first** ``S`` tokens (not a ring): the roster is turn
+      2-3 of 11, so keeping the head of the session means the pairs cannot be
+      evicted by later filler;
+    * padding never enters: ``mask`` is the sample's real length, so a padded
+      position is addressed out with a large negative score;
+    * reading is ``softmax(scale * W_q h . ck^T) . cv`` and enters **only the
+      output head** - the same rule §55.2 measured (feeding a read back into the
+      cell made the ablation beat the scored arm in §46.13);
+    * ``memory=False`` keeps every parameter, writes nothing and returns a zero
+      read, so the ablation is a drop-in for the parameter-matched control.
+
+    Writes are functional (``cat`` then slice), never in-place: several
+    boundaries stay alive at once for the auxiliary loss, and an in-place store
+    update would change the evidence an earlier boundary is scored on.
+    """
+
+    model_kind = "tokencache"
+
+    def __init__(
+        self,
+        token_count: int,
+        *,
+        hidden: int = 64,
+        emb: int = 32,
+        chunk_seconds: float = DEFAULT_MAX_CHUNK_S,
+        seed: Optional[int] = None,
+        device: str = "cpu",
+        slots: int = 1024,
+        slot_dim: int = 64,
+        value_dim: int = 64,
+        memory: bool = True,
+    ) -> None:
+        if slots <= 0 or slot_dim <= 0 or value_dim <= 0:
+            raise ValueError("slots, slot_dim and value_dim must be > 0")
+        super().__init__(
+            token_count,
+            hidden=hidden,
+            emb=emb,
+            chunk_seconds=chunk_seconds,
+            seed=seed,
+            device=device,
+        )
+        torch = self._torch
+        nn = torch.nn
+        self.slots = int(slots)
+        self.slot_dim = int(slot_dim)
+        self.value_dim = int(value_dim)
+        self.memory = bool(memory)
+
+        self.key_proj = nn.Linear(hidden, self.slot_dim)
+        self.value_proj = nn.Linear(hidden, self.value_dim)
+        self.query_proj = nn.Linear(hidden, self.slot_dim)
+        self.head = nn.Linear(hidden + self.value_dim, token_count)
+        self.log_read_scale = nn.Parameter(torch.tensor(math.log(4.0)))
+        if device != "cpu":
+            self.to(device)
+
+        self._weights_hash = None
+        self._parameter_count = None
+
+    # -- introspection ------------------------------------------------------
+
+    def modules(self) -> Tuple[Any, ...]:
+        return (
+            self.embedding,
+            self.cell,
+            self.dt_proj,
+            self.key_proj,
+            self.value_proj,
+            self.query_proj,
+            self.head,
+        )
+
+    def _modules_by_name(self) -> Tuple[Tuple[str, Any], ...]:
+        return (
+            ("embedding", self.embedding),
+            ("cell", self.cell),
+            ("dt_proj", self.dt_proj),
+            ("key_proj", self.key_proj),
+            ("value_proj", self.value_proj),
+            ("query_proj", self.query_proj),
+            ("head", self.head),
+        )
+
+    def extra_parameters(self) -> Tuple[Tuple[str, Any], ...]:
+        return (("log_read_scale", self.log_read_scale),)
+
+    def config(self) -> Dict[str, Any]:
+        payload = super().config()
+        payload.update(
+            {
+                "slots": self.slots,
+                "slot_dim": self.slot_dim,
+                "value_dim": self.value_dim,
+                "memory": self.memory,
+            }
+        )
+        return payload
+
+    # -- state --------------------------------------------------------------
+
+    def state_tensors(self, batch_size: int) -> Dict[str, Any]:
+        """``h`` plus an *empty* cache; it grows by ``cat`` as tokens arrive."""
+        torch = self._torch
+        return {
+            "h": torch.zeros(batch_size, self.hidden, device=self.device),
+            "ck": torch.zeros(batch_size, 0, self.slot_dim, device=self.device),
+            "cv": torch.zeros(batch_size, 0, self.value_dim, device=self.device),
+            "mask": torch.zeros(batch_size, 0, device=self.device),
+        }
+
+    def cache_write(self, tensors: Dict[str, Any], states: Any, valid: Any) -> Dict[str, Any]:
+        """Append one entry per token: ``states`` ``[B, T, H]``, ``valid`` ``[B, T]``.
+
+        The slice to ``slots`` keeps the **first** ``S`` tokens of the session;
+        a session longer than that loses its tail, and §59.4's B4 records how
+        much. Padding is carried in ``mask`` so it is never read, not dropped
+        from the tensor (positions must stay aligned with the token order).
+        """
+        if not self.memory:
+            return dict(tensors)
+        torch = self._torch
+        keys = torch.cat([tensors["ck"], self.key_proj(states)], dim=1)[:, : self.slots]
+        values = torch.cat([tensors["cv"], self.value_proj(states)], dim=1)[:, : self.slots]
+        mask = torch.cat([tensors["mask"], valid.to(states.dtype)], dim=1)[:, : self.slots]
+        return {**tensors, "ck": keys, "cv": values, "mask": mask}
+
+    # -- the decode interface -----------------------------------------------
+
+    def read_vector(self, tensors: Dict[str, Any]) -> Any:
+        """Content-addressed read over the token cache (all zeros when off)."""
+        torch = self._torch
+        hidden = tensors["h"]
+        keys = tensors.get("ck")
+        if not self.memory or keys is None or int(keys.shape[1]) == 0:
+            return torch.zeros(
+                hidden.shape[0],
+                self.value_dim,
+                dtype=hidden.dtype,
+                device=hidden.device,
+            )
+        query = self.query_proj(hidden)
+        scores = torch.bmm(keys, query.unsqueeze(2)).squeeze(2)
+        scores = scores * torch.exp(self.log_read_scale)
+        scores = scores.masked_fill(tensors["mask"] <= 0, -1.0e9)
+        weights = torch.softmax(scores, dim=-1)
+        return torch.bmm(weights.unsqueeze(1), tensors["cv"]).squeeze(1)
+
+    def token_logits(self, tensors: Dict[str, Any]) -> Any:
+        """Logits from ``[h, read]`` - the cache never enters ``h``."""
+        torch = self._torch
+        return self.head(torch.cat([tensors["h"], self.read_vector(tensors)], dim=-1))
+
+    # -- the two cycles -----------------------------------------------------
+
+    def ai_step(self, tokens: Any, state: CoreState) -> Tuple[Any, CoreState]:
+        """``tokens``: LongTensor ``[B, L]`` → ``(logits [B, L, V], state)``.
+
+        Each token is consumed, written to the cache, then read: the first
+        step's logits therefore see the first token (never an empty cache,
+        which would make the read a zero vector for the wrong reason).
+        """
+        torch = self._torch
+        if tokens.ndim != 2:
+            raise ValueError(f"tokens must be [B, L], got shape {tuple(tokens.shape)}")
+        tensors = dict(state.tensors)
+        batch = int(tokens.shape[0])
+        if batch != tensors["h"].shape[0]:
+            raise ValueError("batch size of tokens and state disagree")
+
+        outputs = []
+        ones = torch.ones((batch, 1), dtype=tensors["h"].dtype, device=tensors["h"].device)
+        for position in range(tokens.shape[1]):
+            tensors = self.consume(tokens[:, position], tensors)
+            tensors = self.cache_write(tensors, tensors["h"].unsqueeze(1), ones)
             outputs.append(self.token_logits(tensors))
         logits = torch.stack(outputs, dim=1)
 

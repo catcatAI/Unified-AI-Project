@@ -107,6 +107,7 @@ credentials.json
 !scripts/train_token_snn.py
 !tests/ai/test_token_snn.py
 !tests/test_train_token_snn.py
+!tests/ai/test_token_cache_core.py
 *.key
 *.pem
 .env

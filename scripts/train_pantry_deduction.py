@@ -136,6 +136,11 @@ L_PARAMS = 124_611
 
 # §49.6 - thresholds, with the quantity each one comes from.
 FIT_SESSIONS = 200
+
+# §55's per-turn store and §59's per-token cache are both derived from L and both
+# take the ``--no-memory`` ablation; keeping one tuple means a new arm cannot be
+# half-wired (accepted by the CLI but refused by the derivation, or vice versa).
+STORE_ARMS = ("turnstore", "tokencache")
 FIT_FLOOR = 0.25
 SURFACE_BASELINE_UPPER = 0.25
 CHANCE_MARGIN = 0.10
@@ -397,7 +402,19 @@ def build_core(
     kind: str = "gru",
     memory: bool = True,
 ) -> Any:
-    """The registered carriers: ``gru`` (stages L/P…) and ``turnstore`` (§55)."""
+    """The registered carriers: ``gru`` (L/P…), ``turnstore`` (§55), ``tokencache`` (§59)."""
+    if kind == "tokencache":
+        from ai.core.stateful_decoder import TokenCacheCore
+
+        return TokenCacheCore(
+            VOCAB_SIZE,
+            hidden=hidden,
+            emb=emb,
+            chunk_seconds=CHUNK_SECONDS,
+            seed=seed,
+            device=device,
+            memory=memory,
+        )
     if kind == "turnstore":
         from ai.core.stateful_decoder import TurnStoreCore
 
@@ -513,8 +530,11 @@ def start_from_stage_l(core: Any, path: Path, *, source_hidden: int) -> str:
     with matching shapes: §49.1 pins the start, and a derivation of something
     else is a different experiment.
     """
-    if getattr(core, "model_kind", "") != "turnstore":
-        raise SystemExit(f"start_from_stage_l is for the turnstore arm, not {core.model_kind!r}")
+    if getattr(core, "model_kind", "") not in STORE_ARMS:
+        raise SystemExit(
+            f"start_from_stage_l is for the store arms {sorted(STORE_ARMS)}, "
+            f"not {core.model_kind!r}"
+        )
     if not path.exists():
         raise SystemExit(f"missing the stage-L checkpoint: {path}")
     file_digest = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -564,7 +584,7 @@ def start_is_stage_l(start: Dict[str, Any]) -> bool:
             and int(start.get("hidden") or 0) > HIDDEN
             and int(start.get("params") or 0) > L_PARAMS
         )
-    if start.get("derived_from") == "turnstore":
+    if start.get("derived_from") in STORE_ARMS:
         return (
             start.get("source_weights_hash") == L_WEIGHTS_HASH
             and int(start.get("hidden") or 0) == HIDDEN
@@ -597,12 +617,17 @@ def load_stage_l(core: Any, path: Path) -> str:
     return digest
 
 
-def _run_turn(core: Any, rows: Sequence[Sequence[int]], hidden: Any) -> Any:
-    """Feed one turn per sample and keep the state at each sample's own length.
+def _run_turn(core: Any, rows: Sequence[Sequence[int]], hidden: Any) -> Tuple[Any, Any, Any]:
+    """Feed one turn per sample; return ``(state at real length, all states, valid)``.
 
     Right-padding is only used to batch the arithmetic: the gathered state is the
     one computed from that sample's real tokens, so the pad never enters the
     state (``tests/test_pantry_deduction.py`` checks this against ``ai_step``).
+
+    ``stacked`` is every position's state ``[B, width, H]`` and ``valid`` is the
+    real-length mask ``[B, width]``: §59's token cache needs both (a token entry
+    per position, and padding excluded from the read) and it must be written from
+    the same computation, not from a second pass.
     """
     torch = core._torch
     lengths = [len(row) for row in rows]
@@ -618,7 +643,10 @@ def _run_turn(core: Any, rows: Sequence[Sequence[int]], hidden: Any) -> Any:
         states.append(hidden)
     stacked = torch.stack(states, dim=1)
     picks = torch.as_tensor([n - 1 for n in lengths], device=hidden.device).reshape(-1, 1, 1)
-    return stacked.gather(1, picks.expand(-1, 1, stacked.shape[-1])).reshape(len(rows), -1)
+    final = stacked.gather(1, picks.expand(-1, 1, stacked.shape[-1])).reshape(len(rows), -1)
+    positions = torch.arange(width, device=hidden.device).unsqueeze(0)
+    valid = positions < torch.as_tensor(lengths, device=hidden.device).unsqueeze(1)
+    return final, stacked, valid
 
 
 def run_session(
@@ -665,10 +693,14 @@ def run_session(
                 )
                 state = core.al_step(dt, state)
                 hidden = state.tensors["h"]
-        hidden = _run_turn(core, [row[index] for row in batch_turns], hidden)
+        hidden, stacked, valid = _run_turn(core, [row[index] for row in batch_turns], hidden)
         # one ai_step per turn, so state_version/ticks mean what they mean in
         # the contract (al_step bumps for chunks; this bumps for the turn)
         state.tensors["h"] = hidden
+        # §59: a token-level arm writes its cache from the same stacked states
+        # the turn was computed from, with padding marked invalid. The write is
+        # functional, so an earlier boundary's cache is never rewritten.
+        state.tensors = core.cache_write(state.tensors, stacked, valid)
         state.bump()
         state.tensors = core.end_turn(state.tensors)
         hidden = state.tensors["h"]
@@ -828,6 +860,30 @@ def random_answer_ids(session: Dict[str, Any], seed: int) -> List[int]:
     rng = random.Random(f"{seed}:{session['session_meta']['index']}:rand")
     choice = rng.choice([name for name in actors if name != culprit])
     return [BYTE_OFFSET + byte for byte in (choice + "\n").encode("utf-8")]
+
+
+def cache_report(sessions: Sequence[Dict[str, Any]], *, slots: int) -> Dict[str, Any]:
+    """§59.4's B4: what the token cache holds and what it had to drop.
+
+    The cache keeps the **first** ``slots`` tokens of a session (§59.2), so a
+    session longer than that silently loses its tail. That is a design choice,
+    not a measurement, and it is only honest if the report says how much was
+    lost: the roster is turn 2-3, so the expectation is "almost nothing", and a
+    run where it is not almost nothing is not testing the registering question.
+    """
+    lengths = [sum(len(turn) for turn in turn_tokens(session)) for session in sessions]
+    total = sum(lengths)
+    dropped = sum(max(0, length - slots) for length in lengths)
+    return {
+        "slots": int(slots),
+        "sessions": len(lengths),
+        "mean_tokens": _round(total / len(lengths)) if lengths else None,
+        "max_tokens": max(lengths) if lengths else None,
+        "sessions_truncated": sum(1 for length in lengths if length > slots),
+        "tokens_total": total,
+        "tokens_dropped": dropped,
+        "tokens_dropped_share": _round(dropped / total) if total else None,
+    }
 
 
 def build_samples(
@@ -1380,8 +1436,28 @@ def _stage_g_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
         "G3_store_beats_gru_on_heldout": None,
         "G4_cost_recorded": all(
             cost.get(key) not in (None, 0) for key in ("params", "train_seconds", "device")
-        ),
+        )
+        and _cache_cost_recorded(report),
     }
+
+
+def _cache_cost_recorded(report: Dict[str, Any]) -> bool:
+    """B4's extra requirement: a cache arm must say what the cache dropped.
+
+    Arms without a cache (everything before §59) have nothing to record, so this
+    is ``True`` for them - the existing G4 cells stay exactly as measured. A
+    ``tokencache`` arm cannot pass B4 without ``cost.cache``.
+    """
+    core_kind = (report.get("config") or {}).get("core")
+    if core_kind != "tokencache":
+        return True
+    cache = (report.get("cost") or {}).get("cache") or {}
+    if not cache:
+        return False
+    return all(
+        (block or {}).get("tokens_dropped") is not None and (block or {}).get("slots")
+        for block in cache.values()
+    )
 
 
 def mcnemar_one_sided(wins: int, losses: int) -> Optional[float]:
@@ -1957,18 +2033,18 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "source_weights_hash": L_WEIGHTS_HASH,
             "hidden": core.hidden,
         }
-    elif args.core == "turnstore":
+    elif args.core in STORE_ARMS:
         core = build_core(
             hidden=args.hidden,
             emb=args.emb,
             device=device,
             seed=args.seed,
-            kind="turnstore",
+            kind=args.core,
             memory=not args.no_memory,
         )
         start_hash = start_from_stage_l(core, Path(args.start), source_hidden=HIDDEN)
         widened = {
-            "derived_from": "turnstore",
+            "derived_from": args.core,
             "source_weights_hash": L_WEIGHTS_HASH,
             "hidden": core.hidden,
             "memory": core.memory,
@@ -2032,6 +2108,13 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
 
     # the data contract behind "the answer is not in the question"
     leak = leak_report(heldout)
+
+    # §59.4 B4: a token cache keeps only its first `slots` tokens
+    slots = int(getattr(core, "slots", 0) or 0)
+    cache_costs: Dict[str, Any] = {}
+    if slots:
+        cache_costs["heldout"] = cache_report(heldout, slots=slots)
+        cache_costs["train_subset"] = cache_report(train_sessions, slots=slots)
 
     checkpoint = Path(args.out) / f"pantry_deduction_{stamp}.pt"
     checkpoint.parent.mkdir(parents=True, exist_ok=True)
@@ -2100,6 +2183,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "params": core.parameter_count(),
             "train_seconds": round(time.time() - started, 1),
             "device": device,
+            **({"cache": cache_costs} if cache_costs else {}),
         },
     }
     report["gates"] = gate_values(report)
@@ -2139,11 +2223,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--emb", type=int, default=EMB)
     parser.add_argument(
         "--core",
-        choices=("gru", "turnstore"),
+        choices=("gru", "turnstore", "tokencache"),
         default="gru",
         help=(
             "§55 stage T: 'turnstore' is the per-turn store arm (same recurrence, "
-            "one write per turn, read into the head); 'gru' is every earlier stage"
+            "one write per turn, read into the head); §59 stage B: 'tokencache' "
+            "writes one entry per token and reads it into the head; 'gru' is every "
+            "earlier stage"
         ),
     )
     parser.add_argument(
@@ -2249,13 +2335,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "a --train-sessions arm is capped by its subset and must be graded under "
             "--gate-prefix G (§56), not by a stage that assumes all 800 sessions"
         )
-    if args.no_memory and args.core != "turnstore":
-        parser.error("--no-memory is the turnstore ablation; pass --core turnstore")
+    if args.no_memory and args.core not in STORE_ARMS:
+        parser.error(
+            "--no-memory is the store-arm ablation; pass --core " + " or ".join(sorted(STORE_ARMS))
+        )
     if args.widen_to and args.core != "gru":
         parser.error("--widen-to is §52.4's GRU width rung; it does not combine with --core")
     if args.core != "gru" and (args.hidden != HIDDEN or args.emb != EMB):
         parser.error(
-            f"§55 fixes hidden={HIDDEN} and emb={EMB} for the store arm; "
+            f"§55/§59 fix hidden={HIDDEN} and emb={EMB} for the store arms; "
             "varying them is a different experiment"
         )
     if args.widen_to:

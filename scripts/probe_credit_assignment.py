@@ -98,7 +98,10 @@ def turnwise_forward(
             )
             state = core.al_step(dt, state)
             hidden = state.tensors["h"]
-        hidden = driver._run_turn(core, [row[index] for row in turns], hidden)
+        # §59 changed ``_run_turn`` to return the real-length state plus the
+        # stacked per-token states and their mask; this probe is the GRU
+        # credit-assignment diagnostic and only needs the first.
+        hidden, _stacked, _valid = driver._run_turn(core, [row[index] for row in turns], hidden)
         state.tensors["h"] = hidden
         state.bump()
         hidden.retain_grad()
