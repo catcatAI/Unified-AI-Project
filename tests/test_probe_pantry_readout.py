@@ -94,6 +94,16 @@ def test_sensitivity_counts_the_sessions_below_each_registered_cut(probe):
     assert block["below_cut"]["0.999"] == 3
 
 
+def test_pick_all_returns_the_name_not_its_position(probe):
+    """The bug this pins: a position cast to str makes every comparison false."""
+    names = ["Alex", "Betty", "Chris"]
+    scores = np.array([[0.1, 0.9, 0.2], [0.7, 0.1, 0.2]], dtype=np.float32)
+    indices = [[0, 1], [1, 2]]
+    picked, positions = probe.pick_all(scores, indices, names)
+    assert picked == ["Betty", "Chris"]
+    assert positions == [1, 1]
+
+
 def test_rate_is_the_share_of_true_flags(probe):
     assert probe._rate([True, False, True, True]) == 0.75
     assert probe._rate([]) == 0.0
@@ -117,6 +127,32 @@ def test_identity_re_read_is_exactly_itself(stage, probe):
         assert outcome["argmax_flip_rate"] == 0.0
         assert outcome["mean_abs_delta_roster"] == 0.0
         assert outcome["h_rel_final"]["max"] == 0.0
+
+
+def test_identity_accuracy_is_rank_actors_accuracy(stage, probe, trainer):
+    """The probe's roster argmax must be the production readout, not a lookalike."""
+    for size, block in stage.items():
+        core = block["core"]
+        sessions = block["sessions"]
+        outcome = probe.compare_variant(
+            block["identity"],
+            block["identity"],
+            sessions,
+            block["names"],
+            block["indices"],
+            label="identity",
+        )
+        expected = sum(
+            1
+            for session in sessions
+            if trainer.rank_actor(
+                core,
+                trainer._slice(_final_boundary(trainer, core, session), 0, 1),
+                list(session["environment"]["actors"]),
+            )
+            == session["ground_truth_oracle"]["culprit"]
+        ) / len(sessions)
+        assert outcome["accuracy"] == pytest.approx(round(expected, 4))
 
 
 def test_the_probe_keeps_both_boundaries_and_the_store(stage, probe):
@@ -264,7 +300,7 @@ def test_fork_is_a_pure_function_of_the_stored_medians(probe):
 # the mechanical re-check
 # --------------------------------------------------------------------------- #
 def _synthetic_report(*, k=2, read_median=0.999, moved=0.1, store_median=0.05):
-    summary = {"n": 200, "correct": 53, "exact": 0.265, "chance": 0.5}
+    summary = {"n": 200, "correct": 53, "exact": 0.265, "chance": 0.5, "ranking_exact": 0.495}
     twin = _variant(read_median=read_median, store_median=store_median, moved=moved)
     reorder = _variant(read_median=read_median)
     fork = None
@@ -274,6 +310,11 @@ def _synthetic_report(*, k=2, read_median=0.999, moved=0.1, store_median=0.05):
             "matches": True,
             "identity_summary": dict(summary),
             "report_full": dict(summary),
+            "roster_argmax_matches_report": {
+                "probe": 0.495,
+                "report": 0.495,
+                "matches": True,
+            },
         },
         "r2_edits_are_surgical": {"checked": 200, "violations": []},
         "readout": {
@@ -334,6 +375,15 @@ def test_check_rejects_a_report_whose_r1_no_longer_matches(probe, tmp_path):
     path.write_text(json.dumps(data), encoding="utf-8")
     problems = probe.check(path)
     assert any("R1 no longer matches" in problem for problem in problems)
+
+
+def test_check_rejects_a_probe_that_stopped_matching_rank_actor(probe, tmp_path):
+    path = _write_check_report(probe, tmp_path)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["r1_identity_reproduces_the_report"]["roster_argmax_matches_report"]["probe"] = 0.0
+    path.write_text(json.dumps(data), encoding="utf-8")
+    problems = probe.check(path)
+    assert any("roster argmax no longer reproduces" in problem for problem in problems)
 
 
 def test_check_rejects_a_recorded_r2_violation(probe, tmp_path):

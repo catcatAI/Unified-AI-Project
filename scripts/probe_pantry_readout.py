@@ -277,14 +277,24 @@ def roster_indices(sessions: Sequence[Dict[str, Any]], names: Sequence[str]) -> 
     ]
 
 
-def pick_all(scores: np.ndarray, indices: Sequence[List[int]]) -> Tuple[List[str], List[int]]:
-    """Per-row argmax over that row's own roster -> (names, positions)."""
+def pick_all(
+    scores: np.ndarray,
+    indices: Sequence[List[int]],
+    names: Sequence[str],
+) -> Tuple[List[str], List[int]]:
+    """Per-row argmax over that row's own roster -> (names, positions).
+
+    ``indices`` are positions into the corpus-wide ``names``; the returned name
+    must be ``names[index[position]]``, not the position itself. Getting that
+    wrong makes every name comparison trivially false, which is why the probe
+    cross-checks its identity accuracy against the report's ``ranking_exact``.
+    """
     chosen_names: List[str] = []
     chosen_positions: List[int] = []
     for row, index in enumerate(indices):
         position = int(np.argmax(scores[row, index]))
         chosen_positions.append(position)
-        chosen_names.append(str(index[position]))
+        chosen_names.append(str(names[index[position]]))
     return chosen_names, chosen_positions
 
 
@@ -298,8 +308,8 @@ def compare_variant(
     label: str,
 ) -> Dict[str, Any]:
     """State movement plus score movement, for one edit against ``identity``."""
-    variant_names, variant_positions = pick_all(variant["scores"], indices)
-    _, identity_positions = pick_all(identity["scores"], indices)
+    variant_names, variant_positions = pick_all(variant["scores"], indices, names)
+    _, identity_positions = pick_all(identity["scores"], indices, names)
     deltas = []
     for row, index in enumerate(indices):
         deltas.append(
@@ -549,9 +559,9 @@ def run(
     reorder_read = read_variant(trainer, core, reorders, names, batch=batch)
 
     twin_culprits = [session["ground_truth_oracle"]["culprit"] for session in twins]
-    twin_names, _ = pick_all(twin_read["scores"], indices)
-    identity_names, identity_positions = pick_all(identity["scores"], indices)
-    reorder_names, _ = pick_all(reorder_read["scores"], indices)
+    twin_names, _ = pick_all(twin_read["scores"], indices, names)
+    identity_names, _ = pick_all(identity["scores"], indices, names)
+    reorder_names, _ = pick_all(reorder_read["scores"], indices, names)
 
     twin = compare_variant(identity, twin_read, heldout, names, indices, label="twin")
     twin["moved_to_twin_target"] = _rate(
@@ -587,6 +597,17 @@ def run(
         [row["prediction"] == row["target"] for row in identity_records if row["target"]]
     )
     mismatch = summarise_mismatch(identity, heldout)
+
+    # R1's second half: the probe's own roster argmax must reproduce the report's
+    # `rank_actor` accuracy, or the probe is not reading the production readout.
+    report_ranking = report.get("results", {}).get("full", {}).get("ranking_exact")
+    identity_block["roster_argmax_matches_report"] = {
+        "probe": identity_block["accuracy"],
+        "report": report_ranking,
+        "matches": identity_block["accuracy"] == report_ranking,
+    }
+    r1["roster_argmax_matches_report"] = identity_block["roster_argmax_matches_report"]
+    r1["matches"] = bool(r1["matches"] and r1["roster_argmax_matches_report"]["matches"])
 
     fork = branch(k=k, twin=twin, reorder=reorder)
     elapsed = time.time() - started
@@ -654,6 +675,15 @@ def check(path: Path) -> List[str]:
         problems.append(f"R1 no longer matches the report: {mismatches}")
     if bool(r1.get("matches")) != (not mismatches):
         problems.append("R1.matches disagrees with its own stored summaries")
+
+    cross = r1.get("roster_argmax_matches_report") or {}
+    if cross.get("probe") != cross.get("report"):
+        problems.append(
+            "the probe's roster argmax no longer reproduces the report's ranking_exact: "
+            f"{cross.get('probe')} vs {cross.get('report')}"
+        )
+    if cross.get("matches") is not True:
+        problems.append("R1.roster_argmax_matches_report is not True")
 
     violations = (data.get("r2_edits_are_surgical") or {}).get("violations") or []
     if violations:
