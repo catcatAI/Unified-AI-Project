@@ -1336,6 +1336,61 @@ def test_region_loss_refuses_a_target_that_is_not_in_the_candidate_set(stage):
         )
 
 
+def test_region_loss_reads_a_store_boundary_not_only_h(stage):
+    """§60 runs on the per-turn store, whose boundary is a tensor mapping.
+
+    A `_select` that only moved `h` would leave the store on the batch's rows and
+    score candidate *i* against sample 0's store - wrong, and silent. This pins
+    the restricted CE against a hand computation on the same boundary.
+    """
+    import torch
+
+    core = stage.build_core(hidden=8, emb=4, device="cpu", kind="turnstore")
+    core.eval()
+    boundaries = []
+    stage.run_session(
+        core,
+        [[[3, 4, 5], [6, 7]], [[9, 10], [11, 12, 13]]],
+        [[60.0, 120.0], [60.0, 120.0]],
+        boundaries=boundaries,
+    )
+    early = boundaries[0]
+    assert set(stage._decode_view(early)) > {"h"}  # h + the store
+
+    candidates = ["Alex", "Bartholomew"]
+    target = stage.candidates_tokens("Alex")
+    produced = stage._candidate_region_loss(core, early, [candidates, candidates], [target, target])
+    with torch.no_grad():
+        first = _manual_log_prob(stage, core, stage._select(early, torch.tensor([0])), target)
+        second = _manual_log_prob(stage, core, stage._select(early, torch.tensor([1])), target)
+        long_first = _manual_log_prob(
+            stage,
+            core,
+            stage._select(early, torch.tensor([0])),
+            stage.candidates_tokens("Bartholomew"),
+        )
+    long_second = _manual_log_prob(
+        stage, core, stage._select(early, torch.tensor([1])), stage.candidates_tokens("Bartholomew")
+    )
+    assert float(produced[0]) == pytest.approx(
+        float(-first + torch.logsumexp(torch.stack([first, long_first]), dim=0)), rel=1e-4
+    )
+    assert float(produced[1]) == pytest.approx(
+        float(-second + torch.logsumexp(torch.stack([second, long_second]), dim=0)), rel=1e-4
+    )
+    # and the store has to move with the row: scoring row 1 against row 0's
+    # store gives a different log-probability (the fresh gating makes it small,
+    # but it is far above float32 noise at this magnitude)
+    mixed = dict(stage._decode_view(early))
+    mixed["h"] = mixed["h"][1:2]
+    for key in ("k", "v", "mask"):
+        if key in mixed:
+            mixed[key] = mixed[key][0:1]
+    with torch.no_grad():
+        leaked = _manual_log_prob(stage, core, mixed, target)
+    assert abs(float(leaked) - float(second)) > 1e-5
+
+
 def test_weighted_region_weights_each_boundary_by_one_over_roster_width(stage, monkeypatch):
     """``aux = Σ w·CE / Σ w`` with ``w = 1/|C|`` (not a plain mean over samples)."""
     import torch
