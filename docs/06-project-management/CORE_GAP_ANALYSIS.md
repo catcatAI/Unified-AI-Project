@@ -7488,3 +7488,128 @@ done
 **M1 全過、M2 全不過** → 下一步是**讀出／狀態探針**：在已訓練的 k=2 與 k=5 checkpoint 上，於名冊
 那一輪抓 state，只換名冊文字（換順序、換名字、換人數），看輸出頭是否真的讀到 mapping；
 **不新增訓練預算**（不加 epoch、不加寬度、不加段數）。
+
+
+
+## 六十六、階段 ORD-2：讀出／狀態探針（2026-11-15，量測前寫定）
+
+### 66.1 為什麼是這一支
+
+§65.10 的機械輸出是：k=3／4／5 每一格 **M1 過、M2 不過**，而且 `exact/chance` 沒有趨勢
+（0.570／0.380／0.650，k=2 是 0.530）。真正隨 k 變化的是**名冊對輸出的約束**：答案落在名冊裡的比例
+0.555→0.550→0.500→0.450，而不管內容的期望是 0.167→0.250→0.333→0.417，領先幅度從 0.388 掉到
+0.033；名冊內正確率也從未超過 chance（0.477／0.345／0.190／0.289）。
+
+§65.9 對這一格登記的下一步是**讀出／狀態探針**：在已訓練的 k=2 與 k=5 checkpoint 上，只換名冊文字，
+看輸出頭是否真的讀到 mapping；**不新增訓練預算**。這一節就是那支探針，而且它要在跑之前把「讀到哪裡」
+與「在哪一層丟掉」寫清楚，否則量完只會得到另一組可以任意解釋的餘弦。
+
+### 66.2 量什麼（三層 × 三種編輯 + 一個參考分布）
+
+對每一個留出 session，只改名冊那一輪（`roster_turn`，§62 起固定是第 2 輪），重跑整段，然後在**答案邊界**
+讀三層：
+
+| 層 | 量 | 為什麼 |
+| --- | --- | --- |
+| 控制器 | `h` 的餘弦／相對 L2 | 名冊的影響有沒有傳到答題時的迴路狀態 |
+| 讀出 | `core.read_vector` 的餘弦／相對 L2 | 輸出頭**實際被餵到**的內容（`token_logits = head([h, read])`） |
+| 存放 | 答案邊界上 `k`／`v` 槽的相對 L2 | 「從來沒寫進去」與「寫了但答題時不讀」是兩件事 |
+
+以及**行為層**：對 12 個語料名字逐一算「名字＋換行」的序列對數似然（與 `rank_actor` 同一條路徑），
+取該 session 名冊內的 argmax，量它有沒有跟著 mapping 走。
+
+三種編輯（同一批留出 session）：
+
+* `identity`：不改，重跑。R1 必須逐欄重現報告的 `results.full`。
+* `twin`（§62 的換名配對）：正解翻成另一個人，證據值不動。
+* `reorder`（§64 的順序配對）：mapping 不動，名冊條目反序，正解不動。
+* `mismatch`（**參考分布，不是編輯**）：第 *i* 題的答案邊界對第 *i+1* 題的。它給「兩題完全無關」時的
+  餘弦，讓「名冊只是小擾動」有一把量出來的尺，而不是靠 0.99 這個數字自己說。
+
+### 66.3 程式與重用
+
+* 新檔 `scripts/probe_pantry_readout.py`（`--report` 讀已訓練報告、`--check` 機械重驗）。
+* 重用 `train_pantry_deduction.py` 的 `run_session`（`boundaries` 鉤子）、`evaluate`（R1 的生產路徑）、
+  `summarise`、`generate_bytes`、`_slice`／`_decode_view`、`candidates_tokens`、`_chunks`，以及
+  `gen_pantry_ecosystem.py` 的 `minimal_twin`、`minimal_order_twin`、`derive`、`_all_asserts`。
+* 名字分數的迴圈與 `rank_actor` 逐字相同（只多回傳每個名字的分數），並有一條測試要求兩者的 argmax
+  在同樣的 boundary 上一致——否則探針量的不是生產路徑的讀出。
+* 只讀 checkpoint（`weights_hash` 與檔案 sha256 前後比對），不寫入任何被量的環境；輸出只寫 `--out`。
+
+### 66.4 門檻（跑之前寫定）
+
+| 門檻 | 條件 | 意思 |
+| --- | --- | --- |
+| **R1** | `identity` 重跑的 `summarise(evaluate(..., "full"))` 與報告 `results.full` 的 14 個欄位**逐欄相等** | 儀器檢查：語料／checkpoint 配對正確，否則後面全部不讀 |
+| **R2** | 每一組編輯只改 `roster_turn` 這一輪、輪數不變；`twin` 的 `derive()` 等於 twin 正解且不等於原正解、名冊成員不變；`reorder` 的 `derive()` 等於原正解。違規數 **0** | 編輯是外科手術，不是換了一題 |
+| **R3** | 見 66.9 的分叉（`READ_COS_STATIC = 0.99`、`STORE_WRITTEN = 0.01`、`FOLLOWS_MAPPING = 0.50`） | 這是**發現**，不是通過／不通過 |
+| **R4** | 成本（session 數、變體數、秒、參數）已記錄；`weights_hash` 與 checkpoint sha256 前後相同 | 探針沒有改動模型 |
+
+0.99 是一個**先寫定的診斷切點**，不是自然常數。所以報告同時給出 `min/p25/median/p75/max` 與
+「低於 0.90／0.95／0.99／0.999 各有幾題」的敏感度表，讀者可以自己換切點重讀；分叉的結論必須在
+同一組數字下可重算（`--check` 會用儲存的數字重跑 `branch()`）。
+
+### 66.5 預測（寫在跑之前）
+
+| 讀數 | 預測 | 理由 |
+| --- | --- | --- |
+| R1 | **逐欄相符** | 同一份語料、同一個 checkpoint、CPU 決定性 |
+| R2 | **0 違規** | 兩種配對都是既有的產生器函式，§63／§64 已用過 |
+| `read_cos_roster` 中位數 | **< 0.99**（兩個變體、兩個 k） | 名冊文字真的變了，名冊那一輪的讀出一定不同 |
+| **`read_cos_final` 中位數** | **≥ 0.99**（兩個變體、兩個 k）→ **R3a** | 答案邊界還隔著證據輪與提問輪；§65 的名冊約束随 k 衰減，預期答題時的讀出幾乎不變 |
+| `store_v_rel_final` 中位數 | **≥ 0.01** → **R3a-stored-not-read** | 名冊那一輪的寫入應該有進去，只是答題時不讀它 |
+| `moved_to_twin_target` | 與 identity 的名冊內正確率相差 **±0.05 以內**（k=2 ≈ 0.265、k=5 ≈ 0.130） | 若答題時的讀出沒變，換名與否對頭來說是同一題 |
+| `same_prediction`（twin vs identity） | k=2 **0.30–0.45**、k=5 **0.60–0.80** | §65 的留出換名配對同答率是 70/200＝0.35、142/200＝0.71 |
+| `mismatch` 的 `read_cos_final` 中位數 | **低於 twin 的** | 兩題完全無關時狀態應該差更多；若反而更高，代表狀態根本沒有 session 特異性 |
+| `reorder` 的 `follows_last_entry` | **0.10–0.60** | §65 已量到沒有跨 k 一致的位置規則，這裡不應該冒出 1.0 |
+
+**最可能落到的分支**：R3a-stored-not-read（讀出在答題時不看名冊槽）。這不是「名冊太小」，也不是
+「沒寫進去」，而是**答題那一輪的 query 沒有去要名冊那一輪的內容**——對應的修法是讀／query 路徑，
+不是加 epoch、加寬度或加段數。
+
+### 66.6 這一節**不會**證明什麼
+
+* 不是能力分數；核心分不變 **0.00/10**。
+* 只探 k=2 與 k=5 兩個已訓練 checkpoint（§64 與 §65），k=3／k=4 不重跑：分叉只需要「最小」與
+  「最大」兩個名冊，重跑其餘兩格是重複。
+* 餘弦是**診斷**，不是因果：`read_cos` 高不代表名冊一定不在別處，只代表**答題時餵給頭的向量**沒變。
+  `store_v_rel` 就是為了把這個區別量出來。
+* 單一 seed、單一讀出、單一任務；200 題；`--aux-mode resolvable` 的混淆仍在（§62.2）→ 診斷，不是
+  歸因臂。
+* `mismatch` 是循環位移（第 *i* 題對第 *i+1* 題），不是獨立抽樣的配對；它只給一個量級，不是檢定。
+* 探針不改任何門檻、不改評測題、不在留出上調參。
+
+### 66.7 指令
+
+```
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/probe_pantry_readout.py \
+    --report data/pantry_stage/ord_arm/pantry_deduction_20261115-015751.json \
+    --out data/pantry_stage/probe66/k2.json
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/probe_pantry_readout.py \
+    --report data/pantry_stage/k5_arm/pantry_deduction_20261115-033310.json \
+    --out data/pantry_stage/probe66/k5.json
+./.venv/bin/python scripts/probe_pantry_readout.py --check data/pantry_stage/probe66/k2.json
+./.venv/bin/python scripts/probe_pantry_readout.py --check data/pantry_stage/probe66/k5.json
+```
+
+### 66.8 這一節的地位
+
+§64 證明擬合是順序不變的綁定；§65 排除「名冊太小」。§66 只問一件事：**那份綁定在答題的時候，
+有沒有被端到輸出頭面前？** 三個層次（控制器／讀出／存放）與一個無關配對的參考分布，是為了讓
+「沒有」可以再分成三種不同的「沒有」，各自指向不同的修法。它不改語料、不改步數、不改模型。
+
+### 66.9 分叉（跑之前寫定，機械決定下一步）
+
+先看儀器，再看發現：
+
+| 條件 | 編號 | 讀法 | 下一步 |
+| --- | --- | --- | --- |
+| **R1 不符** | — | 語料／checkpoint 配對錯了，或生產路徑改了 | 修探針；**不得**讀任何 R3 數字 |
+| **R2 有違規** | — | 編輯不是只動名冊那一輪 | 修編輯；**不得**讀任何 R3 數字 |
+| `read_cos_final` 中位數 **≥ 0.99**（兩個變體）且 `store_v_rel_final` **≥ 0.01** | **R3a-stored-not-read** | 名冊寫進去了，答題時的讀出幾乎不變：**寫了但沒被讀** | 讀／query 路徑（讓答題那一輪去要名冊那一輪的內容），**不是**加訓練預算 |
+| `read_cos_final` 中位數 **≥ 0.99** 且 `store_v_rel_final` **< 0.01** | **R3a-not-stored** | 連槽內容都沒怎麼變：名冊那一輪沒有進入載體 | 寫入路徑（write gate／slot 分配），**不是**加訓練預算 |
+| `read_cos_final` 中位數 **< 0.99** 且 `moved_to_twin_target` **< 0.50** | **R3b-head-ignores** | 內容在 state 裡，輸出頭不用它 | 讀出（名冊限定的選擇頭），**不是**加訓練預算 |
+| `read_cos_final` 中位數 **< 0.99** 且 `moved_to_twin_target` **≥ 0.50** | **R3c-follows-but-wrong** | 頭跟著換名走，但準確率仍在 chance 以下：方向或正規化錯了（位置／順序假象） | 先稽核選擇的方向與名冊順序的正規化，再談訓練 |
+
+不論落到哪一格，**都不得**用「加 epoch／加大寬度／加段數」當下一步：這一節量的就是「再訓練也不會
+改變的那一層」。
