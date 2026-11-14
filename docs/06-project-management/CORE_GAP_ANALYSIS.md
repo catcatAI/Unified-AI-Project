@@ -7037,6 +7037,10 @@ PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_pantry_deduction.py
 ./.venv/bin/python scripts/train_pantry_deduction.py --check <report>.json
 ```
 
+**啟動時的實作修正（在看到任何結果之前）**：`--gate-prefix` 為 `G` 或 `M` 時不要求 F-rand 對照報告。
+§62 以 G 跑，因此原本就沒要求；§63 改用 M，而 M1–M5 沒有任何「格式對照」條款，且 §62 的配對來自真兇、
+做不出格式對照。這只改「先決條件」，不改門檻、語料、評分或任何預測。
+
 ### 63.8 這一節的地位
 
 §62 的結果不作數，因為它的語料讓「答第二格」與「讀名冊」在四組資料上都無法區分。§63 只做兩件事：

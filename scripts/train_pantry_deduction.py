@@ -2447,7 +2447,12 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
     # it. Training an F-rand arm on the same subset would double the cost for a
     # gate that is not part of §56.4.
     needs_control = args.control != "rand" and not args.smoke and not args.overfit
-    if args.gate_prefix == "G":
+    if args.gate_prefix in {"G", "M"}:
+        # §56's G gates and §62/§63's M gates have no format-control condition
+        # (M1-M5 are fit, held-out above chance, pair readings, cost and the
+        # positional control), and a format arm cannot be built from §62's twins
+        # (the twins come from the real culprit). §62 ran under G for this reason;
+        # §63 uses M, so both prefixes skip it.
         needs_control = False
     if needs_control:
         control_path = _find_control_report(
