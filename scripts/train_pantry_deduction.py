@@ -750,12 +750,124 @@ def _answer_loss(core: Any, record: Any, answers: Sequence[Sequence[int]]) -> An
     )
 
 
+def candidates_tokens(name: str) -> List[int]:
+    """A candidate name as the exact bytes the answer loss would score."""
+    return [BYTE_OFFSET + byte for byte in (name + "\n").encode("utf-8")]
+
+
+def _candidate_region_loss(
+    core: Any,
+    boundary: Any,
+    names: Sequence[Sequence[str]],
+    answers: Sequence[Sequence[int]],
+) -> Any:
+    """§60: per-sample CE over only the names consistent with this prefix.
+
+    ``names[s]`` is sample ``s``'s candidate set and ``answers[s]`` the culprit's
+    token ids (which the corpus's ``derive()`` guarantees is a member). Scoring
+    uses the same teacher-forced decode the answer loss uses, so the model sees
+    exactly the bytes it would have to emit; the softmax is taken over the
+    candidates instead of the whole byte vocabulary.
+
+    Returns one cross-entropy per sample (reduction ``none``), because the caller
+    weights each (sample, boundary) pair by ``1/|candidates|``.
+    """
+    import torch.nn.functional as functional
+
+    torch = core._torch
+    view = _decode_view(boundary)
+    device = view["h"].device
+
+    pairs: List[Tuple[int, List[int]]] = []
+    for index, sample_names in enumerate(names):
+        for name in sample_names:
+            pairs.append((index, candidates_tokens(name)))
+    if not pairs:
+        return torch.zeros(0, device=device)
+
+    picked = {
+        key: value.index_select(
+            0, torch.as_tensor([sample for sample, _ in pairs], dtype=torch.long, device=device)
+        )
+        for key, value in view.items()
+    }
+    longest = max(len(tokens) for _, tokens in pairs)
+    totals = torch.zeros(len(pairs), dtype=view["h"].dtype, device=device)
+    cursor = picked
+    for position in range(longest):
+        logits = core.token_logits(cursor)
+        log_probs = functional.log_softmax(logits, dim=-1)
+        targets = []
+        masks = []
+        for _, tokens in pairs:
+            targets.append(tokens[position] if position < len(tokens) else 0)
+            masks.append(1.0 if position < len(tokens) else 0.0)
+        target_tensor = torch.as_tensor(targets, dtype=torch.long, device=device)
+        mask = torch.as_tensor(masks, dtype=view["h"].dtype, device=device)
+        totals = totals + log_probs.gather(1, target_tensor.unsqueeze(1)).squeeze(1) * mask
+        cursor = core.consume(target_tensor, cursor)
+
+    # regroup the flattened log-probabilities into one row per sample, in the
+    # same candidate order, and drop the rows that are not real candidates
+    scores = torch.full(
+        (len(names), max(len(sample_names) for sample_names in names)),
+        float("-inf"),
+        dtype=view["h"].dtype,
+        device=device,
+    )
+    slot = 0
+    targets = []
+    for index, sample_names in enumerate(names):
+        answer = list(answers[index])
+        chosen = None
+        for position, name in enumerate(sample_names):
+            scores[index, position] = totals[slot]
+            if candidates_tokens(name) == answer:
+                chosen = position
+            slot += 1
+        if chosen is None:
+            raise SystemExit(
+                "the culprit is not in the candidate set; the corpus's derive() and the "
+                "answer disagree, so the region loss would be scored against a wrong target"
+            )
+        targets.append(chosen)
+    return functional.cross_entropy(
+        scores,
+        torch.as_tensor(targets, dtype=torch.long, device=device),
+        reduction="none",
+    )
+
+
+def region_stats(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    """W4's cost record: how many boundaries are scored and how wide they are."""
+    scored = 0
+    skipped = 0
+    pairs = 0
+    widths: List[int] = []
+    for row in samples:
+        for candidates in row.get("candidate_sets") or []:
+            if candidates is None:
+                skipped += 1
+                continue
+            scored += 1
+            pairs += len(candidates)
+            widths.append(len(candidates))
+    return {
+        "boundaries_scored": scored,
+        "boundaries_skipped": skipped,
+        "candidate_pairs_per_epoch": pairs,
+        "mean_width": _round(sum(widths) / len(widths)) if widths else None,
+        "max_width": max(widths) if widths else None,
+    }
+
+
 def _training_loss(
     core: Any,
     boundaries: Sequence[Any],
     answers: Sequence[Sequence[int]],
     aux_lambda: float,
     prefix_answers: Optional[Sequence[Sequence[Optional[Sequence[int]]]]] = None,
+    candidate_sets: Optional[Sequence[Sequence[Optional[Sequence[str]]]]] = None,
 ) -> Tuple[Any, Any, Optional[Any]]:
     """The registered §50.2 objective: main CE plus the mean CE at earlier turns.
 
@@ -774,6 +886,11 @@ def _training_loss(
     earlier = list(boundaries[:-1])
     if aux_lambda <= 0.0 or not earlier:
         return main, main, None
+    if candidate_sets is not None:
+        auxiliary = _weighted_region_auxiliary(core, earlier, answers, candidate_sets)
+        if auxiliary is None:
+            return main, main, None
+        return main + aux_lambda * auxiliary, main, auxiliary
     if prefix_answers is None:
         auxiliary = sum(_answer_loss(core, hidden, answers) for hidden in earlier) / len(earlier)
         return main + aux_lambda * auxiliary, main, auxiliary
@@ -791,6 +908,49 @@ def _training_loss(
         return main, main, None
     auxiliary = sum(terms) / len(terms)
     return main + aux_lambda * auxiliary, main, auxiliary
+
+
+def _weighted_region_auxiliary(
+    core: Any,
+    earlier: Sequence[Any],
+    answers: Sequence[Sequence[int]],
+    candidate_sets: Sequence[Sequence[Optional[Sequence[str]]]],
+) -> Optional[Any]:
+    """§60.2: ``Σ w·CE / Σ w`` over boundaries restricted to their roster.
+
+    ``w = 1/|C|`` because a narrower roster is a more determinate question: a
+    boundary with two names left says almost as much as the final readout, while
+    one with eight says little. Weighting by the count instead would let the
+    earliest, least-informative boundaries dominate.
+
+    Boundaries with ``|C| < 2`` are skipped: there is only one name on the
+    table, so the cross-entropy is zero no matter what the model does and its
+    gradient is exactly zero - scoring it would only add a constant to the
+    denominator and dilute the boundaries that carry information.
+    """
+    torch = core._torch
+    numerator: Optional[Any] = None
+    denominator = 0.0
+    for index, boundary in enumerate(earlier):
+        rows = [candidate_sets[sample][index] for sample in range(len(answers))]
+        # a single candidate has no choice to make: CE is exactly 0 and so is
+        # its gradient, so it must not enter the denominator either
+        keep = [position for position, names in enumerate(rows) if names and len(names) >= 2]
+        if not keep:
+            continue
+        picked = [list(rows[position]) for position in keep]
+        index_tensor = _decode_view(boundary)["h"].new_tensor(keep).long()
+        targets = [answers[position] for position in keep]
+        losses = _candidate_region_loss(core, _select(boundary, index_tensor), picked, targets)
+        weights = torch.as_tensor(
+            [1.0 / len(names) for names in picked], dtype=losses.dtype, device=losses.device
+        )
+        term = (losses * weights).sum()
+        numerator = term if numerator is None else numerator + term
+        denominator += float(sum(1.0 / len(names) for names in picked))
+    if numerator is None or denominator <= 0.0:
+        return None
+    return numerator / denominator
 
 
 def generate_bytes(core: Any, record: Any, limit: int = MAX_ANSWER_BYTES) -> List[bytes]:
@@ -892,6 +1052,7 @@ def build_samples(
     seed: int,
     control: Optional[str],
     prefix_module: Any = None,
+    region_module: Any = None,
 ) -> List[Dict[str, Any]]:
     """Turn sessions into training rows.
 
@@ -899,6 +1060,10 @@ def build_samples(
     turn boundary, that boundary's own ``derive()`` answer - ``None`` where the
     prefix does not yet determine one. It costs nothing at λ=0 and is ignored
     there, so stage P/Q reports stay reproducible from this function.
+
+    ``region_module`` (§60) records the *whole* candidate set at each boundary
+    instead of only the unique answer, because the weighted region loss scores
+    the correct name against the others still consistent with that prefix.
     """
     picker = random_answer_ids if control == "rand" else answer_ids
     rows = []
@@ -925,6 +1090,16 @@ def build_samples(
                         continue
                     payload = (candidates[0] + "\n").encode("utf-8")
                     row["prefix_answers"].append([BYTE_OFFSET + byte for byte in payload])
+        if region_module is not None:
+            # §60: what the earlier boundaries are allowed to answer. The answer
+            # is still decided by the testimony; this only says which names are
+            # on the table at that boundary (it is the roster, which the input
+            # states). `None` entries are boundaries with fewer than two
+            # candidates - there is nothing to discriminate, so they are skipped.
+            row["candidate_sets"] = []
+            for upto in range(len(session["turns"]) - 1):
+                candidates = prefix_candidates(region_module, session, upto)
+                row["candidate_sets"].append(list(candidates) if len(candidates) >= 2 else None)
         rows.append(row)
     return rows
 
@@ -968,6 +1143,11 @@ def train(
                 (
                     [row["prefix_answers"] for row in rows]
                     if aux_mode == "resolvable" and boundaries is not None
+                    else None
+                ),
+                (
+                    [row["candidate_sets"] for row in rows]
+                    if aux_mode == "weighted-region" and boundaries is not None
                     else None
                 ),
             )
@@ -2061,6 +2241,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         seed=args.seed,
         control=args.control,
         prefix_module=module if args.aux_mode == "resolvable" else None,
+        region_module=module if args.aux_mode == "weighted-region" else None,
     )
     print(
         f"stage P: device={device} params={core.parameter_count()} "
@@ -2172,6 +2353,11 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             ),
             "seconds": round(time.time() - started, 1),
             "history": history,
+            **(
+                {"aux_region": region_stats(samples)}
+                if args.aux_mode == "weighted-region" and args.aux_loss > 0.0
+                else {}
+            ),
         },
         "results": results,
         "control": control_block,
@@ -2285,10 +2471,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "--aux-mode",
         default=AUX_MODE_DEFAULT,
-        choices=("all", "resolvable"),
+        choices=("all", "resolvable", "weighted-region"),
         help=(
             "what the earlier boundaries are asked (§50.2 'all' vs §51.2 'resolvable': "
-            "only where the prefix already has a unique derive() answer)"
+            "only where the prefix already has a unique derive() answer; §60 "
+            "'weighted-region': only names still consistent with that prefix, weighted "
+            "by 1/|candidates|)"
         ),
     )
     parser.add_argument(
@@ -2311,6 +2499,23 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         parser.error("--aux-loss must be >= 0; 0.0 is stage P and is never negative")
     if args.aux_mode == "resolvable" and args.aux_loss <= 0.0:
         parser.error("--aux-mode resolvable only matters with --aux-loss > 0")
+    if args.aux_mode != "all" and args.aux_loss <= 0.0:
+        parser.error(f"--aux-mode {args.aux_mode} only matters with --aux-loss > 0")
+    if args.aux_mode == "weighted-region":
+        # §60 registers this as an objective on the per-turn store; the other
+        # cores were measured under different objectives and changing two things
+        # at once would not attribute the result to the region loss.
+        if args.core != "turnstore":
+            parser.error(
+                "§60 registers --aux-mode weighted-region on --core turnstore; "
+                "another carrier is a different experiment"
+            )
+        if args.control == "rand":
+            parser.error(
+                "--aux-mode weighted-region needs the real culprit: the format control "
+                "trains a random name that is not necessarily in the roster, so the "
+                "region loss would have no valid target"
+            )
     if args.gate_prefix is not None and (
         len(args.gate_prefix) != 1
         or not args.gate_prefix.isalpha()
@@ -2363,7 +2568,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         args.limit = args.limit or 4
         args.eval_limit = args.eval_limit or 8
         args.batch = min(args.batch, 4)
-        args.control = args.control or "rand"
+        # §60's objective needs the real culprit (a control's random name is not
+        # necessarily in the roster), so a weighted-region smoke stays on the
+        # scored arm's target; it is still marked `smoke` and never a control.
+        if args.aux_mode == "weighted-region":
+            args.control = None
+        else:
+            args.control = args.control or "rand"
         if args.out == "data/pantry_stage":
             # a smoke report must never be picked up as the F-rand control
             args.out = "data/pantry_stage/smoke"

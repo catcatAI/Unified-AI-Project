@@ -1214,3 +1214,270 @@ def test_stage_g_fit_reads_the_declared_subset_when_it_is_larger_than_the_cap(st
     mixed = _subset_report(stage, fit=0.10)
     mixed["results"]["train_fit_subset"] = {"exact": 0.10}
     assert stage.gate_values(mixed)["G1_fits_the_subset"] is False
+
+
+# --------------------------------------------------------------------------- #
+# §60: the weighted region loss
+# --------------------------------------------------------------------------- #
+def _fake_core(stage, torch):
+    """A core whose logits are ``h`` and whose step adds the consumed token.
+
+    The region loss is arithmetic over log-probabilities; with random weights the
+    losing candidates are tens of nats behind and the cross-entropy rounds to
+    zero, which would let a broken implementation pass. This core makes the
+    numbers exact (bias ``token % 5`` at every position, ``+1`` on the consumed
+    token) so the restricted softmax, the target, and the padding mask are all
+    observable in the result.
+    """
+
+    class Fake:
+        _torch = torch
+
+        def __init__(self):
+            self.bias = torch.arange(stage.VOCAB_SIZE, dtype=torch.float32) % 5
+
+        def token_logits(self, view):
+            return view["h"]
+
+        def consume(self, tokens, view):
+            return {
+                "h": view["h"]
+                + torch.nn.functional.one_hot(tokens, stage.VOCAB_SIZE).to(view["h"].dtype)
+            }
+
+    return Fake()
+
+
+def _fake_boundary(stage, core, rows):
+    import torch
+
+    return {"h": core.bias.unsqueeze(0).repeat(rows, 1)}
+
+
+def _manual_log_prob(stage, core, view, tokens):
+    """Teacher-forced log p(tokens) for row 0 of ``view``."""
+    import torch
+    import torch.nn.functional as functional
+
+    total = view["h"].new_zeros(())
+    cursor = view
+    for token in tokens:
+        log_probs = functional.log_softmax(core.token_logits(cursor), dim=-1)
+        total = total + log_probs[0, token]
+        cursor = core.consume(
+            torch.as_tensor([token], dtype=torch.long, device=cursor["h"].device), cursor
+        )
+    return total
+
+
+def test_region_loss_is_the_answer_loss_restricted_to_the_candidates(stage):
+    """The softmax runs over the roster, not over 259 byte tokens."""
+    import torch
+
+    core = _fake_core(stage, torch)
+    boundary = _fake_boundary(stage, core, 1)
+    view = stage._decode_view(boundary)
+    candidates = ["Alex", "David", "Kevin"]
+    produced = stage._candidate_region_loss(
+        core, boundary, [candidates], [stage.candidates_tokens("Kevin")]
+    )[0]
+
+    scores = torch.stack(
+        [_manual_log_prob(stage, core, view, stage.candidates_tokens(name)) for name in candidates]
+    )
+    expected = -scores[-1] + torch.logsumexp(scores, dim=0)
+    assert float(produced) == pytest.approx(float(expected), rel=1e-5)
+    # a real value, not a rounded-to-zero one: the fake core keeps the
+    # candidates within a few nats of each other
+    assert 0.1 < float(produced) < 20.0
+
+    # a one-name "region" is exactly zero by construction (nothing to choose)
+    assert float(
+        stage._candidate_region_loss(core, boundary, [["Alex"]], [stage.candidates_tokens("Alex")])[
+            0
+        ]
+    ) == pytest.approx(0.0, abs=1e-6)
+
+
+def test_region_loss_masks_short_names_and_moves_each_candidate_independently(stage):
+    """Names of different byte lengths are scored on their own bytes only."""
+    import torch
+
+    core = _fake_core(stage, torch)
+    boundary = _fake_boundary(stage, core, 1)
+    view = stage._decode_view(boundary)
+    target = stage.candidates_tokens("Alex")
+    produced = stage._candidate_region_loss(core, boundary, [["Alex", "Bartholomew"]], [target])[0]
+
+    short = _manual_log_prob(stage, core, view, target)
+    long_name = _manual_log_prob(stage, core, view, stage.candidates_tokens("Bartholomew"))
+    expected = -short + torch.logsumexp(torch.stack([short, long_name]), dim=0)
+    assert float(produced) == pytest.approx(float(expected), rel=1e-5)
+    # the alternative is 7 bytes longer and the fake core makes every extra
+    # token unlikely, so the two scores are far apart - if the masked positions
+    # leaked into the score this equality above would not hold
+    assert abs(float(short) - float(long_name)) > 1.0
+
+    # and the alternative is actually what moves the loss: a different name of a
+    # different length gives a different value
+    other = stage._candidate_region_loss(core, boundary, [["Alex", "Zed"]], [target])[0]
+    assert float(other) != pytest.approx(float(produced))
+
+
+def test_region_loss_refuses_a_target_that_is_not_in_the_candidate_set(stage):
+    """The corpus's derive() puts the culprit in C; a mismatch is a bug, not a loss."""
+    import torch
+
+    core = _fake_core(stage, torch)
+    boundary = _fake_boundary(stage, core, 1)
+    with pytest.raises(SystemExit):
+        stage._candidate_region_loss(
+            core, boundary, [["Alex", "David"]], [stage.candidates_tokens("Kevin")]
+        )
+
+
+def test_weighted_region_weights_each_boundary_by_one_over_roster_width(stage, monkeypatch):
+    """``aux = Σ w·CE / Σ w`` with ``w = 1/|C|`` (not a plain mean over samples)."""
+    import torch
+
+    core = _fake_core(stage, torch)
+    answers = [[1, 2, 3], [4, 5]]
+    wide = ["A", "B", "C", "D", "E", "F", "G", "H"]
+    sets = [[["A", "B"], wide], [["A", "B", "C", "D"], wide]]
+    calls = []
+
+    def fake(_core, boundary, names, targets):
+        calls.append((len(boundary["h"]), [len(row) for row in names]))
+        value = 1.0 if len(calls) == 1 else 3.0
+        return torch.full((len(names),), value)
+
+    monkeypatch.setattr(stage, "_candidate_region_loss", fake)
+    aux = stage._weighted_region_auxiliary(
+        core, [{"h": torch.zeros(2, 8)}, {"h": torch.zeros(2, 8)}], answers, sets
+    )
+    # boundary 0: 1/2 + 1/4 = 0.75, boundary 1: 1/8 + 1/8 = 0.25
+    expected = (1.0 * 0.75 + 3.0 * 0.25) / (0.75 + 0.25)
+    assert calls == [(2, [2, 4]), (2, [8, 8])]
+    assert float(aux) == pytest.approx(expected)
+    assert float(aux) != pytest.approx(2.0)  # a plain mean over boundaries
+
+
+def test_a_boundary_with_no_choice_is_skipped_not_scored_as_zero(stage, monkeypatch):
+    """``|C| < 2`` has a zero gradient; counting it would only dilute the rest."""
+    import torch
+
+    core = _fake_core(stage, torch)
+    calls = []
+
+    def fake(_core, boundary, names, targets):
+        calls.append([len(row) for row in names])
+        return torch.full((len(names),), 2.0)
+
+    monkeypatch.setattr(stage, "_candidate_region_loss", fake)
+    aux = stage._weighted_region_auxiliary(
+        core,
+        [{"h": torch.zeros(2, 8)}, {"h": torch.zeros(2, 8)}],
+        [[1, 2], [3, 4]],
+        [[["A", "B"], None], [["C"], None]],
+    )
+    # the size-1 entry and the None boundary are both skipped: only the real
+    # two-name choice is scored
+    assert calls == [[2]]
+    assert float(aux) == pytest.approx(2.0)
+
+    assert (
+        stage._weighted_region_auxiliary(
+            core, [{"h": torch.zeros(2, 8)}], [[1, 2], [3, 4]], [[None], [None]]
+        )
+        is None
+    )
+
+
+def test_training_loss_routes_candidate_sets_to_the_region_term(stage):
+    """The main term is still the last boundary; the auxiliary is the region CE."""
+    import torch
+
+    core = _fake_core(stage, torch)
+    early = _fake_boundary(stage, core, 2)
+    final = _fake_boundary(stage, core, 2)
+    answers = [stage.candidates_tokens("Alex"), stage.candidates_tokens("Kevin")]
+    sets = [[["Alex", "David"]], [["Kevin", "Lena"]]]
+    total, main_loss, aux_loss = stage._training_loss(
+        core, [early, final], answers, 1.0, None, sets
+    )
+    expected_main = stage._answer_loss(core, final, answers)
+    expected_aux = stage._weighted_region_auxiliary(core, [early], answers, sets)
+    assert torch.allclose(main_loss, expected_main, atol=1e-6)
+    assert torch.allclose(aux_loss, expected_aux, atol=1e-6)
+    assert torch.allclose(total, main_loss + aux_loss, atol=1e-6)
+
+    # λ=0 keeps stage P's objective: no region term is computed at all
+    total0, _, aux0 = stage._training_loss(core, [early, final], answers, 0.0, None, sets)
+    assert aux0 is None
+    assert torch.allclose(total0, stage._answer_loss(core, final, answers), atol=1e-6)
+
+
+def test_build_samples_records_the_candidate_sets_of_every_earlier_boundary(stage, corpus):
+    session = corpus["heldout"][0]
+    rows = stage.build_samples(
+        [session], seed=stage.SEED, control=None, region_module=corpus["module"]
+    )
+    sets = rows[0]["candidate_sets"]
+    assert len(sets) == len(session["turns"]) - 1
+    actors = set(session["environment"]["actors"])
+    for candidates in sets:
+        if candidates is None:
+            continue
+        assert len(candidates) >= 2
+        assert len(set(candidates)) == len(candidates)
+        assert set(candidates) <= actors
+    # the roster is early; by the last boundary the prefix names the culprit
+    assert sets[-1] is None
+    assert rows[0]["answer"] == stage.answer_ids(session)
+
+    # and it is absent unless asked for (stage P/Q reports stay reproducible)
+    plain = stage.build_samples([session], seed=stage.SEED, control=None)
+    assert "candidate_sets" not in plain[0]
+
+
+def test_region_stats_records_what_the_objective_scores(stage):
+    samples = [
+        {"candidate_sets": [["A", "B"], None, ["A", "B", "C"]]},
+        {"candidate_sets": [None, ["A", "B"], None]},
+    ]
+    stats = stage.region_stats(samples)
+    assert stats == {
+        "boundaries_scored": 3,
+        "boundaries_skipped": 3,
+        "candidate_pairs_per_epoch": 2 + 3 + 2,
+        "mean_width": 2.3333,
+        "max_width": 3,
+    }
+
+
+def test_cli_refuses_weighted_region_combinations_that_change_the_arm(stage):
+    for argv in (
+        [
+            "--overfit",
+            "1",
+            "--aux-mode",
+            "weighted-region",
+            "--aux-loss",
+            "0",
+            "--core",
+            "turnstore",
+        ],
+        [
+            "--overfit",
+            "1",
+            "--aux-mode",
+            "weighted-region",
+            "--control",
+            "rand",
+            "--core",
+            "turnstore",
+        ],
+        ["--overfit", "1", "--aux-mode", "weighted-region", "--core", "gru"],
+    ):
+        with pytest.raises(SystemExit):
+            stage.main(argv)
