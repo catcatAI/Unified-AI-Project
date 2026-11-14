@@ -937,6 +937,11 @@
       "referenced": true,
       "purpose": "Does the native neural engine *learn* a fact from dialogue, or store it?"
     },
+    "probe_pantry_state.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "Stage K (§58): is the answer linearly decodable from the state?"
+    },
     "probe_paraphrase.py": {
       "category": "probe",
       "referenced": true,
