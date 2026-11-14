@@ -1809,7 +1809,8 @@ def test_minimal_structure_has_two_actors_one_live_value_and_no_trap(stage, mini
         ]
         assert len(evidence) == 1 and evidence[0]["kind"] == "seen"
         live = evidence[0]["value"]
-        assert list(roster_assert["value"])[1] == live
+        # §63: the live value may sit first or second - §62 always wrote it second
+        assert live in roster_assert["value"]
         # without the evidence turn the roster cannot answer: the question is
         # genuinely a choice between the two people
         prefix = [
@@ -1892,35 +1893,269 @@ def test_minimal_pair_report_reads_two_person_pairs(stage):
 
 
 def test_cli_refuses_minimal_binding_combinations_that_change_the_arm(stage):
+    objective = ["--core", "turnstore", "--aux-loss", "1.0", "--aux-mode", "resolvable"]
     for argv in (
         # §61 and §62 are different corpora with different chance levels
-        ["--minimal-binding", "--counterfactual", "--gate-prefix", "G"],
+        ["--minimal-binding", "--counterfactual", "--gate-prefix", "M"],
         # the registered arm is 400 items
-        ["--minimal-binding", "--train-sessions", "200", "--gate-prefix", "G"],
+        ["--minimal-binding", "--train-sessions", "200", "--gate-prefix", "M"],
         # the whole pair head and the whole held-out set are the test
         [
             "--minimal-binding",
             "--train-sessions",
             "400",
             "--gate-prefix",
-            "G",
-            "--core",
-            "turnstore",
-            "--aux-loss",
-            "1.0",
-            "--aux-mode",
-            "resolvable",
+            "M",
+            *objective,
             "--eval-limit",
             "8",
         ],
         # §62 holds the objective fixed
-        ["--minimal-binding", "--train-sessions", "400", "--gate-prefix", "G"],
+        ["--minimal-binding", "--train-sessions", "400", "--gate-prefix", "M"],
         # a format control has no twin
-        ["--minimal-binding", "--control", "rand", "--gate-prefix", "G"],
+        ["--minimal-binding", "--control", "rand", "--gate-prefix", "M"],
         # not a Q1 calibration
-        ["--minimal-binding", "--overfit", "4", "--gate-prefix", "G"],
+        ["--minimal-binding", "--overfit", "4", "--gate-prefix", "M"],
         # the corpus builds itself; --sessions does not apply
-        ["--minimal-binding", "--sessions", "800", "--gate-prefix", "G"],
+        ["--minimal-binding", "--sessions", "800", "--gate-prefix", "M"],
     ):
         with pytest.raises(SystemExit):
             stage.main(argv)
+
+
+def test_cli_requires_the_m_prefix_for_the_minimal_binding_arm(stage):
+    # §63 adds M5, so the scored arm must be graded under M; a §62 report keeps
+    # the prefix it recorded and stays checkable.
+    with pytest.raises(SystemExit):
+        stage.main(["--minimal-binding", "--train-sessions", "400", "--gate-prefix", "G"])
+    with pytest.raises(SystemExit):
+        stage.main(["--minimal-binding", "--train-sessions", "400"])
+
+
+# --------------------------------------------------------------------------- #
+# §63: the positional control (M5) and the balanced roster order
+# --------------------------------------------------------------------------- #
+def _culprit_position(module, session):
+    _, item = module._roster_item(session)
+    names = list(dict(item["value"]).values())
+    return names.index(session["ground_truth_oracle"]["culprit"])
+
+
+def test_balanced_corpus_puts_the_culprit_first_and_second_equally(stage, minimal):
+    module = stage._load_generator()
+    train = minimal["train"]
+    groups = {
+        "train structures": train[::2],
+        "train twins": train[1::2],
+        "heldout": minimal["heldout"],
+        "heldout twins": minimal["heldout_twins"],
+    }
+    for label, rows in groups.items():
+        positions = [_culprit_position(module, row) for row in rows]
+        assert len(positions) == 200
+        assert positions.count(0) == 100 and positions.count(1) == 100, label
+
+
+def test_balanced_corpus_does_not_let_a_second_entry_reader_win(stage, minimal):
+    # A "second entry" reader is right on a structure iff the culprit is second;
+    # on the twin the live value's key is unchanged, so it wins the same half.
+    # Across a pair that is half the items, i.e. chance for two names.
+    module = stage._load_generator()
+    for rows in (minimal["heldout"], minimal["heldout_twins"]):
+        hits = sum(1 for row in rows if _culprit_position(module, row) == 1)
+        assert hits == 100
+
+
+def test_legacy_roster_order_reproduces_the_section_62_digests(stage):
+    legacy = stage.load_corpus(minimal_binding=True, minimal_roster_order="culprit_second")
+    assert (
+        legacy["meta"]["train_digest"]
+        == "6e99f629584cb0885f1e244d80db9432c3fd878d9c85fe47ebf19ab98bd06e19"
+    )
+    assert (
+        legacy["meta"]["heldout_digest"]
+        == "6e19fd0546800519eaded2601bff3dc780df32c7f385952deb8491a9f3a62561"
+    )
+    assert legacy["meta"]["minimal_roster_order"] == "culprit_second"
+    module = stage._load_generator()
+    assert all(
+        _culprit_position(module, row) == 1 for row in legacy["train"][::2] + legacy["heldout"]
+    )
+    # the balanced corpus is a different corpus, not a relabelling
+    assert (
+        legacy["meta"]["train_digest"]
+        != stage.load_corpus(minimal_binding=True)["meta"]["train_digest"]
+    )
+
+
+def test_legacy_validator_still_accepts_the_legacy_corpus(stage):
+    module = stage._load_generator()
+    legacy = stage.load_corpus(minimal_binding=True, minimal_roster_order="culprit_second")
+    splits = {
+        "train": legacy["train"],
+        "heldout": legacy["heldout"],
+        "heldout_twins": legacy["heldout_twins"],
+    }
+    assert (
+        module.validate_minimal_binding(
+            splits,
+            structures=stage.MINIMAL_STRUCTURES,
+            heldout=stage.MINIMAL_HELDOUT_ITEMS,
+            roster_order="culprit_second",
+        )
+        == []
+    )
+
+
+def test_balanced_validator_rejects_a_corpus_where_the_culprit_always_sits_second(stage):
+    module = stage._load_generator()
+    balanced = stage.load_corpus(minimal_binding=True)
+    splits = {
+        "train": list(balanced["train"]),
+        "heldout": list(balanced["heldout"]),
+        "heldout_twins": list(balanced["heldout_twins"]),
+    }
+    # move every structure's culprit onto the second roster entry: the balanced
+    # validator must notice that a positional reader would be free again
+    for session in splits["heldout"]:
+        turn, item = module._roster_item(session)
+        mapping = dict(item["value"])
+        culprit = session["ground_truth_oracle"]["culprit"]
+        other = next(name for name in mapping.values() if name != culprit)
+        flipped = {
+            next(value for value, name in mapping.items() if name == culprit): culprit,
+            next(value for value, name in mapping.items() if name == other): other,
+        }
+        item["value"] = flipped
+        session["turns"][turn]["user_input"] = module._roster_text("apron", flipped)
+    problems = module.validate_minimal_binding(
+        splits, structures=stage.MINIMAL_STRUCTURES, heldout=stage.MINIMAL_HELDOUT_ITEMS
+    )
+    assert any("positional shortcut" in problem for problem in problems)
+
+
+def test_reorder_roster_keeps_the_answer_and_moves_the_entries(stage):
+    module = stage._load_generator()
+    corpus = stage.load_corpus(minimal_binding=True)
+    for session in corpus["heldout"][:40]:
+        reordered = stage.reorder_roster(session, module)
+        assert module.derive(
+            module._all_asserts(reordered), reordered["environment"]["actors"]
+        ) == [session["ground_truth_oracle"]["culprit"]]
+        assert (
+            reordered["ground_truth_oracle"]["culprit"] == session["ground_truth_oracle"]["culprit"]
+        )
+        assert _culprit_position(module, reordered) == 1 - _culprit_position(module, session)
+        assert reordered["turns"][1]["user_input"] != session["turns"][1]["user_input"]
+        for left, right in zip(session["turns"], reordered["turns"]):
+            if left["turn_id"] != session["session_meta"]["roster_turn"]:
+                assert left["user_input"] == right["user_input"]
+
+
+def _minimal_report(prefix="M", **overrides):
+    pair = {
+        "n_pairs": 200,
+        "same_prediction": 0,
+        "both_correct": 200,
+        "structure_correct": 200,
+        "twin_correct": 200,
+        "targets_differ": 200,
+    }
+    report = {
+        "config": {"gate_prefix": prefix, "aux_lambda": 1.0},
+        "results": {
+            "train_fit_subset": {"exact": 1.0},
+            "full": {"exact": 1.0, "wilson_lower": 0.9812, "chance": 0.5},
+        },
+        "cost": {"params": 168150, "train_seconds": 1845.2, "device": "cpu"},
+        "diagnostics": {
+            "minimal_pairs": dict(pair),
+            "minimal_heldout_pairs": dict(pair),
+            "minimal_roster_permutation": {"exact": 0.9},
+        },
+    }
+    for key, value in overrides.items():
+        section, _, field = key.partition("__")
+        if field:
+            report[section][field] = value
+        else:
+            report[section] = value
+    return report
+
+
+def test_m5_reads_the_roster_permutation_control(stage):
+    gates = stage.gate_values(_minimal_report())
+    assert set(gates) == {
+        "M1_fits_the_declared_items",
+        "M2_heldout_beats_chance",
+        "M3_pairs_recorded",
+        "M4_cost_recorded",
+        "M5_answer_follows_the_mapping",
+    }
+    assert gates["M5_answer_follows_the_mapping"] is True
+    assert stage.verdict(gates) is True
+
+    positional = _minimal_report()
+    positional["diagnostics"]["minimal_roster_permutation"] = {
+        "exact": 0.0,
+        "follows_second_entry": 200,
+        "follows_second_entry_rate": 1.0,
+    }
+    gates = stage.gate_values(positional)
+    assert gates["M5_answer_follows_the_mapping"] is False
+    assert stage.verdict(gates) is False
+
+
+def test_m5_is_unreadable_when_the_arm_does_not_fit(stage):
+    report = _minimal_report()
+    report["results"]["train_fit_subset"] = {"exact": 0.5}
+    gates = stage.gate_values(report)
+    assert gates["M1_fits_the_declared_items"] is False
+    assert gates["M5_answer_follows_the_mapping"] is None
+    assert stage.verdict(gates) is False
+
+
+def test_m5_is_false_when_the_control_was_not_run(stage):
+    report = _minimal_report()
+    del report["diagnostics"]["minimal_roster_permutation"]
+    gates = stage.gate_values(report)
+    assert gates["M5_answer_follows_the_mapping"] is False
+
+
+def test_roster_permutation_report_reads_a_positional_model(stage):
+    module = stage._load_generator()
+    corpus = stage.load_corpus(minimal_binding=True)
+    sessions = corpus["heldout"][:20]
+
+    class FakeCore:
+        def __getattr__(self, name):
+            raise AttributeError(name)
+
+    # drive `evaluate` through its own module hook: a positional reader answers
+    # the second roster entry of the *reordered* session, so it gets every twin
+    # answer right and every structure answer wrong - the §62 shape.
+    original_evaluate = stage.evaluate
+
+    def fake_evaluate(core, rows, variant, module=None):
+        out = []
+        for row in rows:
+            names = list(dict(module._roster_item(row)[1]["value"]).values())
+            out.append(
+                {
+                    "session_id": row["session_id"],
+                    "target": row["ground_truth_oracle"]["culprit"],
+                    "prediction": names[-1],
+                    "ranking": names[-1],
+                }
+            )
+        return out
+
+    stage.evaluate = fake_evaluate
+    try:
+        report = stage.roster_permutation_report(FakeCore(), sessions, module=module)
+    finally:
+        stage.evaluate = original_evaluate
+    assert report["n"] == 20
+    assert report["follows_second_entry"] == 20
+    assert report["follows_second_entry_rate"] == 1.0
+    assert 0 <= report["correct"] <= 20

@@ -126,6 +126,10 @@ MINIMAL_STRUCTURES = 200
 MINIMAL_TRAIN_ITEMS = 2 * MINIMAL_STRUCTURES
 MINIMAL_HELDOUT_ITEMS = 200
 MINIMAL_BINDING_CHANCE = 0.5
+# §63 M5: reversing the roster's entry order leaves the answer unchanged, so a
+# model that matches the evidence value through the roster keeps its accuracy
+# and a model that reads the entry's position loses it (§62.10).
+ROSTER_PERMUTATION_FLOOR = 0.80
 TRAIN_BYTES = 1_014_924
 HOLDOUT_BYTES = 254_050
 TRAIN_DIGEST = "cbbe5265b2f065b15c170116d277c20eb508d822929e6f8865e59c19997d0179"
@@ -342,6 +346,7 @@ def load_corpus(
     seed: int = PANTRY_SEED,
     counterfactual: bool = False,
     minimal_binding: bool = False,
+    minimal_roster_order: str = "balanced",
 ) -> Dict[str, Any]:
     """Generate the registered corpus, run the data gates, and pin the digests.
 
@@ -361,10 +366,16 @@ def load_corpus(
     heldout_twins: List[Dict[str, Any]] = []
     if minimal_binding:
         splits = module.build_minimal_binding(
-            structures=MINIMAL_STRUCTURES, heldout=MINIMAL_HELDOUT_ITEMS, seed=seed
+            structures=MINIMAL_STRUCTURES,
+            heldout=MINIMAL_HELDOUT_ITEMS,
+            seed=seed,
+            roster_order=minimal_roster_order,
         )
         problems = module.validate_minimal_binding(
-            splits, structures=MINIMAL_STRUCTURES, heldout=MINIMAL_HELDOUT_ITEMS
+            splits,
+            structures=MINIMAL_STRUCTURES,
+            heldout=MINIMAL_HELDOUT_ITEMS,
+            roster_order=minimal_roster_order,
         )
         if problems:
             head = "; ".join(problems[:5])
@@ -422,6 +433,7 @@ def load_corpus(
             "minimal_binding_structures": MINIMAL_STRUCTURES if minimal_binding else 0,
             "minimal_binding_twins": MINIMAL_STRUCTURES if minimal_binding else 0,
             "minimal_binding_chance": MINIMAL_BINDING_CHANCE if minimal_binding else None,
+            "minimal_roster_order": minimal_roster_order if minimal_binding else None,
             "heldout_twins": len(heldout_twins),
             "registered_sizes_match": (
                 not counterfactual
@@ -1508,6 +1520,59 @@ def counterfactual_pair_report(records: Sequence[Dict[str, Any]]) -> Dict[str, A
     }
 
 
+def reorder_roster(session: Dict[str, Any], module: Any) -> Dict[str, Any]:
+    """§63 M5: swap the roster's two entries' order, keep the mapping.
+
+    ``derive()`` still names the same culprit, so the correct answer does not
+    move. Only a model that reads *where* an entry sits is disturbed.
+    """
+    copy = json.loads(json.dumps(session))
+    turn, item = module._roster_item(copy)
+    mapping = dict(item["value"])
+    flipped = dict(reversed(list(mapping.items())))
+    item["value"] = flipped
+    copy["turns"][turn]["user_input"] = module._roster_text(
+        str(session["session_meta"]["chain"]), flipped
+    )
+    return copy
+
+
+def roster_permutation_report(
+    core: Any,
+    sessions: Sequence[Dict[str, Any]],
+    *,
+    module: Any,
+) -> Dict[str, Any]:
+    """§63 M5: re-answer the same held-out sessions with the roster order flipped.
+
+    ``follows_second_entry`` is the positional reading: after the flip, the
+    second entry is the *other* person, so a positional model answers it every
+    time. Run before the flip it would be the culprit every time - which is
+    exactly what §62 could not distinguish (§62.10).
+    """
+    reordered = [reorder_roster(session, module) for session in sessions]
+    records = evaluate(core, reordered, "full", module=module)
+    total = len(records)
+    correct = sum(1 for row in records if row["prediction"] == row["target"])
+    follows = 0
+    for record, session in zip(records, reordered):
+        names = list(dict(module._roster_item(session)[1]["value"]).values())
+        if names and record["prediction"] == names[-1]:
+            follows += 1
+    return {
+        "n": total,
+        "correct": correct,
+        "exact": _round(correct / total) if total else None,
+        "follows_second_entry": follows,
+        "follows_second_entry_rate": _round(follows / total) if total else None,
+        "note": (
+            "M5: the roster's entry order is reversed, the value -> person mapping is not, "
+            "so the correct answer is unchanged; a positional reader answers the new second "
+            "entry and loses the exact rate"
+        ),
+    }
+
+
 # --------------------------------------------------------------------------- #
 # the auxiliary readout (§50.6) - a diagnostic, never a gate
 # --------------------------------------------------------------------------- #
@@ -1804,6 +1869,7 @@ def _heldout_predictions(report: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         seed=int(corpus_block.get("seed", PANTRY_SEED)),
         counterfactual=bool(corpus_block.get("counterfactual")),
         minimal_binding=bool(corpus_block.get("minimal_binding")),
+        minimal_roster_order=str(corpus_block.get("minimal_roster_order") or "culprit_second"),
     )
     kind = str(config.get("core") or "gru")
     core = build_core(
@@ -2082,6 +2148,9 @@ def gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
     if _gate_prefix_of(report) == "G":
         # §56's arms are graded by G1-G4: fit, held-out above chance, pair, cost
         return _stage_g_gate_values(report)
+    if _gate_prefix_of(report) == "M":
+        # §62/§63's minimal binding diagnostic is graded by M1-M5
+        return _stage_m_gate_values(report)
     if _aux_lambda_of(report) > 0.0:
         return _aux_gate_values(report)
     corpus = report.get("corpus") or {}
@@ -2141,6 +2210,59 @@ def gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _stage_m_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
+    """§62.4/§63 M1-M5 for the minimal binding diagnostic.
+
+    M1 is "the arm fitted the items it declares"; M2 is held-out above the
+    report's own 0.5 chance; M3 is "the pair diagnostics were recorded" (a
+    boolean, since their values are readings, not thresholds); M4 is cost. M5 is
+    the positional control: reversing the roster order must not move the answer.
+    It is ``None`` when M1 fails, because an arm that cannot do the task at all
+    cannot be shown to use the position either.
+    """
+    results = report.get("results") or {}
+    fit = results.get("train_fit_subset") or results.get("train_fit") or {}
+    full = results.get("full") or {}
+    cost = report.get("cost") or {}
+    diagnostics = report.get("diagnostics") or {}
+    pairs = diagnostics.get("minimal_pairs") or {}
+    heldout_pairs = diagnostics.get("minimal_heldout_pairs") or {}
+    permutation = diagnostics.get("minimal_roster_permutation") or {}
+    fit_ok = fit.get("exact") is not None and float(fit["exact"]) >= GENERAL_FIT_FLOOR
+    pair_keys = (
+        "n_pairs",
+        "same_prediction",
+        "both_correct",
+        "structure_correct",
+        "twin_correct",
+        "targets_differ",
+    )
+    pairs_recorded = all(key in pairs for key in pair_keys) and all(
+        key in heldout_pairs for key in pair_keys
+    )
+    permutation_exact = permutation.get("exact")
+    return {
+        "M1_fits_the_declared_items": fit_ok,
+        "M2_heldout_beats_chance": (
+            full.get("wilson_lower") is not None
+            and full.get("chance") is not None
+            and float(full["wilson_lower"]) > float(full["chance"])
+        ),
+        "M3_pairs_recorded": pairs_recorded,
+        "M4_cost_recorded": all(
+            cost.get(key) not in (None, 0) for key in ("params", "train_seconds", "device")
+        ),
+        "M5_answer_follows_the_mapping": (
+            None
+            if not fit_ok
+            else (
+                permutation_exact is not None
+                and float(permutation_exact) >= ROSTER_PERMUTATION_FLOOR
+            )
+        ),
+    }
+
+
 def verdict(checks: Dict[str, Any]) -> bool:
     """Only booleans are gates; diagnostics may live beside them (see §46.11)."""
     booleans = [value for value in checks.values() if isinstance(value, bool)]
@@ -2178,6 +2300,7 @@ def check_report(path: Path) -> List[str]:
         seed=int(corpus_block.get("seed", PANTRY_SEED)),
         counterfactual=bool(corpus_block.get("counterfactual")),
         minimal_binding=bool(corpus_block.get("minimal_binding")),
+        minimal_roster_order=str(corpus_block.get("minimal_roster_order") or "culprit_second"),
     )
     if corpus["meta"]["train_digest"] != (report.get("corpus") or {}).get("train_digest"):
         problems.append("the regenerated train corpus does not match the report")
@@ -2272,6 +2395,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         seed=args.pantry_seed,
         counterfactual=bool(args.counterfactual),
         minimal_binding=bool(args.minimal_binding),
+        minimal_roster_order="balanced",
     )
     meta = corpus["meta"]
     if args.minimal_binding:
@@ -2447,16 +2571,25 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         diagnostics["readout"] = readout_profile(core, heldout, module=module)
     if args.counterfactual and fit_subset_records is not None:
         diagnostics["counterfactual_pairs"] = counterfactual_pair_report(fit_subset_records)
-    if args.minimal_binding and fit_subset_records is not None:
-        # §62 M3: the mechanism reading, on the fitted pairs and on the held-out
-        # pairs. Neither is a score; the held-out singleton is M2.
-        diagnostics["minimal_pairs"] = counterfactual_pair_report(fit_subset_records)
+    if args.minimal_binding:
+        if fit_subset_records is not None:
+            # §62 M3: the mechanism reading, on the fitted pairs and on the held-out
+            # pairs. Neither is a score; the held-out singleton is M2.
+            diagnostics["minimal_pairs"] = counterfactual_pair_report(fit_subset_records)
         if heldout_twins:
             twin_records = evaluate(core, heldout_twins, "full", module=module)
             diagnostics["minimal_heldout_pairs"] = counterfactual_pair_report(
                 list(raw["full"]) + twin_records
             )
             diagnostics["minimal_heldout_twins"] = summarise(twin_records)
+        # §63 M5: the positional control. Reverse the roster's entry order on the
+        # same held-out sessions, leaving value -> person unchanged, so `derive()`
+        # still names the same culprit. A model that matches the value through the
+        # roster keeps its score; the §62 arm, which answered the second entry,
+        # drops to 0 (measured on the finished §62 checkpoint, §62.10).
+        diagnostics["minimal_roster_permutation"] = roster_permutation_report(
+            core, heldout, module=module
+        )
 
     # the data contract behind "the answer is not in the question"
     leak = leak_report(heldout)
@@ -2772,6 +2905,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 "--minimal-binding builds its own four-turn corpus; --sessions does not apply"
             )
         if not args.smoke:
+            if args.gate_prefix != "M":
+                parser.error(
+                    "§63 grades this diagnostic by M1-M5; pass --gate-prefix M "
+                    "(§62's report stays checkable under the prefix it recorded)"
+                )
             if args.train_sessions != MINIMAL_TRAIN_ITEMS:
                 parser.error(
                     f"§62 registers {MINIMAL_TRAIN_ITEMS} training items "
@@ -2789,10 +2927,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     "--aux-mode resolvable so the objective is held fixed"
                 )
     if args.train_sessions and args.gate_prefix != "G":
-        parser.error(
-            "a --train-sessions arm is capped by its subset and must be graded under "
-            "--gate-prefix G (§56), not by a stage that assumes all 800 sessions"
-        )
+        if not (args.minimal_binding and args.gate_prefix == "M"):
+            parser.error(
+                "a --train-sessions arm is capped by its subset and must be graded under "
+                "--gate-prefix G (§56), not by a stage that assumes all 800 sessions"
+            )
     if args.no_memory and args.core not in STORE_ARMS:
         parser.error(
             "--no-memory is the store-arm ablation; pass --core " + " or ".join(sorted(STORE_ARMS))

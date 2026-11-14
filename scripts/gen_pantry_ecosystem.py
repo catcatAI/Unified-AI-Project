@@ -90,7 +90,7 @@ import math
 import random
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -1229,7 +1229,13 @@ MINIMAL_INDEX_OFFSET = 10_000
 MINIMAL_SUFFIX = "_cf"
 
 
-def _minimal_session(index: int, rng: random.Random, seed: int, split: str) -> Dict[str, Any]:
+def _minimal_session(
+    index: int,
+    rng: random.Random,
+    seed: int,
+    split: str,
+    roster_order: str = "balanced",
+) -> Dict[str, Any]:
     """Four turns: the crime, a two-name roster, one live value, the question.
 
     No trap, no correction, no time filter. The only thing that can turn the
@@ -1237,7 +1243,18 @@ def _minimal_session(index: int, rng: random.Random, seed: int, split: str) -> D
     binding §61 showed the carrier only does for part of its pairs. The
     dead value never appears in the testimony; it exists so the roster is a real
     choice of two rather than a one-entry lookup.
+
+    ``roster_order`` exists because §62's first version wrote the dead value
+    first and the live value second every time, so the culprit was always the
+    second roster entry; a trained arm answered that position and scored 1.0000
+    without reading the mapping (§62.10). ``balanced`` alternates the live
+    value's position with the session index, so the two positions hold the
+    culprit equally often and the position cannot stand in for the answer.
+    ``culprit_second`` reproduces the §62 corpus byte for byte so that report
+    stays checkable.
     """
+    if roster_order not in {"balanced", "culprit_second"}:
+        raise ValueError(f"unknown roster_order {roster_order!r}")
     actors = rng.sample(ACTORS, MINIMAL_ROSTER_SIZE)
     culprit, other = actors
     target_key = rng.choice(sorted(ITEMS))
@@ -1245,7 +1262,12 @@ def _minimal_session(index: int, rng: random.Random, seed: int, split: str) -> D
     decoy_key = rng.choice([key for key in sorted(ITEMS) if key != target_key])
     decoy_zh = ITEMS[decoy_key][0]
     live_value, dead_value = rng.sample(sorted(COLOURS), 2)
-    mapping = {dead_value: other, live_value: culprit}
+    if roster_order == "culprit_second":
+        mapping = {dead_value: other, live_value: culprit}
+    elif index % 2:
+        mapping = {dead_value: other, live_value: culprit}
+    else:
+        mapping = {live_value: culprit, dead_value: other}
     action = rng.randint(17 * 60 + 30, 19 * 60)
     opening = action - rng.randint(55, 70)
     now = action + rng.randint(30, 50)
@@ -1370,6 +1392,7 @@ def build_minimal_binding(
     structures: int = MINIMAL_TRAIN_STRUCTURES,
     heldout: int = MINIMAL_HELDOUT_STRUCTURES,
     seed: int = DEFAULT_SEED,
+    roster_order: str = "balanced",
 ) -> Dict[str, List[Dict[str, Any]]]:
     """``[o0, t0, o1, t1, ...]`` for train, plain structures for held-out."""
     used: set = set()
@@ -1377,7 +1400,7 @@ def build_minimal_binding(
     def make(index: int, split: str) -> Dict[str, Any]:
         for salt in range(128):
             rng = random.Random(f"{seed}:minimal:{index}:{salt}")
-            session = _minimal_session(index, rng, seed, split)
+            session = _minimal_session(index, rng, seed, split, roster_order)
             key = PantryEcosystemSynthesizer._answer_key(session)
             if key in used:
                 continue
@@ -1414,6 +1437,7 @@ def validate_minimal_binding(
     *,
     structures: int = MINIMAL_TRAIN_STRUCTURES,
     heldout: int = MINIMAL_HELDOUT_STRUCTURES,
+    roster_order: str = "balanced",
 ) -> List[str]:
     """Every §62 invariant, as violations a reader can act on."""
     problems: List[str] = []
@@ -1514,6 +1538,44 @@ def validate_minimal_binding(
     for session, twin in zip(heldout_sessions, heldout_twins):
         if twin["session_meta"].get("counterfactual_of") != session["session_id"]:
             problems.append(f"{twin['session_id']}: held-out twin is not linked")
+
+    if roster_order == "balanced":
+        # §62.10: the first corpus wrote the live value second every time, so the
+        # culprit was always the second roster entry. An arm trained on it read
+        # the position and scored 1.0000 without ever matching the evidence value
+        # through the roster. The answer must not be recoverable from where the
+        # entry sits.
+        def culprit_position(session: Dict[str, Any]) -> Optional[int]:
+            _, roster_assert = _roster_item(session)
+            mapping = dict(roster_assert["value"])
+            culprit = session["ground_truth_oracle"]["culprit"]
+            names = list(mapping.values())
+            return names.index(culprit) if culprit in names else None
+
+        train_structures = [
+            session for session in train if not session["session_meta"].get("counterfactual_of")
+        ]
+        train_twins = [
+            session for session in train if session["session_meta"].get("counterfactual_of")
+        ]
+        # A "second entry" reader is right on a structure exactly when the culprit
+        # sits second, and the twin keeps the live value's key (only the name
+        # changes), so the twin's culprit sits in the same slot. Both splits must
+        # therefore be balanced, or such a reader gets a free half of the corpus.
+        for label, rows in (
+            ("train structures", train_structures),
+            ("train twins", train_twins),
+            ("heldout", heldout_sessions),
+            ("heldout twins", heldout_twins),
+        ):
+            positions = [culprit_position(session) for session in rows]
+            first = sum(1 for position in positions if position == 0)
+            second = sum(1 for position in positions if position == 1)
+            if first + second != len(positions) or first != second:
+                problems.append(
+                    f"{label}: the culprit is the first roster entry {first} times and the "
+                    f"second {second} of {len(positions)}; a positional shortcut would be free"
+                )
 
     heldout_ids = {session["session_id"] for session in heldout_sessions}
     for twin in twins + heldout_twins:
