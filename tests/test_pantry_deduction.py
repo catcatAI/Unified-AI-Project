@@ -1189,3 +1189,28 @@ def test_cli_refuses_a_subset_arm_that_is_not_stage_g(stage):
     ):
         with pytest.raises(SystemExit):
             stage.main(argv)
+
+
+def test_stage_g_fit_reads_the_declared_subset_when_it_is_larger_than_the_cap(stage):
+    """§57: "fits the subset" is the sessions it was trained on, not the first 200.
+
+    §49.6 capped the stage-P fit readout at 200 sessions for cost; on a
+    400-session arm those are a sample *of* the subset, so the gate must read
+    ``train_fit_subset`` when the report carries it (and fall back when it does not).
+    """
+    capped_only = _subset_report(stage, fit=0.95)
+    assert "train_fit_subset" not in capped_only["results"]
+    assert stage.gate_values(capped_only)["G1_fits_the_subset"] is True
+
+    under = _subset_report(stage, fit=0.95)
+    under["results"]["train_fit_subset"] = {"exact": 0.80}
+    assert stage.gate_values(under)["G1_fits_the_subset"] is False
+
+    over = _subset_report(stage, fit=0.95)
+    over["results"]["train_fit_subset"] = {"exact": 0.9125}
+    assert stage.gate_values(over)["G1_fits_the_subset"] is True
+
+    # the capped readout alone cannot lift a failing subset over the floor
+    mixed = _subset_report(stage, fit=0.10)
+    mixed["results"]["train_fit_subset"] = {"exact": 0.10}
+    assert stage.gate_values(mixed)["G1_fits_the_subset"] is False

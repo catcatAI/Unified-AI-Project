@@ -1361,7 +1361,11 @@ def _stage_g_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
     ``None`` is ignored by :func:`verdict`, so one report cannot claim it.
     """
     results = report.get("results") or {}
-    fit = results.get("train_fit") or {}
+    # §57: "fits the subset" means the sessions it was trained on. A report whose
+    # declared subset is larger than §49.6's 200-session cap carries
+    # ``train_fit_subset`` for exactly that set; older reports (and every arm at
+    # or below the cap) keep using ``train_fit``.
+    fit = results.get("train_fit_subset") or results.get("train_fit") or {}
     full = results.get("full") or {}
     cost = report.get("cost") or {}
     exact = fit.get("exact")
@@ -2011,6 +2015,15 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
 
     fit_rows = train_sessions[: min(FIT_SESSIONS, len(train_sessions))]
     results["train_fit"] = summarise(evaluate(core, fit_rows, "full", module=module))
+    if len(train_sessions) > FIT_SESSIONS:
+        # §49.6 capped the fit readout at 200 sessions for stage-P cost, but §56's
+        # G1 (and §57's H1) is "the arm fits the sessions it was *trained on*". On
+        # a 400-session subset those are different sets, so the declared subset is
+        # measured too and the gate reads it; the capped number stays for the
+        # stage-P comparison it was introduced for.
+        results["train_fit_subset"] = summarise(
+            evaluate(core, train_sessions, "full", module=module)
+        )
 
     # §50.6: where does an answer exist along the testimony? Diagnostic only.
     diagnostics: Dict[str, Any] = {}
