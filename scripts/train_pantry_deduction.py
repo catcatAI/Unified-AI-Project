@@ -58,6 +58,19 @@ format control::
     ./.venv/bin/python scripts/train_pantry_deduction.py --overfit 32 --epochs 100 \\
         --aux-loss 1.0 --device cpu --out data/pantry_stage/q_overfit
     ./.venv/bin/python scripts/train_pantry_deduction.py --aux-loss 1.0 --out data/pantry_stage/q
+
+Stage G (§56) is the question §55.6's branch names: the same 400 reviews/session,
+but 200 distinct training sessions instead of 32, graded on the 200 held-out
+sessions. ``--train-sessions N`` declares the subset, ``--gate-prefix G`` grades
+it by G1-G4, and ``--stage-g`` computes the paired verdict::
+
+    ./.venv/bin/python scripts/train_pantry_deduction.py --train-sessions 200 \\
+        --epochs 400 --core turnstore --aux-loss 1.0 --aux-mode resolvable \\
+        --gate-prefix G --device cpu --out data/pantry_stage/g_store
+    ./.venv/bin/python scripts/train_pantry_deduction.py --train-sessions 200 \\
+        --epochs 400 --aux-loss 1.0 --aux-mode resolvable \\
+        --gate-prefix G --device cpu --out data/pantry_stage/g_gru
+    ./.venv/bin/python scripts/train_pantry_deduction.py --stage-g <store>.json <gru>.json
 """
 
 from __future__ import annotations
@@ -147,6 +160,15 @@ ABLATION_CEILING = 0.65
 ABLATION_GAP = 0.25
 ABLATION_TOLERANCE = 0.15
 GRU_CONTROL_EXACT = 0.375
+
+# §56 - stage G is the question §55.6's branch names: with the same 400
+# reviews/session, does an arm trained on *many* sessions answer answer tuples
+# the corpus never gave it? The fit floor is the one the store already had to
+# clear (0.90); the chance line is the report's own per-session chance (a roster
+# of 5-8 names, not 1/12), and the store-vs-GRU line is a paired test on the
+# same held-out sessions, so neither number is chosen here.
+GENERAL_FIT_FLOOR = STORE_FLOOR
+GENERAL_ALPHA = 0.05
 
 SAMPLE_ROWS = 3
 
@@ -1328,6 +1350,242 @@ def stage_t_branch(checks: Dict[str, bool]) -> str:
     )
 
 
+def _stage_g_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
+    """§56.4's G1-G4 for *one* arm; G3 needs the pair and is ``None`` here.
+
+    G1 is "the arm fitted the sessions it was trained on" - without it the
+    held-out number is capped by underfitting and is not read. G2 is "held-out
+    beats the report's own per-session chance" (a roster of 5-8 names), with the
+    Wilson lower bound doing the reading, not the point estimate. G3 compares the
+    two arms on the *same* held-out sessions and is computed by ``--stage-g``;
+    ``None`` is ignored by :func:`verdict`, so one report cannot claim it.
+    """
+    results = report.get("results") or {}
+    fit = results.get("train_fit") or {}
+    full = results.get("full") or {}
+    cost = report.get("cost") or {}
+    exact = fit.get("exact")
+    chance = full.get("chance")
+    return {
+        "G1_fits_the_subset": (exact is not None and exact >= GENERAL_FIT_FLOOR),
+        "G2_heldout_beats_chance": (
+            full.get("wilson_lower") is not None
+            and chance is not None
+            and float(full["wilson_lower"]) > float(chance)
+        ),
+        "G3_store_beats_gru_on_heldout": None,
+        "G4_cost_recorded": all(
+            cost.get(key) not in (None, 0) for key in ("params", "train_seconds", "device")
+        ),
+    }
+
+
+def mcnemar_one_sided(wins: int, losses: int) -> Optional[float]:
+    """Exact one-sided sign test over the *discordant* pairs (no normal approx).
+
+    ``wins`` is "the store is right and the GRU is wrong"; ``losses`` the
+    reverse. Sessions both arms answer the same way carry no information about
+    which one is better, so they are not in the denominator.
+    """
+    total = int(wins) + int(losses)
+    if total <= 0:
+        return None
+    tail = sum(math.comb(total, k) for k in range(int(wins), total + 1))
+    return tail / (2.0**total)
+
+
+def _heldout_predictions(report: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Re-run a report's checkpoint on the held-out corpus and return its records.
+
+    The pair verdict must not trust the ``samples`` block (it keeps three rows),
+    so both arms are re-evaluated from the checkpoint the report names; the
+    weights hash is checked first, so a report and a checkpoint cannot be mixed.
+    """
+    config = report.get("config") or {}
+    corpus_block = report.get("corpus") or {}
+    corpus = load_corpus(
+        sessions=int(corpus_block.get("sessions", PANTRY_SESSIONS)),
+        seed=int(corpus_block.get("seed", PANTRY_SEED)),
+    )
+    kind = str(config.get("core") or "gru")
+    core = build_core(
+        hidden=int(config.get("hidden", HIDDEN)),
+        emb=int(config.get("emb", EMB)),
+        device="cpu",
+        kind=kind,
+        memory=bool(config.get("memory", True)),
+    )
+    checkpoint = report.get("checkpoint")
+    if not checkpoint or not Path(checkpoint).exists():
+        raise SystemExit("a report's checkpoint is missing; the pair cannot be re-evaluated")
+    core.load_weights(checkpoint, strict_config=True)
+    if kind != "gru" and core.config().get("model_kind") != kind:
+        raise SystemExit(f"checkpoint model_kind is not {kind!r}")
+    if core.weights_hash() != report.get("weights_hash"):
+        raise SystemExit("checkpoint weights_hash does not match the report it is graded with")
+    records = evaluate(core, corpus["heldout"], "full", module=corpus["module"])
+    return {row["session_id"]: row for row in records}
+
+
+def _start_source(report: Dict[str, Any]) -> Optional[str]:
+    """Which weights a report's start actually is.
+
+    A ``turnstore`` arm records ``source_weights_hash`` (the L it was copied
+    from) because its own ``weights_hash`` is the derived model; a plain ``gru``
+    arm records only ``weights_hash``, which *is* L's hash after loading. Both
+    fields name the same thing here, so the pair check reads whichever exists
+    instead of comparing two different keys and calling it a difference.
+    """
+    start = report.get("start") or {}
+    return start.get("source_weights_hash") or start.get("weights_hash")
+
+
+def stage_g_comparison(store: Dict[str, Any], gru: Dict[str, Any]) -> Dict[str, Any]:
+    """§56.4's pair verdict: does the store generalise where the GRU does not?
+
+    Both arms must be the registered pair (same corpus digests, same subset,
+    same seed/lr/batch/epochs, same L derivation, one ``turnstore`` with the
+    store on and one plain ``gru``), and the held-out answers are re-derived
+    from the checkpoints. G3 is an exact sign test on the sessions where the two
+    arms disagree, so "the store is better" cannot come from a shifted base rate.
+    """
+    problems: List[str] = []
+    for label, report in (("store", store), ("gru", gru)):
+        if _gate_prefix_of(report) != "G":
+            problems.append(f"the {label} report is not graded under G")
+        if report.get("overfit"):
+            problems.append(f"the {label} report is an overfit calibration, not a subset arm")
+    configs = [(store.get("config") or {}), (gru.get("config") or {})]
+    if configs[0].get("core") != "turnstore" or configs[0].get("memory") is not True:
+        problems.append("the first report is not the store arm (turnstore with memory on)")
+    if configs[1].get("core") != "gru":
+        problems.append("the second report is not the plain GRU arm")
+    for key in (
+        "seed",
+        "lr",
+        "batch",
+        "epochs",
+        "token_count",
+        "hidden",
+        "emb",
+        "aux_lambda",
+        "aux_mode",
+        "train_subset",
+    ):
+        if configs[0].get(key) != configs[1].get(key):
+            problems.append(f"the two arms differ in {key}")
+    for key in ("train_digest", "heldout_digest"):
+        if (store.get("corpus") or {}).get(key) != (gru.get("corpus") or {}).get(key):
+            problems.append(f"the two arms used a different {key}")
+    if (store.get("corpus") or {}).get("train_sessions_used") != (gru.get("corpus") or {}).get(
+        "train_sessions_used"
+    ):
+        problems.append("the two arms used different numbers of training sessions")
+    if _start_source(store) != _start_source(gru):
+        problems.append("the two arms started from different derivations of L")
+    for key in ("checkpoint_sha256", "init_weights_hash"):
+        if (store.get("start") or {}).get(key) != (gru.get("start") or {}).get(key):
+            problems.append(f"the two arms disagree on start.{key}")
+    if problems:
+        raise SystemExit("; ".join(problems))
+
+    store_records = _heldout_predictions(store)
+    gru_records = _heldout_predictions(gru)
+    if set(store_records) != set(gru_records):
+        raise SystemExit("the two arms were graded on different held-out sessions")
+
+    shared = sorted(store_records)
+    targeted = [sid for sid in shared if store_records[sid].get("target")]
+    store_hits = sum(
+        1 for sid in targeted if store_records[sid]["prediction"] == store_records[sid]["target"]
+    )
+    gru_hits = sum(
+        1 for sid in targeted if gru_records[sid]["prediction"] == gru_records[sid]["target"]
+    )
+    wins = sum(
+        1
+        for sid in targeted
+        if store_records[sid]["prediction"] == store_records[sid]["target"]
+        and gru_records[sid]["prediction"] != gru_records[sid]["target"]
+    )
+    losses = sum(
+        1
+        for sid in targeted
+        if store_records[sid]["prediction"] != store_records[sid]["target"]
+        and gru_records[sid]["prediction"] == gru_records[sid]["target"]
+    )
+    p_value = mcnemar_one_sided(wins, losses)
+
+    store_fit = ((store.get("results") or {}).get("train_fit") or {}).get("exact")
+    gru_fit = ((gru.get("results") or {}).get("train_fit") or {}).get("exact")
+    if store_fit is None or gru_fit is None:
+        raise SystemExit("a train_fit exact rate is missing; the pair cannot be graded")
+    store_chance = ((store.get("results") or {}).get("full") or {}).get("chance")
+    gru_chance = ((gru.get("results") or {}).get("full") or {}).get("chance")
+    if store_chance != gru_chance:
+        raise SystemExit("the two arms were scored against different chance rates")
+
+    store_gates = _stage_g_gate_values(store)
+    gru_gates = _stage_g_gate_values(gru)
+    checks = {
+        # G1 is the arm whose held-out is read: the GRU's fit is recorded beside
+        # it, because "the GRU did not fit either" changes the reading of G3 but
+        # does not make the store's own fit untrue.
+        "G1_fits_the_subset": store_gates["G1_fits_the_subset"],
+        "G2_heldout_beats_chance": store_gates["G2_heldout_beats_chance"],
+        "G3_store_beats_gru_on_heldout": (
+            None
+            if not store_gates["G1_fits_the_subset"]
+            else bool(wins > losses and p_value is not None and p_value < GENERAL_ALPHA)
+        ),
+        "G4_cost_recorded": (store_gates["G4_cost_recorded"] and gru_gates["G4_cost_recorded"]),
+    }
+    return {
+        "store_fit": store_fit,
+        "gru_fit": gru_fit,
+        "store_heldout_exact": _round(store_hits / len(targeted)) if targeted else None,
+        "gru_heldout_exact": _round(gru_hits / len(targeted)) if targeted else None,
+        "n": len(targeted),
+        "chance": store_chance,
+        "wins": wins,
+        "losses": losses,
+        "p_value": _round(p_value),
+        "checks": checks,
+        "all_pass": verdict(checks),
+        "branch": stage_g_branch(checks, gru_fit=gru_fit),
+    }
+
+
+def stage_g_branch(checks: Dict[str, Any], gru_fit: Optional[float] = None) -> str:
+    """§56.6, mechanically: what the next experiment is allowed to be."""
+    if not checks["G1_fits_the_subset"]:
+        return (
+            "G1 fails: at 400 reviews/session the store does not fit 200 distinct sessions, "
+            "so held-out is not read; next is per-turn regional losses (§55.6's T1-fail rule), "
+            "never more epochs or width"
+        )
+    if not checks["G2_heldout_beats_chance"]:
+        return (
+            "G1 passes but G2 fails: fitting survives more sessions, generalisation does not; "
+            "next is the memorisation diagnosis (where the prediction comes from), not more epochs"
+        )
+    if not checks["G3_store_beats_gru_on_heldout"]:
+        note = (
+            " (the GRU did not fit the subset either, so its chance-level held-out is not a "
+            "generalisation failure to compare against)"
+            if gru_fit is not None and gru_fit < GENERAL_FIT_FLOOR
+            else ""
+        )
+        return (
+            "G1+G2 pass but G3 does not: the arm generalises, the store is not shown to be why; "
+            "next is the store's ablation at the same subset (memory=False), not more epochs" + note
+        )
+    return (
+        "G1+G2+G3 pass: the store generalises at the same per-session budget; next is the same "
+        "protocol on the remaining training sessions (data scaling), registered, not a score"
+    )
+
+
 def _aux_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
     """§50.4's Q1-Q9 (and §51.4's R1-R9), recomputed from the recorded numbers.
 
@@ -1423,6 +1681,9 @@ def gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
     if _gate_prefix_of(report) == "T":
         # §55's arms are graded by T1-T4, not by stage Q's nine conditions
         return _stage_t_gate_values(report)
+    if _gate_prefix_of(report) == "G":
+        # §56's arms are graded by G1-G4: fit, held-out above chance, pair, cost
+        return _stage_g_gate_values(report)
     if _aux_lambda_of(report) > 0.0:
         return _aux_gate_values(report)
     corpus = report.get("corpus") or {}
@@ -1628,9 +1889,24 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         train_sessions = train_sessions[: args.overfit]
     if args.eval_limit:
         heldout = heldout[: args.eval_limit]
+    if args.train_sessions:
+        if args.train_sessions > len(train_sessions):
+            raise SystemExit(
+                f"--train-sessions {args.train_sessions} asks for more sessions than the "
+                f"{len(train_sessions)} available in the registered training split"
+            )
+        train_sessions = train_sessions[: args.train_sessions]
 
     control_block: Optional[Dict[str, Any]] = None
-    if args.control != "rand" and not args.smoke and not args.overfit:
+    # §56: a stage-G arm is a mechanism comparison on held-out sessions; its
+    # gates do not include Q7 (the format-only control), and the attribution it
+    # does read (G3) is paired on the same text, so a format model cannot create
+    # it. Training an F-rand arm on the same subset would double the cost for a
+    # gate that is not part of §56.4.
+    needs_control = args.control != "rand" and not args.smoke and not args.overfit
+    if args.gate_prefix == "G":
+        needs_control = False
+    if needs_control:
         control_path = _find_control_report(
             Path(args.out), aux_lambda=args.aux_loss, aux_mode=args.aux_mode
         )
@@ -1769,6 +2045,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "aux_mode": args.aux_mode,
             "gate_prefix": args.gate_prefix,
             "overfit_sessions": args.overfit,
+            "train_subset": args.train_sessions or None,
         },
         "corpus": {
             **meta,
@@ -1871,6 +2148,22 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="§55.4/§55.6: grade the pair from two finished reports and print the branch",
     )
     parser.add_argument(
+        "--stage-g",
+        nargs=2,
+        metavar=("STORE", "GRU"),
+        help="§56.4/§56.6: grade the held-out pair from two finished reports and print the branch",
+    )
+    parser.add_argument(
+        "--train-sessions",
+        type=int,
+        default=0,
+        metavar="N",
+        help=(
+            "§56: train on the first N of the registered 800 training sessions (a declared "
+            "subset, not an overfit calibration); graded under --gate-prefix G"
+        ),
+    )
+    parser.add_argument(
         "--widen-to",
         type=int,
         default=0,
@@ -1927,6 +2220,22 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         parser.error("--gate-prefix must be a single A-Z letter")
     if args.overfit < 0:
         parser.error("--overfit must be >= 0")
+    if args.train_sessions < 0:
+        parser.error("--train-sessions must be >= 0")
+    if args.train_sessions and args.overfit:
+        parser.error(
+            "--train-sessions is §56's declared subset; --overfit is §50.4's calibration. "
+            "The two subsets have different gates and cannot be the same run"
+        )
+    if args.train_sessions and args.limit:
+        parser.error("--train-sessions and --limit both subset the training split; pass one")
+    if args.train_sessions and args.smoke:
+        parser.error("--train-sessions is not a smoke flag")
+    if args.train_sessions and args.gate_prefix != "G":
+        parser.error(
+            "a --train-sessions arm is capped by its subset and must be graded under "
+            "--gate-prefix G (§56), not by a stage that assumes all 800 sessions"
+        )
     if args.no_memory and args.core != "turnstore":
         parser.error("--no-memory is the turnstore ablation; pass --core turnstore")
     if args.widen_to and args.core != "gru":
@@ -1977,6 +2286,36 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"branch   : {outcome['branch']}")
         return 0 if outcome["all_pass"] else 1
 
+    if args.stage_g:
+        store_path, gru_path = (Path(part) for part in args.stage_g)
+        try:
+            outcome = stage_g_comparison(
+                json.loads(store_path.read_text(encoding="utf-8")),
+                json.loads(gru_path.read_text(encoding="utf-8")),
+            )
+        except SystemExit as exc:
+            print(f"FAILED --stage-g: {exc}")
+            return 1
+        print(
+            f"store : {store_path}  fit {outcome['store_fit']:.4f}  "
+            f"held-out {outcome['store_heldout_exact']:.4f}"
+        )
+        print(
+            f"gru   : {gru_path}  fit {outcome['gru_fit']:.4f}  "
+            f"held-out {outcome['gru_heldout_exact']:.4f}"
+        )
+        print(
+            f"pairs : n={outcome['n']}  chance={outcome['chance']:.4f}  "
+            f"store-only {outcome['wins']}  gru-only {outcome['losses']}  "
+            f"p={outcome['p_value']}"
+        )
+        for name, value in outcome["checks"].items():
+            label = "n/a " if value is None else ("PASS" if value else "FAIL")
+            print(f"  {label}  {name}")
+        print(f"all_pass : {outcome['all_pass']}")
+        print(f"branch   : {outcome['branch']}")
+        return 0 if outcome["all_pass"] else 1
+
     if args.check:
         problems = check_report(Path(args.check))
         if problems:
@@ -1999,6 +2338,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(
             f"overfit   : {report['config']['overfit_sessions']} train sessions "
             "(calibration arm, not a score)"
+        )
+    if report["config"].get("train_subset"):
+        print(
+            f"subset    : {report['config']['train_subset']} of the registered training "
+            "sessions (§56); held-out is the 200 unseen answer tuples"
         )
     print(
         f"corpus    : train {report['corpus']['train_bytes']} B / "

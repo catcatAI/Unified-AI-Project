@@ -974,3 +974,218 @@ def test_updates_per_session_records_rehearsal_not_steps(stage):
     assert stage.updates_per_session(1600, 8, 32) == 400.0
     assert stage.updates_per_session(6400, 8, 32) == 1600.0
     assert stage.updates_per_session(400, 8, 0) == 0.0
+
+
+# --------------------------------------------------------------------------- #
+# §56 stage G: a declared subset, graded on answer tuples it never saw
+# --------------------------------------------------------------------------- #
+def _subset_report(
+    stage,
+    *,
+    core="turnstore",
+    memory=True,
+    fit=0.95,
+    heldout=0.22,
+    lower=0.17,
+    chance=0.1591,
+    subset=200,
+    derived=True,
+    weights_hash="sha256:" + "a" * 64,
+):
+    start = {
+        "weights_hash": "sha256:" + "c" * 64 if derived else stage.L_WEIGHTS_HASH,
+        "checkpoint_sha256": stage.L_CHECKPOINT_SHA256,
+        "init_weights_hash": stage.L_INIT_HASH,
+    }
+    if derived:
+        # a turnstore arm names the L it was copied from; a gru arm's weights_hash
+        # is L's, so the pair check has to read both shapes (--stage-g does)
+        start["source_weights_hash"] = stage.L_WEIGHTS_HASH
+    return {
+        "config": {
+            "core": core,
+            "memory": memory,
+            "gate_prefix": "G",
+            "train_subset": subset,
+            "seed": stage.SEED,
+            "lr": stage.LEARNING_RATE,
+            "batch": stage.BATCH,
+            "epochs": 400,
+            "token_count": stage.VOCAB_SIZE,
+            "hidden": stage.HIDDEN,
+            "emb": stage.EMB,
+            "aux_lambda": 1.0,
+            "aux_mode": "resolvable",
+        },
+        "corpus": {
+            "train_digest": stage.TRAIN_DIGEST,
+            "heldout_digest": stage.HOLDOUT_DIGEST,
+            "train_sessions_used": subset,
+        },
+        "start": start,
+        "results": {
+            "train_fit": {"exact": fit},
+            "full": {"exact": heldout, "wilson_lower": lower, "chance": chance},
+        },
+        "cost": {"params": 168150, "train_seconds": 6000.0, "device": "cpu"},
+        "overfit": False,
+        "checkpoint": "unused.pt",
+        "weights_hash": weights_hash,
+    }
+
+
+def test_stage_g_gates_are_g1_to_g4_and_the_pair_stays_none(stage):
+    checks = stage.gate_values(_subset_report(stage))
+    assert list(checks) == [
+        "G1_fits_the_subset",
+        "G2_heldout_beats_chance",
+        "G3_store_beats_gru_on_heldout",
+        "G4_cost_recorded",
+    ]
+    assert checks["G1_fits_the_subset"] is True
+    assert checks["G2_heldout_beats_chance"] is True
+    assert checks["G3_store_beats_gru_on_heldout"] is None  # one report cannot claim the pair
+    assert checks["G4_cost_recorded"] is True
+
+
+def test_stage_g_reads_the_lower_bound_not_the_point_estimate(stage):
+    """22% of 200 is above 15.91%, but the Wilson lower bound is what decides."""
+    report = _subset_report(stage, heldout=0.22, lower=0.15)
+    assert stage.gate_values(report)["G2_heldout_beats_chance"] is False
+    assert stage.gate_values(_subset_report(stage, lower=0.17))["G2_heldout_beats_chance"] is True
+
+
+def test_stage_g_fit_floor_is_stage_t_s_floor(stage):
+    assert stage.GENERAL_FIT_FLOOR == stage.STORE_FLOOR == 0.90
+    assert stage.gate_values(_subset_report(stage, fit=0.89))["G1_fits_the_subset"] is False
+    assert stage.gate_values(_subset_report(stage, fit=0.90))["G1_fits_the_subset"] is True
+
+
+def test_mcnemar_is_exact_one_sided_and_ignores_agreement(stage):
+    assert stage.mcnemar_one_sided(0, 0) is None  # no discordant pair carries no evidence
+    assert stage.mcnemar_one_sided(0, 10) == 1.0  # the store never won
+    assert math.isclose(stage.mcnemar_one_sided(10, 0), 1 / 1024)  # every pair went one way
+    assert math.isclose(stage.mcnemar_one_sided(9, 1), 11 / 1024)
+    assert math.isclose(stage.mcnemar_one_sided(5, 5), 0.623046875)
+
+
+def test_stage_g_refuses_a_pair_that_is_not_the_registered_pair(stage):
+    store = _subset_report(stage)
+    gru = _subset_report(
+        stage, core="gru", memory=None, derived=False, weights_hash="sha256:" + "b" * 64
+    )
+
+    with pytest.raises(SystemExit):
+        stage.stage_g_comparison(store, _subset_report(stage))  # second arm is not a GRU
+
+    with pytest.raises(SystemExit):
+        stage.stage_g_comparison(_subset_report(stage, core="gru"), gru)  # first arm has no store
+
+    with pytest.raises(SystemExit):
+        stage.stage_g_comparison(store, dict(gru, overfit=True))
+
+    mismatched = _subset_report(stage, core="gru", memory=None, derived=False, subset=100)
+    mismatched["corpus"]["train_sessions_used"] = 100
+    with pytest.raises(SystemExit):
+        stage.stage_g_comparison(store, mismatched)
+
+    off_letter = dict(store)
+    off_letter["config"] = dict(store["config"], gate_prefix="T")
+    with pytest.raises(SystemExit):
+        stage.stage_g_comparison(off_letter, gru)
+
+    # a different L (file hash or initialisation) is not the same start
+    other_l = json.loads(json.dumps(gru))
+    other_l["start"]["checkpoint_sha256"] = "0" * 64
+    with pytest.raises(SystemExit):
+        stage.stage_g_comparison(store, other_l)
+
+
+def test_stage_g_pair_counts_only_discordant_sessions(stage, monkeypatch):
+    """Equal wins and losses are not evidence; the exact test says so."""
+    targets = {f"s{i}": "Alex" for i in range(30)}
+    store_hits = set(range(28))  # 28 of 30
+    gru_hits = set(range(3))  # 3 of 30, all inside the store's wins
+
+    # store-only = 25, gru-only = 0 -> p = 2**-25
+    def fake(report):
+        hits = store_hits if report["config"]["core"] == "turnstore" else gru_hits
+        return {
+            sid: (
+                {
+                    "session_id": sid,
+                    "target": target,
+                    "prediction": target if index in hits else "Kevin",
+                }
+            )
+            for index, (sid, target) in enumerate(targets.items())
+        }
+
+    monkeypatch.setattr(stage, "_heldout_predictions", fake)
+    outcome = stage.stage_g_comparison(
+        _subset_report(stage),
+        _subset_report(
+            stage, core="gru", memory=None, derived=False, weights_hash="sha256:" + "b" * 64
+        ),
+    )
+    assert outcome["wins"] == 25 and outcome["losses"] == 0
+    assert outcome["p_value"] < 0.05
+    assert outcome["checks"]["G3_store_beats_gru_on_heldout"] is True
+    assert outcome["all_pass"] is True
+
+
+def test_stage_g_pair_does_not_call_a_tie_a_win(stage, monkeypatch):
+    targets = {f"s{i}": "Alex" for i in range(30)}
+    store_hits = set(range(10))
+    gru_hits = set(range(10))  # identical answers: zero discordant pairs
+
+    def fake(report):
+        hits = store_hits if report["config"]["core"] == "turnstore" else gru_hits
+        return {
+            sid: {
+                "session_id": sid,
+                "target": target,
+                "prediction": target if index in hits else "Kevin",
+            }
+            for index, (sid, target) in enumerate(targets.items())
+        }
+
+    monkeypatch.setattr(stage, "_heldout_predictions", fake)
+    outcome = stage.stage_g_comparison(
+        _subset_report(stage),
+        _subset_report(
+            stage, core="gru", memory=None, derived=False, weights_hash="sha256:" + "b" * 64
+        ),
+    )
+    assert outcome["wins"] == 0 and outcome["losses"] == 0
+    assert outcome["p_value"] is None
+    assert outcome["checks"]["G3_store_beats_gru_on_heldout"] is False
+
+
+def test_stage_g_branch_is_mechanical(stage):
+    fit = {
+        "G1_fits_the_subset": True,
+        "G2_heldout_beats_chance": True,
+        "G3_store_beats_gru_on_heldout": True,
+        "G4_cost_recorded": True,
+    }
+    assert "data scaling" in stage.stage_g_branch(fit)
+    assert "not shown to be why" in stage.stage_g_branch(
+        dict(fit, G3_store_beats_gru_on_heldout=False)
+    )
+    assert "memorisation diagnosis" in stage.stage_g_branch(
+        dict(fit, G2_heldout_beats_chance=False)
+    )
+    assert "per-turn regional losses" in stage.stage_g_branch(dict(fit, G1_fits_the_subset=False))
+
+
+def test_cli_refuses_a_subset_arm_that_is_not_stage_g(stage):
+    for argv in (
+        ["--train-sessions", "200", "--overfit", "32", "--gate-prefix", "G"],
+        ["--train-sessions", "200", "--limit", "50", "--gate-prefix", "G"],
+        ["--train-sessions", "200", "--smoke", "--gate-prefix", "G"],
+        ["--train-sessions", "200"],  # no gate prefix: would be graded by Q/R
+        ["--train-sessions", "200", "--gate-prefix", "T"],
+    ):
+        with pytest.raises(SystemExit):
+            stage.main(argv)
