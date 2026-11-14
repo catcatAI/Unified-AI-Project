@@ -138,6 +138,16 @@ AUX_LAMBDA_DEFAULT = 0.0
 AUX_MODE_DEFAULT = "all"
 OVERFIT_FLOOR = 0.90
 
+# §55 - stage T compares an architecture arm against the same budget. The GRU
+# control is the registered n32_4x report (12/32 at 1,600 steps = 400
+# updates/session); putting the number here means the ablation is graded against
+# the run that exists, not against a recollection of it.
+STORE_FLOOR = 0.90
+ABLATION_CEILING = 0.65
+ABLATION_GAP = 0.25
+ABLATION_TOLERANCE = 0.15
+GRU_CONTROL_EXACT = 0.375
+
 SAMPLE_ROWS = 3
 
 VARIANTS = ("full", "reset", "no_correction", "no_roster", "no_bounds", "skip_al")
@@ -356,7 +366,28 @@ def leak_report(sessions: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
 # --------------------------------------------------------------------------- #
 # model plumbing
 # --------------------------------------------------------------------------- #
-def build_core(*, hidden: int = HIDDEN, emb: int = EMB, device: str, seed: int = SEED) -> Any:
+def build_core(
+    *,
+    hidden: int = HIDDEN,
+    emb: int = EMB,
+    device: str,
+    seed: int = SEED,
+    kind: str = "gru",
+    memory: bool = True,
+) -> Any:
+    """The registered carriers: ``gru`` (stages L/P…) and ``turnstore`` (§55)."""
+    if kind == "turnstore":
+        from ai.core.stateful_decoder import TurnStoreCore
+
+        return TurnStoreCore(
+            VOCAB_SIZE,
+            hidden=hidden,
+            emb=emb,
+            chunk_seconds=CHUNK_SECONDS,
+            seed=seed,
+            device=device,
+            memory=memory,
+        )
     from ai.core.stateful_decoder import GRUCore
 
     return GRUCore(
@@ -443,8 +474,64 @@ def widen_from_stage_l(core: Any, path: Path, *, source_hidden: int) -> str:
     return core.weights_hash()
 
 
+def start_from_stage_l(core: Any, path: Path, *, source_hidden: int) -> str:
+    """Copy L's blocks into a store arm so the start point is still L (§55.3).
+
+    ``load_weights(strict_config=True)`` refuses a ``gru`` checkpoint in a
+    ``turnstore`` model (the model kind differs), and a fresh init would silently
+    change the start. This copies everything the two arms share and leaves the
+    new projections at their seed init:
+
+    * embedding / dt_proj / cell are copied wholesale (their shapes are L's);
+    * ``head.weight[:, :H]`` and ``head.bias`` are copied, the new ``D`` columns
+      are zero - so ``head([h, 0])`` is L's ``head(h)`` and the first token's
+      logits are L's until the first read.
+
+    The file must be the registered artifact (sha256), not merely a checkpoint
+    with matching shapes: §49.1 pins the start, and a derivation of something
+    else is a different experiment.
+    """
+    if getattr(core, "model_kind", "") != "turnstore":
+        raise SystemExit(f"start_from_stage_l is for the turnstore arm, not {core.model_kind!r}")
+    if not path.exists():
+        raise SystemExit(f"missing the stage-L checkpoint: {path}")
+    file_digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    if file_digest != L_CHECKPOINT_SHA256:
+        raise SystemExit(
+            f"stage-L checkpoint file sha256 {file_digest[:12]}… != registered "
+            f"{L_CHECKPOINT_SHA256[:12]}…; the start point is not the artifact §49.1 names"
+        )
+    import torch
+
+    payload = torch.load(str(path), map_location="cpu", weights_only=True)
+    config = payload.get("config") or {}
+    if config.get("model_kind") != "gru":
+        raise SystemExit(f"{path} is not the GRU carrier (model_kind={config.get('model_kind')!r})")
+    if int(config.get("hidden", -1)) != source_hidden:
+        raise SystemExit(
+            f"stage-L hidden {config.get('hidden')!r} != the registered {source_hidden}"
+        )
+    if int(config.get("emb", -1)) != core.emb:
+        raise SystemExit(f"stage-L emb {config.get('emb')!r} != this model's {core.emb}")
+    if int(config.get("token_count", -1)) != core.token_count:
+        raise SystemExit(f"stage-L token_count {config.get('token_count')!r} != {core.token_count}")
+
+    source = payload["state_dict"]
+    with torch.no_grad():
+        core.embedding.weight.copy_(source["embedding"]["weight"])
+        for name in ("weight_ih", "weight_hh", "bias_ih", "bias_hh"):
+            getattr(core.cell, name).copy_(source["cell"][name])
+        core.dt_proj.weight.copy_(source["dt_proj"]["weight"])
+        core.dt_proj.bias.copy_(source["dt_proj"]["bias"])
+        core.head.weight[:, :source_hidden].copy_(source["head"]["weight"])
+        core.head.weight[:, source_hidden:].zero_()
+        core.head.bias.copy_(source["head"]["bias"])
+    core.invalidate_hash()
+    return core.weights_hash()
+
+
 def start_is_stage_l(start: Dict[str, Any]) -> bool:
-    """True when the recorded start is L, or a behaviour-preserving widening of L."""
+    """True when the recorded start is L, or a behaviour-preserving derivation of L."""
     if start.get("checkpoint_sha256") != L_CHECKPOINT_SHA256 or not start.get("checkpoint"):
         return False
     widened = start.get("widened_from_hidden")
@@ -453,6 +540,12 @@ def start_is_stage_l(start: Dict[str, Any]) -> bool:
             int(widened) == HIDDEN
             and start.get("source_weights_hash") == L_WEIGHTS_HASH
             and int(start.get("hidden") or 0) > HIDDEN
+            and int(start.get("params") or 0) > L_PARAMS
+        )
+    if start.get("derived_from") == "turnstore":
+        return (
+            start.get("source_weights_hash") == L_WEIGHTS_HASH
+            and int(start.get("hidden") or 0) == HIDDEN
             and int(start.get("params") or 0) > L_PARAMS
         )
     return start.get("weights_hash") == L_WEIGHTS_HASH and start.get("params") == L_PARAMS
@@ -517,10 +610,15 @@ def run_session(
 ) -> Tuple[Any, Any]:
     """Run whole sessions; ``al_step`` happens *between* turns, never after.
 
-    ``boundaries`` is the §50.2 hook: when a list is passed, each turn's hidden
-    state is appended to it (the graph is kept, so training can read out from
-    every turn). When it is ``None`` nothing changes - stage P's run is bitwise
-    the same computation.
+    ``boundaries`` is the §50.2 hook: when a list is passed, each turn's state is
+    appended to it (the graph is kept, so training can read out from every turn).
+    When it is ``None`` nothing changes - stage P's run is bitwise the same
+    computation. A boundary is the ``h`` tensor for one-tensor cores (so existing
+    probes keep their type) and the whole tensor mapping for a core with a store,
+    because its answer depends on more than ``h``.
+
+    The §55 turn-end write happens here, after the turn's tokens and before the
+    snapshot: a boundary is the state *after* turn k, including what turn k wrote.
     """
     torch = core._torch
     batch = len(batch_turns)
@@ -532,7 +630,12 @@ def run_session(
     for index in range(turns):
         if index > 0:
             if reset_before_last and index == turns - 1:
-                hidden = torch.zeros_like(hidden)
+                # the reset arm asks what the last turn says on its own; a store
+                # left over from earlier turns would answer for them
+                state.tensors = {
+                    name: torch.zeros_like(value) for name, value in state.tensors.items()
+                }
+                hidden = state.tensors["h"]
             else:
                 state.tensors["h"] = hidden
                 dt = torch.as_tensor(
@@ -545,24 +648,43 @@ def run_session(
         # the contract (al_step bumps for chunks; this bumps for the turn)
         state.tensors["h"] = hidden
         state.bump()
+        state.tensors = core.end_turn(state.tensors)
+        hidden = state.tensors["h"]
         if boundaries is not None:
-            boundaries.append(hidden)
+            snapshot = dict(state.tensors)
+            boundaries.append(snapshot["h"] if len(snapshot) == 1 else snapshot)
     return state, hidden
 
 
-def _answer_loss(core: Any, hidden: Any, answers: Sequence[Sequence[int]]) -> Any:
+def _decode_view(record: Any) -> Dict[str, Any]:
+    """Normalise a boundary/hidden into a tensor mapping (h only, or h + store)."""
+    if isinstance(record, dict):
+        return dict(record)
+    return {"h": record}
+
+
+def _select(record: Any, index: Any) -> Dict[str, Any]:
+    """Pick rows from a boundary - a store boundary has to move with its ``h``."""
+    return {name: value.index_select(0, index) for name, value in _decode_view(record).items()}
+
+
+def _slice(record: Any, start: int, stop: int) -> Dict[str, Any]:
+    return {name: value[start:stop] for name, value in _decode_view(record).items()}
+
+
+def _answer_loss(core: Any, record: Any, answers: Sequence[Sequence[int]]) -> Any:
     import torch.nn.functional as functional
 
     torch = core._torch
     longest = max(len(answer) for answer in answers)
+    view = _decode_view(record)
     logits = []
-    current = hidden
     for position in range(longest):
-        logits.append(core.head(current))
+        logits.append(core.token_logits(view))
         tokens = [answer[position] if position < len(answer) else PAD_ID for answer in answers]
         if position < longest - 1:
-            feed = torch.as_tensor(tokens, dtype=torch.long, device=current.device)
-            current = core.cell(core.embedding(feed), current)
+            feed = torch.as_tensor(tokens, dtype=torch.long, device=view["h"].device)
+            view = core.consume(feed, view)
     stacked = torch.stack(logits, dim=1)
     targets = torch.full((len(answers), longest), -100, dtype=torch.long, device=stacked.device)
     for index, answer in enumerate(answers):
@@ -609,22 +731,26 @@ def _training_loss(
         if not keep:
             continue
         picked = [rows[position] for position in keep]
-        index_tensor = hidden.new_tensor(keep).long()
-        terms.append(_answer_loss(core, hidden.index_select(0, index_tensor), picked))
+        index_tensor = _decode_view(hidden)["h"].new_tensor(keep).long()
+        terms.append(_answer_loss(core, _select(hidden, index_tensor), picked))
     if not terms:
         return main, main, None
     auxiliary = sum(terms) / len(terms)
     return main + aux_lambda * auxiliary, main, auxiliary
 
 
-def generate_bytes(core: Any, hidden: Any, limit: int = MAX_ANSWER_BYTES) -> List[bytes]:
-    """Greedy decode: stop at a newline, a special token, or ``limit`` bytes."""
-    batch = int(hidden.shape[0])
+def generate_bytes(core: Any, record: Any, limit: int = MAX_ANSWER_BYTES) -> List[bytes]:
+    """Greedy decode: stop at a newline, a special token, or ``limit`` bytes.
+
+    ``record`` is a boundary (``h`` tensor) or a tensor mapping; a core with a
+    store reads it at every step, so the answer can depend on all of it.
+    """
+    view = _decode_view(record)
+    batch = int(view["h"].shape[0])
     produced: List[List[int]] = [[] for _ in range(batch)]
     finished = [False] * batch
-    current = hidden
     for _ in range(limit):
-        tokens = core.head(current).argmax(dim=-1)
+        tokens = core.token_logits(view).argmax(dim=-1)
         for index in range(batch):
             if finished[index]:
                 continue
@@ -639,11 +765,11 @@ def generate_bytes(core: Any, hidden: Any, limit: int = MAX_ANSWER_BYTES) -> Lis
             produced[index].append(byte)
         if all(finished):
             break
-        current = core.cell(core.embedding(tokens), current)
+        view = core.consume(tokens, view)
     return [bytes(item) for item in produced]
 
 
-def rank_actor(core: Any, hidden: Any, candidates: Sequence[str]) -> str:
+def rank_actor(core: Any, record: Any, candidates: Sequence[str]) -> str:
     """Sequence log-likelihood of each name (plus terminator); argmax wins."""
     import torch.nn.functional as functional
 
@@ -652,13 +778,13 @@ def rank_actor(core: Any, hidden: Any, candidates: Sequence[str]) -> str:
     best_score = -math.inf
     for name in candidates:
         ids = [BYTE_OFFSET + byte for byte in (name + "\n").encode("utf-8")]
-        current = hidden
+        view = _decode_view(record)
         total = 0.0
         for token in ids:
-            logits = core.head(current)
+            logits = core.token_logits(view)
             total += float(functional.log_softmax(logits, dim=-1)[0, token])
-            feed = torch.as_tensor([token], dtype=torch.long, device=current.device)
-            current = core.cell(core.embedding(feed), current)
+            feed = torch.as_tensor([token], dtype=torch.long, device=view["h"].device)
+            view = core.consume(feed, view)
         if total > best_score:
             best_score = total
             best_name = name
@@ -758,7 +884,7 @@ def train(
             )
             total, main_loss, aux_loss = _training_loss(
                 core,
-                boundaries if boundaries is not None else [hidden],
+                boundaries if boundaries is not None else [dict(state.tensors)],
                 [row["answer"] for row in rows],
                 aux_lambda,
                 (
@@ -846,10 +972,11 @@ def evaluate(
 
             reset = variant == "reset"
             state, hidden = run_session(core, turns, gaps, reset_before_last=reset)
-            produced = generate_bytes(core, hidden)
+            final = dict(state.tensors)
+            produced = generate_bytes(core, final)
             for index, session in enumerate(chunk):
                 ranked = rank_actor(
-                    core, hidden[index : index + 1], session["environment"]["actors"]
+                    core, _slice(final, index, index + 1), session["environment"]["actors"]
                 )
                 prediction = _decoded(produced[index])
                 records.append(
@@ -1064,6 +1191,143 @@ def _aux_lambda_of(report: Dict[str, Any]) -> float:
     return float((report.get("config") or {}).get("aux_lambda") or 0.0)
 
 
+def _gate_prefix_of(report: Dict[str, Any]) -> str:
+    """The letter a report is graded under; stages default to Q or R."""
+    prefix = (report.get("config") or {}).get("gate_prefix")
+    if prefix is None:
+        prefix = "R" if (report.get("config") or {}).get("aux_mode") == "resolvable" else "Q"
+    prefix = str(prefix)
+    if len(prefix) != 1 or not prefix.isalpha() or prefix != prefix.upper():
+        raise SystemExit(f"gate_prefix must be a single A-Z letter, got {prefix!r}")
+    return prefix
+
+
+def _stage_t_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
+    """§55.4's T1-T4 for *one* arm; T2 needs the pair and is ``None`` here.
+
+    T1 is the store arm's own calibration at the registered budget, T3 is the
+    ablation's distance from the GRU control, T4 is cost. T2 (store minus
+    ablation) cannot be computed from one report, so it stays ``None`` and
+    ``--stage-t`` computes it from the pair; ``verdict`` ignores ``None``, so no
+    single report can claim the pair's result. A GRU report under ``--gate-prefix
+    T`` is not a T arm: only T4 applies.
+    """
+    config = report.get("config") or {}
+    fit = (report.get("results") or {}).get("train_fit") or {}
+    cost = report.get("cost") or {}
+    overfit = bool(report.get("overfit"))
+    memory = config.get("memory")
+    exact = fit.get("exact")
+    store_arm = overfit and memory is True
+    ablation = overfit and memory is False
+
+    return {
+        "T1_store_fits_at_budget": (
+            (exact is not None and exact >= STORE_FLOOR) if store_arm else None
+        ),
+        "T2_store_minus_ablation": None,
+        "T3_ablation_matches_gru": (
+            (abs(float(exact) - GRU_CONTROL_EXACT) <= ABLATION_TOLERANCE)
+            if (ablation and exact is not None)
+            else None
+        ),
+        "T4_cost_recorded": all(
+            cost.get(key) not in (None, 0) for key in ("params", "train_seconds", "device")
+        ),
+    }
+
+
+def stage_t_comparison(store: Dict[str, Any], ablation: Dict[str, Any]) -> Dict[str, Any]:
+    """§55.4's pair verdict, computed from the two reports (never from a memory).
+
+    Refuses to compare arms that are not the registered pair: same corpus
+    digests, same seed/lr/batch/epochs, same L derivation, one store arm and one
+    ablation. Without those checks the "gap" could be a difference in the test.
+    """
+    problems: List[str] = []
+    for label, report in (("store", store), ("ablation", ablation)):
+        if _gate_prefix_of(report) != "T":
+            problems.append(f"the {label} report is not graded under T")
+        if not report.get("overfit"):
+            problems.append(f"the {label} report is not the overfit calibration")
+    configs = [(store.get("config") or {}), (ablation.get("config") or {})]
+    if configs[0].get("memory") is not True:
+        problems.append("the first report is not the store arm (memory != True)")
+    if configs[1].get("memory") is not False:
+        problems.append("the second report is not the ablation (memory != False)")
+    for key in ("seed", "lr", "batch", "epochs", "token_count", "hidden", "emb"):
+        if configs[0].get(key) != configs[1].get(key):
+            problems.append(f"the two arms differ in {key}")
+    if (store.get("corpus") or {}).get("train_digest") != (ablation.get("corpus") or {}).get(
+        "train_digest"
+    ):
+        problems.append("the two arms used different training corpora")
+    if (store.get("start") or {}).get("source_weights_hash") != (ablation.get("start") or {}).get(
+        "source_weights_hash"
+    ):
+        problems.append("the two arms started from different derivations of L")
+    if problems:
+        raise SystemExit("; ".join(problems))
+
+    store_exact = ((store.get("results") or {}).get("train_fit") or {}).get("exact")
+    ablation_exact = ((ablation.get("results") or {}).get("train_fit") or {}).get("exact")
+    if store_exact is None or ablation_exact is None:
+        raise SystemExit("a train_fit exact rate is missing; the pair cannot be graded")
+
+    checks = {
+        "T1_store_fits_at_budget": float(store_exact) >= STORE_FLOOR,
+        "T2_store_minus_ablation": (
+            float(ablation_exact) <= ABLATION_CEILING
+            and (float(store_exact) - float(ablation_exact)) >= ABLATION_GAP
+        ),
+        "T3_ablation_matches_gru": (
+            abs(float(ablation_exact) - GRU_CONTROL_EXACT) <= ABLATION_TOLERANCE
+        ),
+        "T4_cost_recorded": all(
+            (report.get("cost") or {}).get(key) not in (None, 0)
+            for report in (store, ablation)
+            for key in ("params", "train_seconds", "device")
+        ),
+    }
+    return {
+        "store_exact": store_exact,
+        "ablation_exact": ablation_exact,
+        "gap": round(float(store_exact) - float(ablation_exact), 4),
+        "gru_control_exact": GRU_CONTROL_EXACT,
+        "checks": checks,
+        "all_pass": all(checks.values()),
+        "branch": stage_t_branch(checks),
+    }
+
+
+def stage_t_branch(checks: Dict[str, bool]) -> str:
+    """§55.6, mechanically: what the next experiment is allowed to be."""
+    if not checks["T3_ablation_matches_gru"]:
+        return (
+            "T3 fails: the ablation is not the same function as the GRU control, "
+            "so T1/T2 are not read; fix the wiring first"
+        )
+    if checks["T1_store_fits_at_budget"] and checks["T2_store_minus_ablation"]:
+        return (
+            "T1+T2 pass: the store shortens the credit path; next is held-out "
+            "generalisation at the same budget, not a score"
+        )
+    if checks["T1_store_fits_at_budget"] and not checks["T2_store_minus_ablation"]:
+        return (
+            "T1 passes but T2 does not: the fit is not attributable to the store; "
+            "next is the parameter-matched GRU control, no architecture claim"
+        )
+    if not checks["T1_store_fits_at_budget"] and checks["T2_store_minus_ablation"]:
+        return (
+            "T1 fails but T2 passes: the store helps but not enough; next is "
+            "per-turn regional losses, not more epochs or width"
+        )
+    return (
+        "T1 and T2 fail: this wiring does not shorten the path; next is "
+        "truncated BPTT or whole-turn attention, never more epochs or width"
+    )
+
+
 def _aux_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
     """§50.4's Q1-Q9 (and §51.4's R1-R9), recomputed from the recorded numbers.
 
@@ -1149,18 +1413,16 @@ def _aux_gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
     # stage R (§51) keeps the same nine conditions and only renames them, and
     # stage S (§52) does the same under its own letter, so a report cannot claim
     # one stage's name while being graded by another stage's rules
-    prefix = (report.get("config") or {}).get("gate_prefix")
-    if prefix is None:
-        prefix = "R" if (report.get("config") or {}).get("aux_mode") == "resolvable" else "Q"
-    prefix = str(prefix)
-    if len(prefix) != 1 or not prefix.isalpha() or prefix != prefix.upper():
-        raise SystemExit(f"gate_prefix must be a single A-Z letter, got {prefix!r}")
+    prefix = _gate_prefix_of(report)
     checks = {(prefix + name[1:]): value for name, value in checks.items()}
     return checks
 
 
 def gate_values(report: Dict[str, Any]) -> Dict[str, Any]:
     """Recompute stage P's G1-G10 from the recorded numbers; never read the stored verdict."""
+    if _gate_prefix_of(report) == "T":
+        # §55's arms are graded by T1-T4, not by stage Q's nine conditions
+        return _stage_t_gate_values(report)
     if _aux_lambda_of(report) > 0.0:
         return _aux_gate_values(report)
     corpus = report.get("corpus") or {}
@@ -1276,7 +1538,7 @@ def check_report(path: Path) -> List[str]:
     if not start_is_stage_l(start):
         problems.append(
             "the recorded start is neither the registered stage-L carrier nor a "
-            "behaviour-preserving widening of it"
+            "behaviour-preserving derivation of it"
         )
 
     # §50.4 Q9: if the auxiliary loss was on, every epoch must have both parts
@@ -1305,14 +1567,17 @@ def check_report(path: Path) -> List[str]:
         problems.append("checkpoint is missing, so the weights hash cannot be re-verified")
     else:
         try:
+            kind = str(config.get("core") or "gru")
             core = build_core(
                 hidden=int(config.get("hidden", HIDDEN)),
                 emb=int(config.get("emb", EMB)),
                 device="cpu",
+                kind=kind,
+                memory=bool(config.get("memory", True)),
             )
             core.load_weights(checkpoint, strict_config=True)
-            if core.config().get("model_kind") != "gru":
-                problems.append("checkpoint model_kind is not 'gru'")
+            if core.config().get("model_kind") != kind:
+                problems.append(f"checkpoint model_kind is not {kind!r}")
             if core.token_count != VOCAB_SIZE:
                 problems.append(f"checkpoint token_count {core.token_count} != {VOCAB_SIZE}")
             if core.weights_hash() != report.get("weights_hash"):
@@ -1412,6 +1677,22 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "source_weights_hash": L_WEIGHTS_HASH,
             "hidden": core.hidden,
         }
+    elif args.core == "turnstore":
+        core = build_core(
+            hidden=args.hidden,
+            emb=args.emb,
+            device=device,
+            seed=args.seed,
+            kind="turnstore",
+            memory=not args.no_memory,
+        )
+        start_hash = start_from_stage_l(core, Path(args.start), source_hidden=HIDDEN)
+        widened = {
+            "derived_from": "turnstore",
+            "source_weights_hash": L_WEIGHTS_HASH,
+            "hidden": core.hidden,
+            "memory": core.memory,
+        }
     else:
         core = build_core(hidden=args.hidden, emb=args.emb, device=device, seed=args.seed)
         start_hash = load_stage_l(core, Path(args.start))
@@ -1482,6 +1763,8 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "seed": args.seed,
             "max_answer_bytes": MAX_ANSWER_BYTES,
             "arm": arm,
+            "core": args.core,
+            "memory": None if args.core == "gru" else not args.no_memory,
             "aux_lambda": args.aux_loss,
             "aux_mode": args.aux_mode,
             "gate_prefix": args.gate_prefix,
@@ -1565,6 +1848,29 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--hidden", type=int, default=HIDDEN)
     parser.add_argument("--emb", type=int, default=EMB)
     parser.add_argument(
+        "--core",
+        choices=("gru", "turnstore"),
+        default="gru",
+        help=(
+            "§55 stage T: 'turnstore' is the per-turn store arm (same recurrence, "
+            "one write per turn, read into the head); 'gru' is every earlier stage"
+        ),
+    )
+    parser.add_argument(
+        "--no-memory",
+        action="store_true",
+        help=(
+            "§55 T2/T3 ablation: keep every parameter, set the read to 0 and write "
+            "nothing (only meaningful with --core turnstore)"
+        ),
+    )
+    parser.add_argument(
+        "--stage-t",
+        nargs=2,
+        metavar=("STORE", "ABLATION"),
+        help="§55.4/§55.6: grade the pair from two finished reports and print the branch",
+    )
+    parser.add_argument(
         "--widen-to",
         type=int,
         default=0,
@@ -1621,6 +1927,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         parser.error("--gate-prefix must be a single A-Z letter")
     if args.overfit < 0:
         parser.error("--overfit must be >= 0")
+    if args.no_memory and args.core != "turnstore":
+        parser.error("--no-memory is the turnstore ablation; pass --core turnstore")
+    if args.widen_to and args.core != "gru":
+        parser.error("--widen-to is §52.4's GRU width rung; it does not combine with --core")
+    if args.core != "gru" and (args.hidden != HIDDEN or args.emb != EMB):
+        parser.error(
+            f"§55 fixes hidden={HIDDEN} and emb={EMB} for the store arm; "
+            "varying them is a different experiment"
+        )
     if args.widen_to:
         if args.widen_to <= HIDDEN:
             parser.error(
@@ -1642,6 +1957,25 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if args.out == "data/pantry_stage":
             # a smoke report must never be picked up as the F-rand control
             args.out = "data/pantry_stage/smoke"
+
+    if args.stage_t:
+        store_path, ablation_path = (Path(part) for part in args.stage_t)
+        try:
+            outcome = stage_t_comparison(
+                json.loads(store_path.read_text(encoding="utf-8")),
+                json.loads(ablation_path.read_text(encoding="utf-8")),
+            )
+        except SystemExit as exc:
+            print(f"FAILED --stage-t: {exc}")
+            return 1
+        print(f"store    : {store_path}  train exact {outcome['store_exact']:.4f}")
+        print(f"ablation : {ablation_path}  train exact {outcome['ablation_exact']:.4f}")
+        print(f"gap      : {outcome['gap']:.4f}  (GRU control {outcome['gru_control_exact']:.4f})")
+        for name, value in outcome["checks"].items():
+            print(f"  {'PASS' if value else 'FAIL'}  {name}")
+        print(f"all_pass : {outcome['all_pass']}")
+        print(f"branch   : {outcome['branch']}")
+        return 0 if outcome["all_pass"] else 1
 
     if args.check:
         problems = check_report(Path(args.check))

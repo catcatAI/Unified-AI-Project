@@ -44,7 +44,7 @@ SCHEMA_VERSION = 1
 MAX_STATE_BYTES = 10 * 1024 * 1024
 META_FILENAME = "meta.json"
 TENSORS_FILENAME = "tensors.npz"
-MODEL_KINDS = frozenset({"gru", "slots", "snn", "ssm"})
+MODEL_KINDS = frozenset({"gru", "slots", "snn", "ssm", "turnstore"})
 WEIGHTS_HASH_PREFIX = "sha256:"
 
 _META_REQUIRED = (

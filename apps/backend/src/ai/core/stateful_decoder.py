@@ -11,6 +11,9 @@ Three arms live here, and they differ **only** in what the state is:
 * :class:`SlotMemoryCore` — the round-7 arm (round 6's design requirement): the
   same recurrence plus a key-addressed store, so the state can hold two
   bindings instead of one vector's worth of "the most recent value".
+* :class:`TurnStoreCore` — the §55 arm: the GRU recurrence plus a store written
+  once per turn and read only into the output head, so credit does not have to
+  travel back through every token (the measured obstacle in §49.16-§54).
 
 Everything a core needs in order to obey the contract (state object, weights
 hash, checkpointing) is in :class:`StatefulCore`, so a new arm cannot quietly
@@ -255,6 +258,30 @@ class StatefulCore:
             raise CoreStateInvalid("state 'h' must be a torch tensor; call attach_state()")
         return hidden
 
+    # -- the decode interface the trainer uses ------------------------------
+
+    def token_logits(self, tensors: Dict[str, Any]) -> Any:
+        """Logits for one decoding step from a tensor mapping.
+
+        The trainer decodes from a *snapshot* of the state (one per turn), not
+        from the live object, so this takes the tensors directly. A core with a
+        store must override it - the store is part of what a step reads.
+        """
+        raise NotImplementedError(f"{type(self).__name__} has no token_logits()")
+
+    def consume(self, tokens: Any, tensors: Dict[str, Any]) -> Dict[str, Any]:
+        """Advance the recurrence by one token and return a new tensor mapping.
+
+        Must not mutate the input mapping: auxiliary losses hold several past
+        boundaries alive at once, and a decoder that wrote back would change the
+        evidence an earlier boundary is scored on.
+        """
+        raise NotImplementedError(f"{type(self).__name__} has no consume()")
+
+    def end_turn(self, tensors: Dict[str, Any]) -> Dict[str, Any]:
+        """Optional turn-end hook; cores without a store return the state as is."""
+        return dict(tensors)
+
     # -- checkpointing ------------------------------------------------------
 
     def state_dict(self) -> Dict[str, Any]:
@@ -373,6 +400,16 @@ class GRUCore(StatefulCore):
             ("head", self.head),
         )
 
+    # -- the decode interface the trainer uses ------------------------------
+
+    def token_logits(self, tensors: Dict[str, Any]) -> Any:
+        """``head(h)`` - the decode step, bitwise the old ``core.head(current)``."""
+        return self.head(tensors["h"])
+
+    def consume(self, tokens: Any, tensors: Dict[str, Any]) -> Dict[str, Any]:
+        """``h <- cell(embedding(token), h)``; the store (if any) is untouched."""
+        return {**tensors, "h": self.cell(self.embedding(tokens), tensors["h"])}
+
     # -- the two cycles -----------------------------------------------------
 
     def ai_step(self, tokens: Any, state: CoreState) -> Tuple[Any, CoreState]:
@@ -447,6 +484,227 @@ class GRUCore(StatefulCore):
         state.last_dt_s = float(dt.detach().max().to("cpu"))
         state.bump()
         return state
+
+
+class TurnStoreCore(GRUCore):
+    """§55 stage T: the same recurrence, plus one write at each turn's end.
+
+    Stage S measured the cost of credit assignment rather than a capacity wall:
+    the same 124,611-parameter carrier fits 32 sessions, but only at 1,600
+    updates/session, and the 800-session pantry arm was given 20. This arm keeps
+    every part of :class:`GRUCore` that the contract pins - ``embedding`` →
+    ``cell``, ``dt_proj``, ``al_step``, ``chunk_seconds`` - and adds a
+    key-addressed store written **once per turn**, so the answer does not have to
+    travel back through every token of every turn.
+
+    The state carries ``h`` ``[B, H]`` and the store ``k`` ``[B, S, D]`` /
+    ``v`` ``[B, S, D]``. At a turn's end the controller writes
+
+    * ``a = softmax(scale_w * W_s h)`` - which slot receives this turn;
+    * ``g = sigmoid(W_g h)`` - how strongly, starting at bias -2.0;
+    * ``slot <- slot * (1 - a g) + a g * W_{k|v} h``.
+
+    Reading is content-addressed: ``r = Σ softmax(scale * W_q h · kᵀ) v`` and the
+    output is ``head([h, r])``. Two things are deliberate and each has a measured
+    reason in §55.2: the write is per turn, not per token (the moving-average
+    window is ``1/s`` tokens, so a ~100-byte turn would erase itself mid-turn),
+    and ``r`` enters **only the output head**, never the cell (feeding it back
+    made the ablation beat the scored arm in §46.13). ``al_step`` is inherited
+    unchanged: time advances the controller and leaves the store alone, because
+    slots are content, not a clock.
+
+    ``memory=False`` is the R4 ablation: every parameter is kept, ``r ≡ 0`` and
+    no write happens. With L's blocks copied, ``head([h, 0])`` is L's
+    ``head(h)``, so the ablation's *function* is the GRU arm's and only its
+    random stream differs.
+    """
+
+    model_kind = "turnstore"
+
+    def __init__(
+        self,
+        token_count: int,
+        *,
+        hidden: int = 64,
+        emb: int = 32,
+        chunk_seconds: float = DEFAULT_MAX_CHUNK_S,
+        seed: Optional[int] = None,
+        device: str = "cpu",
+        slots: int = 16,
+        slot_dim: int = 64,
+        value_dim: int = 64,
+        memory: bool = True,
+    ) -> None:
+        if slots <= 0 or slot_dim <= 0 or value_dim <= 0:
+            raise ValueError("slots, slot_dim and value_dim must be > 0")
+        super().__init__(
+            token_count,
+            hidden=hidden,
+            emb=emb,
+            chunk_seconds=chunk_seconds,
+            seed=seed,
+            device=device,
+        )
+        torch = self._torch
+        nn = torch.nn
+        self.slots = int(slots)
+        self.slot_dim = int(slot_dim)
+        self.value_dim = int(value_dim)
+        self.memory = bool(memory)
+
+        self.key_proj = nn.Linear(hidden, self.slot_dim)
+        self.value_proj = nn.Linear(hidden, self.value_dim)
+        self.query_proj = nn.Linear(hidden, self.slot_dim)
+        self.slot_gate = nn.Linear(hidden, self.slots)
+        self.write_gate = nn.Linear(hidden, 1)
+        # ``head`` sees the controller plus the current read. The ablation keeps
+        # the same shape and zeroes the read, so it stays a drop-in for GRUCore.
+        self.head = nn.Linear(hidden + self.value_dim, token_count)
+        # Start by writing slowly and learn when to commit (§46.4b's prior).
+        nn.init.constant_(self.write_gate.bias, -2.0)
+        self.log_read_scale = nn.Parameter(torch.tensor(math.log(4.0)))
+        self.log_write_scale = nn.Parameter(torch.tensor(math.log(4.0)))
+        if device != "cpu":
+            self.to(device)
+
+        self._weights_hash = None
+        self._parameter_count = None
+
+    # -- introspection ------------------------------------------------------
+
+    def modules(self) -> Tuple[Any, ...]:
+        return (
+            self.embedding,
+            self.cell,
+            self.dt_proj,
+            self.key_proj,
+            self.value_proj,
+            self.query_proj,
+            self.slot_gate,
+            self.write_gate,
+            self.head,
+        )
+
+    def _modules_by_name(self) -> Tuple[Tuple[str, Any], ...]:
+        return (
+            ("embedding", self.embedding),
+            ("cell", self.cell),
+            ("dt_proj", self.dt_proj),
+            ("key_proj", self.key_proj),
+            ("value_proj", self.value_proj),
+            ("query_proj", self.query_proj),
+            ("slot_gate", self.slot_gate),
+            ("write_gate", self.write_gate),
+            ("head", self.head),
+        )
+
+    def extra_parameters(self) -> Tuple[Tuple[str, Any], ...]:
+        return (
+            ("log_read_scale", self.log_read_scale),
+            ("log_write_scale", self.log_write_scale),
+        )
+
+    def config(self) -> Dict[str, Any]:
+        payload = super().config()
+        payload.update(
+            {
+                "slots": self.slots,
+                "slot_dim": self.slot_dim,
+                "value_dim": self.value_dim,
+                "memory": self.memory,
+            }
+        )
+        return payload
+
+    # -- state --------------------------------------------------------------
+
+    def state_tensors(self, batch_size: int) -> Dict[str, Any]:
+        torch = self._torch
+        return {
+            "h": torch.zeros(batch_size, self.hidden, device=self.device),
+            "k": torch.zeros(batch_size, self.slots, self.slot_dim, device=self.device),
+            "v": torch.zeros(batch_size, self.slots, self.value_dim, device=self.device),
+        }
+
+    def _store(self, tensors: Dict[str, Any]) -> Tuple[Any, Any]:
+        keys = tensors.get("k")
+        values = tensors.get("v")
+        if keys is None or values is None:
+            raise CoreStateInvalid("state has no 'k'/'v' tensors")
+        return keys, values
+
+    # -- the one step interface the trainer uses ----------------------------
+
+    def read_vector(self, tensors: Dict[str, Any]) -> Any:
+        """The content the current ``h`` addresses (all zeros when ``memory`` is off)."""
+        torch = self._torch
+        hidden = tensors["h"]
+        if not self.memory:
+            return torch.zeros(
+                hidden.shape[0],
+                self.value_dim,
+                dtype=hidden.dtype,
+                device=hidden.device,
+            )
+        keys, values = self._store(tensors)
+        query = self.query_proj(hidden)
+        scores = torch.bmm(keys, query.unsqueeze(2)).squeeze(2)
+        weights = torch.softmax(torch.exp(self.log_read_scale) * scores, dim=-1)
+        return torch.bmm(weights.unsqueeze(1), values).squeeze(1)
+
+    def token_logits(self, tensors: Dict[str, Any]) -> Any:
+        """Logits for one step, from ``[h, read]`` - the store never enters ``h``."""
+        torch = self._torch
+        return self.head(torch.cat([tensors["h"], self.read_vector(tensors)], dim=-1))
+
+    def consume(self, tokens: Any, tensors: Dict[str, Any]) -> Dict[str, Any]:
+        """Advance ``h`` by one token, leaving the store untouched."""
+        return {**tensors, "h": self.cell(self.embedding(tokens), tensors["h"])}
+
+    def end_turn(self, tensors: Dict[str, Any]) -> Dict[str, Any]:
+        """One write per turn: address, strength, then a moving average."""
+        if not self.memory:
+            return dict(tensors)
+        torch = self._torch
+        hidden = tensors["h"]
+        keys, values = self._store(tensors)
+        weights = torch.softmax(torch.exp(self.log_write_scale) * self.slot_gate(hidden), dim=-1)
+        strength = torch.sigmoid(self.write_gate(hidden))
+        share = (strength * weights).unsqueeze(-1)
+        new_keys = self.key_proj(hidden).unsqueeze(1)
+        new_values = self.value_proj(hidden).unsqueeze(1)
+        return {
+            **tensors,
+            "k": keys * (1.0 - share) + share * new_keys,
+            "v": values * (1.0 - share) + share * new_values,
+        }
+
+    # -- the two cycles -----------------------------------------------------
+
+    def ai_step(self, tokens: Any, state: CoreState) -> Tuple[Any, CoreState]:
+        """``tokens``: LongTensor ``[B, L]`` → ``(logits [B, L, V], state)``.
+
+        Identical to :meth:`GRUCore.ai_step` except that every step's logits see
+        the current store. No write happens here; a turn-end write is explicit
+        (:meth:`end_turn`) so a caller cannot accidentally write mid-turn.
+        """
+        torch = self._torch
+        if tokens.ndim != 2:
+            raise ValueError(f"tokens must be [B, L], got shape {tuple(tokens.shape)}")
+        tensors = dict(state.tensors)
+        if tokens.shape[0] != tensors["h"].shape[0]:
+            raise ValueError("batch size of tokens and state disagree")
+
+        outputs = []
+        for position in range(tokens.shape[1]):
+            tensors = self.consume(tokens[:, position], tensors)
+            outputs.append(self.token_logits(tensors))
+        logits = torch.stack(outputs, dim=1)
+
+        for name, value in tensors.items():
+            state.tensors[name] = value
+        state.bump()
+        return logits, state
 
 
 class SSMCore(StatefulCore):
