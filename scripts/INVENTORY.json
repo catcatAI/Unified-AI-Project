@@ -947,6 +947,11 @@
       "referenced": true,
       "purpose": "§68: what does the state carry? (frozen carrier, linear readouts at the answer boundary)"
     },
+    "probe_pantry_families.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§70: which readout family reaches the roster? (same frozen carrier, same turn)"
+    },
     "probe_pantry_readout.py": {
       "category": "probe",
       "referenced": true,
