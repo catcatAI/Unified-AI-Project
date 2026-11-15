@@ -727,6 +727,11 @@
       "referenced": true,
       "purpose": "get drive auth url（無說明：原始碼未附 docstring）"
     },
+    "gpu_limit.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "A computed ceiling for one process's GPU use, from the kernel's own counters."
+    },
     "hardware_intelligence_report.py": {
       "category": "tool",
       "referenced": false,
