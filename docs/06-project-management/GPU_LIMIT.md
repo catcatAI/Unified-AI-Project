@@ -66,6 +66,22 @@ rebase，幻影 cycle 就不會汙染下一個視窗，而報告裡的 duty 只�
 同一次量測也順便留下幻影的證據：被限速的那次，**它自己的 counter** 說它用了
 0.872 duty，而算式與實際吞吐都說 0.478／0.536——差的就是暫停期間的幻影。
 
+## 怎麼用（套在真的訓練上）
+
+限速器只管「這個行程的 GPU duty」，不管它跑什麼，所以接訓練不需要改訓練程式：
+
+```bash
+# 5 折上限：48 秒工作 / 48 秒暫停（暫停長度是算的，不是猜的）
+./.venv/bin/python scripts/gpu_limit.py --run --target 0.5 -- \
+    ./.venv/bin/python scripts/train_token_snn.py --limit 20000 --epochs 5 --device xpu
+```
+
+- `--seconds N` 只限 N 秒後放手（之後行程全速跑），要全程受控就不要給。
+- `--out report.json` 留下算出來的 duty、暫停次數、每個 phase 的 `pause_until_total`。
+- `--pid` 可以接上已經在跑的行程，但**前面已經送出的工作收不回來**，要全程受控就用
+  `--run` 從頭帶。
+- 目標 0.6 剛好是硬規則的上限；實測會低約 2 個百分點（保守側）。
+
 ## 誠實的限制
 
 1. **會略微低於上限**（0.477 vs 0.5）。恢復點是算的，但 socket 排程與 poll
