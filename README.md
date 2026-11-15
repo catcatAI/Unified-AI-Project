@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-10-29 (R75 薄索引化於 2026-09-21；內文狀態數字於 10-19／10-20 續改；本次只校正檔頭日期)
+  LAST_MODIFIED: 2026-11-15 (R75 薄索引化於 2026-09-21；內文狀態數字於 10-19／10-20 續改；本次只新增「相關工具」連結)
   =============================================================================
 -->
 
@@ -140,6 +140,14 @@ npx prettier --check .                             # 全倉格式（豁免見 .p
 
 隨機三目錄組合測試在 CI 每次探索一種組合（防 sys.path 類跨套件汙染回歸）。
 
+## Related Tool
+
+[**ai-repo-guard**](https://cxcxuouo.gumroad.com/l/dtnnkp) — the gates used in
+this repo (project map, status matrix, mypy ratchet), extracted into a
+standalone package for any Python repository. It is sold separately under its
+own commercial license; this project keeps running its own scripts under
+`scripts/`.
+
 ## Documentation Index
 
 - [docs/INDEX.md](docs/INDEX.md) — 全部文檔索引
@@ -211,3 +219,9 @@ cd apps/backend && python -m src.game.app
 - [STATUS_MATRIX.md](docs/STATUS_MATRIX.md) — 功能成熟度唯一總表（生成視圖）
 - [INVOCATION_MATRIX.md](docs/INVOCATION_MATRIX.md)
   — 調用矩陣（怎麼用、配什麼、怎麼驗證）
+
+### 相關工具
+
+[**ai-repo-guard**](https://cxcxuouo.gumroad.com/l/dtnnkp)
+—從本專案抽出來的檢查（專案地圖、狀態矩陣、mypy 棘輪門），做成可獨立用於任何 Python 倉庫的套件。它另外販售、有自己的商業授權；本專案仍使用
+`scripts/` 底下自己的腳本。
