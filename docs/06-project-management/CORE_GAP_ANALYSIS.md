@@ -10748,3 +10748,34 @@ PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/probe_pantry_write76.py \
 ```
 
 **這一節不是能力分數**；核心分不變 **0.00/10**。它只回答「一次寫入能裝多少，是不是組合的損失所在」。
+
+### 76.12 執行條件的修訂（**跑之前**寫定；沒有動任何常數、閘門或分支）
+
+首次啟動（16:30）後，主機的使用者要求算力不得佔滿：**CPU ≤ 50%、RAM ≤ 60%、swap／VRAM ≤ 60%**，
+且在整個階段都必須成立。原本的訓練指令讓 torch 用滿 12 個邏輯 CPU（約 8 秒／epoch），
+這違反上述上限。因此**在產生任何 §76 讀數之前**修改執行條件，其餘逐項不變：
+
+* **裝置仍是 `cpu`**（登記值），語料種子仍是 `20261127`，`--write-slots` 仍是唯一的自變數。
+* 兩臂改在**同一個 transient user service** 下重訓，cgroup 硬上限：
+  `CPUQuota=500%`（12 個邏輯 CPU 中的 5 個＝**41.7%**，留給桌面）、
+  `MemoryMax=9216M`（15.40 GiB 的 **58.4%**）、`MemorySwapMax=0`（swap **0%**）。
+  另設 `OMP_NUM_THREADS=5` 等，避免執行緒數與配額不一致。
+* **對照臂一併重訓**（原 16:30–16:58 的 control 載體**作廢、不計分**）。理由：若只重訓治療臂，
+  兩臂的浮點縮約順序（執行緒數）就不同，`FIT_COMPARABILITY` 會把執行緒差讀成寫入差；
+  兩臂必須只差 `--write-slots`。作廢的載體留在 `data/pantry_stage/write76/control/` 供查，
+  **沒有**任何讀數由它產生。
+* 首次啟動在 epoch 196/200 因工作階段重啟而被終止，**沒有寫出報告**；`slots4/` 為空。
+  該次不算一次跑，也不採用任何中間數字。
+* **GPU 不使用**（0% ≤ 50%）：Intel Arc + torch 沒有可用的**逐行程利用率上限**；
+  唯一能「一直保證 ≤ 50%」的做法就是讓它閒置。若日後要用 GPU，必須另立 amendment 並改兩臂裝置。
+* 若 cgroup 的 `MemoryMax` 觸發 OOM，該次記為**失敗的跑**，不是結果；不得為此放寬上限。
+
+命令（`systemd-run` 的資源上限即上表；輸出在 `data/pantry_stage/write76/capped.log`）：
+
+```bash
+systemd-run --user --unit=pantry76-capped --collect \
+    -p CPUQuota=500% -p MemoryMax=9216M -p MemorySwapMax=0 \
+    /home/cxuo/文件/GitHub/Unified-AI-Project/data/pantry_stage/write76/run_capped.sh
+```
+
+**這一節不是能力分數**；核心分不變 **0.00/10**。
