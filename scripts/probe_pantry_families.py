@@ -586,8 +586,12 @@ def run(
             "capacity": ceiling,
         }
 
-    train_structure = structure_test(torch, train_views["state"], roster_keys(train))
-    held_structure = structure_test(torch, held_views["state"], roster_keys(heldout))
+    # §70.2 registers the structure test on the **standardised** [h, read]:
+    # cosine distance is scale-sensitive per dimension, so the metric must be the
+    # one the registration names, not the raw state.
+    state_train, state_held = standardised("linear_state")
+    train_structure = structure_test(torch, state_train, roster_keys(train))
+    held_structure = structure_test(torch, state_held, roster_keys(heldout))
 
     reproduction: Dict[str, Any] = {
         "reference": str(reference_path) if reference_path else None,
