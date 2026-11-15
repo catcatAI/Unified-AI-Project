@@ -140,8 +140,11 @@ def slot_block(torch: Any, core: Any, views: Dict[str, Any]) -> Dict[str, Any]:
         return float(spectrum[1] / spectrum[0].clamp_min(1e-12))
 
     return {
-        "weights": weights,
-        "address": address,
+        # The readings are computed in double for the rank numbers, but the two
+        # views that feed a linear probe must keep the store's dtype: §70's
+        # probe is float32, and mixing dtypes fails at the first matmul.
+        "weights": weights.to(values.dtype),
+        "address": address.to(values.dtype),
         "max_share": weights.max(dim=1).values,
         "effective_slots": 1.0 / (weights * weights).sum(dim=1),
         "active_slots": active,
