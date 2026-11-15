@@ -37,6 +37,17 @@ The two controls are the discriminators. If the state tracks **the roster set**,
 did not change). If the state tracks **the literal text**, both move it away,
 while ``swap`` still lands on genuine text of the edited roster.
 
+The skip rule (§71.9, amendment)
+--------------------------------
+The registration claimed a same-length replacement "always exists". That is
+false when a roster exhausts a byte-length class - all five 4-byte names
+(Alex, Hana, Ivan, Judy, Lena) on one roster leaves no same-length outsider for
+that class. Such a session is **skipped in the swap arm and counted**
+(``edits.swap_skipped``); the edit is never weakened to a different token count,
+and the other two edits are always available. k=2 cannot be affected: a
+two-name roster holds at most two of a class, and the 4-byte / 5-byte pools hold
+five and seven outsiders.
+
 What this measures (all capacity-free)
 -------------------------------------
 * ``movement``  - ``1 - cos(state_edited, state_original)`` at the roster
@@ -163,21 +174,31 @@ def _digest(text: str) -> int:
 
 def edit_swap(
     session: Dict[str, Any], actors: Sequence[str]
-) -> Tuple[Dict[str, Any], Tuple[str, ...]]:
-    """Replace one name with a **same-byte-length** name that is not in the roster."""
+) -> Optional[Tuple[Dict[str, Any], Tuple[str, ...]]]:
+    """Replace one name with a **same-byte-length** name that is not in the roster.
+
+    ``None`` when every byte-length class present in the roster has no outsider
+    left: no same-length replacement exists then, and a longer or shorter name
+    would change the turn's token count (the core tokenises one token per byte),
+    so the swap arm is **skipped** for that session rather than weakened. §71.9
+    records this amendment. A two-name roster cannot exhaust a class (the 4-byte
+    and 5-byte pools hold five and seven names outside a pair), so k=2 is
+    unaffected by the change.
+    """
     clauses = clauses_of(session)
     names = [name for _, name in clauses]
     seed = _digest(session["session_id"])
-    index = seed % len(clauses)
-    name = names[index]
-    width = len(name.encode("utf-8"))
-    candidates = sorted(
-        actor for actor in actors if len(actor.encode("utf-8")) == width and actor not in names
-    )
-    if not candidates:
-        raise SystemExit(
-            f"{session['session_id']}: no same-length name outside {names} (width {width})"
+    feasible: List[Tuple[int, List[str]]] = []
+    for index, name in enumerate(names):
+        width = len(name.encode("utf-8"))
+        candidates = sorted(
+            actor for actor in actors if len(actor.encode("utf-8")) == width and actor not in names
         )
+        if candidates:
+            feasible.append((index, candidates))
+    if not feasible:
+        return None
+    index, candidates = feasible[seed % len(feasible)]
     replacement = candidates[(seed >> 8) % len(candidates)]
     edited = list(clauses)
     edited[index] = (clauses[index][0], replacement)
@@ -369,7 +390,17 @@ def gates(report: Dict[str, Any]) -> Dict[str, Any]:
     retention_block = report["retention"]
     instrument = report["instrument"]
 
-    swap_moves = float(movement_block["swap"]["mean"]) > EDIT_MOVEMENT_FLOOR
+    swap_block = movement_block["swap"]
+    # §71.9's `n_rows` is metadata; a file scored before the amendment carries the
+    # same information in `per_row`, so absence is not a zero-row arm.
+    if "n_rows" in swap_block:
+        swap_rows = int(swap_block["n_rows"])
+    else:
+        swap_rows = len(swap_block.get("per_row") or [])
+    swap_mean = swap_block["mean"]
+    swap_moves = bool(
+        swap_rows > 0 and swap_mean is not None and float(swap_mean) > EDIT_MOVEMENT_FLOOR
+    )
     lift_defined = int(lift["rows_compared"]) >= MIN_LIFT_ROWS
     lift_passes = bool(
         lift_defined and float(lift["mean"]) > 0.0 and float(lift["p_value"]) <= LIFT_ALPHA
@@ -386,22 +417,28 @@ def gates(report: Dict[str, Any]) -> Dict[str, Any]:
                 and instrument["determinism_ok"]
                 and instrument["texts_changed"]
                 and instrument["token_counts_matched"]
+                and swap_rows > 0
             ),
             "carrier_unchanged": instrument["carrier_unchanged"],
             "checkpoint_unchanged": instrument["checkpoint_unchanged"],
             "determinism_ok": instrument["determinism_ok"],
             "texts_changed": instrument["texts_changed"],
             "token_counts_matched": instrument["token_counts_matched"],
+            "swap_rows": swap_rows,
+            "swap_skipped": int(instrument.get("swap_skipped", 0)),
             "reading": (
-                "re-running the unedited session reproduces its state, all three edits change the "
-                "bytes, and every edit keeps the roster turn's token count"
+                "re-running the unedited session reproduces its state, every produced edit changes "
+                "the bytes, every produced edit keeps the roster turn's token count, and the swap "
+                "arm has at least one row (§71.9: a roster that exhausts its byte-length classes "
+                "skips that session instead of weakening the edit)"
             ),
         },
         "J1_edit_moves_the_state": {
             "pass": bool(swap_moves),
-            "swap_movement": movement_block["swap"]["mean"],
+            "swap_movement": swap_mean,
             "reverse_movement": movement_block["reverse"]["mean"],
             "colour_movement": movement_block["colour"]["mean"],
+            "swap_rows": swap_rows,
             "floor": EDIT_MOVEMENT_FLOOR,
             "reading": "an edit of the roster line changes the state at the roster boundary",
         },
@@ -431,6 +468,7 @@ def gates(report: Dict[str, Any]) -> Dict[str, Any]:
             ),
         },
         "J4_neighbourhood_power": {
+            "pass": bool(lift_defined),
             "k": k,
             "rows_compared": lift["rows_compared"],
             "rows_missing_reference": lift["rows_missing_reference"],
@@ -582,28 +620,43 @@ def run(
     swaps: List[Dict[str, Any]] = []
     reversed_sessions: List[Dict[str, Any]] = []
     colour_sessions: List[Dict[str, Any]] = []
+    swap_positions: List[int] = []
+    swap_ids: List[str] = []
+    swap_original_keys: List[Tuple[str, ...]] = []
     edited_keys: List[Tuple[str, ...]] = []
     original_keys: List[Tuple[str, ...]] = []
+    swap_skipped: List[str] = []
     texts_changed = True
     token_counts_matched = True
-    for session in heldout:
+    for position, session in enumerate(heldout):
         turn = roster_turn(session)
         original_line = str(session["turns"][turn]["user_input"])
-        swapped, target = edit_swap(session, actors)
-        if clause_key(swapped) != target:
-            raise SystemExit(f"{session['session_id']}: swap did not produce the target roster")
+        original_keys.append(roster_key(session))
         reversed_session = edit_reverse(session)
         colour_session = edit_colour(session, colours)
-        for edited in (swapped, reversed_session, colour_session):
+        edited_versions = [reversed_session, colour_session]
+        swapped = edit_swap(session, actors)
+        if swapped is None:
+            # The roster exhausts every byte-length class that has an outsider,
+            # so no same-length replacement exists (§71.9).
+            swap_skipped.append(str(session["session_id"]))
+        else:
+            edited_swap, target = swapped
+            if clause_key(edited_swap) != target:
+                raise SystemExit(f"{session['session_id']}: swap did not produce the target roster")
+            swaps.append(edited_swap)
+            swap_positions.append(position)
+            swap_ids.append(str(session["session_id"]))
+            swap_original_keys.append(roster_key(session))
+            edited_keys.append(target)
+            edited_versions.append(edited_swap)
+        for edited in edited_versions:
             if str(edited["turns"][turn]["user_input"]) == original_line:
                 texts_changed = False
             if len(edited["turns"][turn]["user_input"].encode("utf-8")) != len(
                 original_line.encode("utf-8")
             ):
                 token_counts_matched = False
-        swaps.append(swapped)
-        edited_keys.append(target)
-        original_keys.append(roster_key(session))
         reversed_sessions.append(reversed_session)
         colour_sessions.append(colour_session)
 
@@ -611,17 +664,26 @@ def run(
     reverse_states = _states(families, trainer, contents, core, reversed_sessions, roster_index)
     colour_states = _states(families, trainer, contents, core, colour_sessions, roster_index)
     edited_ids = [str(session["session_id"]) for session in heldout]
+    positions = torch.as_tensor(swap_positions, dtype=torch.long)
+    swap_originals = original_states[positions]
 
     movement_block = {
         "swap": {
-            "mean": round(sum(movement(torch, swap_states, original_states)) / len(heldout), 6),
-            "per_row": movement(torch, swap_states, original_states),
+            "n_rows": len(swaps),
+            "mean": (
+                round(sum(movement(torch, swap_states, swap_originals)) / len(swaps), 6)
+                if swaps
+                else None
+            ),
+            "per_row": movement(torch, swap_states, swap_originals),
         },
         "reverse": {
+            "n_rows": len(reversed_sessions),
             "mean": round(sum(movement(torch, reverse_states, original_states)) / len(heldout), 6),
             "per_row": movement(torch, reverse_states, original_states),
         },
         "colour": {
+            "n_rows": len(colour_sessions),
             "mean": round(sum(movement(torch, colour_states, original_states)) / len(heldout), 6),
             "per_row": movement(torch, colour_states, original_states),
         },
@@ -631,11 +693,11 @@ def run(
         torch,
         swap_states,
         edited_keys,
-        original_keys,
+        swap_original_keys,
         reference_states,
         reference_keys,
         reference_ids,
-        edited_ids,
+        swap_ids,
     )
 
     reverse_own = retention(
@@ -666,7 +728,7 @@ def run(
         edited_ids,
     )
     swap_own = retention(
-        torch, swap_states, edited_keys, reference_states, reference_keys, reference_ids, edited_ids
+        torch, swap_states, edited_keys, reference_states, reference_keys, reference_ids, swap_ids
     )
     retention_block = {
         "original": {"mean": original_own["mean"], "n_rows": original_own["n_rows"]},
@@ -703,6 +765,8 @@ def run(
         "determinism_ok": bool(determinism >= 1.0 - 1e-6),
         "texts_changed": bool(texts_changed),
         "token_counts_matched": bool(token_counts_matched),
+        "swap_rows": len(swaps),
+        "swap_skipped": len(swap_skipped),
         "seconds": 0.0,
     }
     outcome: Dict[str, Any] = {
@@ -728,6 +792,8 @@ def run(
                 "only the roster turn's user_input changes; names are chosen same-length and "
                 "colours are two characters, so the roster turn's token count is unchanged"
             ),
+            "swap_skipped": swap_skipped,
+            "swap_skipped_count": len(swap_skipped),
         },
         "probe": {
             "features": "frozen carrier state [h, read] at the roster boundary, torch.no_grad",
@@ -771,18 +837,42 @@ def check(path: Path) -> List[str]:
     problems: List[str] = []
     for name in ("swap", "reverse", "colour"):
         block = (data.get("movement") or {}).get(name) or {}
-        if not isinstance(block.get("mean"), (int, float)):
-            problems.append(f"movement.{name} has no mean")
-        elif not isinstance(block.get("per_row"), list) or not block["per_row"]:
-            problems.append(f"movement.{name} has no per-row values")
+        rows = block.get("per_row")
+        # §71.9 added `n_rows`; a file scored before the amendment carries its
+        # row count only in `per_row`, so that is the fallback. A file that
+        # stores both must have them agree.
+        if "n_rows" in block:
+            n_rows = int(block["n_rows"])
+            if isinstance(rows, list) and len(rows) != n_rows:
+                problems.append(f"movement.{name}.n_rows does not match its per-row values")
         else:
-            recomputed = sum(block["per_row"]) / len(block["per_row"])
+            n_rows = len(rows) if isinstance(rows, list) else 0
+        if n_rows == 0:
+            # §71.9: a session whose roster exhausts its byte-length classes has
+            # no swap arm. Zero rows is a recorded skip, not missing data.
+            if not isinstance(rows, list) or rows:
+                problems.append(f"movement.{name} has no rows but stores per-row values")
+            if block.get("mean") is not None:
+                problems.append(f"movement.{name} has no rows but stores a mean")
+        elif not isinstance(block.get("mean"), (int, float)):
+            problems.append(f"movement.{name} has no mean")
+        elif not isinstance(rows, list) or not rows:
+            problems.append(f"movement.{name} has no per-row values")
+        elif len(rows) != n_rows:
+            problems.append(f"movement.{name}.n_rows does not match its per-row values")
+        else:
+            recomputed = sum(rows) / len(rows)
             if abs(recomputed - float(block["mean"])) > 1e-4:
                 problems.append(f"movement.{name}.mean does not follow from its rows")
     lift = data.get("lift") or {}
     differences = lift.get("differences")
-    if not isinstance(differences, list) or not differences:
+    if not isinstance(differences, list):
         problems.append("lift has no per-row differences")
+    elif not differences:
+        if int(lift.get("rows_compared") or 0) != 0:
+            problems.append("lift has no rows but claims a compared count")
+        if int(lift.get("rows_missing_reference") or 0) == 0:
+            problems.append("lift has no rows and no recorded missing reference")
     else:
         block = sign_flip(
             differences,
@@ -878,9 +968,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         f"{outcome['corpus']['reference_rosters']} reference rosters"
     )
     print()
-    print(f"  {'edit':10s} {'movement':>10s}")
+    print(f"  {'edit':10s} {'rows':>5s} {'movement':>10s}")
     for name, block in outcome["movement"].items():
-        print(f"  {name:10s} {block['mean']:10.6f}")
+        mean = block["mean"]
+        shown = f"{mean:10.6f}" if isinstance(mean, (int, float)) else f"{'n/a':>10s}"
+        print(f"  {name:10s} {block.get('n_rows', 0):5d} {shown}")
+    skipped = outcome["edits"]["swap_skipped"]
+    if skipped:
+        print(f"  swap skipped (no same-length outsider): {len(skipped)} session(s)")
     print()
     print(
         f"  lift   : mean {outcome['lift']['mean']}  p {outcome['lift']['p_value']}  "

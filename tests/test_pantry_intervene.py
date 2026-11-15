@@ -117,9 +117,33 @@ def test_swap_is_deterministic_for_the_same_session(probe):
     assert first_target == second_target
 
 
-def test_swap_refuses_when_no_same_length_outsider_exists(probe):
-    with pytest.raises(SystemExit):
-        probe.edit_swap(_session(), ["Hana", "Grace"])
+def test_swap_skips_when_no_same_length_outsider_exists(probe):
+    # Hana and Grace are no outsiders at all, so every byte-length class the
+    # roster uses is exhausted: the arm is skipped (§71.9), not weakened.
+    assert probe.edit_swap(_session(), ["Hana", "Grace"]) is None
+
+
+def test_swap_uses_the_class_that_still_has_an_outsider(probe):
+    # All five 4-byte names are on the roster, but the 5-byte class still has
+    # outsiders, so the swap must happen on the 5-byte clause rather than skip.
+    line = "今天值班表上寫著：白色是 Alex、紅色是 Hana、藍色是 Ivan、綠色是 Judy、灰色是 Lena、黑色是 Betty。"
+    actors = ["Alex", "Hana", "Ivan", "Judy", "Lena", "Betty"]
+    session = _session(line=line, actors=actors)
+    edited, target = probe.edit_swap(session, ACTORS)
+    before = probe.clauses_of(session)
+    after = probe.clauses_of(edited)
+    changed = [index for index in range(len(before)) if before[index] != after[index]]
+    assert len(changed) == 1
+    assert before[changed[0]][1] == "Betty"
+    assert after[changed[0]][1] not in [name for _, name in before]
+    assert len(after[changed[0]][1].encode("utf-8")) == len("Betty".encode("utf-8"))
+    assert target == probe.clause_key(edited)
+
+
+def test_swap_skips_a_roster_that_exhausts_every_length_class(probe):
+    line = "今天值班表上寫著：白色是 Alex、紅色是 Hana、藍色是 Ivan、綠色是 Judy、灰色是 Lena。"
+    session = _session(line=line, actors=["Alex", "Hana", "Ivan", "Judy", "Lena"])
+    assert probe.edit_swap(session, ACTORS) is None
 
 
 def test_reverse_keeps_the_set_and_reverses_the_order(probe):
@@ -291,8 +315,8 @@ def test_retention_excludes_the_edited_session_itself(probe):
 # --------------------------------------------------------------------------- #
 # gates and the fork
 # --------------------------------------------------------------------------- #
-def _edit_block(mean: float) -> dict:
-    return {"mean": mean, "per_row": [mean]}
+def _edit_block(mean: float, rows: int = 200) -> dict:
+    return {"mean": mean, "per_row": [mean] * rows, "n_rows": rows}
 
 
 def _diff(probe, value: float, *, rows: int = 120, seed: int = 1) -> dict:
@@ -342,6 +366,8 @@ def _report(
             "determinism_ok": ok,
             "texts_changed": ok,
             "token_counts_matched": ok,
+            "swap_rows": 200,
+            "swap_skipped": 0,
         },
     }
 
@@ -371,6 +397,18 @@ def test_branch_takes_the_first_matching_reading(probe):
 
     no_lift = _report(probe, lift_mean=-0.01, lift_p=0.9)
     assert probe.branch(probe.gates(no_lift))["id"] == "J2-the-trace-is-the-line-not-the-roster"
+
+
+def test_zero_swap_rows_fails_the_instrument_gate(probe):
+    report = _report(probe)
+    for name in ("swap",):
+        report["movement"][name] = {"mean": None, "per_row": [], "n_rows": 0}
+    report["instrument"]["swap_rows"] = 0
+    report["instrument"]["swap_skipped"] = 200
+    gate = probe.gates(report)
+    assert gate["J0_instrument"]["pass"] is False
+    assert gate["J0_instrument"]["swap_rows"] == 0
+    assert probe.branch(gate)["id"] == "J0-instrument"
 
 
 def test_registered_constants_are_pinned(probe):
@@ -406,6 +444,21 @@ def test_check_rejects_an_invented_p_value(probe, tmp_path):
     path.write_text(json.dumps(report), encoding="utf-8")
     problems = probe.check(path)
     assert any("does not follow from its own differences" in item for item in problems)
+
+
+def test_check_accepts_a_recorded_zero_family(probe, tmp_path):
+    report = _report(probe)
+    report["movement"]["swap"] = {"mean": None, "per_row": [], "n_rows": 0}
+    report["instrument"]["swap_rows"] = 0
+    report["instrument"]["swap_skipped"] = 200
+    report["gates"] = probe.gates(report)
+    report["branch"] = probe.branch(report["gates"])
+    report["instrument_ok"] = False
+    path = tmp_path / "verdict.json"
+    path.write_text(json.dumps(report), encoding="utf-8")
+    problems = probe.check(path)
+    assert not any("movement.swap" in item for item in problems)
+    assert any("instrument_ok is false" in item for item in problems)
 
 
 def test_check_rejects_a_stale_gate(probe, tmp_path):
