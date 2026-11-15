@@ -121,6 +121,7 @@ def rebuild_core(trainer: Any, report: Dict[str, Any], *, device: str = "cpu") -
         device=device,
         kind=str(config.get("core") or "gru"),
         memory=bool(config.get("memory", True)),
+        address=str(config.get("address") or "gate"),
     )
     checkpoint = report.get("checkpoint")
     if not checkpoint or not Path(checkpoint).exists():

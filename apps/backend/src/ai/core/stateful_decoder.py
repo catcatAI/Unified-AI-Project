@@ -281,8 +281,14 @@ class StatefulCore:
         """
         raise NotImplementedError(f"{type(self).__name__} has no consume()")
 
-    def end_turn(self, tensors: Dict[str, Any]) -> Dict[str, Any]:
-        """Optional turn-end hook; cores without a store return the state as is."""
+    def end_turn(self, tensors: Dict[str, Any], *, address: Optional[int] = None) -> Dict[str, Any]:
+        """Optional turn-end hook; cores without a store return the state as is.
+
+        ``address`` is the zero-based turn index. Only a core whose write rule
+        is turn-addressed (:class:`TurnStoreCore` with ``address="turn"``, §73)
+        reads it; every other core ignores it, so the call site can always pass
+        it without changing what an earlier stage computes.
+        """
         return dict(tensors)
 
     def cache_write(self, tensors: Dict[str, Any], states: Any, valid: Any) -> Dict[str, Any]:
@@ -335,6 +341,18 @@ class StatefulCore:
                     raise CoreStateInvalid(
                         f"checkpoint {key}={config[key]!r} != model {expected[key]!r}"
                     )
+            # §73: the write address cannot be recovered from the parameter
+            # shapes (``address="turn"`` uses the same ``slot_gate``), so a gate
+            # checkpoint loaded into a turn-addressed core - or the reverse -
+            # would silently change what ``end_turn`` writes. Checkpoints
+            # written before §73 have no ``address`` key and are gate
+            # checkpoints, so they still load into the default core.
+            stored_address = config.get("address", "gate")
+            expected_address = expected.get("address", "gate")
+            if stored_address != expected_address:
+                raise CoreStateInvalid(
+                    f"checkpoint address={stored_address!r} != model {expected_address!r}"
+                )
         self.load_state_dict(payload["state_dict"])
         return self
 
@@ -530,6 +548,13 @@ class TurnStoreCore(GRUCore):
     no write happens. With L's blocks copied, ``head([h, 0])`` is L's
     ``head(h)``, so the ablation's *function* is the GRU arm's and only its
     random stream differs.
+
+    ``address="turn"`` (§73, default off) changes only *which slot* receives the
+    turn: the softmax gate above is replaced by ``one_hot(turn_index % slots)``,
+    so turn ``k`` is stored alone instead of being averaged into whatever slot
+    the gate happened to pick. ``g`` is unchanged, ``slot_gate`` is kept so the
+    parameter count is identical, and ``address="gate"`` is bit-identical to
+    every earlier stage.
     """
 
     model_kind = "turnstore"
@@ -547,9 +572,12 @@ class TurnStoreCore(GRUCore):
         slot_dim: int = 64,
         value_dim: int = 64,
         memory: bool = True,
+        address: str = "gate",
     ) -> None:
         if slots <= 0 or slot_dim <= 0 or value_dim <= 0:
             raise ValueError("slots, slot_dim and value_dim must be > 0")
+        if address not in ("gate", "turn"):
+            raise ValueError(f"address must be 'gate' or 'turn', got {address!r}")
         super().__init__(
             token_count,
             hidden=hidden,
@@ -564,6 +592,7 @@ class TurnStoreCore(GRUCore):
         self.slot_dim = int(slot_dim)
         self.value_dim = int(value_dim)
         self.memory = bool(memory)
+        self.address = str(address)
 
         self.key_proj = nn.Linear(hidden, self.slot_dim)
         self.value_proj = nn.Linear(hidden, self.value_dim)
@@ -625,6 +654,7 @@ class TurnStoreCore(GRUCore):
                 "slot_dim": self.slot_dim,
                 "value_dim": self.value_dim,
                 "memory": self.memory,
+                "address": self.address,
             }
         )
         return payload
@@ -674,14 +704,36 @@ class TurnStoreCore(GRUCore):
         """Advance ``h`` by one token, leaving the store untouched."""
         return {**tensors, "h": self.cell(self.embedding(tokens), tensors["h"])}
 
-    def end_turn(self, tensors: Dict[str, Any]) -> Dict[str, Any]:
+    def write_weights(self, hidden: Any, address: Optional[int] = None) -> Any:
+        """Where this write lands: ``[B, slots]`` weights that sum to 1.
+
+        ``address="gate"`` is every stage before §73: the learned
+        ``softmax(exp(log_write_scale) * slot_gate(h))``. ``address="turn"``
+        (default off) is §73's write-side fix: turn ``k`` writes slot ``k % slots``
+        whatever the gate says, so a turn's own value is never averaged with an
+        earlier turn's. ``address`` is the zero-based turn index and is required
+        in that mode.
+        """
+        torch = self._torch
+        mode = self.address
+        if mode == "turn":
+            if address is None:
+                raise ValueError("address='turn' needs the zero-based turn index")
+            index = int(address) % self.slots
+            return torch.nn.functional.one_hot(
+                torch.full((hidden.shape[0],), index, dtype=torch.long, device=hidden.device),
+                self.slots,
+            ).to(hidden.dtype)
+        return torch.softmax(torch.exp(self.log_write_scale) * self.slot_gate(hidden), dim=-1)
+
+    def end_turn(self, tensors: Dict[str, Any], *, address: Optional[int] = None) -> Dict[str, Any]:
         """One write per turn: address, strength, then a moving average."""
         if not self.memory:
             return dict(tensors)
         torch = self._torch
         hidden = tensors["h"]
         keys, values = self._store(tensors)
-        weights = torch.softmax(torch.exp(self.log_write_scale) * self.slot_gate(hidden), dim=-1)
+        weights = self.write_weights(hidden, address)
         strength = torch.sigmoid(self.write_gate(hidden))
         share = (strength * weights).unsqueeze(-1)
         new_keys = self.key_proj(hidden).unsqueeze(1)

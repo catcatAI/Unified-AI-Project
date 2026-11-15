@@ -278,3 +278,147 @@ def test_cli_refuses_combinations_that_change_the_arm(stage):
     ):
         with pytest.raises(SystemExit):
             stage.main(argv)
+
+
+# --------------------------------------------------------------------------- #
+# §73: the turn-addressed write (default off)
+# --------------------------------------------------------------------------- #
+def _turnstore(*, address="gate", memory=True, slots=16, hidden=8, emb=4, seed=7):
+    from ai.core.stateful_decoder import TurnStoreCore
+
+    return TurnStoreCore(
+        259,
+        hidden=hidden,
+        emb=emb,
+        chunk_seconds=60.0,
+        seed=seed,
+        device="cpu",
+        slots=slots,
+        slot_dim=8,
+        value_dim=8,
+        memory=memory,
+        address=address,
+    )
+
+
+def test_the_default_write_rule_is_the_gate_and_the_config_says_so(torch):
+    core = _turnstore()
+    assert core.address == "gate"
+    assert core.config()["address"] == "gate"
+    hidden = torch.randn(3, core.hidden)
+    expected = torch.softmax(torch.exp(core.log_write_scale) * core.slot_gate(hidden), dim=-1)
+    assert torch.equal(core.write_weights(hidden), expected)
+    # the default rule ignores the turn index: passing it cannot change the write
+    assert torch.equal(core.write_weights(hidden, 5), expected)
+
+
+def test_the_turn_rule_writes_one_hot_and_ignores_the_gate(torch):
+    core = _turnstore(address="turn")
+    hidden = torch.randn(4, core.hidden)
+    for index in (0, 3, 15, 16, 19):
+        weights = core.write_weights(hidden, index)
+        expected = torch.zeros(4, core.slots)
+        expected[:, index % core.slots] = 1.0
+        assert torch.equal(weights, expected)
+
+    # the gate cannot override the address: driving it to a corner changes nothing
+    with torch.no_grad():
+        core.slot_gate.weight.fill_(1e3)
+        core.slot_gate.bias.fill_(1e3)
+    assert torch.equal(core.write_weights(hidden, 2)[:, 2], torch.ones(4))
+
+
+def test_the_turn_rule_needs_the_index(torch):
+    core = _turnstore(address="turn")
+    with pytest.raises(ValueError):
+        core.write_weights(torch.randn(2, core.hidden))
+    with pytest.raises(ValueError):
+        core.end_turn(core.init_state(2).tensors)
+
+
+def test_an_unknown_address_is_refused():
+    with pytest.raises(ValueError):
+        _turnstore(address="slot")
+
+
+def test_four_turns_land_in_four_slots_instead_of_one_merged_vector(stage, torch):
+    """A flat gate is the old rule's worst case: every turn writes every slot."""
+    turns = [[[3 + i, 4 + i, 5 + i] for i in range(4)]]
+    gaps = [[120.0, 60.0, 240.0, 120.0]]
+
+    def flat(core):
+        with torch.no_grad():
+            core.slot_gate.weight.zero_()
+            core.slot_gate.bias.zero_()
+        return core
+
+    gate = flat(_turnstore())
+    gate_state, _ = stage.run_session(gate, turns, gaps)
+    # uniform weights => a share of every slot on every turn => 16 slots touched
+    assert int((gate_state.tensors["v"].abs().sum(-1) > 0).sum()) == gate.slots
+
+    turn = flat(_turnstore(address="turn"))
+    turn_state, _ = stage.run_session(turn, turns, gaps)
+    used = (turn_state.tensors["v"].abs().sum(-1) > 0)[0]
+    assert [int(index) for index in torch.nonzero(used).flatten()] == [0, 1, 2, 3]
+
+
+def test_the_turn_rule_keeps_every_parameter(torch):
+    gate = _turnstore()
+    turn = _turnstore(address="turn")
+    assert turn.parameter_count() == gate.parameter_count()
+    assert list(turn.state_dict()) == list(gate.state_dict())
+    assert "slot_gate" in turn.state_dict()
+    assert [name for name, _ in turn.extra_parameters()] == [
+        name for name, _ in gate.extra_parameters()
+    ]
+
+
+def test_checkpoints_say_which_rule_they_were_trained_with(tmp_path, torch):
+    from ai.core.core_state import CoreStateInvalid
+
+    path = tmp_path / "gate.pt"
+    gate = _turnstore(seed=11)
+    gate.save_weights(str(path))
+
+    same = _turnstore(seed=11)
+    same.load_weights(str(path), strict_config=True)
+    assert same.weights_hash() == gate.weights_hash()
+    assert same.address == "gate"
+
+    with pytest.raises(CoreStateInvalid) as error:
+        _turnstore(seed=11, address="turn").load_weights(str(path), strict_config=True)
+    assert "address" in str(error.value)
+
+
+def test_a_checkpoint_without_an_address_key_is_a_gate_checkpoint(tmp_path, torch):
+    """§73 must not invalidate every checkpoint written before it."""
+    from ai.core.core_state import CoreStateInvalid
+
+    path = tmp_path / "pre73.pt"
+    _turnstore(seed=13).save_weights(str(path))
+    payload = torch.load(str(path), map_location="cpu", weights_only=True)
+    payload["config"].pop("address")
+    torch.save(payload, str(path))
+
+    loaded = _turnstore(seed=13)
+    loaded.load_weights(str(path), strict_config=True)
+    assert loaded.address == "gate"
+    with pytest.raises(CoreStateInvalid):
+        _turnstore(seed=13, address="turn").load_weights(str(path), strict_config=True)
+
+
+def test_build_core_passes_the_address_to_the_store_arm(stage):
+    core = stage.build_core(hidden=8, emb=4, device="cpu", kind="turnstore", address="turn")
+    assert core.address == "turn"
+    assert stage.build_core(hidden=8, emb=4, device="cpu", kind="turnstore").address == "gate"
+
+
+def test_cli_refuses_a_turn_address_without_a_store(stage):
+    for argv in (
+        ["--overfit", "1", "--address", "turn"],
+        ["--overfit", "1", "--core", "tokencache", "--address", "turn"],
+        ["--overfit", "1", "--address", "slot"],
+    ):
+        with pytest.raises(SystemExit):
+            stage.main(argv)

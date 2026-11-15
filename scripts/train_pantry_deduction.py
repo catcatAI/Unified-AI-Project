@@ -510,6 +510,7 @@ def build_core(
     seed: int = SEED,
     kind: str = "gru",
     memory: bool = True,
+    address: str = "gate",
 ) -> Any:
     """The registered carriers: ``gru`` (L/P…), ``turnstore`` (§55), ``tokencache`` (§59)."""
     if kind == "tokencache":
@@ -535,6 +536,7 @@ def build_core(
             seed=seed,
             device=device,
             memory=memory,
+            address=address,
         )
     from ai.core.stateful_decoder import GRUCore
 
@@ -778,6 +780,9 @@ def run_session(
 
     The §55 turn-end write happens here, after the turn's tokens and before the
     snapshot: a boundary is the state *after* turn k, including what turn k wrote.
+    §73's turn-addressed write needs to know *which* turn it is, so the zero-based
+    index is passed through as ``address``; every core whose rule is the softmax
+    gate ignores it, which is why the default arm is unchanged.
     """
     torch = core._torch
     batch = len(batch_turns)
@@ -811,7 +816,7 @@ def run_session(
         # functional, so an earlier boundary's cache is never rewritten.
         state.tensors = core.cache_write(state.tensors, stacked, valid)
         state.bump()
-        state.tensors = core.end_turn(state.tensors)
+        state.tensors = core.end_turn(state.tensors, address=index)
         hidden = state.tensors["h"]
         if boundaries is not None:
             snapshot = dict(state.tensors)
@@ -1935,6 +1940,7 @@ def _heldout_predictions(report: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         device="cpu",
         kind=kind,
         memory=bool(config.get("memory", True)),
+        address=str(config.get("address") or "gate"),
     )
     checkpoint = report.get("checkpoint")
     if not checkpoint or not Path(checkpoint).exists():
@@ -2421,6 +2427,7 @@ def check_report(path: Path) -> List[str]:
                 device="cpu",
                 kind=kind,
                 memory=bool(config.get("memory", True)),
+                address=str(config.get("address") or "gate"),
             )
             core.load_weights(checkpoint, strict_config=True)
             if core.config().get("model_kind") != kind:
@@ -2578,6 +2585,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             seed=args.seed,
             kind=args.core,
             memory=not args.no_memory,
+            address=args.address,
         )
         start_hash = start_from_stage_l(core, Path(args.start), source_hidden=HIDDEN)
         widened = {
@@ -2585,6 +2593,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "source_weights_hash": L_WEIGHTS_HASH,
             "hidden": core.hidden,
             "memory": core.memory,
+            "address": getattr(core, "address", None) if args.core == "turnstore" else None,
         }
     else:
         core = build_core(hidden=args.hidden, emb=args.emb, device=device, seed=args.seed)
@@ -2704,6 +2713,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "arm": arm,
             "core": args.core,
             "memory": None if args.core == "gru" else not args.no_memory,
+            "address": None if args.core != "turnstore" else args.address,
             "aux_lambda": args.aux_loss,
             "aux_mode": args.aux_mode,
             "gate_prefix": args.gate_prefix,
@@ -2807,6 +2817,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "one write per turn, read into the head); §59 stage B: 'tokencache' "
             "writes one entry per token and reads it into the head; 'gru' is every "
             "earlier stage"
+        ),
+    )
+    parser.add_argument(
+        "--address",
+        choices=("gate", "turn"),
+        default="gate",
+        help=(
+            "§73: how end_turn picks the slot a turn is written to. 'gate' (default) is "
+            "the learned softmax slot_gate(h) every earlier stage used; 'turn' writes "
+            "turn k to slot k %% 16, so a turn's value is never averaged with another "
+            "turn's. Only the turnstore arm has a store to address."
         ),
     )
     parser.add_argument(
@@ -3073,6 +3094,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         parser.error(
             "--no-memory is the store-arm ablation; pass --core " + " or ".join(sorted(STORE_ARMS))
         )
+    if args.address != "gate" and args.core != "turnstore":
+        parser.error("--address is the turnstore write rule; pass --core turnstore")
     if args.widen_to and args.core != "gru":
         parser.error("--widen-to is §52.4's GRU width rung; it does not combine with --core")
     if args.core != "gru" and (args.hidden != HIDDEN or args.emb != EMB):

@@ -78,6 +78,10 @@ BOUNDARIES = REPO_ROOT / "scripts" / "probe_pantry_boundaries.py"
 READABLE_FLOOR = 0.95
 TRANSFER_FLOOR = 0.50
 CAPACITY_MAX = 0.50
+# §72's rank-1 floor and active-slot share, reused by §73's store reading so the
+# two stages report the same quantity with the same definition.
+RANK1_EPS = 1e-3
+ACTIVE_SLOT_SHARE = 1e-3
 STRUCTURE_AUC_FLOOR = 0.65
 STRUCTURE_ALPHA = 0.001
 STRUCTURE_PERMUTATIONS = 1000
@@ -180,6 +184,53 @@ def transform(name: str, features: Any) -> Any:
 def feature_view(name: str, views: Dict[str, Any]) -> Any:
     """Which stored view a family reads: state for both state arms, values for v."""
     return views["values"] if name == "linear_values" else views["state"]
+
+
+def store_shape(
+    torch: Any, values: Any, shape: Sequence[int], *, share_floor: float = ACTIVE_SLOT_SHARE
+) -> Dict[str, Any]:
+    """§73: what the store itself holds at this boundary - no fitted parameters.
+
+    This is descriptive, not a gate: ``active_slots`` counts the slots whose norm
+    is at least ``share_floor`` of the session's strongest slot (the §72 floor),
+    and ``rank1_residual`` is each session's second-over-first singular value of
+    the 16x64 value matrix. In the default ``address="gate"`` arm both read
+    "one slot, rank 1"; in the turn-addressed arm the roster boundary has already
+    received two turns, so they read "two slots, not rank 1". Reusing §72's
+    floors is what makes the two stages comparable.
+    """
+    slots, dim = int(shape[0]), int(shape[1])
+    matrix = values.reshape(-1, slots, dim).double()
+    norms = matrix.norm(dim=-1)
+    strongest = norms.max(dim=1, keepdim=True).values
+    active = (norms >= strongest * float(share_floor)).sum(dim=1)
+    residuals = torch.linalg.svdvals(matrix)
+    first = residuals[:, 0]
+    rank1 = torch.where(
+        first > 0.0, residuals[:, 1] / torch.clamp(first, min=torch.finfo(first.dtype).tiny), 0.0
+    )
+    counts: Dict[str, int] = {}
+    for count in active.tolist():
+        counts[str(int(count))] = counts.get(str(int(count)), 0) + 1
+
+    def stat(row: Any) -> Dict[str, float]:
+        return {
+            "mean": round(float(row.mean()), 6),
+            "min": round(float(row.min()), 6),
+            "max": round(float(row.max()), 6),
+        }
+
+    total = int(matrix.shape[0])
+    return {
+        "shape": [slots, dim],
+        "sessions": total,
+        "active_slots": {**stat(active.double()), "counts": counts},
+        "rank1_residual": stat(rank1),
+        "multi_slot_fraction": round(float((active > 1).double().mean()), 6),
+        "rank1_fraction": round(float((rank1 <= RANK1_EPS).double().mean()), 6),
+        "share_floor": float(share_floor),
+        "rank1_eps": RANK1_EPS,
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -677,6 +728,10 @@ def run(
         },
         "turns": indexes,
         "value_shape": train_views["value_shape"],
+        "store": {
+            "train": store_shape(torch, train_views["values"], train_views["value_shape"]),
+            "heldout": store_shape(torch, held_views["values"], held_views["value_shape"]),
+        },
         "arms": arms,
         "positive_controls": controls,
         "structure": {"train": train_structure, "heldout": held_structure},
@@ -754,6 +809,23 @@ def check(path: Path) -> List[str]:
                 f"structure.{split}'s p {block['p_value']} does not follow from its null "
                 f"({expected_p})"
             )
+    store = data.get("store")
+    if store is not None:
+        for split in ("train", "heldout"):
+            block = store.get(split) or {}
+            sessions = block.get("sessions")
+            counts = (block.get("active_slots") or {}).get("counts")
+            if not isinstance(sessions, int) or sessions <= 0 or not isinstance(counts, dict):
+                problems.append(f"store.{split} has no active-slot counts")
+                continue
+            if sum(int(value) for value in counts.values()) != sessions:
+                problems.append(f"store.{split}'s active-slot counts do not sum to its sessions")
+                continue
+            multi = sum(int(key) > 1 for key in counts for _ in range(counts[key])) / sessions
+            if abs(multi - float(block.get("multi_slot_fraction", -1.0))) > 1e-6:
+                problems.append(
+                    f"store.{split}'s multi-slot fraction does not follow from its own counts"
+                )
     try:
         expected = gates(data)
     except (KeyError, TypeError, ZeroDivisionError) as error:

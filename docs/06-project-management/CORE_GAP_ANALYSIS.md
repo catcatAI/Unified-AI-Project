@@ -9558,3 +9558,181 @@ S5 PASS → **S4-two-addresses**（登記的預測，命中）。
 
 這一項要**另外登記**（新的寫入規則、同一個邊界、同一組門檻與 no-op 對照都寫在跑之前），不能順手
 接在這一節後面跑。**不加步數、不加寬度、不加資料**——這是 §71／§72 共同定下的條件。
+
+## §73 把寫入改成一個回合一個位址（S1 的機械輸出）
+
+### 73.1 為什麼是這一支
+
+§72 的機械輸出是 **S1-single-address-temporal-superposition**（k=2；k=5 是 S4-two-addresses，
+但機制相同：99% 的段只有一個槽）。逐槽讀數是沒有擬合的：
+
+* 寫入門在名冊邊界是 **one-hot**（k=2 留出 200/200 段，`max_share` 平均 0.999998、最小 0.999949）；
+* 16 個槽裡 **15 個空著**（k=2 `active_slots` 全部 `{1}`），值矩陣 **rank 1**（每段 `σ₂/σ₁` ≤
+  9.00e-06）；
+* 讀出**就是**那一槽的值（每段 `|cos|` = 1.000000）；
+* 位址跨段是常數輪廓，用位址認名冊的留出正確率只有 0.0500（chance 0.5）。
+
+所以名冊不是被讀出抹掉的，也不是被槽碰撞弄掉的：它跟**先前每一回合的文字**共用同一個 64 維移動平均。
+S1 指名的下一步是**換一個寫入**，不是換一個讀出。
+
+### 73.2 改什麼（只改位址，其餘逐項固定）
+
+`TurnStoreCore` 多一個**預設關閉**的旗標 `address`（`"gate"` 預設／`"turn"`）：
+
+| 模式 | 寫入位址 `a` |
+| --- | --- |
+| `"gate"`（每一節到目前為止） | `softmax(exp(log_write_scale) · slot_gate(h))` |
+| `"turn"`（§73） | `one_hot(turn_index % slots)` |
+
+**其餘全部不動**：強度仍是 `g = sigmoid(write_gate(h))`、鍵與值仍是 `key_proj(h)`／`value_proj(h)`、
+更新仍是 `slot ← slot (1 − a g) + a g · new`、讀出仍是 `softmax(scale · q·kᵀ) v`、`h` 的遞歸、
+`al_step`、`head([h, r])`、`chunk_seconds`、參數個數（`slot_gate` 保留在模組清單裡，turn 模式下不進梯度，
+所以兩個臂的參數量逐位相同）全部一樣。
+
+**不加步數、不加寬度、不加資料、不加 epoch、不改語料、不改目標函數、不改讀出。** 這也是 §71／§72
+共同定下的條件。語料、seed、10,000 步、lr 5e-4、batch 8、hidden 128、emb 64 與 §70 的兩個載體逐項相同。
+
+`turn_index` 是**零基底**的回合序號（`run_session` 的迴圈索引）。這個語料最短的 session 是 4 回合
+（罪行 0／名冊 1／證據 2／問句 3），所以 `% 16` 在這個語料上從不繞回；寫成 `% slots` 只是為了讓規則
+在更長的 session 上也定義良好。
+
+### 73.3 量什麼（同一個邊界、同一個探針、同一組臂）
+
+**不新開探針**：直接跑 `scripts/probe_pantry_families.py`（§70 的探針），所以三個臂、標準化、
+置換容量控制、結構檢定、seed、2,000 步全部與 §70／§72 逐項相同，`linear_values` 的留出可以直接跟
+§72 的 **0.1400** 比。
+
+探針新增一個**描述性**區塊 `store`（不是閘門、不進任何臂）：在名冊邊界從實際的 `v` 算
+`active_slots`（地板 `1e-3 × 該段最強槽`）與每段值矩陣的 `σ₂/σ₁`，用的常數就是 §72 的
+`ACTIVE_SLOT_SHARE`／`RANK1_EPS`。這是「寫入真的換了」的機械讀數，也是與 §72 同一句話的比較。
+
+跑之前已在**預設（gate）載體**上驗過這個新增區塊不改變任何既有數字（73.4）。
+
+### 73.4 程式與跑之前的回歸檢查
+
+* `apps/backend/src/ai/core/stateful_decoder.py`：`TurnStoreCore(..., address="gate")`、
+  `write_weights(hidden, address=None)`、`end_turn(tensors, *, address=None)`、`config()` 帶
+  `address`；`load_weights(strict_config=True)` 新增一條「位址必須相符」的檢查（舊 checkpoint 沒有
+  `address` 鍵，視為 `"gate"`，所以**§43–§72 的每一個 checkpoint 仍可載入**）。
+* `scripts/train_pantry_deduction.py`：`build_core(..., address=...)`、`--address {gate,turn}`
+  （預設 `gate`，且只有在 `--core turnstore` 時可用）、報告 `config.address`、`run_session` 把回合
+  索引傳給 `end_turn`、兩個重建載體的路徑（配對重評與 `--check`）都讀 `config.address`。
+* `scripts/probe_pantry_readout.py`、`scripts/probe_pantry_state.py`：重建載體時傳 `address`。
+* `scripts/probe_pantry_families.py`：`store_shape()` 與報告的 `store` 區塊（描述性）；`--check`
+  會驗證它與自己的 `active_slots` 計數一致（舊報告沒有這個鍵 → 跳過）。
+* `tests/ai/test_turn_store_core.py`：**+10 條**（20 條綠）——預設規則就是那條 softmax 且忽略索引、
+  turn 規則給出 one-hot 且不受 `slot_gate` 影響、缺索引會拒絕、未知模式會拒絕、四回合落在四個槽
+  （gate 的均勻門會碰 16 個槽）、參數量與模組清單不變、checkpoint 記錄模式且 gate↔turn 互載會拒絕、
+  **沒有 `address` 鍵的舊 checkpoint 仍是 gate 且可載入**、`build_core` 傳遞位址、CLI 拒絕
+  `--address turn` 搭配非 turnstore。
+
+**跑之前的回歸檢查（預設路徑逐位不變）**：
+
+1. 用 §72 的兩個 checkpoint 重建：`address` 都是 `gate`，`weights_hash` 與報告相同
+   （k=2 `de17ed7d…`、k=5 `05c3b103…`）；舊 checkpoint 沒有 `address` 鍵仍載入。
+2. `probe_pantry_slots.py` 在 k=2 載體上重跑一次（輸出到暫存），與 §72 的 `slots72/k2.json`
+   **除 `seconds` 外整份相同**。
+3. `probe_pantry_families.py` 在 k=2 載體上重跑：`arms`／`structure`／`positive_controls` 與 §70 的
+   `readout70/k2.json` **逐位元組相同**；新的 `store` 區塊給出 `{1: 400}`／`{1: 200}`、
+   `σ₂/σ₁` 最大 1.10e-05／9.00e-06——與 §72 的機制讀數相同。
+
+### 73.5 登記的門檻
+
+| 常數 | 值 | 理由 |
+| --- | --- | --- |
+| `READABLE_FLOOR` | **0.95** | 與 §70 同一個「擬合得到」的門檻（in-sample） |
+| `CAPACITY_MAX` | **0.50** | 置換標籤容量控制上限，超過就不宣稱轉移 |
+| `TRANSFER_FLOOR` | **0.50** | 與 §70 同一個「可用轉移」的門檻（**不是**本節的決策線） |
+| 決策線 | **§72 的 0.1400** | 這一節問的是「同一個臂有沒有比 §72 高」，不是「有沒有過 0.50」 |
+| `ACTIVE_SLOT_SHARE` | **1e-3** | §72 的「槽不是空的」地板 |
+| `RANK1_EPS` | **1e-3** | §72 的 rank-1 門檻 |
+| 逐段比例地板 | **0.95** | 與 §72 的 `FRACTION_FLOOR` 相同 |
+
+### 73.6 閘門（跑之前寫定）
+
+| 閘門 | 條件 |
+| --- | --- |
+| **W0 儀器** | 三個家族的 `H0_instrument` 全過（in-sample ≥ 0.95、容量 ≤ 0.50）、載體 `weights_hash` 與 checkpoint sha256 前後相同、同一份探針**跑兩次**除 `seconds` 外逐位相同 |
+| **W1 寫入真的換了** | 留出名冊邊界 `active_slots ≥ 2` 的段數 ≥ 95% **且** `rank1_residual > 1e-3` 的段數 ≥ 95% |
+| **W2 store 擬合得到** | `linear_values` in-sample ≥ 0.95 且容量 < 0.50 |
+| **W3 比 §72 高** | `linear_values` 留出 **> 0.1400** 且容量 < 0.50 |
+| **W4 可用轉移** | `linear_values` 留出 ≥ 0.50 且容量 < 0.50 |
+
+**W0 的兩點照實寫**：
+
+1. `H1_linear_state_reproduces_§69` 在這一節**不適用**：它比的是「同一個 §69 格重跑」，而 §73 是一個
+   新訓練的載體，`linear_state` 本來就不會相同。`branch()` 的優先序**不看 H1**，所以它不阻擋任何分支；
+   報告的 `instrument_ok` 會因為它顯示 `False`，這一節讀 **W0 本身**，不讀那個旗標。
+2. `H0` 的正控制是「同一個讀出擬合載體自己的標籤（問句邊界的兇手）」，與名冊無關。
+
+### 73.7 分叉（跑之前寫定，機械決定；固定優先序）
+
+| 分支 | 條件 | 下一步 |
+| --- | --- | --- |
+| **W0-instrument** | W0 不過 | 修探針管路（決定性／有限性／載體雜湊），這一輪不讀任何東西 |
+| **W1-write-not-turn-addressed** | W0 過、W1 不過 | 載體沒有在逐回合分槽寫入（`active_slots` 仍是 1）：先查明為什麼，這一輪不回答 §73 的問題 |
+| **W2-not-readable-in-sample** | W0、W1 過、W2 不過 | 線性讀出在 turn 載體上擬合不到自己的訓練標籤 → **校準失敗**，不是「沒有轉移」的證據 |
+| **W4-address-is-not-the-loss** | W0–W2 過、W3 不過 | 分槽了、讀得出來、但留出沒有比 §72 高 → 損失**不在位址**；下一個嫌疑是 `value_proj(h)` 把整個回合壓成一個向量本身 |
+| **W3-write-was-part-of-the-loss** | W3 過、W4 不過 | 留出上升但仍在 0.50 以下：位址是損失的**一部分**；照實報 Δ，**不得**說「修好了」 |
+| **W5-write-was-the-loss** | W3、W4 都過 | 分槽寫入讓 store 的留出達到 §70 的可用地板 → 寫入就是損失所在，下一個問題是讀出（或問句邊界） |
+
+### 73.8 預測與否證（寫在跑之前）
+
+| 讀數 | 預測 | 否證條件 |
+| --- | --- | --- |
+| W0 | PASS | 任一家族 H0 不過、載體或 checkpoint 變動、兩次跑不相同 |
+| W1 | **PASS**（依構造：4 回合寫 4 個槽） | 留出 `active_slots ≥ 2` 或 `rank1_residual > 1e-3` 的段數 < 95% |
+| W2 | **PASS**（§70 的 gate 載體在同一批資料上 in-sample 0.4975，turn 只是不再混合回合） | `linear_values` in-sample < 0.95 或容量 ≥ 0.50 |
+| W3 | **PASS**：k=2 `values` 留出 **> 0.1400** | 留出 ≤ 0.1400 |
+| W4 | **FAIL**（預期 0.1400–0.50 之間，不到可用地板） | 若 ≥ 0.50 則 W4 也過（那是比預期好的結果，照實報） |
+| 分支（k=2） | **W3-write-was-part-of-the-loss** | 見上（任何一項不過就走它的分支） |
+| 分支（k=5） | 同方向，**不預設**會過 0.50（§72 的 k=5 gate 載體是 0.0050，chance 0.0056） | 同 W3 |
+
+**為什麼 W3 的預測是「會上升」**：§72 說名冊那一回合的 `value_proj(h)` 被灌進同一個移動平均，而那個
+平均裡有先前的罪行回合。分槽之後，名冊回合的值單獨存在一個槽裡，線性探針只要看那一槽就夠——所以
+**如果**那一個向量本身帶著名冊，留出就應該上升。**這一節的否證就是反面**：若留出不動，表示連
+「名冊回合自己的 `value_proj(h)`」都不足以線性命名名冊，損失在**把一個回合壓成一個 64 維向量**這件事，
+不在位址。
+
+**這一輪的預測不是盲的**（照實寫）：§72 的 gate 讀數與兩個臂的數字都看過，W1 是構造保證，W2 是 §70
+的 in-sample。真正有資訊量的是 **W3 與 W4 的留出值**，而 turn 模式的**任何**訓練或探針讀數在登記時
+都**沒有**跑過。
+
+**什麼會讓這一節作廢**：
+
+1. W0 不過（兩次跑不相同、特徵有非有限值、載體被改動）——整份讀數無效；
+2. 載體 `weights_hash` 或 checkpoint sha256 前後不同（探針不得訓練載體，也不得寫回 checkpoint）；
+3. 語料 digest 與 §70 的同一個 k 不同（那就不是同一個語料，兩個階段不能比）；
+4. 任何人為改動門檻、讀數定義、臂、分割或分支表——改動必須以 amendment 另記。
+
+**這一節不是能力分數**；核心分不變 **0.00/10**。它只回答「S1 指名的寫入是不是損失所在」。
+
+### 73.9 指令（登記；一次跑兩格）
+
+```
+for k in 2 5; do
+  PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_pantry_deduction.py \
+      --train-sessions 400 --epochs 200 --core turnstore --address turn \
+      --aux-loss 1.0 --aux-mode resolvable --minimal-binding --order-augmented \
+      --roster-size $k --gate-prefix M --device cpu --out data/pantry_stage/turn73/k${k}_arm
+  ./.venv/bin/python scripts/train_pantry_deduction.py --check \
+      $(ls -t data/pantry_stage/turn73/k${k}_arm/*.json | head -1)
+done
+```
+
+量測（每一格跑兩次，第二次只為了 W0 的決定性）：
+
+```
+for k in 2 5; do
+  for tag in "" "_rerun"; do
+    PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/probe_pantry_families.py \
+        --report $(ls -t data/pantry_stage/turn73/k${k}_arm/*.json | head -1) \
+        --out data/pantry_stage/write73/k${k}${tag}.json --device cpu
+    ./.venv/bin/python scripts/probe_pantry_families.py --check \
+        data/pantry_stage/write73/k${k}${tag}.json
+  done
+done
+```
+
+k=2 與 k=5 各自沿用 §70 同一個 k 的載體設定（`--roster-size`），語料 digest 必須等於
+`416a8a68…`／`69c730e1…`（k=2）與 `d6ca78a8…`／`948b08cc…`（k=5）。
