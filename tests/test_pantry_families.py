@@ -239,6 +239,7 @@ def _report(
             "roster": {"prediction": [1, 1] + [0] * 10, "correct": 3, "n": 200, "exact": 0.015}
         },
         "reproduction": {
+            "reference": "data/pantry_stage/slots69/k2.json",
             "expected": {
                 "in_sample": 0.7700,
                 "capacity": 0.2500,
@@ -332,6 +333,60 @@ def test_check_rejects_an_invented_auc(probe, tmp_path):
     path.write_text(json.dumps(report), encoding="utf-8")
     problems = probe.check(path)
     assert any("does not follow from its own rank sum" in item for item in problems)
+
+
+def test_check_requires_H1_when_a_reference_was_recorded(probe, tmp_path):
+    """§70/§72 pass --reference, so there H1 is part of the instrument."""
+    report = _report(probe)
+    report["reproduction"]["equal"] = False
+    report["gates"] = probe.gates(report)
+    report["branch"] = probe.branch(report["gates"])
+    report["instrument_ok"] = True
+    path = tmp_path / "verdict.json"
+    path.write_text(json.dumps(report), encoding="utf-8")
+    assert probe.h1_is_applicable(report) is True
+    problems = probe.check(path)
+    assert any("H1_linear_state_reproduces_§69 did not pass" in item for item in problems)
+
+
+def test_check_does_not_require_H1_when_no_reference_was_recorded(probe, tmp_path):
+    """§73: a newly trained carrier cannot reproduce §69, so H1 is not applicable.
+
+    The stored ``instrument_ok`` flag keeps reading ``False`` (it folds H1 in
+    unconditionally); §73 reads W0's components, which is what this checks.
+    """
+    report = _report(probe)
+    report["reproduction"] = {"reference": None, "expected": None, "actual": None, "equal": False}
+    report["gates"] = probe.gates(report)
+    report["branch"] = probe.branch(report["gates"])
+    report["instrument_ok"] = False
+    path = tmp_path / "verdict.json"
+    path.write_text(json.dumps(report), encoding="utf-8")
+    assert probe.h1_is_applicable(report) is False
+    assert probe.instrument_problems(report) == []
+    assert probe.check(path) == []
+
+
+def test_check_still_fails_a_broken_H0_without_a_reference(probe, tmp_path):
+    """Dropping H1 must not drop the rest of the instrument."""
+    report = _report(probe)
+    report["reproduction"] = {"reference": None, "expected": None, "actual": None, "equal": False}
+    report["positive_controls"]["linear_values"]["in_sample"]["exact"] = 0.60
+    report["gates"] = probe.gates(report)
+    report["branch"] = probe.branch(report["gates"])
+    report["instrument_ok"] = False
+    path = tmp_path / "verdict.json"
+    path.write_text(json.dumps(report), encoding="utf-8")
+    problems = probe.check(path)
+    assert any("H0_instrument did not pass" in item for item in problems)
+
+
+def test_a_report_without_a_reference_cannot_claim_a_reproduction(probe):
+    report = _report(probe)
+    report["reproduction"] = {"reference": None, "expected": None, "actual": None, "equal": False}
+    report["gates"] = probe.gates(report)
+    report["instrument_ok"] = True
+    assert any("never recorded" in item for item in probe.instrument_problems(report))
 
 
 # --------------------------------------------------------------------------- #

@@ -755,6 +755,42 @@ def run(
 # --------------------------------------------------------------------------- #
 # mechanical re-check
 # --------------------------------------------------------------------------- #
+def h1_is_applicable(data: Dict[str, Any]) -> bool:
+    """§73 amendment: H1 exists only when a reference report was recorded.
+
+    H1 asks whether *this* carrier reproduces §69's cell, and that question only
+    has an answer when ``--reference`` was passed. ``instrument_ok`` folds H1 in
+    unconditionally, which is right for §70/§72 (both passed one) and a false
+    alarm for a stage that registers H1 as **not applicable** (§73.6): a newly
+    trained carrier cannot reproduce §69's cell by construction, so the flag
+    reads ``False`` while every part of §73's W0 holds. The stored flag is left
+    exactly as it was written; the verdict below asks this question instead, so
+    no stored number and no branch changes.
+    """
+    return (data.get("reproduction") or {}).get("reference") is not None
+
+
+def instrument_problems(data: Dict[str, Any]) -> List[str]:
+    """W0 read from its components: H0, both hashes, and H1 when it applies."""
+    problems: List[str] = []
+    gates_ = data.get("gates") or {}
+    h0 = gates_.get("H0_instrument") or {}
+    if h0.get("pass") is not True:
+        problems.append("H0_instrument did not pass")
+    instrument = data.get("instrument") or {}
+    if instrument.get("carrier_unchanged") is not True:
+        problems.append("the carrier weights changed")
+    if instrument.get("checkpoint_unchanged") is not True:
+        problems.append("checkpoint bytes changed")
+    if h1_is_applicable(data):
+        h1 = gates_.get("H1_linear_state_reproduces_§69") or {}
+        if h1.get("pass") is not True:
+            problems.append("H1_linear_state_reproduces_§69 did not pass")
+    elif data.get("instrument_ok") is True:
+        problems.append("instrument_ok claims a reproduction that was never recorded")
+    return problems
+
+
 def check(path: Path) -> List[str]:
     data = json.loads(path.read_text(encoding="utf-8"))
     problems: List[str] = []
@@ -842,13 +878,7 @@ def check(path: Path) -> List[str]:
             f"the branch is stale: stored {(data.get('branch') or {}).get('id')}, "
             f"recomputed {fork['id']}"
         )
-    instrument = data.get("instrument") or {}
-    if instrument.get("carrier_unchanged") is not True:
-        problems.append("the carrier weights changed")
-    if instrument.get("checkpoint_unchanged") is not True:
-        problems.append("checkpoint bytes changed")
-    if not data.get("instrument_ok"):
-        problems.append("instrument_ok is false")
+    problems.extend(instrument_problems(data))
     return problems
 
 
@@ -914,11 +944,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print(f"next    : {outcome['branch']['next']}")
     print(f"cost    : {outcome['instrument']['seconds']}s on {outcome['instrument']['device']}")
     print(f"instrument_ok : {outcome['instrument_ok']}")
+    if not instrument_problems(outcome) and not outcome["instrument_ok"]:
+        print("instrument    : H0 and both hashes hold; H1 is not applicable (no --reference)")
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(json.dumps(outcome, indent=2) + "\n", encoding="utf-8")
         print(f"wrote   : {args.out}")
-    return 0 if outcome["instrument_ok"] else 1
+    return 0 if not instrument_problems(outcome) else 1
 
 
 if __name__ == "__main__":
