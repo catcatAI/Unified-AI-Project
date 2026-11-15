@@ -7738,3 +7738,141 @@ PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/probe_pantry_readout.py \
 > 下一步：**讀出**——一個以 `read` 為輸入、在名冊候選上做選擇的頭（例如對每個候選算
 > `[h, read, candidate embedding]` 的分數），訓練它讀 state，而不是加 session、步數或寬度。
 > 這一節已經把「再加訓練不會改變的那一層」量出來了：`h` 不含這一題、store 含、頭不用。
+
+
+
+## 六十七、階段 RD：名冊限定的選擇頭（2026-11-15，量測前寫定）
+
+### 67.1 為什麼是這一支
+
+§66.10 的機械輸出是 **R3b-head-ignores**，兩個 checkpoint 都一樣：`h` 的餘弦中位數 1.0000（連兩題完全
+無關時也只有 0.9870／0.9999）→ `h` 不裝這一題；`read` 會動（0.8405／0.8553、0.9938／0.8105）、store 的
+value 也在動（0.6004／0.5560、0.1203／0.6968）→ 綁定有寫進去、答題時也讀給頭看；但名冊限定的 argmax
+跟著換名走的比例只有 0.4950（chance 1/2）與 0.2300（chance 1/5），正好是 1/k。
+
+**§66 有一個必須先說清楚的限制**：它量的是「換了名冊文字，`read` 會不會變」，**不是**「`read` 裡有沒有
+足夠的資訊指出兇手」。所以 R3b 其實留下**兩種**讀法，而只有第一種是讀出問題：
+
+1. state 裡有 value → person 的綁定，自迴歸頭不用它 → 換一個選擇頭就應該拿得到，**而且應該轉移**；
+2. `read` 只是**隨著名冊文字變動**（session 記憶），並不以可轉移的方式指出兇手 → 任何讀出都無法把它
+   變成留出正確率。
+
+§66 分不開這兩種，因為它沒有做任何**介入**（沒有換掉 `read`、沒有換 query）。這一節只換讀出，並且加上
+一個不需要訓練的介入，把「頭有沒有在用 `read`」變成可裁決的問題。
+
+### 67.2 量什麼（三個臂 + 一個介入）
+
+載體**凍結**：訓練前後記錄 `weights_hash` 與 checkpoint sha256，只有一個新的小頭被訓練，訓練資料是
+**同一個 400 項已宣告訓練集**（§64 的順序擴增語料／§65 的 k=5 語料）：
+
+```
+score(c) = v · tanh(W_h h + W_r read + W_e e_c + b)
+```
+
+`e_c` 是候選名字在載體 `embedding` 表上的**凍結平均 byte 向量**（沒有逐名字參數表），softmax **只在該
+session 的名冊候選上**取，所以「答名冊外的人」在構造上不可能（記為建構檢查，不是分數）。
+
+| 臂 | 輸入 | 用途 |
+| --- | --- | --- |
+| `read` | `[h, read, e_c]` | 登記的讀出 |
+| `h` | `read` 在訓練與評估都歸零 | 只有控制器（消融） |
+| `cand` | `h` 與 `read` 都歸零 | 只有候選名字（無內容對照） |
+
+三個臂**同一個架構、同一個參數量、同一個初始化**（同一個 seed 先建構），所以差異只能來自輸入。
+
+**介入（不訓練）**：把留出集每一列的 `read` 換成**下一列**的（循環位移），再問同一個 `read` 頭。若它
+照樣答對，就表示它根本沒在用 `read`。位移的有效性本身就是建構檢查（`read_permutation_share` 必須是
+1.0，即每一列都真的被換掉）。
+
+### 67.3 程式與重用
+
+* 新檔 `scripts/train_pantry_selection.py`（`--report` 讀已訓練報告、`--check` 機械重驗）。
+* 直接重用 §66 探針的 `rebuild_core`／`checkpoint_sha256`／`turn_payload`（import 同一個檔案，
+  兩階段的編碼不可能漂移），以及 `train_pantry_deduction.py` 的 `load_corpus`／`run_session`／
+  `_chunks`／`BYTE_OFFSET`，和 `gen_pantry_ecosystem.py` 的 `minimal_twin`／`minimal_order_twin`。
+* 特徵只讀一次（載體凍結、`torch.no_grad`）：訓練 400 列、留出 200 列、留出換名 200 列、留出反序
+  200 列；頭的訓練只在這些固定特徵上跑，**不會**回寫載體。
+* 輸出只寫 `--out`；`--check` 從儲存的數字重算五道門與分支。
+
+### 67.4 門檻（跑之前寫定）
+
+頭的表面參數：`hidden=64`、`steps=6000`、`batch=8`、`AdamW(lr=1e-3, weight_decay=1e-4)`、
+`seed=20261118`、每 500 步記錄一次 fit／留出曲線；**報告的是最後一步，沒有 early stopping、沒有挑
+checkpoint**。
+
+| 門檻 | 條件 | 意思 |
+| --- | --- | --- |
+| **R1** | 語料 digest 與項數已記錄（`train_digest`／`heldout_digest`／400／200） | 語料是登記的那一份 |
+| **R2** | 載體 `weights_hash` 與 checkpoint sha256 前後相同 | 只訓練了頭 |
+| **R3** | 三個臂的留出預測 **0 個**在名冊外；`read_permutation_share == 1.0` | 建構檢查：softmax 在名冊上、介入是真的 |
+| **S1** | `read` 臂 **fit exact ≥ 0.90**（與 §62–§65 的 M1 同一個地板） | 頭至少能擬合已宣告的 400 項 |
+| **S2** | `read` 臂 **留出 Wilson 下界 > 1/k**（與 M2 同一個形狀） | 轉移：比亂猜好，且不是靠浮動 |
+| **S3** | `read` 臂留出**反序後同人率 ≥ 0.80**（與 M5 同一個地板） | 選擇跟著 mapping，不跟著格子 |
+| **S4** | `read` 臂留出 Wilson 下界 **> max(`h`、`cand`、`permuted` 的 Wilson 上界)** | 增益可歸因於 `read`，不是先驗或位置 |
+
+S1／S2／S3 的地板與 §62–§65 完全相同（0.90／chance 的 Wilson 下界／0.80），沒有為這一節調整。S4 是
+**分離**而不是另訂地板：它要求登記臂的下界高過三個對照的上界，等於要求「不是重疊」。
+
+### 67.5 預測（寫在跑之前）
+
+| 讀數 | 預測 | 理由 |
+| --- | --- | --- |
+| R1／R2／R3 | 全過 | 語料由同一支產生器、載體只讀、softmax 在名冊上 |
+| S1（fit） | **PASS**，兩個 k 都 ≥ 0.99 | 400 項上載體本來就擬合 1.0000；固定特徵上一個 17k 參數的頭要背 400 列不難 |
+| `h` 臂的 fit | **也會很高**（≥ 0.80） | 證據值本身在 `h` 裡，擬合段可以背「這個值 → 這個人」；這正是它必須當消融的原因 |
+| `cand` 臂的 fit | 接近 1/k | 只有名字、沒有這一題的資訊 |
+| **S2（transfer）** | **FAIL**，兩個 k 都是 | §58 的線性探針已是同一個形狀（in-sample 0.9725、留出 0.1100）；§65 的 k=3／4／5 也一樣。若讀出真的是缺口，S1 與 S2 會**同時**過——那會是對 §66 R3b 讀法的重要修正 |
+| S3（order） | 大約 chance | 留出反序是沒見過的；S2 若不過，S3 不會被讀 |
+| S4（attribution） | **FAIL**（因為 S2 先不過） | 分離需要先有轉移 |
+| 最可能的分支 | **R4b-fits-not-transfers** | 「讀出不是缺口」與 §58／§64／§65 的既有形狀一致 |
+
+**這一段是這一節最重要的預測**：我預期 S1 過、S2 不過。若真的如此，§66 的「內容在 state 裡、頭不用它」
+必須收窄成「`read` 隨名冊變動，但不含可轉移的答案識別」——那不是把 §66 讀得更寬，是讀得更窄。
+
+### 67.6 這一節**不會**證明什麼
+
+* 不是能力分數；核心分不變 **0.00/10**，不論四道門結果如何。
+* 不是產品：名冊是 session 給的，所以這是**選擇題**讀出，不是開放式作答；它只回答「state 裡有沒有
+  可轉移的綁定」。
+* 只探 k=2 與 k=5 兩個 checkpoint（§64／§65），不重跑 k=3／k=4。
+* 單一 seed、單一頭架構、單一任務、200 題；`--aux-mode resolvable` 的混淆仍在（§62.2）→ 診斷，
+  不是歸因臂。
+* 頭的 6,000 步是**事先寫定**的預算；若 S1 不過，**不得**用「加步數／加寬度」當下一步（§59 的教訓：
+  先分開「架構不對」與「訓練不夠」）。
+* `read` 只取一個向量（value_dim 聚合），沒有做 per-slot 讀取；所以 S2 不過**不能**推論「任何讀出都
+  不行」，只推論「這一個讀出不行、而它已經拿到同樣的 state」。
+
+### 67.7 指令
+
+```
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_pantry_selection.py \
+    --report data/pantry_stage/ord_arm/pantry_deduction_20261115-015751.json \
+    --out data/pantry_stage/sel67/k2.json
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_pantry_selection.py \
+    --report data/pantry_stage/k5_arm/pantry_deduction_20261115-033310.json \
+    --out data/pantry_stage/sel67/k5.json
+./.venv/bin/python scripts/train_pantry_selection.py --check data/pantry_stage/sel67/k2.json
+./.venv/bin/python scripts/train_pantry_selection.py --check data/pantry_stage/sel67/k5.json
+```
+
+### 67.8 這一節的地位
+
+§66 把「綁定在哪一層丟掉」問到剩一個問題：**換一個會用 `read` 的讀出，能不能把 state 裡的東西變成
+留出正確率？** 三個臂（`read`／`h`／`cand`）與一個介入（permuted read）是為了讓「可以」與「不行」都
+有對照：不行的时候，必須能說出「不是因為沒擬合、不是因為先驗、不是因為介入沒生效」。
+
+### 67.9 分叉（跑之前寫定，機械決定下一步）
+
+先看儀器，再看發現：
+
+| 條件 | 編號 | 讀法 | 下一步 |
+| --- | --- | --- | --- |
+| **R1／R2／R3 任一不過** | — | 語料、載體或介入錯了 | 修儀器；**不得**讀任何 S 數字 |
+| S1 **FAIL**（fit < 0.90） | **R4a-head-cannot-fit** | 凍結的 state 連擬合段都撐不起選擇頭：§66 的「內容」只是「`read` 隨名冊變動」，不是「指出兇手」 | 用線性讀出量 `read` 到底編碼了什麼（兇手 vs 格子），**不是**加訓練、**不是**換另一個頭 |
+| S1 PASS、S2 **FAIL** | **R4b-fits-not-transfers** | 頭能擬合已宣告的 400 項，留出仍在 chance 以下：**讀出不是缺口**，state 裡是 per-session 記憶，不是可轉移的 value → person 綁定 | 量「擬合段與留出段的 state 差在哪」（§58 的形狀），因為任何讀出都無法從同一個 state 產生它沒有的轉移 |
+| S1／S2 PASS、S4 **FAIL** | **R4c-uses-a-prior** | 頭有轉移，但沒有高過 `h`／`cand`／permuted 的上界：學到的東西不需要 `read` | 先稽核頭在用哪個輸入，再談 state 的綁定 |
+| S1／S2／S4 PASS、S3 **FAIL** | **R4d-unstable-under-order** | 能轉移、也高過對照，但換名冊順序就換答案：選擇仍靠格子位置 | 在頭裡做順序正規化（排序或 set-pool），再談放大 |
+| 四道全 PASS | **R4e-readout-was-missing** | 凍結的 state 裡有可轉移的綁定，名冊限定的選擇頭拿得到、且高過所有對照、也撐過反序：**讀出就是缺口** | 把同一個頭接到 §49 的 11 輪語料；能力宣告仍只在凍結基準說話時才移動 |
+
+不論落到哪一格，**都不得**用「加 epoch／加大寬度／加段數」當下一步：這一節量的就是「在同一個 state
+上換讀出」。
