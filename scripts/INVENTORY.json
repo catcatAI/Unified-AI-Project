@@ -942,6 +942,11 @@
       "referenced": true,
       "purpose": "§69: where do the facts live? (same frozen carrier, same readout, three boundaries)"
     },
+    "probe_pantry_composition.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§74: is the roster cell a reading of the roster, or a content-blind prior?"
+    },
     "probe_pantry_contents.py": {
       "category": "probe",
       "referenced": true,
