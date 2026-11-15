@@ -952,6 +952,11 @@
       "referenced": true,
       "purpose": "§70: which readout family reaches the roster? (same frozen carrier, same turn)"
     },
+    "probe_pantry_intervene.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§71: does the roster line *cause* the roster in the state? (intervention, no fitting)"
+    },
     "probe_pantry_readout.py": {
       "category": "probe",
       "referenced": true,
