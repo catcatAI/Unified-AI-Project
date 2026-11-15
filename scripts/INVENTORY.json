@@ -972,6 +972,11 @@
       "referenced": true,
       "purpose": "§72: what does ``end_turn`` actually write, and why can no readout name the roster?"
     },
+    "probe_pantry_split75.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§75: does the roster reading survive a roster the carrier never saw?"
+    },
     "probe_pantry_state.py": {
       "category": "probe",
       "referenced": true,

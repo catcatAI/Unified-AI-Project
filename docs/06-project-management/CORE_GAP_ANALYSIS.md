@@ -10256,3 +10256,186 @@ k=5 的 overlap 額外告訴我們一件事：留出的 overlap 2.46–2.57 **�
 
 在 §75 登記之前：**不得**把 Q3 的 FAIL 讀成「store 不會組合」（null 是 0.0207，LRO 是 0.2350），
 也**不得**把 0.2350 讀成「會組合」（門檻是 1.5，實際 1.2050）。
+
+## §75 那 0.3350 是「看過的名冊」撐起來的嗎？換語料種子，弱訊號還在嗎？
+
+### 75.1 為什麼是這兩支（§74.17 指名的下一步）
+
+§74 的機械分支 `Q2-transfer-below-the-composition-floor` 指名兩件事，這一節就是那兩件：
+
+1. **把留出拆成「載體看過的名冊」與「沒看過的名冊」。** §74 的留出 200 段混了兩群人：名冊那一對
+   名字在 400 段訓練裡出現過，與從未出現過。只有後者能顯示**新的**組合。§74 只讀了 pooled 值，
+   所以 0.3350 有可能是「已看過的那一對」在撐。
+2. **換語料種子重做 leave-roster-out。** §74 的 `linear_values` LRO 是 0.2350（null 平均 0.0207），
+   登記的門檻是 1.5 overlap：**訊號對 null 是真的、對門檻是不夠的**。第二支語料決定這個形狀是語料的
+   還是載體的。
+
+### 75.2 量什麼
+
+**A（`--part seen`；§73 的 k=2 載體，凍結，不重訓）**
+
+每個家族（`linear_state`、`linear_values`，就是 §74.17 指名的那兩個）用**與 §74 留出讀數完全相同**
+的方式擬合：400 段訓練段、真標籤、2,000 步、`PROBE_SEED`，然後**一次前向**掃過 200 段留出。接著把留出
+的列按「名冊 key 是否出現在 57 個訓練名冊裡」切成兩格，**每一格用自己那批列做 400 次標籤置換**（擬合
+不動，只換被評分的標籤）。
+
+因為擬合與 §74 的留出讀數逐位相同，**pooled 的 exact 必須重現 §74 存檔的那一格**（`N0a`）——否則這
+就不是「同一個量測的切分」，而是另一個量測。`linear_state` 對 0.4650、`linear_values` 對 0.3350
+（`data/pantry_stage/compose74/k2.json`）。
+
+**B（`--part fresh`；新語料種子 20261126，重訓）**
+
+§73 的訓練指令**只改 `--pantry-seed` 與輸出路徑**：400 段、200 epochs、10,000 步、168,150 參數、
+`--core turnstore --address turn --aux-loss 1.0 --aux-mode resolvable --minimal-binding
+--order-augmented --roster-size 2 --gate-prefix M`，**沒有**加 epoch／寬度／資料。然後跑 §74 的三個
+讀數（`in_sample`、`heldout`、`leave_roster_out`），**同一個 400 次抽樣、同一個 α、同一個 `0.75k`
+門檻**（§74 的程式直接 import，不複製一份）。
+
+§73 的 reproduction 閘門對新語料**依構造不成立**（那個 corpus 在 §73 評分時不存在），所以 B 的儀器閘門
+是 `N0b`：載體 `weights_hash` 與 checkpoint sha256 前後不變 ∧ 兩份 corpus digest 有記錄，而
+`reproduction_applicable` 明確記成 `false`、`equal` 記成 `false`——不假裝重現。
+
+### 75.3 登記之前已經看過什麼（照實寫）
+
+* **看過語料組成（不是分數）**：k=2 的留出 200 段裡，**176 段**的名冊出現在訓練（57 個），**24 段**
+  的名冊從未出現（9 個名冊，每組 1–4 段）。這是決定 A 的分格能不能裁決的必要資訊——若沒看過就登記，
+  可能登記一個**永遠無法觸發**的門檻（正是 §73 W2 的缺陷形狀）。看的是 roster key 的分布，**沒有**
+  擬合任何 probe、**沒有**讀任何分數。
+* **沒看過 A 的分格分數**：兩格都需要擬合 probe；登記時一格都沒跑。
+* **沒看過 B 的任何東西**：語料種子 20261126 尚未生成、載體尚未訓練。
+* **管路測試**（登記前，只為確認程式接得起來）：見 75.9——跑在**未登記的那一格**（k=5 的 A 分格），
+  輸出到 `/tmp`、不進 `data/`。它**不會**出現在本節的分數裡；若它洩漏了 k=5 的形狀，本節照實記，
+  但 k=5 不是本節登記的格。
+
+### 75.4 登記的常數（跑之前寫定；程式在 import 時斷言與 §74 相同）
+
+| 常數 | 值 | 理由 |
+| --- | --- | --- |
+| `NULL_DRAWS` | **400** | 與 §74 相同；最小可達 p = 1/401 = 0.002494。 |
+| `NULL_SEED` | 20261125 | 同 §74：`NULL_SEED + d`，擬合仍用 `PROBE_SEED`。 |
+| `ALPHA` | **0.005** | 同 §74。 |
+| `COMPOSED_OVERLAP_FRACTION` | **0.75** | 同 §74；k=2 的門檻是 overlap 1.5。 |
+| A 的家族 | `linear_state`、`linear_values` | §74.17 指名；**不**加第三個家族（那會把兩格的問題變成家族搜索）。 |
+| B 的家族 | §74 的三個 | 複現要用同一組讀數。 |
+| B 的語料種子 | **20261126** | 尚未使用過的種子；其餘訓練引數與 §73 逐項相同。 |
+
+### 75.5 閘門（跑之前寫定）
+
+**A**
+
+| 閘門 | 條件 |
+| --- | --- |
+| `N0a_instrument` | `carrier_unchanged` ∧ `checkpoint_unchanged` ∧ pooled 的 exact **等於** §74 存檔的兩格 |
+| `S1_seen`（每家族） | seen 格 p < 0.005 ∧ seen exact > chance（0.015152） |
+| `S2_unseen`（每家族） | unseen 格 p < 0.005 ∧ unseen exact > chance |
+
+**B**：`N0b_instrument`（見 75.2）＋ §74 的 `Q1_relative_fit`／`Q2_transfer`／`Q3_composed_from_names`
+（同一組算術、同一個 `any`）。
+
+### 75.6 分叉（跑之前寫定，機械決定；固定優先序）
+
+**A：`N0a` > `S2` > `S1`**
+
+| # | 條件 | id | 讀法 | 下一步 |
+| --- | --- | --- | --- | --- |
+| 1 | `N0a` 不過 | `N0-instrument` | 載體／checkpoint／重現有一個動了；這一節什麼都不能讀 | 先修儀器 |
+| 2 | 任一家族 `S2` 過 | `U1-unseen-rosters-answer` | 載體**從未看過**的那一對名字，留出仍然顯著高於自己的 null | 先做 B（第二支語料）才准讀成組合 |
+| 3 | 只有 `S1` 過 | `U2-seen-rosters-only` | 只有「看過的名冊」那格高於 null ⇒ pooled 的 0.3350 是「已看過的那一對」在撐 | 下一個要量的是「必須回答沒看過的一對」的載體，不是更大的留出池 |
+| 4 | 兩格都不過 | `U3-neither-cell-above-null` | pooled 撐不過切分 | 主題是讀出，不是切分 |
+
+**B：`N0b` > `Q1` > `Q2` > `Q3`**
+
+| # | 條件 | id | 讀法 | 下一步 |
+| --- | --- | --- | --- | --- |
+| 1 | `N0b` 不過 | `N0-instrument` | 新載體／checkpoint／語料記錄動了 | 先修儀器 |
+| 2 | 沒有家族過 `Q1` | `Q1-no-relative-fit` | 新語料上沒有任何家族高於自己的置換分佈 | **停止**：不得加 epoch／寬度／資料 |
+| 3 | 有 `Q1`、沒有 `Q2` | `Q2-fit-but-no-transfer` | §74 的轉移沒有複現 | 轉移在第三支種子之前只算那一支語料的 |
+| 4 | 有 `Q2`、有家族過 `Q3` | `Q3-composed-from-names-on-second-seed` | LRO 在**新語料**上到達 `0.75k` | 仍不宣稱 binding；要第三支種子＋第二個任務 |
+| 5 | 有 `Q2`、沒有 `Q3`、但至少一個 LRO 的 **p < 0.005** | `Q3-below-floor-again` | 與 §74 同形：對 null 有訊號、對門檻不夠 | 問「寫入要裝什麼才會提高它」，不是加預算 |
+| 6 | 其餘 | `Q3-flat-on-second-seed` | LRO 在新語料上**與置換不可分** ⇒ §74 的弱訊號是那一支語料的 | 撤回 §74 的「弱而存在」讀法 |
+
+### 75.7 預測與否證（寫在跑之前）
+
+**A（k=2）**
+
+* pooled 必須逐位重現（`N0a`）；這是儀器，不是預測。
+* **seen 的 exact 高於 unseen**（若 pooled 0.4650 且 unseen ≈ 0.25，則 seen ≈ 0.49）。
+* **`S2` 至少一臂過**（unseen 24 段；若真率 ≈ 0.25，6/24 就遠超 400 次抽樣的最大值）。**這條不確定**：
+  24 段的解析度是 1/24 = 0.0417，真率若低到 0.10（2–3 段）就可能不過。因此登記：**S2 過了只算
+  「在這個大小上的證據」；S2 不過不算「組合不存在」**（這是 75.2 就寫定的讀法規則，不是事後補的）。
+
+**B（新種子 20261126）**
+
+* `N0b` 過；`Q1` 至少 `linear_state` 與 `nonlinear_quad` 過（§74 的 k=2 分別是 0.8075／0.9625 對
+  null 0.2669／0.5581，`linear_values` 0.5325 對 0.0609 也預期過）。
+* `Q2` 三臂都過（§74 的 k=2 三臂 p 都是最小可達值）。
+* **`Q3` 三臂都不過門檻，但 `linear_values` 的 LRO p < 0.005** → 分支 **`Q3-below-floor-again`**。
+
+**否證（若成立，結論照那樣寫）**
+
+1. 若 B 的 `Q1` 全不過 → `Q1-no-relative-fit`，且**登記的停損**：不得以加 epoch／寬度／資料去追
+   （§73 W2 的教訓是判準問題不是預算問題；這裡也一樣，換語料不是換預算）。
+2. 若 B 的 `Q2` 全不過 → `Q2-fit-but-no-transfer`，§74 的轉移被記成該語料所有。
+3. 若 B 的 LRO 對 null **不可分**（p ≥ 0.005）→ `Q3-flat-on-second-seed`，**§74 的「組合訊號弱而存在」
+   要撤回**，只留「門檻沒到」。
+4. 若 A 的 `S2` 不過而 `S1` 過 → `U2-seen-rosters-only`，且**不得**把 pooled 的 0.3350 當成新組合的證據。
+5. 若 B 的 LRO 到達 `0.75k` → `Q3-composed-from-names-on-second-seed`；**仍然不宣稱 binding**（要第三支
+   種子＋第二個任務），只記「不是單一語料的運氣」。
+
+### 75.8 程式（新檔；不改 §74 的探針，避免 §74 的存檔變成 stale）
+
+`scripts/probe_pantry_split75.py`：
+
+* `load_composition()`：import §74 的模組（null 機制、三個讀數、`score_set`、`chance_block` 只有一份），
+  並在 import 時斷言四個常數與本節登記值相同——任何一邊改了就是 `SystemExit`，不會靜默分岔。
+* A：`split_rows()`（切分並驗證是分割）、`subset_reading()`（**只用該格的列**做 400 次置換）、
+  `wilson()`（區間；24 段的寬度要看得見）、`seen_gates()`／`seen_branch()`／`check()`。
+* B：`fresh_gates()`（§74 的 `gates()` ＋ 換成 `N0b`）、`fresh_branch()`／`check()`。
+* `--check` 重驗：p 值算術、`exact == correct/n`、`overlap == overlap_sum/n`、Wilson 區間、直方圖總和、
+  抽樣數、α、門檻、閘門可從存檔重算、分支 id、儀器欄位。
+
+`tests/test_pantry_split75.py`（契約，不載入任何載體）：切分是分割且不漏列、`subset_reading` 只用該格的
+列做置換、α 在 400 次抽樣下可達、門檻＝`0.75k`、兩張分叉表的優先序、`--check` 的各種拒絕。
+
+### 75.9 指令（登記）
+
+訓練（**只改種子與輸出路徑**；§73 的命令其餘逐項相同）：
+
+```bash
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_pantry_deduction.py \
+    --train-sessions 400 --epochs 200 --core turnstore --address turn \
+    --aux-loss 1.0 --aux-mode resolvable --minimal-binding --order-augmented \
+    --roster-size 2 --gate-prefix M --pantry-seed 20261126 --device cpu \
+    --out data/pantry_stage/seed75/k2_arm
+./.venv/bin/python scripts/train_pantry_deduction.py --check \
+    $(ls -t data/pantry_stage/seed75/k2_arm/*.json | head -1)
+```
+
+A 與 B 的量測：
+
+```bash
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/probe_pantry_split75.py --part seen \
+    --report data/pantry_stage/turn73/k2_arm/pantry_deduction_20261115-125247.json \
+    --reference data/pantry_stage/compose74/k2.json --device cpu \
+    --out data/pantry_stage/split75/seen_k2.json
+./.venv/bin/python scripts/probe_pantry_split75.py --check data/pantry_stage/split75/seen_k2.json
+
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/probe_pantry_split75.py --part fresh \
+    --report $(ls -t data/pantry_stage/seed75/k2_arm/*.json | head -1) --device cpu \
+    --out data/pantry_stage/split75/fresh_k2.json
+./.venv/bin/python scripts/probe_pantry_split75.py --check data/pantry_stage/split75/fresh_k2.json
+```
+
+**管路測試（登記前，未登記的格；已執行，結果照實記）**：`--part seen` 跑在 **k=5** 的報告上
+（`--reference data/pantry_stage/compose74/k5.json`），只為確認切分／置換／重現／`--check` 接得起來，
+輸出到 `/tmp`（`/tmp/opencode/split75_k5_plumbing.json`，`--check OK`，2.67 s）。它**完成了**：
+pooled 的 exact 逐位重現 §74 的 k=5 格（0.0050／0.0050），切分是 60 seen／140 unseen（177 個訓練名冊、
+125 個沒看過的名冊，因為 `C(12,5)=792`），兩臂的兩格都沒有高於自己的 null → `U3-neither-cell-above-null`。
+
+這件事要照實記：**k=5 的分格形狀我已經看過**（與 §74 的 k=5「什麼都沒轉移」一致，不意外）。**k=2 的格
+在登記時仍然一格都沒跑**，而本節登記的是 k=2 的 A 與新種子 20261126 的 B。k=5 的數字**不進**本節任何
+表格、也不當預測的依據；它唯一的用途是證明儀器接得起來。
+
+### 75.10 這一節不是能力分數
+
+核心分不變 **0.00/10**；A 與 B 都是診斷。B 若過了門檻也**不**宣稱 binding。
