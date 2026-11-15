@@ -937,6 +937,11 @@
       "referenced": true,
       "purpose": "Does the native neural engine *learn* a fact from dialogue, or store it?"
     },
+    "probe_pantry_contents.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§68: what does the state carry? (frozen carrier, linear readouts at the answer boundary)"
+    },
     "probe_pantry_readout.py": {
       "category": "probe",
       "referenced": true,
