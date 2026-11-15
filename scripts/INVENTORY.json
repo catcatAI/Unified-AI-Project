@@ -1317,6 +1317,11 @@
       "referenced": true,
       "purpose": "Stage P: pantry deduction on the stage-L byte carrier (§49)."
     },
+    "train_pantry_selection.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "§67: is the readout the missing piece? (frozen carrier, selection head only)"
+    },
     "train_pilot_association.py": {
       "category": "training",
       "referenced": true,
