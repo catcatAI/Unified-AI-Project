@@ -937,6 +937,11 @@
       "referenced": true,
       "purpose": "Does the native neural engine *learn* a fact from dialogue, or store it?"
     },
+    "probe_pantry_boundaries.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§69: where do the facts live? (same frozen carrier, same readout, three boundaries)"
+    },
     "probe_pantry_contents.py": {
       "category": "probe",
       "referenced": true,
