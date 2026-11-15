@@ -353,6 +353,23 @@ class StatefulCore:
                 raise CoreStateInvalid(
                     f"checkpoint address={stored_address!r} != model {expected_address!r}"
                 )
+            # §76: the write strength is also shape-invisible (``write_gate`` is
+            # kept when it is bypassed), so the same argument applies.
+            stored_strength = config.get("write_strength", "learned")
+            expected_strength = expected.get("write_strength", "learned")
+            if stored_strength != expected_strength:
+                raise CoreStateInvalid(
+                    "checkpoint write_strength="
+                    f"{stored_strength!r} != model {expected_strength!r}"
+                )
+            # §76: likewise for the per-turn write width (the shapes are the same,
+            # only the slot each chunk lands in differs).
+            stored_slots = int(config.get("write_slots", 1))
+            expected_slots = int(expected.get("write_slots", 1))
+            if stored_slots != expected_slots:
+                raise CoreStateInvalid(
+                    f"checkpoint write_slots={stored_slots!r} != model {expected_slots!r}"
+                )
         self.load_state_dict(payload["state_dict"])
         return self
 
@@ -555,6 +572,15 @@ class TurnStoreCore(GRUCore):
     the gate happened to pick. ``g`` is unchanged, ``slot_gate`` is kept so the
     parameter count is identical, and ``address="gate"`` is bit-identical to
     every earlier stage.
+
+    ``write_strength="force"`` (§76, default off) changes only *whether* the
+    turn is written: ``g ≡ 1`` instead of ``sigmoid(write_gate(h))``, so every
+    turn lands in its slot at full weight instead of the carrier learning to
+    keep two of eleven turns. ``write_gate`` is kept so the parameter count is
+    identical, and ``write_strength="learned"`` is bit-identical to §73. It is
+    meaningful only with ``address="turn"``: under ``address="gate"`` a forced
+    write would average every turn into one slot at weight 1.0, which is the
+    §62/§63 collapse rather than a different content.
     """
 
     model_kind = "turnstore"
@@ -573,11 +599,28 @@ class TurnStoreCore(GRUCore):
         value_dim: int = 64,
         memory: bool = True,
         address: str = "gate",
+        write_strength: str = "learned",
+        write_slots: int = 1,
     ) -> None:
         if slots <= 0 or slot_dim <= 0 or value_dim <= 0:
             raise ValueError("slots, slot_dim and value_dim must be > 0")
         if address not in ("gate", "turn"):
             raise ValueError(f"address must be 'gate' or 'turn', got {address!r}")
+        if write_strength not in ("learned", "force"):
+            raise ValueError(f"write_strength must be 'learned' or 'force', got {write_strength!r}")
+        if write_strength == "force" and address != "turn":
+            raise ValueError("write_strength='force' needs address='turn'")
+        if int(write_slots) < 1:
+            raise ValueError(f"write_slots must be >= 1, got {write_slots!r}")
+        if int(write_slots) > 1:
+            if address != "turn":
+                raise ValueError("write_slots > 1 needs address='turn'")
+            if slots % int(write_slots):
+                raise ValueError("slots must be a multiple of write_slots")
+            if slot_dim % int(write_slots):
+                raise ValueError("slot_dim must be a multiple of write_slots")
+            if value_dim % int(write_slots):
+                raise ValueError("value_dim must be a multiple of write_slots")
         super().__init__(
             token_count,
             hidden=hidden,
@@ -593,6 +636,8 @@ class TurnStoreCore(GRUCore):
         self.value_dim = int(value_dim)
         self.memory = bool(memory)
         self.address = str(address)
+        self.write_strength = str(write_strength)
+        self.write_slots = int(write_slots)
 
         self.key_proj = nn.Linear(hidden, self.slot_dim)
         self.value_proj = nn.Linear(hidden, self.value_dim)
@@ -655,6 +700,8 @@ class TurnStoreCore(GRUCore):
                 "value_dim": self.value_dim,
                 "memory": self.memory,
                 "address": self.address,
+                "write_strength": self.write_strength,
+                "write_slots": self.write_slots,
             }
         )
         return payload
@@ -713,36 +760,85 @@ class TurnStoreCore(GRUCore):
         whatever the gate says, so a turn's own value is never averaged with an
         earlier turn's. ``address`` is the zero-based turn index and is required
         in that mode.
+
+        With ``write_slots > 1`` (§76) a turn is several sub-writes, so there is
+        no single distribution to report; this raises instead of returning one.
         """
         torch = self._torch
+        if self.write_slots > 1:
+            raise ValueError("write_weights is the one-slot contract; use _turn_weights")
         mode = self.address
         if mode == "turn":
             if address is None:
                 raise ValueError("address='turn' needs the zero-based turn index")
-            index = int(address) % self.slots
-            return torch.nn.functional.one_hot(
-                torch.full((hidden.shape[0],), index, dtype=torch.long, device=hidden.device),
-                self.slots,
-            ).to(hidden.dtype)
+            return self._turn_weights(hidden, int(address) % self.slots)
         return torch.softmax(torch.exp(self.log_write_scale) * self.slot_gate(hidden), dim=-1)
 
+    def _turn_weights(self, hidden: Any, index: int) -> Any:
+        """One-hot at ``index``: the turn-addressed write's slot."""
+        torch = self._torch
+        return torch.nn.functional.one_hot(
+            torch.full((hidden.shape[0],), int(index), dtype=torch.long, device=hidden.device),
+            self.slots,
+        ).to(hidden.dtype)
+
+    def _chunk_masks(self, dim: int, device: Any, dtype: Any) -> Any:
+        """``[write_slots, dim]``: chunk ``j`` occupies its own block and zeros elsewhere."""
+        torch = self._torch
+        width = dim // self.write_slots
+        mask = torch.zeros(self.write_slots, dim, device=device, dtype=dtype)
+        for j in range(self.write_slots):
+            mask[j, j * width : (j + 1) * width] = 1.0
+        return mask
+
     def end_turn(self, tensors: Dict[str, Any], *, address: Optional[int] = None) -> Dict[str, Any]:
-        """One write per turn: address, strength, then a moving average."""
+        """One write per turn: address, strength, then a moving average.
+
+        ``write_slots > 1`` (§76) turns the single write into ``write_slots``
+        sub-writes into consecutive slots: where §73 puts the whole turn in slot
+        ``k``, this puts chunk ``j`` of the turn's key and value in slot
+        ``k * write_slots + j``. The parameters are unchanged - ``key_proj`` and
+        ``value_proj`` are the same linear maps, only their output is scattered -
+        and each chunk keeps zeros outside its own block, so ``read_vector`` does
+        not change: a query's dot product with a chunk-slot only sees that chunk.
+        """
         if not self.memory:
             return dict(tensors)
         torch = self._torch
         hidden = tensors["h"]
         keys, values = self._store(tensors)
-        weights = self.write_weights(hidden, address)
-        strength = torch.sigmoid(self.write_gate(hidden))
-        share = (strength * weights).unsqueeze(-1)
-        new_keys = self.key_proj(hidden).unsqueeze(1)
-        new_values = self.value_proj(hidden).unsqueeze(1)
-        return {
-            **tensors,
-            "k": keys * (1.0 - share) + share * new_keys,
-            "v": values * (1.0 - share) + share * new_values,
-        }
+        if self.address != "turn":
+            weights = self.write_weights(hidden, address)
+            strength = torch.sigmoid(self.write_gate(hidden))
+            if self.write_strength == "force":
+                strength = torch.ones_like(hidden[:, :1])
+            share = (strength * weights).unsqueeze(-1)
+            new_keys = self.key_proj(hidden).unsqueeze(1)
+            new_values = self.value_proj(hidden).unsqueeze(1)
+            return {
+                **tensors,
+                "k": keys * (1.0 - share) + share * new_keys,
+                "v": values * (1.0 - share) + share * new_values,
+            }
+
+        if address is None:
+            raise ValueError("address='turn' needs the zero-based turn index")
+        if self.write_strength == "force":
+            strength = torch.ones_like(hidden[:, :1])
+        else:
+            strength = torch.sigmoid(self.write_gate(hidden))
+        count = self.write_slots
+        base = (int(address) * count) % self.slots
+        key_mask = self._chunk_masks(self.slot_dim, hidden.device, hidden.dtype)
+        value_mask = self._chunk_masks(self.value_dim, hidden.device, hidden.dtype)
+        key_chunks = self.key_proj(hidden).unsqueeze(1) * key_mask.unsqueeze(0)
+        value_chunks = self.value_proj(hidden).unsqueeze(1) * value_mask.unsqueeze(0)
+        for j in range(count):
+            weights = self._turn_weights(hidden, (base + j) % self.slots)
+            share = (strength * weights).unsqueeze(-1)
+            keys = keys * (1.0 - share) + share * key_chunks[:, j].unsqueeze(1)
+            values = values * (1.0 - share) + share * value_chunks[:, j].unsqueeze(1)
+        return {**tensors, "k": keys, "v": values}
 
     # -- the two cycles -----------------------------------------------------
 

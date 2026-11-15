@@ -122,6 +122,12 @@ def rebuild_core(trainer: Any, report: Dict[str, Any], *, device: str = "cpu") -
         kind=str(config.get("core") or "gru"),
         memory=bool(config.get("memory", True)),
         address=str(config.get("address") or "gate"),
+        # §76: the write strength is shape-invisible, so a forced-write carrier
+        # must be rebuilt with it or the strict guard rejects the checkpoint.
+        write_strength=str(config.get("write_strength") or "learned"),
+        # §76: the write width is shape-invisible too (same projections, a different
+        # scatter), so a multi-slot carrier must be rebuilt with it.
+        write_slots=int(config.get("write_slots") or 1),
     )
     checkpoint = report.get("checkpoint")
     if not checkpoint or not Path(checkpoint).exists():

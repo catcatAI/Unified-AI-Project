@@ -982,6 +982,11 @@
       "referenced": true,
       "purpose": "Stage K (§58): is the answer linearly decodable from the state?"
     },
+    "probe_pantry_write76.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§76: is composition limited by the *resolution* of the per-turn write?"
+    },
     "probe_paraphrase.py": {
       "category": "probe",
       "referenced": true,

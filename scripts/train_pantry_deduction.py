@@ -511,6 +511,8 @@ def build_core(
     kind: str = "gru",
     memory: bool = True,
     address: str = "gate",
+    write_strength: str = "learned",
+    write_slots: int = 1,
 ) -> Any:
     """The registered carriers: ``gru`` (L/P…), ``turnstore`` (§55), ``tokencache`` (§59)."""
     if kind == "tokencache":
@@ -537,6 +539,8 @@ def build_core(
             device=device,
             memory=memory,
             address=address,
+            write_strength=write_strength,
+            write_slots=write_slots,
         )
     from ai.core.stateful_decoder import GRUCore
 
@@ -1941,6 +1945,8 @@ def _heldout_predictions(report: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         kind=kind,
         memory=bool(config.get("memory", True)),
         address=str(config.get("address") or "gate"),
+        write_strength=str(config.get("write_strength") or "learned"),
+        write_slots=int(config.get("write_slots") or 1),
     )
     checkpoint = report.get("checkpoint")
     if not checkpoint or not Path(checkpoint).exists():
@@ -2428,6 +2434,8 @@ def check_report(path: Path) -> List[str]:
                 kind=kind,
                 memory=bool(config.get("memory", True)),
                 address=str(config.get("address") or "gate"),
+                write_strength=str(config.get("write_strength") or "learned"),
+                write_slots=int(config.get("write_slots") or 1),
             )
             core.load_weights(checkpoint, strict_config=True)
             if core.config().get("model_kind") != kind:
@@ -2586,6 +2594,8 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             kind=args.core,
             memory=not args.no_memory,
             address=args.address,
+            write_strength=args.write_strength,
+            write_slots=args.write_slots,
         )
         start_hash = start_from_stage_l(core, Path(args.start), source_hidden=HIDDEN)
         widened = {
@@ -2594,6 +2604,12 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "hidden": core.hidden,
             "memory": core.memory,
             "address": getattr(core, "address", None) if args.core == "turnstore" else None,
+            "write_strength": (
+                getattr(core, "write_strength", None) if args.core == "turnstore" else None
+            ),
+            "write_slots": (
+                getattr(core, "write_slots", None) if args.core == "turnstore" else None
+            ),
         }
     else:
         core = build_core(hidden=args.hidden, emb=args.emb, device=device, seed=args.seed)
@@ -2714,6 +2730,8 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "core": args.core,
             "memory": None if args.core == "gru" else not args.no_memory,
             "address": None if args.core != "turnstore" else args.address,
+            "write_strength": (None if args.core != "turnstore" else args.write_strength),
+            "write_slots": (None if args.core != "turnstore" else args.write_slots),
             "aux_lambda": args.aux_loss,
             "aux_mode": args.aux_mode,
             "gate_prefix": args.gate_prefix,
@@ -2828,6 +2846,27 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "the learned softmax slot_gate(h) every earlier stage used; 'turn' writes "
             "turn k to slot k %% 16, so a turn's value is never averaged with another "
             "turn's. Only the turnstore arm has a store to address."
+        ),
+    )
+    parser.add_argument(
+        "--write-strength",
+        choices=("learned", "force"),
+        default="learned",
+        help=(
+            "§76: how strongly end_turn writes. 'learned' (default) is the §73 rule - "
+            "sigmoid(write_gate(h)) - so the carrier decides which turns to keep; 'force' "
+            "writes every turn at weight 1.0, so each turn's own summary is in its slot. "
+            "Only meaningful with --address turn."
+        ),
+    )
+    parser.add_argument(
+        "--write-slots",
+        type=int,
+        default=1,
+        help=(
+            "§76: how many slots one turn's write is split across. 1 (default) is §73's "
+            "single-slot write; 4 puts chunk j of the turn's key/value in slot turn*4+j. "
+            "Same parameters, only the scatter differs. Needs --address turn."
         ),
     )
     parser.add_argument(
@@ -3096,6 +3135,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         )
     if args.address != "gate" and args.core != "turnstore":
         parser.error("--address is the turnstore write rule; pass --core turnstore")
+    if args.write_strength != "learned":
+        if args.core != "turnstore":
+            parser.error("--write-strength is the turnstore write rule; pass --core turnstore")
+        if args.address != "turn":
+            parser.error(
+                "--write-strength force needs --address turn: under the gate address a "
+                "forced write averages every turn into one slot"
+            )
+    if args.write_slots < 1:
+        parser.error("--write-slots must be at least 1")
+    if args.write_slots > 1:
+        if args.core != "turnstore":
+            parser.error("--write-slots is the turnstore write rule; pass --core turnstore")
+        if args.address != "turn":
+            parser.error("--write-slots > 1 needs --address turn (the turn picks the block)")
     if args.widen_to and args.core != "gru":
         parser.error("--widen-to is §52.4's GRU width rung; it does not combine with --core")
     if args.core != "gru" and (args.hidden != HIDDEN or args.emb != EMB):

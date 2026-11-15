@@ -10584,3 +10584,167 @@ overlap **1.2700 → 1.0475**、**1.2050 → 0.9375**、**1.0525 → 0.9625**。
    **下一節的預登記**，不是本節的結論。
 
 **這一節不是能力分數**；核心分不變 **0.00/10**。
+
+---
+
+## §76 每回合寫入的解析度（等預算 A/B）
+
+### 76.1 這一節問什麼
+
+§75.17 的第 3 點指名「主體是寫入」。這一節把「寫入」變成一個**只有一個治療**的 A/B：
+
+> 在**參數、語料、初始化、預算完全相同**的條件下，把「一個回合寫進**一個**槽」換成
+> 「一個回合切成 4 塊寫進 **4 個**槽」，能否提高 leave-roster-out 的組合讀數？
+
+它**不**加 epoch、寬度或資料；它**不**換讀出家族；它**不**改門檻。
+
+### 76.2 登記前實測到的兩件事（決定了治療是什麼）
+
+這兩件事都在**登記之前**量到，且都足以讓原本的治療作廢：
+
+1. **`write_strength="force"` 是死的。** 在 §73 已訓練的 k=2 載體上，
+   `sigmoid(write_gate(h))` 在**每一個回合**（train 與 held-out 都是）落在 **0.9964–0.9987**。
+   把它強制成 1.0，寫入量只改變 **< 0.4%**。所以「強制寫入」不是一個治療，是**同一個治療的數值噪音**。
+   這個候選在登記前被**丟棄**；`write_strength="force"` 留在核心裡作為**已記錄的死路**，不是本節的臂，
+   並有契約測試守住它仍然存在且語意不變。
+2. **`active_slots = 2` 是結構性的，不是學到的「11 回合裡留 2 個」。** 每個 session 是**4 個回合**，
+   名冊邊界落在**第 2 個回合之後**；因此 §73 的 k=2 在邊界上「有 2 個槽非空」是**寫了 2 次**的必然結果。
+   真正的非結構性事實是：**16 個槽裡有 14 個是空的**——整個回合（名冊、證據、值）被壓成**一個**
+   64 維向量放進**一個**槽。
+
+還有一件**必須照實記**的事：在確認上面第 1 點之前，曾為了確認管路而啟動過一次**以 `force` 為臂**的
+探針（輸出到 `/tmp`、未進 `data/`）。確認該治療已死後**立即終止**，沒有產生任何 §76 讀數，也沒有寫入
+任何 `data/` 檔案。那次啟動**不計入**本節，只作為「先量前提、再登記」的紀錄。
+
+### 76.3 治療：每回合寫入的解析度
+
+| 臂 | 寫入規則 | 參數 | 語料 |
+| --- | --- | --- | --- |
+| **control** | `address="turn"`, `write_slots=1`（§73 的寫入）：回合 `k` 把整個 `key_proj(h)` / `value_proj(h)` 寫進槽 `k`。 | 168,150 | 種子 20261127 |
+| **treatment** | `address="turn"`, `write_slots=4`：同一組投影的**第 j 塊**寫進槽 `k*4+j`，其餘位置為 0。 | 168,150 | 種子 20261127 |
+
+`key_proj` / `value_proj` 是**同一個線性映射**，只有**散佈方式**不同；因此參數數量、初始化與梯度预算
+逐項相同。每個塊在自己的槽裡**只佔自己那一段、其餘為 0**，所以 `read_vector` **不用改**：查詢與某個
+塊槽的內積只看到那一塊。也就是說，讀出從「內容定址**整個回合**」變成「內容定址回合的**片段**」，
+讀出端可以在同一個回合裡給「名字那段」與「兇手那段」不同的權重。
+
+一個**單元測試釘住**讓這是「只改寫入」的不變量：4 個塊**加起來等於** control 會寫的那個單槽值
+（key 與 value 都測）。另一點照實記：兩個臂是**分開訓練**的，所以 `linear_values` 的位移讀的是**擬合**，
+不是內容；內容不變量由測試釘住，不由跨臂的 `values` 讀數釘住。
+
+### 76.4 登記的常數（跑之前寫定）
+
+| 常數 | 值 | 理由 |
+| --- | --- | --- |
+| `NULL_DRAWS` | **400** | 同 §74／§75；最小可達 p = 1/401 = 0.002494。 |
+| `NULL_SEED` | 20261125 | 同 §74；擬合仍用 `PROBE_SEED`。 |
+| `ALPHA` | **0.005** | 同 §74。 |
+| `COMPOSED_OVERLAP_FRACTION` | **0.75** | 同 §74；k=2 的門檻是 overlap **1.5**。 |
+| `CONTRAST_MARGIN` | **0.05** | 400 列上的 20 列。**跑之前**寫定：小於此的差不算「有效應」。 |
+| `FIT_COMPARABILITY` | **0.15** | 兩臂的 in-sample 讀數差超過此值時，LRO 的差**不可比**（擬合是共變數，不是證據）。 |
+| `UNSEEN_FLOOR` | **0.125** | 24 列上的 **3/24**；§75.15 顯示 3 列就足以清掉它儲存的 null（p=0.002494）。 |
+| `SLOTS_PER_TURN` | control **1**、treatment **4** | 治療的定義本身。 |
+| `MECHANISM_MAX` | control **3**、treatment **8** | 邊界只看到 **2 個回合**：1×2=2（允許 3 的雜訊），4×2=8（必須達到）。 |
+| 家族 | `linear_state`、`linear_values`、`nonlinear_quad` | §74 的三個；**不**加第四個（那會把 A/B 變成家族搜索）。 |
+| 語料種子 | **20261127** | 兩臂共用、且 §73／§75 都沒用過；其餘訓練引數與 §73 逐項相同。 |
+
+### 76.5 閘門與機制檢查（跑之前寫定）
+
+| 閘門 | 條件 |
+| --- | --- |
+| `N0_instrument` | `carrier_unchanged` ∧ `checkpoint_unchanged` ∧ 語料 train/heldout digest 都有记录。§73 的複現閘門**不適用**（這是它沒量過的語料），照實記為 `reproduction_applicable=False`。 |
+| `W_mechanism` | **control**：留出名冊邊界的 `active_slots` 中位數 **≤ 3**。**treatment**：**≥ 8**。兩者都不過＝A/B 根本沒發生（`N0-instrument`）。 |
+| `Q1_relative_fit` | 每家族 in-sample p < 0.005（§74 的算術）。 |
+| `Q2_transfer` | 每家族 held-out p < 0.005 **且** exact > chance。 |
+| `Q3_composed_from_names` | 每家族 LRO overlap ≥ **1.5** **且** p < 0.005。 |
+| `S1_seen`／`S2_unseen` | §75 的兩格，各自用自己的列做 400 次置換。 |
+| `U_unseen_floor` | **任一**家族的 unseen exact ≥ **0.125** **且** p < 0.005。 |
+
+機制檢查**不用任何擬合參數**，只數「邊界上還有幾個槽不是空的」（地板 `1e-3 × 該段最強槽`，同 §72）。
+若 treatment 的 store 沒有真的出現 8 個槽，這一節讀到的就不是「解析度」的效應。
+
+### 76.6 對比與描述量
+
+* **主對比**：`LRO exact`（treatment − control）。只有當**所有**家族的 in-sample 差都 ≤ `FIT_COMPARABILITY`
+  時，這個對比才 `readable`；否則擬合差是共變數，分支改用 treatment **自己的**閘門，不能把「treatment
+  擬合得更好」讀成「寫入更好」。
+* **描述量**（**報告，不設閘門**）：三個家族 × 三個格（in-sample／held-out／LRO）的全部差值。登記的預期是
+  `linear_values` 的位移**遠小於** `linear_state`（前者是同一批 128 個數字在 1024 維裡換排列）。因為兩臂
+  分開訓練，這個描述量讀的是擬合；它不當證據用。
+
+### 76.7 分支表（跑之前寫定；固定優先序 N0 > Q1 > Q3+U > Q2 > 對比）
+
+| 優先 | id | 觸發條件 | `next` |
+| --- | --- | --- | --- |
+| 1 | `N0-instrument` | 任一臂 N0 或機制不過 | 先修儀器，兩個臂都不讀 |
+| 2 | `W3-treatment-no-fit` | treatment 的 `Q1` 全部不過 | **停**：擬合失敗禁止「更多 epoch／寬度／資料」（§75.7）；主體仍是寫入規則 |
+| 3 | `W1-the-write-resolution-was-the-limit` | 某家族 `Q2`∧`Q3` **且** `U` 過 | 仍不宣稱 binding；下一步是第三個種子＋內容定址寫入，兩者都不能從本節推論 |
+| 4 | `W6-treatment-no-transfer` | treatment 的 `Q2` 全部不過 | 花掉空槽反而破壞轉移；主體是寫入規則，只再試一個寫入規則 |
+| 5 | `W4-partial-gain-from-resolution` | readable ∧ 有 `gain_arms` | 解析度有效但不足；問「塊還缺什麼」（每個名字一次寫入），**不**加預算 |
+| 6 | `W5-resolution-hurt` | readable ∧ 有 `loss_arms` | 解析度不是損失所在；下一節讀「整個回合的值裝了什麼是塊沒有的」 |
+| 7 | `W2-the-write-was-not-the-limit` | 以上皆非 | 限制在 store 內容的下游；下一步是內容定址（per-name）寫入，不是更多預算 |
+
+### 76.8 預測與反證（跑之前寫定）
+
+* **預測（會被打臉的那種）**：因為 §73／§75 的 store 在邊界是**整回合 rank-1**，而讀出本來就能把
+  兩個名字併起來，我預期 **`W2` 或 `W4`**：4 槽要嘛不動 LRO（< 0.05），要嘛動一點但到不了 1.5 的地板。
+  **若 `W1`（同時過地板與 unseen 地板）**，則「一次寫入能裝多少」是損失的一部分——這會直接推翻我的預期。
+* **反證 1（機制）**：若 treatment 的 `active_slots` 中位數 < 8，則治療沒發生（`N0-instrument`），
+  任何讀數都不成立。
+* **反證 2（擬合）**：若兩臂 in-sample 差 > 0.15，則對比 `readable=False`，不能用對比裁決，
+  只能讀 treatment 自己的 `Q1/Q2/Q3`。
+* **反證 3（內容）**：若 4 塊加起來**不等於**單槽值，則這不是「同內容、不同散佈」，而是換了內容；
+  單元測試會直接失敗（已釘住）。
+* **反證 4（方向）**：若 treatment 明顯**更差**（`W5`），則「整回合的值」是比較好的可定址單位，
+  下一節不能假設「切細一定更好」。
+
+### 76.9 停損（登記；與 §75.7 同一條）
+
+1. `W3`（treatment 連自己的訓練名冊都擬合不到 null 之上）→ **不得**用更多 epoch、更寬或更多資料補救；
+   主體回到寫入規則。這一條是**約束**，不是建議。
+2. 對比不可比（`readable=False`）→ **不得**把擬合差讀成寫入效應；分支只能用 treatment 自己的閘門。
+3. **不得**在看到結果後改 `CONTRAST_MARGIN`、`UNSEEN_FLOOR`、`FIT_COMPARABILITY`、α、抽樣數、家族、
+   語料種子、臂或分支表。任何改動必須以 amendment 另記，並照實保留被作廢的數字。
+4. **不得**在 held-out 上調參；`20261127` 只用於這一節。
+5. 若機制不過，**不得**改門檻讓它過；先修儀器。
+
+### 76.10 契約測試
+
+`tests/test_pantry_write76.py`（**不載入任何已訓練載體**，37 條）：
+
+* 核心：`write_slots` 不改參數數、`config()` 記錄、需要 `address="turn"`、`slots`/`slot_dim`/`value_dim`
+  必須整除、寬度 0 被拒、嚴格載入拒絕寬度不符的 checkpoint、回合索引選對塊、塊內/塊外、四塊相加等於
+  單槽值、`write_slots=1` 與 §73 逐位相同、`write_weights` 在 `>1` 時拒絕（單槽契約）、`force` 仍是
+  已記錄的死路。
+* 探針：登記常數、§74 的 `Q1/Q2/Q3` 算術、機制閘門（control ≤ 3、treatment ≥ 8）、對比邊界與
+  `fit_comparability`、描述量涵蓋每一格、七個分支的固定優先序、`--check` 對「分支過期／p 值不跟隨／
+  閘門不可重算／不是 §76／抽樣不足／`write_slots` 與登記不符」的拒絕。
+
+### 76.11 指令（登記）
+
+訓練（兩臂**只差 `--write-slots`**；其餘逐項相同，含種子）：
+
+```bash
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_pantry_deduction.py \
+    --train-sessions 400 --epochs 200 --core turnstore --address turn \
+    --aux-loss 1.0 --aux-mode resolvable --minimal-binding --order-augmented \
+    --roster-size 2 --gate-prefix M --pantry-seed 20261127 --device cpu \
+    --write-slots 1 --out data/pantry_stage/write76/control
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/train_pantry_deduction.py \
+    --train-sessions 400 --epochs 200 --core turnstore --address turn \
+    --aux-loss 1.0 --aux-mode resolvable --minimal-binding --order-augmented \
+    --roster-size 2 --gate-prefix M --pantry-seed 20261127 --device cpu \
+    --write-slots 4 --out data/pantry_stage/write76/slots4
+```
+
+量測（一次；兩臂分開載入，載體不訓練、不寫回）：
+
+```bash
+PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/probe_pantry_write76.py \
+    --control $(ls -t data/pantry_stage/write76/control/*.json | head -1) \
+    --treatment $(ls -t data/pantry_stage/write76/slots4/*.json | head -1) \
+    --device cpu --out data/pantry_stage/write76/k2.json
+./.venv/bin/python scripts/probe_pantry_write76.py --check data/pantry_stage/write76/k2.json
+```
+
+**這一節不是能力分數**；核心分不變 **0.00/10**。它只回答「一次寫入能裝多少，是不是組合的損失所在」。
