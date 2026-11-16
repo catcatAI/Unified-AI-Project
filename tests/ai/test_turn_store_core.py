@@ -422,3 +422,82 @@ def test_cli_refuses_a_turn_address_without_a_store(stage):
     ):
         with pytest.raises(SystemExit):
             stage.main(argv)
+
+
+# --------------------------------------------------------------------------- #
+# §83: a decode view may carry one read for all of its tokens
+# --------------------------------------------------------------------------- #
+def _view_with_store(core, torch, batch=3, seed=23):
+    """A state whose store holds something, so a read is not trivially zero."""
+    tensors = core.state_tensors(batch)
+    generator = torch.Generator().manual_seed(seed)
+    tensors["k"] = torch.randn(batch, core.slots, core.slot_dim, generator=generator)
+    tensors["v"] = torch.randn(batch, core.slots, core.value_dim, generator=generator)
+    tensors["h"] = torch.randn(batch, core.hidden, generator=generator)
+    return tensors
+
+
+def test_a_carried_read_is_returned_unchanged(torch):
+    """§83's hook: a view that carries ``read`` does not re-address the store."""
+    core = _turnstore()
+    tensors = _view_with_store(core, torch)
+    addressed = core.read_vector(tensors)
+    carried = torch.randn(tensors["h"].shape[0], core.value_dim)
+    tensors["read"] = carried
+    assert torch.equal(core.read_vector(tensors), carried)
+    assert not torch.equal(core.read_vector(tensors), addressed)
+
+
+def test_a_view_without_a_carried_read_still_addresses_the_store(torch):
+    """The hook must not change the default: no ``read`` key is every earlier stage."""
+    core = _turnstore()
+    tensors = _view_with_store(core, torch)
+    expected = torch.bmm(
+        torch.softmax(
+            torch.exp(core.log_read_scale)
+            * torch.bmm(tensors["k"], core.query_proj(tensors["h"]).unsqueeze(2)).squeeze(2),
+            dim=-1,
+        ).unsqueeze(1),
+        tensors["v"],
+    ).squeeze(1)
+    assert torch.equal(core.read_vector(tensors), expected)
+    assert "read" not in core.state_tensors(2)
+
+
+def test_consume_preserves_a_carried_read(torch):
+    """A held read must survive the per-token advance, or only token 0 would use it."""
+    core = _turnstore()
+    tensors = _view_with_store(core, torch)
+    carried = torch.randn(tensors["h"].shape[0], core.value_dim)
+    tokens = torch.zeros(tensors["h"].shape[0], dtype=torch.long)
+    tensors["read"] = carried
+    advanced = core.consume(tokens, tensors)
+    assert "read" in advanced
+    assert torch.equal(advanced["read"], carried)
+    assert not torch.equal(advanced["h"], tensors["h"])  # it really advanced
+    # the input mapping is untouched (the no-mutate contract)
+    assert torch.equal(tensors["read"], carried)
+
+
+def test_token_logits_uses_the_carried_read(torch):
+    core = _turnstore()
+    tensors = _view_with_store(core, torch)
+    carried = torch.randn(tensors["h"].shape[0], core.value_dim)
+    tensors["read"] = carried
+    expected = core.head(torch.cat([tensors["h"], carried], dim=-1))
+    assert torch.equal(core.token_logits(tensors), expected)
+    tensors.pop("read")
+    assert not torch.equal(core.token_logits(tensors), expected)
+
+
+def test_a_carried_read_adds_no_parameter_or_weight(torch):
+    """§83 is a read *point*, not a head: the carrier is the same size and hash."""
+    core = _turnstore(seed=31)
+    before = core.parameter_count()
+    before_hash = core.weights_hash()
+    tensors = _view_with_store(core, torch)
+    tensors["read"] = torch.randn(tensors["h"].shape[0], core.value_dim)
+    core.token_logits(tensors)
+    core.consume(torch.zeros(tensors["h"].shape[0], dtype=torch.long), tensors)
+    assert core.parameter_count() == before
+    assert core.weights_hash() == before_hash

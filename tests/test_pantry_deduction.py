@@ -2137,7 +2137,7 @@ def test_roster_permutation_report_reads_a_positional_model(stage):
     # answer right and every structure answer wrong - the §62 shape.
     original_evaluate = stage.evaluate
 
-    def fake_evaluate(core, rows, variant, module=None):
+    def fake_evaluate(core, rows, variant, module=None, read_at="token"):
         out = []
         for row in rows:
             names = list(dict(module._roster_item(row)[1]["value"]).values())
@@ -2287,7 +2287,7 @@ def test_roster_permutation_report_records_the_order_retention(stage):
         """
         known_order = {}
 
-        def fake_evaluate(core, rows, variant, module=None):
+        def fake_evaluate(core, rows, variant, module=None, read_at="token"):
             out = []
             for row in rows:
                 _, item = module._roster_item(row)
@@ -2553,7 +2553,7 @@ def test_roster_permutation_report_records_the_roster_size(stage):
     sessions = corpus["heldout"][:20]
     original_evaluate = stage.evaluate
 
-    def fake_evaluate(core, rows, variant, module=None):
+    def fake_evaluate(core, rows, variant, module=None, read_at="token"):
         out = []
         for row in rows:
             _, item = module._roster_item(row)
@@ -2638,5 +2638,171 @@ def test_cli_roster_size_three_runs_the_registered_arm(stage):
             "cpu",
             "--out",
             str(Path(tempfile.mkdtemp(prefix="pantry65-"))),
+        ]
+    )
+
+
+# --------------------------------------------------------------------------- #
+# §83: the read taken at the evidence boundary and carried through the decode
+# --------------------------------------------------------------------------- #
+def _store_boundaries(stage, corpus, *, seed=59, sessions=2):
+    """`sessions` real sessions run on a store arm, with every boundary kept."""
+    core = stage.build_core(hidden=8, emb=4, device="cpu", kind="turnstore", seed=seed)
+    rows = corpus["heldout"][:sessions]
+    boundaries: list = []
+    stage.run_session(
+        core,
+        [stage.turn_tokens(session) for session in rows],
+        [stage.turn_gaps(session) for session in rows],
+        boundaries=boundaries,
+    )
+    return core, rows, boundaries
+
+
+def test_read_at_token_is_bitwise_the_registered_objective(stage, corpus):
+    """The default arm must be the computation every earlier stage trained."""
+    torch = pytest.importorskip("torch")
+    core, rows, boundaries = _store_boundaries(stage, corpus)
+    answers = [stage.answer_ids(session) for session in rows]
+    default = stage._training_loss(core, boundaries, answers, 1.0)
+    explicit = stage._training_loss(core, boundaries, answers, 1.0, read_at="token")
+    assert torch.equal(default[0], explicit[0])
+    assert torch.equal(default[1], explicit[1])
+    assert torch.equal(default[2], explicit[2])
+
+
+def test_decode_view_at_token_carries_nothing(stage, corpus):
+    core, _, boundaries = _store_boundaries(stage, corpus)
+    for index in (0, 1, len(boundaries) - 1):
+        view = stage._decode_view_at(core, boundaries, index, "token")
+        assert view == stage._decode_view(boundaries[index])
+        assert "read" not in view
+
+
+def test_read_at_boundary_carries_the_read_from_the_previous_boundary(stage, corpus):
+    torch = pytest.importorskip("torch")
+    core, _, boundaries = _store_boundaries(stage, corpus)
+    for index in range(1, len(boundaries)):
+        view = stage._decode_view_at(core, boundaries, index, "boundary")
+        expected = core.read_vector(stage._decode_view(boundaries[index - 1]))
+        assert torch.equal(view["read"], expected)
+        # the state being decoded is still this boundary's, not the earlier one
+        assert torch.equal(view["h"], stage._decode_view(boundaries[index])["h"])
+        assert torch.equal(view["k"], stage._decode_view(boundaries[index])["k"])
+
+
+def test_read_at_boundary_has_a_zero_read_before_the_first_boundary(stage, corpus):
+    """Nothing has been written yet, so the carried read is ``memory=False``'s zero."""
+    torch = pytest.importorskip("torch")
+    core, _, boundaries = _store_boundaries(stage, corpus)
+    view = stage._decode_view_at(core, boundaries, 0, "boundary")
+    assert torch.equal(view["read"], torch.zeros_like(view["read"]))
+    assert view["read"].shape == (view["h"].shape[0], core.value_dim)
+
+
+def test_read_at_boundary_changes_the_answer_loss(stage, corpus):
+    """The carried read must reach the decode, not sit unused in the view."""
+    torch = pytest.importorskip("torch")
+    core, rows, boundaries = _store_boundaries(stage, corpus)
+    answers = [stage.answer_ids(session) for session in rows]
+    _, main_token, _ = stage._training_loss(core, boundaries, answers, 0.0)
+    _, main_boundary, _ = stage._training_loss(core, boundaries, answers, 0.0, read_at="boundary")
+    manual = stage._answer_loss(
+        core, stage._decode_view_at(core, boundaries, len(boundaries) - 1, "boundary"), answers
+    )
+    assert torch.equal(main_boundary, manual)
+    assert not torch.equal(main_token, main_boundary)
+
+
+def test_read_at_boundary_reaches_every_auxiliary_boundary(stage, corpus):
+    torch = pytest.importorskip("torch")
+    core, rows, boundaries = _store_boundaries(stage, corpus)
+    answers = [stage.answer_ids(session) for session in rows]
+    manual = sum(
+        stage._answer_loss(
+            core, stage._decode_view_at(core, boundaries, index, "boundary"), answers
+        )
+        for index in range(len(boundaries) - 1)
+    ) / (len(boundaries) - 1)
+    total, main, aux = stage._training_loss(core, boundaries, answers, 1.0, read_at="boundary")
+    assert torch.allclose(aux, manual, atol=1e-6)
+    assert torch.allclose(total, main + manual, atol=1e-6)
+
+
+def test_decode_view_at_rejects_an_unknown_read_point(stage, corpus):
+    core, _, boundaries = _store_boundaries(stage, corpus)
+    with pytest.raises(ValueError):
+        stage._decode_view_at(core, boundaries, 1, "turn")
+
+
+def test_evaluate_decodes_with_the_carried_read(stage, corpus, monkeypatch):
+    """`evaluate` must hand `generate_bytes` the same view the loss trained."""
+    torch = pytest.importorskip("torch")
+    core, rows, boundaries = _store_boundaries(stage, corpus)
+    seen = []
+    original = stage.generate_bytes
+
+    def spy(core_arg, record, limit=stage.MAX_ANSWER_BYTES):
+        seen.append((record, "read" in record))
+        return original(core_arg, record, limit=limit)
+
+    monkeypatch.setattr(stage, "generate_bytes", spy)
+    module = stage._load_generator()
+    stage.evaluate(core, rows, "full", module=module, batch=len(rows), read_at="boundary")
+    assert len(seen) == 1  # one decode per batch, and the batch is every row
+    assert seen[0][1] is True
+    assert seen[0][0]["read"].shape[0] == len(rows)
+
+    seen.clear()
+    stage.evaluate(core, rows, "full", module=module, batch=len(rows), read_at="token")
+    assert len(seen) == 1
+    assert seen[0][1] is False
+
+
+def test_generate_bytes_holds_one_read_for_the_whole_decode(stage, corpus):
+    """The carried vector is what `token_logits` sees at every step, not just step 0."""
+    torch = pytest.importorskip("torch")
+    core, _, boundaries = _store_boundaries(stage, corpus)
+    view = stage._decode_view_at(core, boundaries, len(boundaries) - 1, "boundary")
+    held = view["read"]
+    advanced = core.consume(torch.zeros(view["h"].shape[0], dtype=torch.long), view)
+    assert torch.equal(core.read_vector(advanced), held)
+
+
+def test_cli_refuses_read_at_boundary_without_a_turnstore(stage):
+    for argv in (
+        ["--overfit", "1", "--read-at", "boundary"],
+        ["--overfit", "1", "--core", "tokencache", "--read-at", "boundary"],
+        ["--overfit", "1", "--core", "gru", "--read-at", "boundary"],
+    ):
+        with pytest.raises(SystemExit):
+            stage.main(argv)
+
+
+def test_cli_accepts_read_at_boundary_on_the_store_arm(stage):
+    """Same store, same budget: the registered treatment is a valid command."""
+    stage.main(
+        [
+            "--minimal-binding",
+            "--order-augmented",
+            "--roster-size",
+            "2",
+            "--smoke",
+            "--core",
+            "turnstore",
+            "--address",
+            "item",
+            "--read-at",
+            "boundary",
+            "--aux-loss",
+            "1.0",
+            "--aux-mode",
+            "weighted-region",
+            "--gate-prefix",
+            "M",
+            "--device",
+            "cpu",
+            "--out",
+            str(Path(tempfile.mkdtemp(prefix="pantry83-"))),
         ]
     )

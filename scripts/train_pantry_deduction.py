@@ -174,6 +174,13 @@ AUX_LAMBDA_DEFAULT = 0.0
 AUX_MODE_DEFAULT = "all"
 OVERFIT_FLOOR = 0.90
 
+# §83 - where the read's query comes from. "token" is every stage before §83: the
+# query is W_q of the token being decoded. "boundary" takes the read once, at the
+# boundary before the decode, and holds it: same W_q, same head, same store,
+# zero new parameters. §82 measured that frozen read at 0.5050 on the §77
+# carrier, so the arm asks what training does to that same number.
+READ_AT = ("token", "boundary")
+
 # §55 - stage T compares an architecture arm against the same budget. The GRU
 # control is the registered n32_4x report (12/32 at 1,600 steps = 400
 # updates/session); putting the number here means the ablation is graded against
@@ -1036,6 +1043,49 @@ def region_stats(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def _carried_read(core: Any, boundaries: Sequence[Any], index: int, reference: Any) -> Any:
+    """§83: the read a decode that starts at ``boundaries[index]`` uses.
+
+    With ``read_at="boundary"`` the read is taken once, at the boundary *before*
+    the decode, and held for every token of it: the query, the keys and the
+    values are the ones at ``boundaries[index - 1]``. That is the computation §82
+    scored frozen (its ``boundary_query`` cell), so retraining changes only what
+    the projection learned, not what the cell measures.
+
+    Before the first boundary the store is empty, so the read is ``0`` - the
+    vector ``memory=False`` returns.
+    """
+    torch = core._torch
+    if index <= 0:
+        return torch.zeros(
+            int(reference.shape[0]),
+            core.value_dim,
+            dtype=reference.dtype,
+            device=reference.device,
+        )
+    return core.read_vector(_decode_view(boundaries[index - 1]))
+
+
+def _decode_view_at(
+    core: Any,
+    boundaries: Sequence[Any],
+    index: int,
+    read_at: str = "token",
+) -> Dict[str, Any]:
+    """The view a decode at ``boundaries[index]`` uses, with §83's read attached.
+
+    ``read_at="token"`` returns the boundary's own tensors unchanged, which is
+    every stage before §83; ``read_at="boundary"`` adds ``read``, so the core
+    returns that vector instead of addressing the store at each token.
+    """
+    if read_at not in READ_AT:
+        raise ValueError(f"read_at must be one of {READ_AT}, got {read_at!r}")
+    view = _decode_view(boundaries[index])
+    if read_at == "boundary":
+        view["read"] = _carried_read(core, boundaries, index, view["h"])
+    return view
+
+
 def _training_loss(
     core: Any,
     boundaries: Sequence[Any],
@@ -1043,6 +1093,7 @@ def _training_loss(
     aux_lambda: float,
     prefix_answers: Optional[Sequence[Sequence[Optional[Sequence[int]]]]] = None,
     candidate_sets: Optional[Sequence[Sequence[Optional[Sequence[str]]]]] = None,
+    read_at: str = "token",
 ) -> Tuple[Any, Any, Optional[Any]]:
     """The registered §50.2 objective: main CE plus the mean CE at earlier turns.
 
@@ -1056,18 +1107,29 @@ def _training_loss(
     auxiliary term then averages only over the (boundary, sample) pairs that
     have an answer, so the model is never asked to answer a question that is not
     yet answerable - the failure §50.13 measured in stage Q's arm.
+
+    ``read_at="boundary"`` (§83) changes only *where the read comes from*: every
+    decode - the main answer and each auxiliary - carries the read taken one
+    boundary earlier. Same parameters, same objective, same steps.
     """
-    main = _answer_loss(core, boundaries[-1], answers)
+    main = _answer_loss(
+        core, _decode_view_at(core, boundaries, len(boundaries) - 1, read_at), answers
+    )
     earlier = list(boundaries[:-1])
     if aux_lambda <= 0.0 or not earlier:
         return main, main, None
     if candidate_sets is not None:
-        auxiliary = _weighted_region_auxiliary(core, earlier, answers, candidate_sets)
+        auxiliary = _weighted_region_auxiliary(
+            core, earlier, answers, candidate_sets, read_at=read_at
+        )
         if auxiliary is None:
             return main, main, None
         return main + aux_lambda * auxiliary, main, auxiliary
     if prefix_answers is None:
-        auxiliary = sum(_answer_loss(core, hidden, answers) for hidden in earlier) / len(earlier)
+        auxiliary = sum(
+            _answer_loss(core, _decode_view_at(core, earlier, index, read_at), answers)
+            for index in range(len(earlier))
+        ) / len(earlier)
         return main + aux_lambda * auxiliary, main, auxiliary
 
     terms = []
@@ -1077,8 +1139,9 @@ def _training_loss(
         if not keep:
             continue
         picked = [rows[position] for position in keep]
-        index_tensor = _decode_view(hidden)["h"].new_tensor(keep).long()
-        terms.append(_answer_loss(core, _select(hidden, index_tensor), picked))
+        view = _decode_view_at(core, earlier, index, read_at)
+        index_tensor = view["h"].new_tensor(keep).long()
+        terms.append(_answer_loss(core, _select(view, index_tensor), picked))
     if not terms:
         return main, main, None
     auxiliary = sum(terms) / len(terms)
@@ -1090,6 +1153,7 @@ def _weighted_region_auxiliary(
     earlier: Sequence[Any],
     answers: Sequence[Sequence[int]],
     candidate_sets: Sequence[Sequence[Optional[Sequence[str]]]],
+    read_at: str = "token",
 ) -> Optional[Any]:
     """§60.2: ``Σ w·CE / Σ w`` over boundaries restricted to their roster.
 
@@ -1114,9 +1178,10 @@ def _weighted_region_auxiliary(
         if not keep:
             continue
         picked = [list(rows[position]) for position in keep]
-        index_tensor = _decode_view(boundary)["h"].new_tensor(keep).long()
+        view = _decode_view_at(core, earlier, index, read_at)
+        index_tensor = view["h"].new_tensor(keep).long()
         targets = [answers[position] for position in keep]
-        losses = _candidate_region_loss(core, _select(boundary, index_tensor), picked, targets)
+        losses = _candidate_region_loss(core, _select(view, index_tensor), picked, targets)
         weights = torch.as_tensor(
             [1.0 / len(names) for names in picked], dtype=losses.dtype, device=losses.device
         )
@@ -1289,6 +1354,7 @@ def train(
     seed: int,
     aux_lambda: float = AUX_LAMBDA_DEFAULT,
     aux_mode: str = AUX_MODE_DEFAULT,
+    read_at: str = "token",
 ) -> List[Dict[str, Any]]:
     torch = core._torch
     optimiser = torch.optim.Adam(list(core.parameters()), lr=lr)
@@ -1303,7 +1369,11 @@ def train(
         seen = 0
         for start in range(0, len(order), batch):
             rows = [samples[index] for index in order[start : start + batch]]
-            boundaries: Optional[List[Any]] = [] if aux_lambda > 0.0 else None
+            # §83 needs the boundary before the answer decode, so the graph is
+            # kept even when there is no auxiliary term.
+            boundaries: Optional[List[Any]] = (
+                [] if (aux_lambda > 0.0 or read_at == "boundary") else None
+            )
             state, hidden = run_session(
                 core,
                 [row["turns"] for row in rows],
@@ -1325,6 +1395,7 @@ def train(
                     if aux_mode == "weighted-region" and boundaries is not None
                     else None
                 ),
+                read_at=read_at,
             )
             optimiser.zero_grad(set_to_none=True)
             total.backward()
@@ -1373,8 +1444,14 @@ def evaluate(
     *,
     module: Any,
     batch: int = 32,
+    read_at: str = "token",
 ) -> List[Dict[str, Any]]:
-    """One record per session: prediction, ranking, and the solver's target."""
+    """One record per session: prediction, ranking, and the solver's target.
+
+    ``read_at="boundary"`` (§83) decodes with the read taken at the boundary
+    before the answer, so the reported answer is the one the treatment actually
+    produces; the default is every earlier stage.
+    """
     torch = core._torch
     records: List[Dict[str, Any]] = []
     core.eval()
@@ -1404,8 +1481,14 @@ def evaluate(
                 raise SystemExit(f"variant {variant} left sessions with different turn counts")
 
             reset = variant == "reset"
-            state, hidden = run_session(core, turns, gaps, reset_before_last=reset)
-            final = dict(state.tensors)
+            snapshots: Optional[List[Any]] = [] if read_at == "boundary" else None
+            state, hidden = run_session(
+                core, turns, gaps, reset_before_last=reset, boundaries=snapshots
+            )
+            if snapshots is not None:
+                final = _decode_view_at(core, snapshots, len(snapshots) - 1, read_at)
+            else:
+                final = dict(state.tensors)
             produced = generate_bytes(core, final)
             for index, session in enumerate(chunk):
                 actors = list(session["environment"]["actors"])
@@ -1641,6 +1724,7 @@ def roster_permutation_report(
     sessions: Sequence[Dict[str, Any]],
     *,
     module: Any,
+    read_at: str = "token",
 ) -> Dict[str, Any]:
     """§63 M5: re-answer the same held-out sessions with the roster order flipped.
 
@@ -1651,9 +1735,9 @@ def roster_permutation_report(
     entry is also the second, so the legacy ``follows_second_entry`` key is kept
     and carries the same count; §65's wider rosters read ``roster_size`` with it.
     """
-    original = evaluate(core, sessions, "full", module=module)
+    original = evaluate(core, sessions, "full", module=module, read_at=read_at)
     reordered = [reorder_roster(session, module) for session in sessions]
-    records = evaluate(core, reordered, "full", module=module)
+    records = evaluate(core, reordered, "full", module=module, read_at=read_at)
     total = len(records)
     correct = sum(1 for row in records if row["prediction"] == row["target"])
     original_correct = sum(1 for row in original if row["prediction"] == row["target"])
@@ -1713,6 +1797,7 @@ def readout_profile(
     *,
     module: Any,
     batch: int = 32,
+    read_at: str = "token",
 ) -> Dict[str, Any]:
     """Decode the answer at every turn boundary (§50.6).
 
@@ -1738,7 +1823,7 @@ def readout_profile(
             )
             for turn in range(turns_total):
                 targets = [prefix_candidates(module, session, turn) for session in chunk]
-                produced = generate_bytes(core, boundaries[turn])
+                produced = generate_bytes(core, _decode_view_at(core, boundaries, turn, read_at))
                 for index, candidates in enumerate(targets):
                     if len(candidates) != 1:
                         continue
@@ -2698,10 +2783,11 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         seed=args.seed,
         aux_lambda=args.aux_loss,
         aux_mode=args.aux_mode,
+        read_at=args.read_at,
     )
 
     raw = {
-        name: evaluate(core, heldout, name, module=module)
+        name: evaluate(core, heldout, name, module=module, read_at=args.read_at)
         for name in ("full", "reset", "no_correction", "no_roster", "no_bounds", "skip_al")
     }
     results: Dict[str, Any] = {name: summarise(records) for name, records in raw.items()}
@@ -2710,7 +2796,9 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
     results["flip"] = flip_summary(raw["full"], raw["no_correction"])
 
     fit_rows = train_sessions[: min(FIT_SESSIONS, len(train_sessions))]
-    results["train_fit"] = summarise(evaluate(core, fit_rows, "full", module=module))
+    results["train_fit"] = summarise(
+        evaluate(core, fit_rows, "full", module=module, read_at=args.read_at)
+    )
     fit_subset_records: Optional[List[Dict[str, Any]]] = None
     if len(train_sessions) > FIT_SESSIONS:
         # §49.6 capped the fit readout at 200 sessions for stage-P cost, but §56's
@@ -2718,13 +2806,15 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         # a 400-session subset those are different sets, so the declared subset is
         # measured too and the gate reads it; the capped number stays for the
         # stage-P comparison it was introduced for.
-        fit_subset_records = evaluate(core, train_sessions, "full", module=module)
+        fit_subset_records = evaluate(
+            core, train_sessions, "full", module=module, read_at=args.read_at
+        )
         results["train_fit_subset"] = summarise(fit_subset_records)
 
     # §50.6: where does an answer exist along the testimony? Diagnostic only.
     diagnostics: Dict[str, Any] = {}
     if args.aux_loss > 0.0:
-        diagnostics["readout"] = readout_profile(core, heldout, module=module)
+        diagnostics["readout"] = readout_profile(core, heldout, module=module, read_at=args.read_at)
     if args.counterfactual and fit_subset_records is not None:
         diagnostics["counterfactual_pairs"] = counterfactual_pair_report(fit_subset_records)
     if args.minimal_binding:
@@ -2741,7 +2831,9 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             else:
                 diagnostics["minimal_pairs"] = counterfactual_pair_report(fit_subset_records)
         if heldout_twins:
-            twin_records = evaluate(core, heldout_twins, "full", module=module)
+            twin_records = evaluate(
+                core, heldout_twins, "full", module=module, read_at=args.read_at
+            )
             diagnostics["minimal_heldout_pairs"] = counterfactual_pair_report(
                 list(raw["full"]) + twin_records
             )
@@ -2752,7 +2844,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
         # roster keeps its score; the §62 arm, which answered the second entry,
         # drops to 0 (measured on the finished §62 checkpoint, §62.10).
         diagnostics["minimal_roster_permutation"] = roster_permutation_report(
-            core, heldout, module=module
+            core, heldout, module=module, read_at=args.read_at
         )
 
     # the data contract behind "the answer is not in the question"
@@ -2791,6 +2883,7 @@ def run(args: argparse.Namespace, stamp: str) -> Dict[str, Any]:
             "write_slots": (None if args.core != "turnstore" else args.write_slots),
             "aux_lambda": args.aux_loss,
             "aux_mode": args.aux_mode,
+            "read_at": args.read_at,
             "gate_prefix": args.gate_prefix,
             "overfit_sessions": args.overfit,
             "train_subset": args.train_sessions or None,
@@ -3030,6 +3123,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--read-at",
+        choices=READ_AT,
+        default="token",
+        help=(
+            "§83: where the answer decode's read comes from. 'token' (default) is "
+            "every earlier stage - W_q of the token being decoded; 'boundary' takes "
+            "the read once, at the boundary before the decode, and holds it for all "
+            "of that decode's tokens (same parameters, same store; §82 measured the "
+            "frozen version of this cell at 0.5050)"
+        ),
+    )
+    parser.add_argument(
         "--gate-prefix",
         default=None,
         metavar="LETTER",
@@ -3047,6 +3152,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
     if args.aux_loss < 0.0:
         parser.error("--aux-loss must be >= 0; 0.0 is stage P and is never negative")
+    if args.read_at != "token" and args.core != "turnstore":
+        parser.error("--read-at is the turnstore read rule; pass --core turnstore")
     if args.aux_mode == "resolvable" and args.aux_loss <= 0.0:
         parser.error("--aux-mode resolvable only matters with --aux-loss > 0")
     if args.aux_mode != "all" and args.aux_loss <= 0.0:

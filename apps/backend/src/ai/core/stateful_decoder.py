@@ -590,6 +590,13 @@ class TurnStoreCore(GRUCore):
     so the items no longer share one rank-1 summary. The plan is data, not a
     second forward pass: the token stream and the ``h`` trajectory are exactly
     the turn-addressed arm's. ``address="turn"`` stays bit-identical to §73.
+
+    The read point is a *training* choice, not a core setting (§83): a decode
+    view may carry ``read``, a vector retrieved once from an earlier boundary, and
+    :meth:`read_vector` then returns it instead of re-addressing the store at
+    every token. Same ``query_proj``, same ``head``, same store - zero new
+    parameters - and only the trainer's ``--read-at boundary`` sets it, so
+    ``--read-at token`` (the default) is bit-identical to every earlier stage.
     """
 
     model_kind = "turnstore"
@@ -742,9 +749,19 @@ class TurnStoreCore(GRUCore):
     # -- the one step interface the trainer uses ----------------------------
 
     def read_vector(self, tensors: Dict[str, Any]) -> Any:
-        """The content the current ``h`` addresses (all zeros when ``memory`` is off)."""
+        """The content the current ``h`` addresses (all zeros when ``memory`` is off).
+
+        A decode view may carry ``read`` (§83): a vector already retrieved from an
+        earlier boundary. When it is present it is returned unchanged, so a decode
+        can run with one read for all of its tokens. Nothing on the write path
+        sets it - ``state_tensors`` has no such entry - so a view without it is
+        byte-identical to every earlier stage.
+        """
         torch = self._torch
         hidden = tensors["h"]
+        carried = tensors.get("read")
+        if carried is not None:
+            return carried
         if not self.memory:
             return torch.zeros(
                 hidden.shape[0],

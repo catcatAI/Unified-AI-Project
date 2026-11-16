@@ -1002,6 +1002,11 @@
       "referenced": true,
       "purpose": "§82: is the missing colour on the key side, on the query side, or neither?"
     },
+    "probe_pantry_readrule83.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§83: does retraining with the read at the evidence boundary make it address?"
+    },
     "probe_pantry_slots.py": {
       "category": "probe",
       "referenced": true,
