@@ -962,6 +962,11 @@
       "referenced": true,
       "purpose": "§70: which readout family reaches the roster? (same frozen carrier, same turn)"
     },
+    "probe_pantry_fit78.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§78: at matched readout fit, does the per-item store still read better?"
+    },
     "probe_pantry_intervene.py": {
       "category": "probe",
       "referenced": true,
