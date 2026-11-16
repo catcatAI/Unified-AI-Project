@@ -158,6 +158,16 @@ def exact_fraction(store: Dict[str, Any], value: int) -> float:
     return round(int(counts.get(str(value), 0)) / total, 6)
 
 
+def items_per_session(trainer: Any, probe: Any, session: Dict[str, Any]) -> int:
+    """How many list items one session splits into (§77.4's 5).
+
+    The session's turns are dicts; the tokens the write plan indexes are the ones
+    ``turn_payload`` builds (``user_input + "\\n"``), not the dicts themselves.
+    """
+    tokens, _ = probe.turn_payload(trainer, session)
+    return sum(len(trainer.item_end_positions(turn)) for turn in tokens)
+
+
 # --------------------------------------------------------------------------- #
 # the mechanism: did each write land, and where
 # --------------------------------------------------------------------------- #
@@ -473,11 +483,7 @@ def run_arm(
             "train_items": len(train),
             "heldout_items": len(heldout),
             "train_rosters": len(set(rosters)),
-            "items_per_session": (
-                sum(len(trainer.item_end_positions(turn)) for turn in train[0]["turns"])
-                if train
-                else 0
-            ),
+            "items_per_session": (items_per_session(trainer, probe, train[0]) if train else 0),
         },
         "split": {
             "rows": split["rows"],

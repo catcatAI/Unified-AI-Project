@@ -967,6 +967,11 @@
       "referenced": true,
       "purpose": "§71: does the roster line *cause* the roster in the state? (intervention, no fitting)"
     },
+    "probe_pantry_item77.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§77: does the *content* written per turn limit composition - per item vs turn end?"
+    },
     "probe_pantry_readout.py": {
       "category": "probe",
       "referenced": true,

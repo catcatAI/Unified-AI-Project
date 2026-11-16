@@ -29,6 +29,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 STATEFUL = REPO_ROOT / "apps" / "backend" / "src" / "ai" / "core" / "stateful_decoder.py"
 ITEM77 = REPO_ROOT / "scripts" / "probe_pantry_item77.py"
 TRAINER = REPO_ROOT / "scripts" / "train_pantry_deduction.py"
+READOUT = REPO_ROOT / "scripts" / "probe_pantry_readout.py"
 
 torch = pytest.importorskip("torch")
 
@@ -119,6 +120,21 @@ def test_item_end_positions_ends_before_the_newline(trainer):
     tokens = turn_tokens("a")
     assert tokens[-1] == BYTE_OFFSET + 10
     assert trainer.item_end_positions(tokens)[-1] == len(tokens) - 2
+
+
+def test_items_per_session_counts_the_session_s_items(probe77, trainer):
+    # regression: the session's turns are dicts, not token lists, so the count
+    # must go through turn_payload (the first run of the probe passed the dicts
+    # straight to item_end_positions and died there)
+    readout = _load_module("pantry_item77_readout_under_test", READOUT)
+    session = {
+        "session_meta": {},
+        "turns": [
+            {"turn_id": 0, "user_input": "a", "dt_s": 0.0},
+            {"turn_id": 1, "user_input": "x、y", "dt_s": 0.0},
+        ],
+    }
+    assert probe77.items_per_session(trainer, readout, session) == 3
 
 
 # --------------------------------------------------------------------------- #
