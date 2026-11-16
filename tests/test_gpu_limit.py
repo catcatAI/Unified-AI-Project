@@ -238,10 +238,20 @@ def test_bad_targets_are_rejected(gpu):
 # end to end: the CLI limits a child that never touches the GPU
 # --------------------------------------------------------------------------- #
 def test_a_process_without_counters_reports_zero(gpu):
-    limiter = gpu.Limiter(gpu.os.getpid(), target=0.5, poll_seconds=0.01, counters_timeout=0.05)
-    report = limiter.run(seconds=0.05)
-    assert report["counters_seen"] is False
-    assert report["measured_duty"] == 0.0
+    # The pid has to be a *fresh* process, not this one: by the time the whole
+    # suite has run, the pytest process itself can hold a DRM file descriptor
+    # (some other test touches the accelerator), and its fdinfo then carries
+    # drm-cycles entries. The claim under test is about a process that never
+    # opened the device, so the test spawns one.
+    child = gpu.subprocess.Popen(["/bin/sleep", "5"])
+    try:
+        limiter = gpu.Limiter(child.pid, target=0.5, poll_seconds=0.01, counters_timeout=0.05)
+        report = limiter.run(seconds=0.05)
+        assert report["counters_seen"] is False
+        assert report["measured_duty"] == 0.0
+    finally:
+        child.terminate()
+        child.wait(timeout=5)
 
 
 def test_cli_runs_and_reports(gpu, tmp_path):
