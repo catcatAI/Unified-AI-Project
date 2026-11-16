@@ -992,6 +992,11 @@
       "referenced": true,
       "purpose": "§66: where does the roster binding go? (readout/state probe, no new training)"
     },
+    "probe_pantry_readrule81.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§81: does removing the key-norm race let the read address the needed entry?"
+    },
     "probe_pantry_slots.py": {
       "category": "probe",
       "referenced": true,
