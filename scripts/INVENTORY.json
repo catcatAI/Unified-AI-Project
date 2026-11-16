@@ -977,6 +977,11 @@
       "referenced": true,
       "purpose": "§77: does the *content* written per turn limit composition - per item vs turn end?"
     },
+    "probe_pantry_pair79.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§79: what one item's entry carries - the value -> name pair inside one write."
+    },
     "probe_pantry_readout.py": {
       "category": "probe",
       "referenced": true,
