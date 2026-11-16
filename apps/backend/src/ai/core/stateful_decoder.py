@@ -49,7 +49,7 @@ from __future__ import annotations
 
 import hashlib
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 from ai.core.core_state import CoreState, CoreStateInvalid
@@ -581,6 +581,15 @@ class TurnStoreCore(GRUCore):
     meaningful only with ``address="turn"``: under ``address="gate"`` a forced
     write would average every turn into one slot at weight 1.0, which is the
     §62/§63 collapse rather than a different content.
+
+    ``address="item"`` (§77, default off) changes *which state* is written, not
+    how wide the write is: the caller passes a plan of one entry per list item
+    (the ``h`` at that item's last token, and the item's own slot), and each
+    entry is written with the same projections and the same learned gate. A turn
+    with one item is one entry; a roster turn with ``n`` items is ``n`` entries,
+    so the items no longer share one rank-1 summary. The plan is data, not a
+    second forward pass: the token stream and the ``h`` trajectory are exactly
+    the turn-addressed arm's. ``address="turn"`` stays bit-identical to §73.
     """
 
     model_kind = "turnstore"
@@ -604,14 +613,21 @@ class TurnStoreCore(GRUCore):
     ) -> None:
         if slots <= 0 or slot_dim <= 0 or value_dim <= 0:
             raise ValueError("slots, slot_dim and value_dim must be > 0")
-        if address not in ("gate", "turn"):
-            raise ValueError(f"address must be 'gate' or 'turn', got {address!r}")
+        if address not in ("gate", "turn", "item"):
+            raise ValueError(f"address must be 'gate', 'turn' or 'item', got {address!r}")
         if write_strength not in ("learned", "force"):
             raise ValueError(f"write_strength must be 'learned' or 'force', got {write_strength!r}")
         if write_strength == "force" and address != "turn":
             raise ValueError("write_strength='force' needs address='turn'")
         if int(write_slots) < 1:
             raise ValueError(f"write_slots must be >= 1, got {write_slots!r}")
+        if address == "item":
+            # §77: the item plan names one slot per item, so a second width axis
+            # would be two treatments in one arm.
+            if int(write_slots) != 1:
+                raise ValueError("address='item' needs write_slots=1")
+            if write_strength != "learned":
+                raise ValueError("address='item' writes with the learned gate")
         if int(write_slots) > 1:
             if address != "turn":
                 raise ValueError("write_slots > 1 needs address='turn'")
@@ -763,9 +779,11 @@ class TurnStoreCore(GRUCore):
 
         With ``write_slots > 1`` (§76) a turn is several sub-writes, so there is
         no single distribution to report; this raises instead of returning one.
+        ``address="item"`` (§77) has the same shape: one write per list item, so
+        the plan - not this method - names the slots.
         """
         torch = self._torch
-        if self.write_slots > 1:
+        if self.write_slots > 1 or self.address == "item":
             raise ValueError("write_weights is the one-slot contract; use _turn_weights")
         mode = self.address
         if mode == "turn":
@@ -791,7 +809,15 @@ class TurnStoreCore(GRUCore):
             mask[j, j * width : (j + 1) * width] = 1.0
         return mask
 
-    def end_turn(self, tensors: Dict[str, Any], *, address: Optional[int] = None) -> Dict[str, Any]:
+    def end_turn(
+        self,
+        tensors: Dict[str, Any],
+        *,
+        address: Optional[int] = None,
+        items: Optional[Sequence[Sequence[Tuple[int, int]]]] = None,
+        states: Any = None,
+        valid: Any = None,
+    ) -> Dict[str, Any]:
         """One write per turn: address, strength, then a moving average.
 
         ``write_slots > 1`` (§76) turns the single write into ``write_slots``
@@ -801,12 +827,63 @@ class TurnStoreCore(GRUCore):
         ``value_proj`` are the same linear maps, only their output is scattered -
         and each chunk keeps zeros outside its own block, so ``read_vector`` does
         not change: a query's dot product with a chunk-slot only sees that chunk.
+
+        ``address="item"`` (§77) writes once per list item instead: ``items`` is
+        one plan per row (``[(token_index, slot), ...]``), ``states`` is the
+        turn's ``[B, T, H]`` stacked states the plan's indices point into, and
+        ``valid`` (``[B, T]``, optional) masks padding. Each entry writes
+        ``sigmoid(write_gate(h_item)) * value_proj(h_item)`` into its own slot,
+        so the items are no longer averaged into one rank-1 summary. The token
+        stream is untouched: this reads positions out of the states the turn
+        already produced.
         """
         if not self.memory:
             return dict(tensors)
         torch = self._torch
         hidden = tensors["h"]
         keys, values = self._store(tensors)
+        if self.address == "item":
+            if items is None or states is None:
+                raise ValueError("address='item' needs items=... and states=...")
+            if len(items) != hidden.shape[0]:
+                raise ValueError("the item plan must have one entry list per batch row")
+            if states.shape[0] != hidden.shape[0]:
+                raise ValueError("states and the state batch disagree")
+            width = int(states.shape[1])
+            longest = max((len(plan) for plan in items), default=0)
+            for entry in range(longest):
+                positions: List[int] = []
+                slots: List[int] = []
+                present: List[float] = []
+                for plan in items:
+                    if entry < len(plan):
+                        position, slot = plan[entry]
+                        position, slot = int(position), int(slot)
+                        if not 0 <= position < width:
+                            raise ValueError(f"item position {position} is outside the turn")
+                        if not 0 <= slot < self.slots:
+                            raise ValueError(f"item slot {slot} is outside the store")
+                        positions.append(position)
+                        slots.append(slot)
+                        present.append(1.0)
+                    else:
+                        positions.append(0)
+                        slots.append(0)
+                        present.append(0.0)
+                index = torch.as_tensor(positions, dtype=torch.long, device=hidden.device)
+                gathered = states.gather(1, index.view(-1, 1, 1).expand(-1, 1, states.shape[-1]))
+                mask = torch.as_tensor(present, dtype=hidden.dtype, device=hidden.device)
+                if valid is not None:
+                    mask = mask * valid.gather(1, index.view(-1, 1)).to(hidden.dtype).squeeze(1)
+                # ``write_gate`` sees the gathered item state ``[B, 1, H]`` and
+                # returns ``[B, 1, 1]``; one strength per row, then the mask.
+                strength = torch.sigmoid(self.write_gate(gathered)).reshape(-1) * mask
+                slot_ids = torch.as_tensor(slots, dtype=torch.long, device=hidden.device)
+                weights = torch.nn.functional.one_hot(slot_ids, self.slots).to(hidden.dtype)
+                share = (strength.unsqueeze(-1) * weights).unsqueeze(-1)
+                keys = keys * (1.0 - share) + share * self.key_proj(gathered)
+                values = values * (1.0 - share) + share * self.value_proj(gathered)
+            return {**tensors, "k": keys, "v": values}
         if self.address != "turn":
             weights = self.write_weights(hidden, address)
             strength = torch.sigmoid(self.write_gate(hidden))

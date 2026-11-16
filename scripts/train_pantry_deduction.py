@@ -318,6 +318,44 @@ def turn_gaps(session: Dict[str, Any]) -> List[float]:
     return [float(turn["dt_s"]) for turn in session["turns"]]
 
 
+# §77: the list separator the item-addressed write splits on. The corpus states
+# every list ("灰色是 Elena、橘色是 Ivan。") with U+3001; the separator stays at
+# the end of the item it terminates, which is what makes "the item's own last
+# character" a well-defined write position.
+ITEM_SEPARATOR = "、"
+ITEM_SEPARATOR_BYTES = ITEM_SEPARATOR.encode("utf-8")
+
+
+def item_end_positions(tokens: Sequence[int]) -> List[int]:
+    """Indices of each list item's last token in one turn (§77).
+
+    ``tokens`` is one turn's token ids (UTF-8 bytes shifted by ``BYTE_OFFSET``,
+    including the turn's trailing newline). Items are split on U+3001 with the
+    separator kept at the end of the item it terminates; the last item ends at
+    the turn's last non-newline character. A turn with no separator is one item,
+    and an empty turn (newline only) has no items at all, so it does not write.
+
+    The registered treatment was measured with exactly this rule before the run
+    (``CORE_GAP_ANALYSIS.md`` §77.2): ending the last item on the newline instead
+    makes the write a near no-op, and ending items *before* the separator
+    weakens the first roster write (gate mean 0.2885, 9% below 0.1).
+    """
+    raw = bytes(int(token) - BYTE_OFFSET for token in tokens)
+    body = raw[:-1] if raw.endswith(b"\n") else raw
+    if not body:
+        return []
+    positions: List[int] = []
+    start = 0
+    found = body.find(ITEM_SEPARATOR_BYTES, start)
+    while found >= 0:
+        positions.append(found + len(ITEM_SEPARATOR_BYTES) - 1)
+        start = found + len(ITEM_SEPARATOR_BYTES)
+        found = body.find(ITEM_SEPARATOR_BYTES, start)
+    if start < len(body):
+        positions.append(len(body) - 1)
+    return positions
+
+
 def drop_indices(session: Dict[str, Any], variant: str) -> set:
     """Which turns the variant removes (registered in §49.9, never tuned)."""
     meta = session["session_meta"]
@@ -787,12 +825,21 @@ def run_session(
     §73's turn-addressed write needs to know *which* turn it is, so the zero-based
     index is passed through as ``address``; every core whose rule is the softmax
     gate ignores it, which is why the default arm is unchanged.
+
+    §77's item-addressed write needs a plan: for each turn, where each list item
+    ends (positions in the turn's own tokens) and which slot it lands in. The
+    positions come from :func:`item_end_positions`; the slot is the session's
+    item counter modulo the store size, so no two items of a session overwrite
+    one another. The counter is per row and per :func:`run_session` call, because
+    a session is the unit that starts empty.
     """
     torch = core._torch
     batch = len(batch_turns)
     turns = len(batch_turns[0])
     if any(len(row) != turns for row in batch_turns):
         raise ValueError("all samples in a batch must have the same number of turns")
+    item_address = getattr(core, "address", None) == "item"
+    item_counter = [0] * batch
     state = state if state is not None else core.init_state(batch)
     hidden = state.tensors["h"]
     for index in range(turns):
@@ -820,7 +867,17 @@ def run_session(
         # functional, so an earlier boundary's cache is never rewritten.
         state.tensors = core.cache_write(state.tensors, stacked, valid)
         state.bump()
-        state.tensors = core.end_turn(state.tensors, address=index)
+        if item_address:
+            plans = []
+            for row in range(batch):
+                entries = []
+                for position in item_end_positions(batch_turns[row][index]):
+                    entries.append((position, item_counter[row] % core.slots))
+                    item_counter[row] += 1
+                plans.append(entries)
+            state.tensors = core.end_turn(state.tensors, items=plans, states=stacked, valid=valid)
+        else:
+            state.tensors = core.end_turn(state.tensors, address=index)
         hidden = state.tensors["h"]
         if boundaries is not None:
             snapshot = dict(state.tensors)
@@ -2839,13 +2896,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     parser.add_argument(
         "--address",
-        choices=("gate", "turn"),
+        choices=("gate", "turn", "item"),
         default="gate",
         help=(
             "§73: how end_turn picks the slot a turn is written to. 'gate' (default) is "
             "the learned softmax slot_gate(h) every earlier stage used; 'turn' writes "
             "turn k to slot k %% 16, so a turn's value is never averaged with another "
-            "turn's. Only the turnstore arm has a store to address."
+            "turn's. §77's 'item' writes once per list item, from the h at that item's "
+            "last token, to the session's next slot. Only the turnstore arm has a store "
+            "to address."
         ),
     )
     parser.add_argument(
@@ -3150,6 +3209,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             parser.error("--write-slots is the turnstore write rule; pass --core turnstore")
         if args.address != "turn":
             parser.error("--write-slots > 1 needs --address turn (the turn picks the block)")
+    if args.address == "item" and args.write_slots != 1:
+        parser.error("--address item needs --write-slots 1 (the item plan names the slot)")
     if args.widen_to and args.core != "gru":
         parser.error("--widen-to is §52.4's GRU width rung; it does not combine with --core")
     if args.core != "gru" and (args.hidden != HIDDEN or args.emb != EMB):
