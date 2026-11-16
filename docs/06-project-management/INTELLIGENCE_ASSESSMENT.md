@@ -210,6 +210,26 @@ value 弱但可讀**：按 session 計，名字兩項都對 **174/200（0.87）*
 本來就有它」（`h` 的 1.0000／0.8375 是上界）。計分跑 **1,144.72 s**（2 核／4 GiB／無 swap／
 `device=cpu`），`--check` **OK**、`instrument_ok` **true**。**核心分仍 0.00/10**
 
+**§80 問「模型自己那次讀，在提問回合有沒有指到問題需要的那一筆」**（§79 的 `next` 是先量**現有**的讀，
+不是先加新讀出；**不重訓**、不掃階梯、不加預算、不把探針擬合到答案上）：凍結的 §77 治療載體，store 取
+**提問回合之前**的邊界（證據回合已寫入），重放提問回合取最後一個 token 的 `h`，讀＝**模型自己的**
+`softmax(exp(log_read_scale)·k·W_q h)`（**零擬合參數**）。計分的格子是 held-out **200** 次讀的**同一
+session 二選一**：證據顏色對應的那一筆 vs 另一筆，chance 0.5；機制控制 `SW` 用 train 的 **200** 對
+order-augmented 雙生（同問句、名冊順序對調，所以需要的那一筆換槽；held-out 沒有雙生，所以它**不是**
+計分格子）。`I0` 全過（`weights_hash`／checkpoint 前後相同、語料 digest 相符、item↔映射 400+200 段
+0 bad、讀點稽核 coverage 1.0 且兩槽 `cos` 1.0、§77 三格逐位重現）。結果 **`H1-read-ignores-query`**：
+**100/200 = 0.5000**（Wilson 0.4314–0.5686）、400 次標籤置換 **400/400** 不低於觀察值（p **1.0**）——
+不是「剛好沒過」，是**沒有訊號**；兩槽的注意力質量 mean／min／max 都 **1.0**、argmax 槽 2
+**200/200**、`m0` 全 0.0／`m1` 全 1.0，雙生的 `SW` **0.0**（`slot_fixed=True`）。描述量
+`h_final → 證據顏色` **0.1050**（42/400，chance 0.125）。讀法是**這次讀沒有用問句去選任何一筆**：
+槽 2 的 key 範數中位數 **9.8219** 對槽 1 的 **2.8158**，`exp(log_read_scale)=4` 下 softmax 早已飽和，
+`r` 就是固定那一槽的 value——所以 §78 的 shortfall 在**讀之前**（不是 entry 沒帶配對，§79 的 own-name
+仍是 0.9350；也不是「讀有看但看錯」，那會是 `H2`）。**照實記**：登記的預測（`H1`）命中、反證條件沒有
+發生；`A` 正好 0.5 有一半是算術（`item` 在兩分割都平衡）；執行 **211.83 s**，登記是 200 % quota，
+但起跑時整機已被別的程式佔到 44 %，改用 `CPUQuota=50%`／`OMP_NUM_THREADS=1` 的 transient service
+（`MemoryMax=4096M`、無 swap、`device=cpu`），只影響 wall time；`--check` **OK**、
+`instrument_ok` **true**。**核心分仍 0.00/10**
+
 **§76 換問「一次寫入裝多少」**（§75.7 的停損擋掉再加預算；兩臂只差 `--write-slots 1` vs `4`，
 語料種子 20261127、10,000 步、168,150 參數、`device=cpu`，並在同一個 `CPUQuota=500%`／
 `MemoryMax=9216M`／`MemorySwapMax=0` 的 transient user service 下跑完）：機制真的換了——
