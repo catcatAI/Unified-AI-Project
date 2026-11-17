@@ -355,8 +355,9 @@ def train_arm(
 def decide(runs: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     by_arm: Dict[str, List[int]] = {arm: [] for arm in ARMS}
     for run in runs:
-        if run["arm"] in by_arm:
-            by_arm[run["arm"]].append(int(run["holdout"]["exact_raw"]))
+        value = run.get("holdout", {}).get("exact_raw")
+        if run["arm"] in by_arm and value is not None:
+            by_arm[run["arm"]].append(int(value))
     if not all(by_arm[arm] for arm in ARMS):
         return {"verdict": "not-decided-missing-arm", "by_arm": by_arm}
     snn, gru = by_arm["snn"], by_arm["gru"]
