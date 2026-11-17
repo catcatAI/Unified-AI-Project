@@ -622,6 +622,11 @@
       "referenced": true,
       "purpose": "L3-1 知識庫擴充 25%→50% 試點 — 硬件規格自適應（<50MB, <3s, 批量+sleep）"
     },
+    "expand_token_snn.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Widen a trained token-SNN in place, preserving what it already computes."
+    },
     "export_minilm_onnx.py": {
       "category": "tool",
       "referenced": true,
@@ -751,6 +756,11 @@
       "category": "tool",
       "referenced": true,
       "purpose": "Import external dictionary JSON files into ED3N's DictionaryLayer."
+    },
+    "incremental.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Content-addressed units, so a change recomputes only what it touched."
     },
     "ingest_my_activities.py": {
       "category": "tool",
@@ -916,6 +926,11 @@
       "category": "probe",
       "referenced": true,
       "purpose": "跑偏稽核：回答到底來自哪一層？對話有沒有改變「回答用的那個模型」？"
+    },
+    "probe_ladder85.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§85: is widening a trained token-SNN a ladder, or just a bigger restart?"
     },
     "probe_local_small_model.py": {
       "category": "probe",
