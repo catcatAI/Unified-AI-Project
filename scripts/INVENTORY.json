@@ -1007,6 +1007,11 @@
       "referenced": true,
       "purpose": "§83: does retraining with the read at the evidence boundary make it address?"
     },
+    "probe_pantry_readrule84.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "§84: does a read taken at the question boundary, and held, fit and address?"
+    },
     "probe_pantry_slots.py": {
       "category": "probe",
       "referenced": true,

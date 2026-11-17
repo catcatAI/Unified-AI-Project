@@ -2806,3 +2806,126 @@ def test_cli_accepts_read_at_boundary_on_the_store_arm(stage):
             str(Path(tempfile.mkdtemp(prefix="pantry83-"))),
         ]
     )
+
+
+# --------------------------------------------------------------------------- #
+# §84: the read taken at the decode's own boundary and held through it
+# --------------------------------------------------------------------------- #
+def test_read_at_question_carries_the_read_from_its_own_boundary(stage, corpus):
+    """The held vector is this boundary's own read, and the state is untouched."""
+    torch = pytest.importorskip("torch")
+    core, _, boundaries = _store_boundaries(stage, corpus)
+    for index in range(len(boundaries)):
+        view = stage._decode_view_at(core, boundaries, index, "question")
+        expected = core.read_vector(stage._decode_view(boundaries[index]))
+        assert torch.equal(view["read"], expected)
+        assert torch.equal(view["h"], stage._decode_view(boundaries[index])["h"])
+        assert torch.equal(view["k"], stage._decode_view(boundaries[index])["k"])
+
+
+def test_read_at_question_is_the_token_arms_first_read(stage, corpus):
+    """Holding the read must not change the vector the token arm starts from."""
+    torch = pytest.importorskip("torch")
+    core, _, boundaries = _store_boundaries(stage, corpus)
+    last = len(boundaries) - 1
+    question = stage._decode_view_at(core, boundaries, last, "question")
+    token = stage._decode_view_at(core, boundaries, last, "token")
+    assert torch.equal(question["read"], core.read_vector(token))
+
+
+def test_read_at_question_differs_from_the_boundary_read(stage, corpus):
+    """§84's only change is that the question turn's write is in the store."""
+    torch = pytest.importorskip("torch")
+    core, _, boundaries = _store_boundaries(stage, corpus)
+    last = len(boundaries) - 1
+    question = stage._decode_view_at(core, boundaries, last, "question")
+    boundary = stage._decode_view_at(core, boundaries, last, "boundary")
+    assert not torch.equal(question["read"], boundary["read"])
+
+
+def test_read_at_question_has_no_zero_read_at_index_zero(stage, corpus):
+    """Index 0 is the first boundary *after* its write, so its read is real."""
+    torch = pytest.importorskip("torch")
+    core, _, boundaries = _store_boundaries(stage, corpus)
+    view = stage._decode_view_at(core, boundaries, 0, "question")
+    assert not torch.equal(view["read"], torch.zeros_like(view["read"]))
+
+
+def test_read_at_question_changes_the_answer_loss(stage, corpus):
+    """The question read must reach the decode and differ from both other arms."""
+    torch = pytest.importorskip("torch")
+    core, rows, boundaries = _store_boundaries(stage, corpus)
+    answers = [stage.answer_ids(session) for session in rows]
+    _, main_token, _ = stage._training_loss(core, boundaries, answers, 0.0)
+    _, main_question, _ = stage._training_loss(core, boundaries, answers, 0.0, read_at="question")
+    _, main_boundary, _ = stage._training_loss(core, boundaries, answers, 0.0, read_at="boundary")
+    manual = stage._answer_loss(
+        core, stage._decode_view_at(core, boundaries, len(boundaries) - 1, "question"), answers
+    )
+    assert torch.equal(main_question, manual)
+    assert not torch.equal(main_token, main_question)
+    assert not torch.equal(main_boundary, main_question)
+
+
+def test_read_at_question_reaches_every_auxiliary_boundary(stage, corpus):
+    torch = pytest.importorskip("torch")
+    core, rows, boundaries = _store_boundaries(stage, corpus)
+    answers = [stage.answer_ids(session) for session in rows]
+    manual = sum(
+        stage._answer_loss(
+            core, stage._decode_view_at(core, boundaries, index, "question"), answers
+        )
+        for index in range(len(boundaries) - 1)
+    ) / (len(boundaries) - 1)
+    total, main, aux = stage._training_loss(core, boundaries, answers, 1.0, read_at="question")
+    assert torch.allclose(aux, manual, atol=1e-6)
+    assert torch.allclose(total, main + manual, atol=1e-6)
+
+
+def test_evaluate_decodes_with_the_question_read(stage, corpus, monkeypatch):
+    """`evaluate` hands `generate_bytes` this boundary's read, held."""
+    torch = pytest.importorskip("torch")
+    core, rows, boundaries = _store_boundaries(stage, corpus)
+    seen = []
+    original = stage.generate_bytes
+
+    def spy(core_arg, record, limit=stage.MAX_ANSWER_BYTES):
+        seen.append((record, "read" in record))
+        return original(core_arg, record, limit=limit)
+
+    monkeypatch.setattr(stage, "generate_bytes", spy)
+    module = stage._load_generator()
+    stage.evaluate(core, rows, "full", module=module, batch=len(rows), read_at="question")
+    assert len(seen) == 1
+    assert seen[0][1] is True
+    expected = core.read_vector(stage._decode_view(boundaries[len(boundaries) - 1]))
+    assert torch.equal(seen[0][0]["read"], expected)
+
+
+def test_cli_accepts_read_at_question_on_the_store_arm(stage):
+    """Same store, same budget: §84's treatment is a valid command."""
+    stage.main(
+        [
+            "--minimal-binding",
+            "--order-augmented",
+            "--roster-size",
+            "2",
+            "--smoke",
+            "--core",
+            "turnstore",
+            "--address",
+            "item",
+            "--read-at",
+            "question",
+            "--aux-loss",
+            "1.0",
+            "--aux-mode",
+            "weighted-region",
+            "--gate-prefix",
+            "M",
+            "--device",
+            "cpu",
+            "--out",
+            str(Path(tempfile.mkdtemp(prefix="pantry84-"))),
+        ]
+    )

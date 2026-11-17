@@ -179,7 +179,14 @@ OVERFIT_FLOOR = 0.90
 # boundary before the decode, and holds it: same W_q, same head, same store,
 # zero new parameters. §82 measured that frozen read at 0.5050 on the §77
 # carrier, so the arm asks what training does to that same number.
-READ_AT = ("token", "boundary")
+#
+# §84 adds "question": the read is taken once, at the *decode's own* boundary,
+# and held. The difference from "boundary" is exactly whether the turn that is
+# being answered (its write included) is inside the store the read addresses.
+# §83's arm did not fit at the registered budget; §84 separates the two things
+# that arm changed at once - "a fixed read vector" and "the read taken before
+# the question's write" - without touching any other knob.
+READ_AT = ("token", "boundary", "question")
 
 # §55 - stage T compares an architecture arm against the same budget. The GRU
 # control is the registered n32_4x report (12/32 at 1,600 steps = 400
@@ -1066,23 +1073,39 @@ def _carried_read(core: Any, boundaries: Sequence[Any], index: int, reference: A
     return core.read_vector(_decode_view(boundaries[index - 1]))
 
 
+def _question_read(core: Any, boundaries: Sequence[Any], index: int) -> Any:
+    """§84: the read a decode at ``boundaries[index]`` uses, taken *there*.
+
+    ``read_at="question"`` holds the read taken at the decode's own boundary, so
+    the store it addresses already contains that turn's write. It is the same
+    ``W_q`` application the token arm makes for its first token, fixed for the
+    rest of the decode; index 0 is therefore the first write's own read, not the
+    zero vector ``boundary`` needs before the first boundary.
+    """
+    return core.read_vector(_decode_view(boundaries[index]))
+
+
 def _decode_view_at(
     core: Any,
     boundaries: Sequence[Any],
     index: int,
     read_at: str = "token",
 ) -> Dict[str, Any]:
-    """The view a decode at ``boundaries[index]`` uses, with §83's read attached.
+    """The view a decode at ``boundaries[index]`` uses, with §83/§84's read attached.
 
     ``read_at="token"`` returns the boundary's own tensors unchanged, which is
-    every stage before §83; ``read_at="boundary"`` adds ``read``, so the core
-    returns that vector instead of addressing the store at each token.
+    every stage before §83; ``read_at="boundary"`` adds ``read`` from the
+    boundary one turn earlier; ``read_at="question"`` adds ``read`` from this
+    same boundary. In both carried arms the core returns that vector instead of
+    addressing the store at each token.
     """
     if read_at not in READ_AT:
         raise ValueError(f"read_at must be one of {READ_AT}, got {read_at!r}")
     view = _decode_view(boundaries[index])
     if read_at == "boundary":
         view["read"] = _carried_read(core, boundaries, index, view["h"])
+    elif read_at == "question":
+        view["read"] = _question_read(core, boundaries, index)
     return view
 
 
@@ -1111,6 +1134,9 @@ def _training_loss(
     ``read_at="boundary"`` (§83) changes only *where the read comes from*: every
     decode - the main answer and each auxiliary - carries the read taken one
     boundary earlier. Same parameters, same objective, same steps.
+    ``read_at="question"`` (§84) is the same plumbing with the read taken at the
+    decode's own boundary, so the question turn's write is inside the store that
+    read addresses. ``token`` stays bit-identical to every earlier stage.
     """
     main = _answer_loss(
         core, _decode_view_at(core, boundaries, len(boundaries) - 1, read_at), answers
@@ -1369,10 +1395,11 @@ def train(
         seen = 0
         for start in range(0, len(order), batch):
             rows = [samples[index] for index in order[start : start + batch]]
-            # §83 needs the boundary before the answer decode, so the graph is
-            # kept even when there is no auxiliary term.
+            # §83/§84 need the boundary before the answer decode (or the decode's
+            # own boundary), so the graph is kept even when there is no
+            # auxiliary term.
             boundaries: Optional[List[Any]] = (
-                [] if (aux_lambda > 0.0 or read_at == "boundary") else None
+                [] if (aux_lambda > 0.0 or read_at != "token") else None
             )
             state, hidden = run_session(
                 core,
@@ -1449,8 +1476,9 @@ def evaluate(
     """One record per session: prediction, ranking, and the solver's target.
 
     ``read_at="boundary"`` (§83) decodes with the read taken at the boundary
-    before the answer, so the reported answer is the one the treatment actually
-    produces; the default is every earlier stage.
+    before the answer, and ``read_at="question"`` (§84) with the read taken at
+    the decode's own boundary, so the reported answer is the one the treatment
+    actually produces; the default is every earlier stage.
     """
     torch = core._torch
     records: List[Dict[str, Any]] = []
@@ -1481,7 +1509,7 @@ def evaluate(
                 raise SystemExit(f"variant {variant} left sessions with different turn counts")
 
             reset = variant == "reset"
-            snapshots: Optional[List[Any]] = [] if read_at == "boundary" else None
+            snapshots: Optional[List[Any]] = [] if read_at != "token" else None
             state, hidden = run_session(
                 core, turns, gaps, reset_before_last=reset, boundaries=snapshots
             )

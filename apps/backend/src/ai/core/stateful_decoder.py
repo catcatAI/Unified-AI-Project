@@ -592,11 +592,13 @@ class TurnStoreCore(GRUCore):
     the turn-addressed arm's. ``address="turn"`` stays bit-identical to §73.
 
     The read point is a *training* choice, not a core setting (§83): a decode
-    view may carry ``read``, a vector retrieved once from an earlier boundary, and
+    view may carry ``read``, a vector retrieved once from a boundary, and
     :meth:`read_vector` then returns it instead of re-addressing the store at
     every token. Same ``query_proj``, same ``head``, same store - zero new
-    parameters - and only the trainer's ``--read-at boundary`` sets it, so
+    parameters - and only the trainer's ``--read-at`` sets it, so
     ``--read-at token`` (the default) is bit-identical to every earlier stage.
+    §84 reuses the same hook with the read taken at the decode's *own* boundary,
+    so the hook itself stays indifferent to which boundary was chosen.
     """
 
     model_kind = "turnstore"

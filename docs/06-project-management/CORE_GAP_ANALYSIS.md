@@ -13312,3 +13312,186 @@ PYTHONPATH=apps/backend/src ./.venv/bin/python scripts/probe_pantry_readrule83.p
 
 在那之前，**§83 的裁決就是 `T0-fit-fails`**：這個預算下治療臂沒有擬合，所以邊界讀的定址能力
 **沒有被測到**，也沒有被否證。
+
+## §84 讀點移到提問回合自己的邊界（登記）
+
+### 84.1 這一節問什麼
+
+§83 把讀點移到**證據邊界**（提問回合之前一個回合）並在整個回答解碼中固定住，結果在登記的預算下
+**沒有擬合**（`train_fit_subset` **0.8325** < 0.90，分支 `T0-fit-fails`）。§83.19 把那個落差拆成
+兩件同時被改動的事：
+
+1. 讀是**一個固定向量**，整個解碼都用它；
+2. 那個向量取在**提問回合的寫入之前**，所以提問回合自己的那一筆（名冊幾何下的下一個槽）在解碼中
+   **不可定址**。
+
+§84 **只改第 2 件**：`--read-at question` 讓讀取在**解碼自己的邊界**（`snapshots[q]`，store 已含
+提問回合的寫入）取一次並固定住。同一個 `W_q`、同一個 `head`、同一個 store、同一個預算，
+**零新增參數**。
+
+這一節要回答的是**擬合**，不是分數：
+
+> 把提問回合自己的寫入放進 store 之後，一個固定的讀向量在這個預算下擬合得了嗎？
+> 若擬合，§83 的失敗就是「讀取在提問寫入之前」；若仍不擬合，兩條臂共同的因素就只剩「一個固定讀向量」。
+
+### 84.2 登記前已經量到的（照實寫）
+
+| 量 | 值 | 出處 |
+| --- | --- | --- |
+| §83 治療臂擬合 | **0.8325**（333/400） | §83.16 |
+| §83 對照臂（§77 item）擬合 | **0.9925**（397/400） | §83.16 |
+| §83 最後 `mean_loss`（治療／對照） | **0.1790**／**0.0078** | §83.16 |
+| 鍵→顏色（凍結載體） | **0.7375**（295/400） | §82 |
+| 提問回合 query→顏色（凍結載體，線性探針） | **0.5450**（109/200），8 路 top-1 0.1550 | §82 |
+| 邊界 query（提問前邊界，零參數） | **0.5000／0.5050** | §82 |
+| 證據邊界的顏色讀出 | **0.8900** | §69 |
+| 提問回合的模型自己那次讀（store 在寫入**之前**） | **100/200**，質量 1.0，argmax 槽 2 200/200 | §80／§81 |
+| 同一批讀的 `cosine_unit` | **100/200**，質量 **0.1785**，argmax 槽 2 200/200 | §81 |
+
+**這一節的對照格是新格子**：§80／§81／§82 讀的都是**提問回合寫入之前**的 store；§84 的讀點是
+**寫入之後**（`snapshots[q]`），所以沒有既有的逐筆質量可以錨。對照臂因此在這一節**只作描述**，不作錨；
+儀器錨改用 §82 的 `boundary_query` 欄（逐筆 2e-9）＋ query 向量逐位相同（84.8）。
+
+### 84.3 凍結的控制臂與治療臂（跑之前寫定）
+
+* **控制臂**：凍結的 §77 item 載體
+  `data/pantry_stage/item77/item/pantry_deduction_20261116-190357.json`（`address=item`、
+  `write_slots=1`、168,150 參數、`weights_hash sha256:0ca9e593…`）。它的讀取在**提問邊界**
+  （store 含提問回合的寫入、query 是提問回合最後一個 token 的 `W_q h`），保持不訓練。
+* **治療臂**：同一架構、同一個 stage-L 起點
+  （`data/text_stage/text_stage_20261113-212446.pt`、`sha256:77cb6af3…`）、同一份語料
+  （種子 **20261127**、`train_digest b12cb2fb…`／`heldout_digest 71eab688…`）、同一個預算
+  （**10,000 步**、**168,150 參數**、`--device cpu`），**唯一自變數是 `--read-at question`**。
+* 兩臂都走同一個 `run_session`、同一份 `--minimal-binding --order-augmented --roster-size 2`
+  語料、同一個 `--aux-loss 1.0 --aux-mode resolvable --gate-prefix M` 目標；治療臂的每一個解碼
+  （主答案與每一個輔助邊界）都攜帶**它自己那個邊界**取出的讀，並在整個解碼中固定。
+* **執行環境刻意與 §83 的治療臂相同**（`CPUQuota=400%`、`OMP_NUM_THREADS=4`、
+  `MemoryMax=4096M`、`MemorySwapMax=0`）：§84 要與 §83 比的是「讀點」，不是執行緒數。
+  §77 的對照臂當年是 5 個執行緒，這件事在 §83.20 已照實記為限制，本節不重複挑環境。
+
+### 84.4 登記的常數（跑之前寫定）
+
+```text
+FIT_FLOOR = 0.90          # §55/§77 的同一個擬合地板
+ALPHA = 0.005             # §79/§80/§81/§82 的同一個顯著水準
+FORCED_FLOOR = 0.5        # 二選一
+NULL_DRAWS = 400          # 標籤置換次數，與 §80/§81/§82 相同
+NULL_SEED = 20261125
+REF_TOLERANCE = 2e-9      # §82 逐筆質量的儀器容差
+PRIMARY_RULE = "model"    # 載體自己的 softmax 是閘門
+RULES = ("model", "cosine_unit")   # 後者只作描述
+ROSTER_ITEMS = 2
+CONTROL_STEPS = 10000
+CONTROL_PARAMS = 168150
+CONTROL_WINS = {"model": 100, "cosine_unit": 101}   # §82 boundary_query 錨
+```
+
+### 84.5 讀點與計分格子（跑之前寫定）
+
+* **讀點**：`snapshots[q]`（`q = len(turns) - 1`）的 store 與該邊界的 `h`；query 是
+  `W_q h`，投影本身**完全沒換**。主解碼使用這個讀；輔助解碼使用它自己那個邊界
+  （`snapshots[k]`）的讀。全部固定、全部零新增參數。
+* **計分格**：§81 的**同一 session 二選一**——名冊兩筆中，證據顏色需要的那一筆是否拿到更多
+  注意力質量。held-out **200** 次讀；`model` 規則（載體自己的 softmax，自己的溫度）是**閘門**，
+  `cosine_unit`（去範數、去溫度）**只作描述**。
+* **虛無**：400 次名冊標籤置換、**不重擬合**（§80/§81 的慣例）。
+* **不迴歸**：§79 的兩格（`k`→顏色、`v`→顏色）在**治療載體**上重擬合（train 800 筆 entry），
+  held-out 400 筆計分，套 §82 的同一道閘門（Wilson 下界 > 0.5、p < 0.005）。
+
+### 84.6 主要指標、門檻與不迴歸
+
+* **主要指標**：治療臂在 `model` 規則上的二選一勝場／200。**通過**＝Wilson 95% 下界 **> 0.5**
+  且置換 p **< 0.005**。`cosine_unit` 只印出來對照，不裁決。
+* **擬合前置條件**：治療臂 `train_fit_subset`（400 段）**≥ 0.90**。
+* **不迴歸**：`entry_key` 與 `entry_value` 兩格都必須通過同一道閘門。
+* **分支**（84.9）依 `E0 > Q0 > Q2 > Q1 > Q3` 的固定優先序。
+
+### 84.7 為什麼先要求治療臂擬合
+
+同 §83.7：若臂連自己訓練的 400 段都背不起來，它的留出讀量到的是「這個預算下沒學會」，不是
+「提問邊界的固定讀能不能定址」。§83 就是這樣被攔下的；§84 沿用同一個地板，**不因 §83 失敗而放寬**。
+
+### 84.8 儀器門檻 `I0`（跑完後檢查）
+
+1. 控制載體 `weights_hash`／checkpoint sha256 前後相同。
+2. 控制報告 `read_at` 缺鍵（`token`）／治療報告 `read_at` **`question`**。
+3. 同語料（兩份 digest 相符且等於重新載入的語料）、同預算（`BUDGET_KEYS` 無差異、
+   `params` 168,150、`steps` 10,000）、同起點（checkpoint／`weights_hash`／`init_weights_hash`／
+   `params` 四項相同）。
+4. 對齊（train／held-out）都過。
+5. **§82 `boundary_query` 錨逐筆重現**：控制載體在同一個行程、同一個算術環境下重新抽取，
+   `model` 與 `cosine_unit` 的質量最大差 ≤ **2e-9**、mismatch 0、勝場 100／101。
+   （本探針必須在 **`OMP_NUM_THREADS=2`** 下跑：§83.14(a) 已量到 4 執行緒會讓這個錨漂到 3e-8。）
+6. **query 恆等**：提問邊界讀的 query 向量，逐筆等於 §82 `query` 欄的 query 向量
+   （`max_abs_diff` **0.0**、mismatch 0）。這一條把「只有 store 換了」變成機械可檢，
+   而不是靠文字宣告。
+
+`I0` 任一條失敗＝`E0-instrument`，這一節**不讀任何一格**。
+
+### 84.9 分支配表（跑之前寫定，優先序由上到下）
+
+| 分支 | 條件 |
+| --- | --- |
+| `E0-instrument` | `I0` 任何一條失敗（含錨未重現、query 不恆等） |
+| **`Q0-fit-fails`** | 治療臂 `train_fit_subset < 0.90` |
+| `Q2-pass-but-regression` | 主格過、不迴歸不過 |
+| `Q1-read-at-question-works` | 主格過、不迴歸過 |
+| `Q3-fits-but-no-gain` | 擬合過、主格不過 |
+
+每一條的 `next` 都寫在探針的 `branch()` 裡，跑之前就固定。
+
+### 84.10 預測與否證（跑之前寫定）
+
+* **主預測：`Q3-fits-but-no-gain`**（低信心）。理由：§83.19 的假設是「固定讀」與「讀在提問寫入
+  之前」的**合取**造成擬合地板；§84 只移除第二項，所以**擬合**是主預測。但 §82 量到這個 query 的
+  痕跡只有 **0.5450**，而固定向量仍可能不足以定址，所以主格**不過**是保守的一半。
+* **替代：`Q0-fit-fails`**。若擬合仍失敗，兩條臂共同的因素只剩「一個固定讀向量」；那會把 §83 的
+  失敗從「讀點」移到「固定」，下一個登記就必須改「每個 token 重新定址」而不是再搬讀點。
+* **否證條件（寫在這裡，跑完照它判）**：主格通過且不迴歸通過＝`Q1`，主預測落空，照實記；
+  不得事後改寫預測或改門檻。
+
+### 84.11 照實記的限制
+
+1. **單一語料種子（20261127）、k=2、單一 stage-L 起點、一條治療臂**；§75 已量到幅度不跨種子複現。
+2. **控制格是新格子**（store 在提問寫入之後），沒有既有的逐筆質量可錨，所以它**只作描述**；
+   這一節的儀器錨是 §82 的 `boundary_query` 加 query 恆等，不是這個新格。
+3. **執行緒數**：治療臂用 4 個執行緒（與 §83 的治療臂相同），控制臂是 §77 的 5 個執行緒；
+   §83.20 已記為限制。不在看到結果之後換環境。
+4. **`Q2` 不是「寫入變好」的證據**：兩臂差的不只是讀點，還有一條新的最佳化軌跡。
+5. **這是探針，不是生成**：核心分不變 **0.00/10**（§275）；輸出只寫 `data/pantry_stage/readrule84/`
+   （gitignored）。
+6. **`T0` 的解讀不沿用**：§84 的 `Q0` 只說「這個臂在這個預算下沒擬合」，不單獨證明「固定讀永遠
+   學不會」；要分離「固定」與「取一次」需要另一條臂（84.9 的 `next`）。
+
+### 84.12 命令與執行上限
+
+```bash
+PYTHONPATH=apps/backend/src OMP_NUM_THREADS=4 \
+  systemd-run --scope --user -p CPUQuota=400% -p MemoryMax=4096M -p MemorySwapMax=0 \
+  ./.venv/bin/python scripts/train_pantry_deduction.py \
+    --train-sessions 400 --epochs 200 --core turnstore --address item \
+    --aux-loss 1.0 --aux-mode resolvable --minimal-binding --order-augmented \
+    --roster-size 2 --gate-prefix M --pantry-seed 20261127 --device cpu --write-slots 1 \
+    --read-at question --out data/pantry_stage/readrule84/treatment
+
+PYTHONPATH=apps/backend/src OMP_NUM_THREADS=2 \
+  systemd-run --scope --user -p CPUQuota=200% -p MemoryMax=4096M -p MemorySwapMax=0 \
+  ./.venv/bin/python scripts/probe_pantry_readrule84.py \
+    --control data/pantry_stage/item77/item/pantry_deduction_20261116-190357.json \
+    --treatment data/pantry_stage/readrule84/treatment/<report>.json \
+    --anchor82 data/pantry_stage/readrule82/k2.json \
+    --out data/pantry_stage/readrule84/k2.json --device cpu
+
+./.venv/bin/python scripts/probe_pantry_readrule84.py --check data/pantry_stage/readrule84/k2.json
+```
+
+* 訓練：`CPUQuota=400%`（整機 33.3%）、`MemoryMax=4096M`、`MemorySwapMax=0`、`--device cpu`、
+  `OMP_NUM_THREADS=4`；起跑前用 `/proc/stat` 量整機負載（12 秒窗），若超過硬規則的 50%，照
+  §80.13 的先例降到 `CPUQuota=<剩餘>` 並照實記。
+* 探針：`CPUQuota=200%`（整機 16.7%）、`OMP_NUM_THREADS=2`（**§82 的算術環境**，見 84.8 第 5 條）、
+  `MemoryMax=4096M`、`MemorySwapMax=0`、`--device cpu`。
+* GPU 不使用（0% ≤ 50%）；swap 0。
+* 若 cgroup 觸發 OOM，該次記為**失敗的跑**，不是結果，不得放寬上限。
+
+**這一節不是能力分數**；核心分不變 **0.00/10**。它只回答「把讀取在提問回合自己的邊界並固定，
+這個臂擬合得了嗎、那個讀定址得了嗎」。
