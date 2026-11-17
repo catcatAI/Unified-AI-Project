@@ -1028,6 +1028,8 @@ class TokenSNN:
         start_epoch: int = 0,
         opt_state: Any = None,
         opt_state_out: Any = None,
+        guard_state: Any = None,
+        guard_state_out: Any = None,
     ) -> List[Dict[str, float]]:
         """Train on ``pairs``.
 
@@ -1061,10 +1063,16 @@ class TokenSNN:
         the optimizer state, and later run the remaining epochs without paying
         for the first k again. The batch order and the torch seed are both
         drawn from ``seed + epoch``, so ``start_epoch`` continues the sequence
-        instead of restarting it. Extension is bitwise equal to one unbroken run
-        as long as no epoch was rolled back by the guard — a rollback also
-        carries ``best_loss`` and a halved learning rate, which live in this
-        call and are not part of ``opt_state``.
+        instead of restarting it.
+
+        ``guard_state`` / ``guard_state_out`` carry the stability rule's own
+        memory (the best loss, the current learning-rate scale, and the best
+        weights *only when they differ from the final ones*). They are what
+        makes extension bitwise equal to one unbroken run even when an epoch
+        was rolled back: a rollback restores weights and halves the rate, and
+        resuming without that state would re-enter the remaining epochs with
+        different weights and a different rate. When the best weights are not
+        carried they are, by construction, the current weights.
         """
         torch = self.torch
         torch.manual_seed(seed)
@@ -1072,9 +1080,15 @@ class TokenSNN:
         if opt_state:
             opt.load_state_dict(opt_state)
         history: List[Dict[str, float]] = []
-        best_loss = float("inf")
-        best_state: Optional[Dict[str, Any]] = None
-        lr_scale = 1.0
+        carried = guard_state or {}
+        best_loss = float(carried.get("best_loss", float("inf")))
+        lr_scale = float(carried.get("lr_scale", 1.0))
+        best_state: Optional[Dict[str, Any]] = carried.get("best_state")
+        # True while the best weights are not the current ones, i.e. after a
+        # rollback. Only then does the state have to store them.
+        stale_best = best_state is not None
+        if guard_state is not None and best_state is None:
+            best_state = {k: v.detach().clone() for k, v in self.net.state_dict().items()}
         order = list(range(len(pairs)))
         for epoch in range(start_epoch, start_epoch + epochs):
             epoch_lr = max(min_lr, (lr_at(epoch) if lr_at is not None else lr) * lr_scale)
@@ -1143,6 +1157,10 @@ class TokenSNN:
                 best_loss, best_state, lr_scale, opt = self._guard_epoch(
                     row, best_loss, best_state, steps, lr, lr_scale, min_lr, diverge_factor, opt
                 )
+                # A rolled-back epoch restores the previous best weights, so the
+                # stored copy is no longer the current model; an improving epoch
+                # refreshes it to the current weights and it is redundant again.
+                stale_best = bool(row.get("rolled_back"))
             history.append(row)
             if log is not None:
                 log(row)
@@ -1152,6 +1170,12 @@ class TokenSNN:
             # Captured after the last epoch (and after any guard rebuild), so an
             # extension resumes Adam's moments exactly where the run stopped.
             opt_state_out.update(opt.state_dict())
+        if guard and guard_state_out is not None:
+            guard_state_out["best_loss"] = best_loss
+            guard_state_out["lr_scale"] = lr_scale
+            guard_state_out.pop("best_state", None)
+            if stale_best and best_state is not None:
+                guard_state_out["best_state"] = best_state
         return history
 
     def _guard_epoch(

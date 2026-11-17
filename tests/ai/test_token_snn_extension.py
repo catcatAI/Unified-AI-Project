@@ -111,3 +111,59 @@ def test_start_epoch_continues_the_batch_order(setup):
         on_epoch=lambda row: calls.append(int(row["epoch"])),
     )
     assert calls == [7]
+
+
+def test_extension_is_exact_across_a_guard_rollback(setup, tmp_path):
+    """A rollback restores weights and halves the rate; resuming must know both.
+
+    ``diverge_factor=1e-9`` makes every epoch after the first look like a
+    runaway, so the guard fires and the carried state (best loss, rate scale,
+    best weights) is what keeps the resumed run identical. Without carrying it,
+    the extension would continue from the diverged weights at the original rate.
+    """
+    import torch
+
+    TokenSNN, vocab, config, pairs = setup
+    options = dict(
+        batch_size=2,
+        lr=1e-3,
+        seed=0,
+        guard=True,
+        diverge_factor=1e-9,
+    )
+
+    torch.manual_seed(0)
+    whole = TokenSNN(vocab, config, device="cpu")
+    history = whole.train_on(pairs, epochs=3, **options)
+    assert any(row.get("rolled_back") for row in history), "the test did not roll back"
+
+    torch.manual_seed(0)
+    part = TokenSNN(vocab, config, device="cpu")
+    optimizer: dict = {}
+    guard: dict = {}
+    part.train_on(
+        pairs,
+        epochs=1,
+        opt_state_out=optimizer,
+        guard_state_out=guard,
+        **options,
+    )
+    assert "best_loss" in guard and "lr_scale" in guard
+
+    # Through a file, because that is how the probe carries it between runs.
+    path = tmp_path / "opt.pt"
+    torch.save({"opt": optimizer, "guard": guard}, path)
+    blob = torch.load(path, weights_only=True)
+
+    part.train_on(
+        pairs,
+        epochs=2,
+        start_epoch=1,
+        opt_state=blob["opt"],
+        guard_state=blob["guard"],
+        **options,
+    )
+
+    left, right = whole.net.state_dict(), part.net.state_dict()
+    for key in left:
+        assert torch.equal(left[key], right[key]), key
