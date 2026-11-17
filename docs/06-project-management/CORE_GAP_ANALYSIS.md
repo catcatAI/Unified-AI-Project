@@ -14403,3 +14403,179 @@ CE 三個 seed **全為正**；exact 三個 seed **全為負**（但大小從 �
   一次剛好越線的 `N1`／`N3`，而那個「剛好」正是門檻不穩定的產物。下一個值得花算力的問題不是
   「哪條臂」，而是 `§276`／`§275` 留下的 **teacher-forced 38.5% 對 exact 0/40 的落差**：先分清那是
   解碼漂移還是分佈退化（~30–60 分鐘，不動訓練），再決定要不要為核心再付一次訓練。
+
+## §88 teacher-forced 與 exact 的落差：解碼漂移，還是分佈退化（登記）
+
+### 88.1 這一節問什麼
+
+`§276` 留下的問題是：一個 token-SNN 可以在 teacher-forced 下拿到遠高於 0 的逐 token 正確率，
+free-running 的 exact 卻接近 0。這個落差有兩種完全不同的成因，而它們的修法相反：
+
+- **解碼（drift／exposure bias）**：餵 gold 前綴時模型選對，餵自己的前綴時走偏——錯一個 token 之後整段被帶走。
+  修法是解碼（teacher forcing、scheduled sampling、beam／top-k 搜尋），不必換資料或加容量。
+- **分佈（degradation）**：即使餵 gold 前綴，gold token 也不在模型的前幾名——對應關係根本沒學到。
+  修法是容量／資料／目標函數；解碼再好也救不回來。
+
+這一節登記兩個問題，**主問題在 held-out，第二個問題在記住的列上**：
+
+> **Q1（主）**：在 `distill_val_holdout`（248 列，模型沒訓過、但與訓練語料同源）上，
+> `distill` checkpoint 的失敗**逐列**分解之後，多數是「gold 前綴就能修」還是「gold 前綴也修不了」？
+>
+> **Q2（次）**：在模型**記住**的列上（`distill_train`／`core_train` 前 248 列），逐 token 正確率較高，
+> 剩下的落差仍然是同一個分解——那裡多數是解碼還是分佈？
+>
+> **Q3（對照，不解釋成能力）**：`core149k` 在 `distill_val_holdout` 上的 **0/248** 與它在自己語料上的
+> exact 差多少？這個差是不是「跨語料量測」造成的，而不是解碼造成的？
+
+Q1 與 Q2 必須分開，因為它們的答案可以不同，而且**只有 Q2 是真正的 exposure-bias 測試**：Q1 的
+逐 token 正確率太低（登記前已知 33.4%），低到「gold 前綴能修的行數」在算術上就有上界（88.7）。
+把 Q1 當成「解碼 vs 分佈」的公平試驗會高估解碼的重要性。
+
+### 88.2 登記前已經量到的（描述，不是裁決結果）
+
+| 項目 | 值 | 怎麼量的 |
+| --- | --- | --- |
+| `token_snn_distill.pt` | 2,491,227 參數、vocab 3,577（`numeric_atoms=False`）、`d_hidden 512 / 1 layer / max_len 192 / membrane` | `TokenSNN.load` |
+| `token_snn_core149k.pt` | 7,623,879 參數、vocab 12,005、`d_hidden 512 / 1 layer / max_len 192 / membrane` | 同上 |
+| distill 的記錄值 | `eval` = `distill_val` 抽 150 列，exact **8%**；`split_tf_accuracy` = `distill_val` 281 列、1,834 token，**response_tf 0.3337** | `data/intelligence_reports/token_snn_distill.json` |
+| core149k 的記錄值 | `eval` = `distill_val_holdout` 248 列，exact **0.0**；`eval_tf_accuracy` 1,186 token，**0.1391**；訓練語料是 `core_train.jsonl` | `data/intelligence_reports/token_snn_core149k.json` |
+| `distill_val_holdout` | 248 列；答案 token 平均 **3.79**、中位 3、p90 6、最大 23 | 本節量測（`vocab.encode`） |
+| `distill_train` | 5,144 列；前 248 列答案 token 平均 **3.07**，**0 個 UNK** | 同上 |
+| `core_train` | 149,489 列；用 core 詞表過 `fits(max_len=192)` 後 138,671 列；前 248 列（可完整拼回）答案 token 平均 **39.9** | 同上 |
+| holdout 的 UNK | 940 個答案 token 中 distill 詞表 **57 個 UNK（6.06%）**、core 詞表 51 個（5.43%）；**33/248 列的答案無法被詞表原樣拼回** | `decode(encode(answer)) != answer` |
+| 語料重疊 | `distill_val_holdout ∩ distill_train = 0`；holdout 的 prompt **0/248** 出現在 `core_train` | 集合比對 |
+| 機器 | CPU 13.4%、RAM 49.9%（可用 7.7 GB）、swap 16.2%，皆在硬上限內 | `/proc/stat`、`/proc/meminfo` |
+
+三件必須先說清楚的事：
+
+1. **歷史的 38.5% 不能重跑**：那個數字來自一個已被取代的小 char 模型（`d_hidden=128`、char 詞表 170、
+   3,000 列），checkpoint 不在磁碟上。這一節量的是**同一個現象**在現有 checkpoint 上的版本，
+   不是重播那個歷史 run。
+2. **`core149k` 的 0/248 是跨語料量測**：它訓在 `core_train`，卻在 `distill_val_holdout` 上評。
+   那 248 列與它的訓練分佈不同（短數值答案 vs 長篇 alpaca／association 答案），所以 0/248 同時混了
+   「不會解碼」與「不是在回答這種題」。Q3 用它在自己語料上的列把兩者分開。
+3. **33/248 列的答案無法被詞表原樣拼回**（UNK 會被 `decode` 丟掉）。所以原始字串比較會把這些列
+   判成錯，**即使模型輸出完全正確的 token**。逐列分解因此用「模型可拼出的答案」（token 完全相等），
+   同時並列原始字串比較（與 `exact_match` 相容）——兩個數都報，理由寫在 88.4。
+
+### 88.3 凍結的四條臂（跑之前寫定；全部只做前向，不訓練、不更新權重）
+
+| 臂 | checkpoint | 列 | 角色 |
+| --- | --- | --- | --- |
+| **`distill_holdout`** | `token_snn_distill.pt` | `distill_val_holdout` 全 248 列 | **Q1 主臂**（同語料、沒訓過） |
+| `core_holdout` | `token_snn_core149k.pt` | 同上 248 列 | Q3 對照（跨語料；0/248 的來源） |
+| **`distill_train`** | `token_snn_distill.pt` | `distill_train` **前 248 列** | **Q2 主臂**（記住的列） |
+| `core_train` | `token_snn_core149k.pt` | `core_train` **前 248 列**（需 `fits(max_len=192)` 且 prompt／answer 都能原樣拼回） | Q2 複現（記住、但答案長） |
+
+「前 248 列」是**固定順序**的檔頭切片，不是隨機抽樣，也不是看模型表現挑的。`core_train` 的
+「能原樣拼回」條件只依詞表，不依模型輸出；若符合條件的列少於 248，這一臂作廢（`I0`）並照實記。
+所有 checkpoint 以 sha256 記錄，載入後跑完再比一次。
+
+### 88.4 逐列量什麼（跑之前寫定）
+
+對每一列，令 `gold = vocab.encode(answer)`、`EOS = vocab.eos_id`、
+`prefix = [BOS] + encode(prompt) + [NL]`。
+
+| 量 | 定義 |
+| --- | --- |
+| `gold_len` | `len(gold)`；`gold_unk` = 其中 UNK 的個數 |
+| `gold_text` | `decode(gold)`（模型可拼出的答案） |
+| `argmax_exact`（`O`） | 餵 `prefix + gold + [EOS]`，**每一個**答案位置（含最後的 EOS）的 argmax 都等於 gold 的下一個 token |
+| `topk_all[k]` | 同上，但要求 gold token 在每個位置的 **rank ≤ k**（k ∈ {3, 5, 10}）；`topk_all[1] ≡ O` |
+| `token_tf` | 所有答案位置（含 EOS）的 argmax 命中率＝`tf_accuracy` 的同一個量 |
+| `rank_median` | 答案位置 gold token rank 的中位數 |
+| `greedy_ids` | 從 `prefix` 起、`argmax` 貪心解碼，遇 EOS／PAD／BOS 停（與 `generate` 同一規則） |
+| `exact_model`（`G`） | `greedy_ids == gold`（模型可拼出的答案完全相等） |
+| `exact_raw` | `decode(greedy_ids).strip() == answer.strip()`（與 `train_token_snn.exact_match` 同一個判定） |
+| `first_div` | 貪心輸出與 `gold` 第一個不同的位置（0-based；全對為 −1） |
+| `prefix_curve[f]` | 對 f ∈ {0.25, 0.5, 0.75, 1.0}：強制餵 `floor(f × gold_len)` 個 gold token，再貪心解出剩下的；**剩餘 token 完全相等**才算命中。f=1.0 等於 `O`，f=0 等於 `G`（兩端點互相檢查） |
+| `greedy_len` | 貪心輸出的 token 數（提早 EOS／暴走都會改它） |
+| `gold_logprob` | 每個答案位置 gold token 的 log-probability 平均（nats） |
+
+**為什麼分解用 `exact_model` 而不是 `exact_raw`**：`exact_raw` 會把 33 列「詞表拼不回」的列判成錯，
+而那些列的 gold 在模型自己的拼法裡是完整的。用 `exact_raw` 會把詞表的限制算進「分佈退化」。
+所以裁決用 `exact_model`，`exact_raw` 並列報告，並在結果裡寫明兩者差幾列。
+
+### 88.5 分支與門檻（跑之前寫定；唯一的分界是多數，沒有其他數字）
+
+把每一列分成四格（`G` = `exact_model`、`T5` = `topk_all[5]`，且 `O ⊆ T5`）：
+
+| 格 | 條件 | 意思 |
+| --- | --- | --- |
+| 成功 `G` | `G` | 貪心就對，沒有落差 |
+| **`D`** | `O` 且 **非** `G` | **gold 前綴就能修**：餵對前綴就全對，錯在解碼 |
+| **`S`** | 非 `O` 且 `T5` 且非 `G` | **前 5 名搜尋可能修**：gold 在每個位置的前 5 名內，但 argmax 路徑不是 gold；beam／top-k 搜尋**有機會**找到 |
+| **`M`** | 非 `T5` | **分佈修不了**：至少一個位置 gold 掉出前 5 名，任何只看前 5 名的解碼都到不了 |
+| `X` | 非 `O` 且 `G` | 貪心走別的路卻拼出同一個答案（預期接近 0，照實報） |
+
+失敗總數 `F = D + S + M`（`X` 不算失敗）。主臂的讀法：
+
+- `F = 0` → **`no-gap`**。
+- `(D + S) / F ≥ 0.5` 且 `M / F < 0.5` → **`gap=decoding`**。
+- `M / F > 0.5` → **`gap=distribution`**。
+- 其餘（只有 0.5／0.5 的平手）→ **`gap=mixed`**。
+
+門檻的理由：**0.5 是多數，不是調出來的數字**。不設「幾個 token 算近」之類的額外常數；
+`D`、`S`、`M` 各給 Wilson 95% 區間，讀者看得到不確定性。`topk_all[3]`／`[10]` 只作描述，
+不改裁決（改 k 會改答案，所以 k=5 先寫定）。
+
+Q2 用同一條規則套在 `distill_train`（主）與 `core_train`（複現）。Q3 只比較兩個 `G` 的 Wilson 區間。
+
+### 88.6 儀器 `I0`（跑完後檢查，任何一項不過則該臂作廢／整節照實記）
+
+1. **checkpoint 不變**：載入前後 sha256 相同；參數量、vocab 大小、config 與 88.2 相同。
+2. **沒有訓練**：全程 `net.eval()`、`torch.no_grad()`；不呼叫 `train_on`、不建 optimizer；跑完 `net.training is False`。
+3. **列就是登記的列**：每臂 248 列、每臂 (prompt, answer) 的順序 digest；主臂
+   `distill_val_holdout ∩ distill_train` 重算為 **0**。
+4. **決定性**：主臂前 32 列**連跑兩次**，逐列記錄必須完全相同（貪心是 argmax，沒有隨機）。
+5. **與生產解碼一致**：主臂的 `exact_raw` 命中數必須等於
+   `train_token_snn.exact_match(primary_pairs, sample=0, seed=3)` 的命中數（同一個 `_response_only` 判定）。
+6. **與生產 teacher-forced 一致**：主臂的 `token_tf`（我們的 gold 前綴前向）必須等於
+   `model.tf_accuracy(primary_pairs)["tf_acc"]`，差 ≤ 1e-6。
+7. **沒有截斷**：`len(ids) < max_len` 對每一列都成立（`gold` 完整）。若有截斷列，該臂的裁決只用在
+   非截斷列上並報列數；截斷列超過 5% 則該臂作廢。
+8. **端點自洽**：`prefix_curve[0]` 等於 `G`、`prefix_curve[1.0]` 等於 `O`，逐列相同。
+
+### 88.7 預測與否證（跑之前寫定）
+
+**Q1（主）主預測：`gap=distribution`（中高信心）**。理由先寫明，因為它讓這個預測不是丟硬幣：
+`D ≤ O`，而 `O` 是「整條 gold argmax 路徑都對」的列數，其比例上限就是逐 token 正確率
+（≈0.334）除以「至少不是貪心就對的列」；主臂的答案長度是 3.79（+EOS ≈ 4.79）。要讓解碼佔多數，
+`S` 必須也很大，也就是 gold 在**每個**位置都留在前 5 名：若失敗列要有一半落在 `S`，每 token 的
+前 5 名命中率得高到 `0.5^(1/4.79) ≈ 0.87`。主預測是 top-5 命中率**沒有**那麼高，所以分佈佔多數。
+**否證**：Q1 出現 `gap=decoding` 或 `gap=mixed`。
+
+**Q2（記住的列）主預測：`gap=decoding`（中等信心）**。理由：記住的列逐 token 正確率高，
+gold 前綴應該能讓多數列全對（`O` 大），而貪心仍會走偏（記錄值 train exact 0.38、val 0.45），
+所以 `D + S` 應該佔多數。**否證**：`distill_train` 出現 `gap=distribution`——那表示即使在記住的列上，
+殘餘落差也不是解碼問題，Q2 的假設錯了，照實記。
+
+**Q3 預測**：`core_train` 的 `G` 與 `core_holdout` 的 `G` 的 Wilson 95% 區間**不重疊**
+（前者應遠高於 0）。**否證**：兩區間重疊——那表示 0/248 不能歸因於跨語料，Q3 的解釋錯了。
+
+### 88.8 照實記的限制（跑之前寫定）
+
+1. **這是前向診斷，不是能力分**：核心分不變 **0.00/10**（§275）。這一節不訓練、不改 checkpoint、
+   不改任何門檻，也不把任何結果算進核心分。
+2. **`S` 是「可能」不是「保證」**：gold 在每個位置前 5 名內，只代表 beam-5 **有機會**找到它；
+   beam 以累積機率剪枝，不一定留得住 gold。結果會這樣寫，不把 `S` 說成「beam 就會對」。
+3. **`O` 是 argmax 路徑，不是最大序列機率**：gold 可能不是 argmax 路徑、卻是最高機率的序列；
+   這一節量的是「餵 gold 前綴時每個位置會不會選對」，不是全域搜尋。
+4. **只有四個 checkpoint × 四組 248 列**，而且 `core_train` 的 248 列是檔頭切片（長答案為主），
+   不代表整個 `core_train` 分佈。Q2 的結論只說明「這 248 列」。
+5. **詞表可拼性**：33/248 的 held-out 列原始字串不可達，所以 `exact_raw` 是下界；`exact_model`
+   是這一節的判準，兩者差幾列會照實寫。
+6. **歷史的 38.5%／0-of-40 不可重跑**（88.2 第 1 條）：這一節量的是同一個現象，不是那個 run。
+7. **`temperature=0`**：只量貪心。取樣解碼不在這一節；它會改變 `G`，但不會改變「gold 在不在前 5 名」。
+
+### 88.9 命令與執行上限（跑之前寫定）
+
+```bash
+OMP_NUM_THREADS=2 ./.venv/bin/python scripts/probe_tf_exact_gap.py \
+  --out-dir data/tf_gap88 --report data/tf_gap88/report.json
+OMP_NUM_THREADS=2 ./.venv/bin/python scripts/probe_tf_exact_gap.py \
+  --check data/tf_gap88/report.json
+```
+
+預算：**≤ 30 分鐘**、2 個執行緒、只寫 `data/tf_gap88/`（gitignored）、GPU 不使用。
+若牆鐘超過 1,800 秒，停止並記為 **aborted**（不作裁決、不採用部分結果）。
