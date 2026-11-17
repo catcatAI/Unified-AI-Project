@@ -1025,6 +1025,9 @@ class TokenSNN:
         min_lr: float = 1e-5,
         should_stop: Any = None,
         kd: Any = None,
+        start_epoch: int = 0,
+        opt_state: Any = None,
+        opt_state_out: Any = None,
     ) -> List[Dict[str, float]]:
         """Train on ``pairs``.
 
@@ -1052,16 +1055,28 @@ class TokenSNN:
         ``kd(hidden, rows)`` adds a soft-target term to each batch. ``rows`` are
         indices into ``pairs`` (the same indices the shuffle produced), because
         a distillation target belongs to a corpus row, not to a batch slot.
+
+        ``start_epoch``, ``opt_state`` and ``opt_state_out`` make a run
+        *extendable*: the caller can stop after k epochs, save the weights and
+        the optimizer state, and later run the remaining epochs without paying
+        for the first k again. The batch order and the torch seed are both
+        drawn from ``seed + epoch``, so ``start_epoch`` continues the sequence
+        instead of restarting it. Extension is bitwise equal to one unbroken run
+        as long as no epoch was rolled back by the guard — a rollback also
+        carries ``best_loss`` and a halved learning rate, which live in this
+        call and are not part of ``opt_state``.
         """
         torch = self.torch
         torch.manual_seed(seed)
         opt = torch.optim.Adam(self.net.parameters(), lr=lr)
+        if opt_state:
+            opt.load_state_dict(opt_state)
         history: List[Dict[str, float]] = []
         best_loss = float("inf")
         best_state: Optional[Dict[str, Any]] = None
         lr_scale = 1.0
         order = list(range(len(pairs)))
-        for epoch in range(epochs):
+        for epoch in range(start_epoch, start_epoch + epochs):
             epoch_lr = max(min_lr, (lr_at(epoch) if lr_at is not None else lr) * lr_scale)
             if should_stop is not None and should_stop():
                 history.append(
@@ -1133,6 +1148,10 @@ class TokenSNN:
                 log(row)
             if on_epoch is not None:
                 on_epoch(row)
+        if opt_state_out is not None:
+            # Captured after the last epoch (and after any guard rebuild), so an
+            # extension resumes Adam's moments exactly where the run stopped.
+            opt_state_out.update(opt.state_dict())
         return history
 
     def _guard_epoch(
