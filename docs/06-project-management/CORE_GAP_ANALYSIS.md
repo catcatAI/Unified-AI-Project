@@ -15091,3 +15091,140 @@ checkpoint 上都是 **0**。如果 §90 決定改引用 `distill`，核心分�
 
 `checkpoint-selection` 這個裁決只在「**報告的 0 屬於誰**」的意義下使用，不在「**哪個核心比較好**」
 的意義下使用。89.12 的「最佳可載入核心」應讀成「**這 40 題上觀察到的最高分**」。
+
+## §90 同一批麵粉、不同作法：只換遞歸單元，泛化會不會動（登記）
+
+### 90.0 為什麼是換單元，不是換詞表原子
+
+原本排定的下一個實驗是「用 `--numeric_atoms` 重訓 distill」——把數值寫成契約網格上的單一原子，讓
+`0.72` 不再拆成四個字元。**這個實驗在跑之前就死了**：distill_train 的 **119,249** 個訓練原子裡，
+落在 2-dp 契約網格（`_VALUE_ATOMS_BY_DECIMALS[2]`）上的是 **0**（0.0000%）。旗標動不到這份語料的
+任何一個位置，跑完只會得到一個「看起來測過、其實沒動到目標」的數字。
+
+同一份語料上還能改變的變數只剩**遞歸單元**。而且它不是隨手挑的：§36 已經在同一任務、同參數、
+同步數下量過（加法 0–99，五個配對種子）——小模型 GRU **0.680** vs SNN **0.349**，大模型 GRU
+**0.806** vs SNN **0.011**。§36 的結論只限於那個任務與那個預算；這一節問的是同一個替換**在這份
+語料上**會不會動泛化。
+
+### 90.1 這一節問什麼
+
+在**同一份語料、同一份詞表、同一預算、同一組種子**下，只把 LIF 遞歸換成同參數量的 GRU，
+248 列凍結 hold-out 的 `exact_raw` 會不會移動 ≥10 列？
+
+跑之前已知的背景（不是本節的結果）：`token_snn_distill.pt` 在同一批 248 列上是 **28/248**
+（11.3%）、同一批 65 題是 math **3/40**、knowledge **0/15**、code **0/10**（§89）。
+
+這一節刻意分成兩個泛化量：
+
+| 量 | 分母 | 檢定力 |
+| --- | --- | --- |
+| 同分佈 hold-out（`distill_val_holdout.jsonl`） | 248 列 | 每列 0.4pp，看得到 10 列級的差 |
+| 跨分佈 transfer（凍結 65 題） | 40／15／10 | 幾乎沒有；只能看「有沒有大幅移動」 |
+
+裁決只用第一個（90.5），第二個照實記（90.4）。
+
+### 90.2 凍結的控制項（跑之前寫定）
+
+| 控制 | 值 | 為什麼是這個值 |
+| --- | --- | --- |
+| 訓練語料 | `distill_train.jsonl`，5,144 列（fit 5,144） | §89.18 指名的「同一批麵粉」 |
+| 驗證語料 | `distill_val.jsonl`，281 列 | 只用來算每輪 val loss、選模 |
+| hold-out | `distill_val_holdout.jsonl`，248 列 | §88／§89 的凍結列，從不訓練 |
+| 考題 | `native_bench_v1.json` 的 math 40／knowledge 15／code 10 | §89 的同一批 65 題 |
+| 詞表 | `token_snn_distill.pt` 自己的 **3,577** 個原子，**不重建** | 重建會是 3,613（36 個 built-only：`é è í _ á ó ä ö ü ² ß …`），OOV 集合會移動，`distill` 那一欄就不再是同一個量測 |
+| 詞表的代價 | 74/5,144 訓練列在 checkpoint 詞表下含 `<unk>` | 兩臂完全相同，寫出來而不是藏起來 |
+| 預算 | 100 epochs × 81 batches = **8,100 步**、batch 64、Adam **3e-3** cosine→1e-5、clip 1.0、teacher forcing、guard on、無 KD／scheduled sampling／tail weight | 記錄中 distill 的那份預算 |
+| 種子 | **0 與 1**，兩臂同一組 | 看「區間有沒有分開」，不是估 seed 分佈 |
+| 選模 | 每輪算 `distill_val` 的 teacher-forced val loss，取最好那一輪（`train_token_snn` 在 `--eval-every` 下的同一條規則） | 選模看驗證，**不看考題** |
+| 兩臂唯一的差別 | `TokenSNN` 的 LIF vs `GRUDecoder` 的 `nn.GRU` | 這就是「不同作法」 |
+| 參數 | SNN **2,491,227**；GRU `d_hidden=418` → **2,489,219**（−0.08%） | 同尺寸 |
+| 裝置 | 訓練 xpu（Arc B570，duty ≤50%）、評估 cpu | 評估裝置與 §89 的呼叫端相同 |
+
+**一個登記前的實測發現**：`compare_snn_gru.match_gru_hidden` 用 `sqrt(target/3)` 當搜尋中心，那假設
+遞歸塊主導參數；在這個詞表（3,577）下 head 主導，中心會指到 `d=911`（約 6.7M，差 170%），
+真正的最近點是 `d=418`。所以這一節用**顯式掃描 2..2000** 取最近，並把 `snn_params`／
+`gru_nearest_params` 寫進報告。
+
+### 90.3 量什麼
+
+- **主要**：hold-out `exact_raw`／248（`probe_core_callers.measure_holdout` 的同一支生產者、
+  `generate(max_new=48)`、逐列答案留存）。
+- **次要**：65 題的 math／knowledge／code（`measure_suites` + `run_benchmarks.score_item`，strict）。
+- **診斷**（不進裁決）：`tf_holdout`（teacher-forced 每 token 正確率）、`train_exact_200`
+  （**記憶**，不得寫成能力）、每輪 train loss 與 val loss、checkpoint sha256、每臂訓練秒數。
+
+### 90.4 預測（跑之前寫定；錯了照實記）
+
+| # | 預測 | 為什麼 |
+| --- | --- | --- |
+| P1 | 兩臂的 hold-out 都落在 **10–45 列**，裁決為 **`recipe-invariant`** | 58 列的法則：在 8,100 步、2.5M 參數上，換 cell 不會把「同一分佈的短答案」從 11% 推到「會」或壓到 0 |
+| P2 | 兩臂的 transfer 都是 math ≤5/40、knowledge 0/15、code 0/10 | 跨分佈的缺口不是 cell 造成的 |
+| P3 | GRU 的 `train_exact_200` ≥ SNN，val loss 下降更快 | 若有差，差在**優化**（能不能擬合訓練集），不是泛化 |
+
+P3 是這一節真正有用的那一條：如果 GRU 擬合得更好、hold-out 卻一樣，那「資料／契約」就是下一個
+該動的地方，而不是「再換一個 cell」。
+
+### 90.5 裁決規則（跑之前寫定；不挑最高分）
+
+`D = mean(GRU 的 hold-out 列數) − mean(SNN 的 hold-out 列數)`。
+
+| 裁決 | 條件 |
+| --- | --- |
+| `recipe-moves` | `D ≥ +10` 且 `min(GRU) > max(SNN)` |
+| `recipe-moves-against` | `D ≤ −10` 且 `max(GRU) < min(SNN)` |
+| `recipe-invariant` | 其餘（含兩臂區間重疊） |
+
+10 列 = **4.0pp**，在 n=248、p≈0.11 下約 **2 個二項標準誤**。這個數字在看到任何分數之前寫定，
+不因結果調整。區間重疊就一律 `recipe-invariant`——兩個種子分不開的差，不能算成 cell 的效果。
+
+**次要量不裁決**：若 hold-out 判 `recipe-invariant`、但 transfer 出現「兩個 GRU 種子都 ≥8/40 且
+兩個 SNN 種子都 <8/40」，那記為 **post-hoc 觀察**（供下一個登記用），不改這一節的裁決。
+
+### 90.6 儀器
+
+`scripts/probe_core_recipe_ab.py`（新檔；不改 `probe_core_callers.py`、不改 `compare_snn_gru.py`）：
+
+- 兩臂共用 `TokenSNN.train_on`（同 shuffle／Adam／clip／guard）、同一條 `cosine_lr`、同一條 val 選模；
+- 每臂存 checkpoint 並記 `sha256`；`report.json` 每跑完一臂就重寫一次（裝置故障不丟前面的結果）；
+- `--check`：從存下的列重算全部聚合、驗兩個 digest 與 checkpoint `sha256`、重載 seed 0 的 checkpoint
+  把 hold-out **逐列重跑**（答案不同就失敗）。
+
+### 90.7 照實記的限制（跑之前寫定）
+
+1. **兩個種子不足以估 seed 變異的分布**，只夠看「區間有沒有分開」。所以裁決門檻是分離，不是 t 檢定。
+2. **SNN 臂不是 recorded distill 的逐位重現**：裝置 xpu vs 記錄的 cpu，詞表用 checkpoint 的重建版
+   （74 列含 `<unk>`）。它是「同一份語料＋同一份詞表的同一道菜」，不是同一個檔案。所以它與
+   28/248 的接近程度是**保真度觀察**，不是必須成立的條件。
+3. 248 列同分佈 hold-out 的解析度是每列 0.4pp；10 列以下不可讀，也不寫成「有效果」。
+4. transfer 65 題（40／15／10）幾乎沒有檢定力，只用來看「有沒有大幅移動」。
+5. 5,144 列 × 8,100 步 × 2.5M 參數是**小預算**；任何結論只在這個預算內成立。
+6. **33/248 的答案含 OOV 原子**（§89 已量，全是字詞、0 個純數字），任何模型都答不出；兩臂相同，
+   但它是這個 hold-out 的天花板之一。
+7. 不調門檻、不改評分、不在 hold-out 上調參、不在看到分數後改種子或步數。
+
+### 90.8 命令與上限（跑之前寫定）
+
+1 epoch 的煙霧測試（不評分，只量速度）：SNN **26.4 s/epoch**、GRU **7.7 s/epoch** → 100 epochs
+約 **2,640 s** 與 **770 s**；四個 arm 合計約 **6,820 s**，加評估約 **7,000–7,400 s**。
+
+```bash
+OMP_NUM_THREADS=2 ./.venv/bin/python scripts/gpu_limit.py --run --target 0.5 \
+  --out /tmp/opencode/gpu_e2.json -- ./.venv/bin/python scripts/probe_core_recipe_ab.py
+OMP_NUM_THREADS=2 ./.venv/bin/python scripts/probe_core_recipe_ab.py \
+  --check data/e2_recipe_ab/report.json
+```
+
+- GPU duty **≤50%**（`gpu_limit --target 0.5`，煙霧實測 0.4468）；
+- 整機 CPU／RAM／swap 由 1 Hz 取樣記進報告的 `resource`，上限 CPU ≤50%、RAM ≤60%、swap ≤60%；
+- `MAX_SECONDS = 10800`：超過就**在開始下一個 arm 之前**停，缺哪一臂照實記（不重跑、不改設定）；
+- 開跑前閘門：CPU **14.3%**、RAM **37.8%**、swap **7.1%**；
+- 註：XPU 長跑有 xe CAT／DEVICE_LOST 的前例；若中斷，已完成的臂保留，缺的記為未跑。
+
+### 90.9 這一節會改變什麼、不會改變什麼
+
+- **`recipe-moves`** → 在這份語料與預算下，遞歸單元是真變因；下一步是同規模的 GRU 對照，而不是
+  繼續加語料。
+- **`recipe-invariant`** → 換 cell 不是答案；同樣的麵粉換作法仍然落在同一個地方，殘差在
+  **資料（33 列 OOV）／契約／解碼**，下一個探針不該再換 cell。
+- **兩種結果都不會**改核心分 0.00/10、不會改任何及格線、不會改報告引用的 checkpoint——那是 §91
+  的問題，而且必須另外登記。
