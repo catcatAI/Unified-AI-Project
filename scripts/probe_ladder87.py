@@ -209,14 +209,15 @@ def _i0_block(
         },
     ]
     # I0-6 is the cross-stage calibration: ``--check`` re-measures §85's nine
-    # checkpoints with these rulers. The run itself only records the item, so
-    # the report never claims a number it did not compute.
+    # checkpoints with these rulers and fails if any of them moved. The run
+    # cannot do it (it has no reason to load §85's arms), so the item records
+    # the claim and the check turns it into a measurement.
     items.insert(
         5,
         {
             "id": "I0-6",
             "name": "the rulers reproduce §85's recorded numbers",
-            "value": "recomputed by --check on §85's checkpoints",
+            "value": "re-verified by --check against §85's nine checkpoints",
             "tolerance": 1e-4,
             "passes": True,
         },
@@ -528,6 +529,38 @@ def check(report_path: Path) -> Tuple[bool, str]:
             item["id"] for item in report.get("i0", {}).get("items", []) if not item["passes"]
         ]
         errors.append(f"the report's own I0 block failed: {', '.join(failed) or 'missing'}")
+
+    # I0-6: the rulers must reproduce §85's recorded numbers. §85's checkpoints
+    # live under data/ (gitignored), so this can only run where §85 ran — and
+    # when it cannot run that is a failure, never a silent pass. §86 made this
+    # comparison by hand; here it is part of the check.
+    prior_path = Path(p85.REPORT)
+    if not prior_path.is_file():
+        errors.append("I0-6 cannot be verified: §85's report is missing")
+    else:
+        prior = json.loads(prior_path.read_text(encoding="utf-8"))
+        if prior.get("stage") != "probe_ladder85":
+            errors.append("I0-6 cannot be verified: §85's report is not a §85 report")
+        else:
+            for prior_row in prior["arms"]:
+                prior_ckpt = p85.resolve_artifact(prior_row["checkpoint"])
+                if not prior_ckpt.is_file():
+                    errors.append(f"I0-6: missing §85 checkpoint {prior_row['checkpoint']}")
+                    continue
+                model = TokenSNN.load(prior_ckpt, device="cpu")
+                measured = p86.measure_all(
+                    model, train_pairs, val_pairs, holdout_pairs, protocol["batch"]
+                )
+                if abs(measured["val_ce"] - float(prior_row["final_val_ce"])) > 1e-4:
+                    errors.append(
+                        f"I0-6: {prior_row['arm']}/{prior_row['seed']} val_ce "
+                        f"{measured['val_ce']:.6f} != §85's {prior_row['final_val_ce']:.6f}"
+                    )
+                if abs(measured["holdout_hits"] - float(prior_row["holdout_hits"])) > 1e-9:
+                    errors.append(
+                        f"I0-6: {prior_row['arm']}/{prior_row['seed']} hold-out hits "
+                        f"{measured['holdout_hits']:.0f} != §85's {prior_row['holdout_hits']:.0f}"
+                    )
 
     recomputed = p86.decide(report["arms"], margins=protocol["margins"])
     if recomputed["branch"] != report["decision"]["branch"]:
