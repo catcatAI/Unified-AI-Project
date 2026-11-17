@@ -15228,3 +15228,25 @@ OMP_NUM_THREADS=2 ./.venv/bin/python scripts/probe_core_recipe_ab.py \
   **資料（33 列 OOV）／契約／解碼**，下一個探針不該再換 cell。
 - **兩種結果都不會**改核心分 0.00/10、不會改任何及格線、不會改報告引用的 checkpoint——那是 §91
   的問題，而且必須另外登記。
+
+### 90.10 登記後的修正 #1（跑之前；裝置改為 cpu）
+
+登記寫的是「訓練 xpu、duty ≤50%」。在**任何評分跑之前**量到兩件事，足以改掉這個選擇：
+
+1. **XPU 路徑的 host 記憶體是固定的 +2.8 GB**。同一個行程在 xpu 上，`rss` 從 692 MiB 跳到
+   **3,482 MiB**（第 1 步之後就停住，40 步不再成長，`torch.xpu.memory_reserved` 只有 144 MiB），
+   整機可用記憶體從 9.8 GB 掉到 6.6 GB（**59.7%**）。這貼著 60% 的硬上限，兩個小時的跑沒有餘裕。
+2. **XPU 受 50% duty 限制後比 CPU 慢**：1 epoch 的煙霧是 26.4 s（SNN）／7.7 s（GRU），換算
+   **0.326／0.095 s/step**；同一份程式在 **cpu、2 執行緒**上是 **0.111／0.136 s/step**
+   （8,100 步 14.9／18.3 分），`rss` 849／873 MiB。
+
+記錄中的 distill 本來也就是 `device: cpu`（`token_snn_distill.json`），所以改成 cpu 同時讓
+**保真度變好**、**記憶體回到安全區**、**總時數變短**（四臂約 66 分，原本估 114 分）。
+
+**只改這一項**：語料、詞表、8,100 步、batch 64、lr 3e-3 cosine、種子 {0,1}、val 選模、248 列
+hold-out、65 題、10 列裁決門檻、10,800 秒上限，全部不變。GPU 不使用（duty 0）；CPU ≤50% 由 1 Hz
+取樣確認。執行指令因此變成：
+
+```bash
+OMP_NUM_THREADS=2 ./.venv/bin/python scripts/probe_core_recipe_ab.py --device cpu
+```
