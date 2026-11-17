@@ -42,11 +42,12 @@ import contextlib
 import io
 import json
 import math
+import os
 import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
@@ -99,6 +100,9 @@ MOVE_ROWS = 10
 
 #: §90.8 — stop before starting an arm rather than run past this wall clock.
 MAX_SECONDS = 10800.0
+
+#: Set by ``run()`` so ``train_arm`` can tag the phase it is in (§90.12).
+SAMPLER: Optional[Any] = None
 
 # Filled by ``run()`` before any arm trains; module-level so ``train_arm`` reads
 # the same rows the report digests describe.
@@ -209,25 +213,45 @@ def _cpu_share() -> float:
     return total, idle
 
 
+def _proc_ticks() -> int:
+    """utime + stime of this process, in clock ticks."""
+    fields = Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()
+    return int(fields[11]) + int(fields[12])
+
+
 class Sampler(threading.Thread):
-    """1 Hz whole-machine sample: CPU, RAM, swap, GPU busy (registered §90.9)."""
+    """1 Hz sample: whole-machine CPU/RAM/swap/GPU **and this process's CPU**.
+
+    §90.11 recorded an unattributed 80% whole-machine peak: the machine sample
+    cannot tell our two training threads apart from another application. The
+    process counter (``/proc/self/stat``) and the phase tag make the next run
+    attributable — reporting only, nothing about training changes.
+    """
 
     def __init__(self) -> None:
         super().__init__(daemon=True)
         self.stop_flag = threading.Event()
-        self.samples: List[Dict[str, float]] = []
+        self.samples: List[Dict[str, Any]] = []
+        self.phase = "start"
 
     def run(self) -> None:
         try:
             total0, idle0 = _cpu_share()
+            ticks0 = _proc_ticks()
         except Exception:  # pragma: no cover - /proc is Linux-only
             return
         while not self.stop_flag.is_set():
+            wall0 = time.monotonic()
             self.stop_flag.wait(1.0)
+            wall = max(1e-6, time.monotonic() - wall0)
             try:
                 total1, idle1 = _cpu_share()
+                ticks1 = _proc_ticks()
                 dt, di = max(1, total1 - total0), idle1 - idle0
                 total0, idle0 = total1, idle1
+                hz = float(os.sysconf("SC_CLK_TCK"))
+                proc = 100.0 * (ticks1 - ticks0) / (hz * wall)
+                ticks0 = ticks1
                 cpu = 100.0 * (1.0 - di / dt)
                 mem = {}
                 for line in Path("/proc/meminfo").read_text().splitlines():
@@ -242,21 +266,37 @@ class Sampler(threading.Thread):
                     except OSError:
                         pass
                 self.samples.append(
-                    {"cpu": cpu, "ram": ram, "swap": swap, "gpu_busy": gpu, "t": time.time()}
+                    {
+                        "cpu": cpu,
+                        "proc": proc,
+                        "ram": ram,
+                        "swap": swap,
+                        "gpu_busy": gpu,
+                        "phase": self.phase,
+                    }
                 )
             except Exception:
                 continue
 
-    def summary(self) -> Dict[str, float]:
+    def summary(self) -> Dict[str, Any]:
         if not self.samples:
             return {}
         cells = {
             key: [s[key] for s in self.samples if s[key] >= 0]
-            for key in ("cpu", "ram", "swap", "gpu_busy")
+            for key in ("cpu", "proc", "ram", "swap", "gpu_busy")
         }
-        return {f"{key}_max": round(max(values), 2) for key, values in cells.items() if values} | {
-            "samples": len(self.samples)
+        out: Dict[str, Any] = {
+            f"{key}_max": round(max(values), 2) for key, values in cells.items() if values
         }
+        phases: Dict[str, Dict[str, float]] = {}
+        for sample in self.samples:
+            cell = phases.setdefault(sample["phase"], {"n": 0, "cpu_max": 0.0, "proc_max": 0.0})
+            cell["n"] += 1
+            cell["cpu_max"] = round(max(cell["cpu_max"], sample["cpu"]), 2)
+            cell["proc_max"] = round(max(cell["proc_max"], sample["proc"]), 2)
+        out["by_phase"] = phases
+        out["samples"] = len(self.samples)
+        return out
 
 
 # -- one arm ----------------------------------------------------------------
@@ -267,6 +307,7 @@ def train_arm(
     cfg: TokenConfig,
     device: str,
     score: bool = True,
+    restore: bool = True,
 ) -> Dict[str, Any]:
     import torch
 
@@ -292,6 +333,8 @@ def train_arm(
             best["state"] = {k: v.detach().clone() for k, v in model.net.state_dict().items()}
 
     started = time.time()
+    if SAMPLER is not None:
+        SAMPLER.phase = "train"
     model.train_on(
         train_fit,
         epochs=EPOCHS,
@@ -306,7 +349,7 @@ def train_arm(
     train_seconds = time.time() - started
 
     restored = ""
-    if best["state"] is not None and val_curve:
+    if restore and best["state"] is not None and val_curve:
         last = val_curve[-1]["val_loss"]
         if math.isfinite(best["loss"]) and best["loss"] < last:
             model.net.load_state_dict(best["state"])
@@ -315,6 +358,8 @@ def train_arm(
     out = OUT_DIR / "checkpoints" / f"{kind}_seed{seed}.pt"
     model.save(out)
 
+    if SAMPLER is not None:
+        SAMPLER.phase = "eval"
     train_match = {"n": 0, "exact": 0.0}
     tf: Dict[str, Any] = {}
     holdout_rows: List[Dict[str, Any]] = []
@@ -328,6 +373,8 @@ def train_arm(
         holdout_rows = measure_holdout(model)
         suite_rows = measure_suites(items, model)
 
+    if SAMPLER is not None:
+        SAMPLER.phase = "between"
     return {
         "arm": kind,
         "seed": seed,
@@ -337,6 +384,7 @@ def train_arm(
         "train_seconds": round(train_seconds, 1),
         "steps": EPOCHS * math.ceil(len(train_fit) / BATCH),
         "restored": restored,
+        "restore": bool(restore),
         "history": history,
         "val_curve": val_curve,
         "best_val": None if not math.isfinite(best["loss"]) else round(best["loss"], 6),
@@ -386,7 +434,7 @@ def decide(runs: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
 
 # -- run --------------------------------------------------------------------
 def run(args: argparse.Namespace) -> Dict[str, Any]:
-    global train_fit, val_fit, items
+    global train_fit, val_fit, items, SAMPLER
 
     vocab, cfg = load_vocab()
     train_pairs = read_pairs(TRAIN)
@@ -411,6 +459,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
 
     sampler = Sampler()
     sampler.start()
+    SAMPLER = sampler
     report: Dict[str, Any] = {
         "epochs": EPOCHS,
         "batch": BATCH,
@@ -448,7 +497,15 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
                     report["stopped_early"] = True
                     break
                 print(f"\n== {kind} seed {seed} ==", flush=True)
-                row = train_arm(kind, seed, vocab, cfg, device, score=not args.no_score)
+                row = train_arm(
+                    kind,
+                    seed,
+                    vocab,
+                    cfg,
+                    device,
+                    score=not args.no_score,
+                    restore=not args.no_restore,
+                )
                 print(
                     f"   holdout exact_raw {row['holdout'].get('exact_raw', 'n/a')}"
                     f"/{row['holdout'].get('n', 'n/a')}"
@@ -526,6 +583,11 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--epochs", type=int, default=EPOCHS, help="smoke only; §90 is 100")
     ap.add_argument("--seeds", default=",".join(str(s) for s in SEEDS), help="smoke only")
     ap.add_argument("--no-score", action="store_true", help="smoke only: train, do not measure")
+    ap.add_argument(
+        "--no-restore",
+        action="store_true",
+        help="§90.11 diagnostic: keep the final epoch instead of the best val_loss epoch",
+    )
     ap.add_argument("--check", default="")
     return ap
 
