@@ -14488,7 +14488,7 @@ Q1 與 Q2 必須分開，因為它們的答案可以不同，而且**只有 Q2 �
 | `exact_model`（`G`） | `greedy_ids == gold`（模型可拼出的答案完全相等） |
 | `exact_raw` | `decode(greedy_ids).strip() == answer.strip()`（與 `train_token_snn.exact_match` 同一個判定） |
 | `first_div` | 貪心輸出與 `gold` 第一個不同的位置（0-based；全對為 −1） |
-| `prefix_curve[f]` | 對 f ∈ {0.25, 0.5, 0.75, 1.0}：強制餵 `floor(f × gold_len)` 個 gold token，再貪心解出剩下的；**剩餘 token 完全相等**才算命中。f=1.0 等於 `O`，f=0 等於 `G`（兩端點互相檢查） |
+| `prefix_curve[f]` | 對 f ∈ {0, 0.25, 0.5, 0.75, 1.0}：強制餵 `floor(f × gold_len)` 個 gold token，再貪心解出剩下的；**剩餘 token 完全相等**才算命中。f=0 等於 `G`，f=1.0 等於 `eos_argmax`（**88.10 第 4 條更正**：不是 `O`） |
 | `greedy_len` | 貪心輸出的 token 數（提早 EOS／暴走都會改它） |
 | `gold_logprob` | 每個答案位置 gold token 的 log-probability 平均（nats） |
 
@@ -14515,7 +14515,9 @@ token 完全相等；`exact_model`／`exact_raw` 仍是字串比較，並列報�
 | **`M`** | 非 `T5` | **分佈修不了**：至少一個位置 gold 掉出前 5 名，任何只看前 5 名的解碼都到不了 |
 | `X` | 非 `O` 且 `G` | 貪心走別的路卻拼出同一個答案（預期接近 0，照實報） |
 
-失敗總數 `F = D + S + M`（`X` 不算失敗）。主臂的讀法：
+**88.10 第 1 條已證明 `O ⇔ G`，所以 `D ≡ 0`、`X ≡ 0`**；上表因此化簡為
+`S(k) = T_k − G`、`M(k) = N − T_k`、`F = N − G = S(k) + M(k)`，`k=5` 決定。
+下表與讀法不變（`D`／`X` 仍逐列計算，只作定理的一致性檢查）。主臂的讀法：
 
 - `F = 0` → **`no-gap`**。
 - `(D + S) / F ≥ 0.5` 且 `M / F < 0.5` → **`gap=decoding`**。
@@ -14537,11 +14539,13 @@ Q2 用同一條規則套在 `distill_train`（主）與 `core_train`（複現）
 4. **決定性**：主臂前 32 列**連跑兩次**，逐列記錄必須完全相同（貪心是 argmax，沒有隨機）。
 5. **與生產解碼一致**：主臂的 `exact_raw` 命中數必須等於
    `train_token_snn.exact_match(primary_pairs, sample=0, seed=3)` 的命中數（同一個 `_response_only` 判定）。
-6. **與生產 teacher-forced 一致**：主臂的 `token_tf`（我們的 gold 前綴前向）必須等於
-   `model.tf_accuracy(primary_pairs)["tf_acc"]`，差 ≤ 1e-6。
+6. **與生產 teacher-forced 一致**：主臂的 teacher-forced **命中數**必須等於
+   `round(model.tf_accuracy(primary_pairs)["tf_acc"] × tokens)`，token 總數也必須相等
+   （比率差 ≤ 5e-5，因為生產端四捨五入到 4 位小數；見 88.10 第 5 條）。
 7. **沒有截斷**：`len(ids) < max_len` 對每一列都成立（`gold` 完整）。若有截斷列，該臂的裁決只用在
    非截斷列上並報列數；截斷列超過 5% 則該臂作廢。
-8. **端點自洽**：`prefix_curve[0]` 等於 `G`、`prefix_curve[1.0]` 等於 `O`，逐列相同。
+8. **端點自洽**：`prefix_curve[0]` 等於 `G`、`prefix_curve[1.0]` 等於 `eos_argmax`，逐列相同
+   （見 88.10 第 4 條）。
 
 ### 88.7 預測與否證（跑之前寫定）
 
@@ -14586,3 +14590,44 @@ OMP_NUM_THREADS=2 ./.venv/bin/python scripts/probe_tf_exact_gap.py \
 
 預算：**≤ 30 分鐘**、2 個執行緒、只寫 `data/tf_gap88/`（gitignored）、GPU 不使用。
 若牆鐘超過 1,800 秒，停止並記為 **aborted**（不作裁決、不採用部分結果）。
+
+### 88.10 登記後的修正 #2（跑之前；寫在實作與儀器煙霧測試之後，尚未跑正式的四臂）
+
+這一條修正的是**代數**，不是結果：它不是看到效果之後調門檻，而是把 88.5 的四格分法化簡成它
+本來就等價的形式。改動點逐條如下。
+
+**1. `O ⇔ G`（定理），所以 `D ≡ 0`、`X ≡ 0`。** 模型是因果的（位置 `t` 只看 `≤ t`），解碼是
+`argmax`。gold 前綴上的 argmax 路徑在第一次分歧之前**就是**貪心路徑；若每個 gold 位置都是 argmax，
+貪心就永遠不會分歧，於是 `O ⇒ G`。反向 `G ⇒ O`：貪心輸出等於 gold 表示貪心走過的每個位置 argmax
+都等於 gold 的下一個 token，而貪心路徑在分歧前與 gold 路徑重合，所以每個 gold 位置也都正確。
+因此 `O` 與 `G` 是同一件事，`D = O ∧ ¬G ≡ 0`（「gold 前綴就能修」不是可量測的桶），
+`X = ¬O ∧ G ≡ 0`（「貪心走別的路卻拼出同一個答案」也不可能）。
+
+**2. 分格用閉式，`k` 仍然只由 5 決定。** 因為 `G ⊆ T_k`（`G` 表示 rank 1），
+`S(k) = T_k − G`（前 `k` 名搜尋可能修）、`M(k) = N − T_k`（至少一個位置掉出前 `k` 名），
+且 `F = N − G = S(k) + M(k)`。裁決規則不變：`k=5` 時 `S/F ≥ 0.5` 且 `M/F < 0.5` → `gap=decoding`；
+`M/F > 0.5` → `gap=distribution`；其餘 → `gap=mixed`；`F=0` → `no-gap`。`D` 與 `X` 仍逐列計算，
+但只作為「定理成立」的一致性檢查（`theorem_gold_path_equals_greedy`），**不進裁決**。
+
+**3. `k` 的描述範圍擴為 {3, 5, 10, 20, 50}。** 5 決定；其餘只印出敏感度，因為 `k` 會改變答案
+（`k` 越大越容易把「分佈」誤讀成「搜尋可修」）。這一條是為了讓讀者看到 `k=5` 這個選擇的代價，
+不是為了挑一個好看的 `k`。
+
+**4. 端點修正（更正 88.4 的修正 #1）。** 修正 #1 說 f=1.0 等於 `O`，**那是錯的**。加上 EOS 之後，
+`k = gold_len` 的續接目標只剩 `[EOS]` 一個 token，所以 f=1.0 量的是「餵完整 gold 後下一個 token
+是不是 EOS」，即 `eos_argmax`；它比 `O` 寬（`O ⇒ eos_argmax`，反之不然）。`I0-8` 因此改為
+逐列比對 `prefix_curve["0.0"] == G` 與 `prefix_curve["1.0"] == eos_argmax`，兩條路徑仍然是
+獨立的（貪心 advance 對批次 gold 前向）。`O` 本身由批次前向量，不從曲線推。
+
+**5. `I0-6` 的精度。** 生產的 `train_token_snn.tf_accuracy` 把比率**四捨五入到小數 4 位**，
+所以在 `1e-6` 下比較比率會必然失敗（`0.376263` 對 `0.3763`）。改為比對**命中數**
+（`production_tf_hits == our_tf_hits`）並要求比率差 ≤ `5e-5`（就是 4 位小數的半步）。
+token 總數仍然必須相等。
+
+**6. 煙霧測試照實記（不是正式結果）。** 實作完成後用 `--arms distill_holdout` 跑過一次
+（子集，`registered_run=false`，輸出在 `/tmp`，7–9 秒），用途只有一個：確認儀器會動。
+那次讀到的 `I0-6`（比率四捨五入）與 `I0-8`（端點定義）**都失敗**，兩者都是儀器缺陷，已按上面第 4、5
+條修正，修正後 `I0` 全部通過。因為前向是決定性的，主臂的分格數字在正式跑之前**已經等於**
+正式跑會得到的那一個（`G=30/248`、`O=30`、`T5=88`、`S=58`、`M=160`，`gap=distribution`）；
+照實寫在這裡，而不是假裝正式跑是盲的。另外三臂（`core_holdout`、`distill_train`、`core_train`）
+在正式跑之前**沒有**被執行過。門檻、預測、列、checkpoint 都沒有因為這個數字而改動。
