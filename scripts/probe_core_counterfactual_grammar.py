@@ -487,6 +487,7 @@ def run_arm(
         "rows": [
             {
                 "i": row["i"],
+                "template": row["template"],
                 "expression": row["expression"],
                 "node": row["node"],
                 "constant_slots": row["constant_slots"],
@@ -730,7 +731,8 @@ def check(report_path: Path) -> Tuple[bool, str]:
                 break
             # every candidate that fits the family's training rows must agree on
             # this test point; otherwise the gold depends on which one was picked
-            family = families.get(row["template"])
+            template = row.get("template") or base.digit_template(row["q"])
+            family = families.get(template)
             if family is None or family["status"] != "usable":
                 problems.append(
                     f"{run['arm']} seed{run['seed']}: row {row['i']} family no longer fits"
