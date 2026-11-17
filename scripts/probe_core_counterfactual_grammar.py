@@ -390,10 +390,13 @@ def build_families(train: Sequence[Tuple[str, str]]) -> Dict[str, Dict[str, Any]
         if len(widths) != 1:
             families[template] = {"rows": rows, "n": len(rows), "status": "ragged-slots"}
             continue
+        # ``fit`` first: the "too-many-non-numeric" status carries a row *count*
+        # under "rows", which would otherwise replace the row list with an int
+        # (no §92 family had that status, so §92's numbers are unaffected).
         families[template] = {
-            "rows": rows,
-            "n": len(rows),
             **fit_family(rows, widths.pop()),
+            "n": len(rows),
+            "rows": rows,
         }
     return families
 
