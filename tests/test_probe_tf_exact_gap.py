@@ -31,6 +31,7 @@ No checkpoint is trained, no threshold is asserted against a measured run.
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -219,6 +220,16 @@ def test_aggregate_weighted_tf_uses_hits_not_the_rounded_rate(probe):
     agg = probe._aggregate(rows)
     assert agg["token_tf_weighted"] == round(4 / 5, 4)
     assert agg["mean_row_tf"] == round((1.0 + 0.5) / 2, 4)
+
+
+def test_aggregate_survives_the_json_round_trip(probe):
+    """``--check`` compares a recomputation with the stored report: Wilson
+    intervals come back as lists, so the comparison must canonicalise."""
+    rows = [_row(g=True, o=True, eos=True, topk=ALL_TRUE, tf_hits=2, ranks=[1, 1], sha="a")]
+    aggregate = probe._aggregate(rows)
+    stored = json.loads(json.dumps(aggregate, sort_keys=True))
+    assert isinstance(stored["greedy_exact_ci"], list)
+    assert probe._canonical(probe._aggregate(rows)) == probe._canonical(stored)
 
 
 def test_wilson_intervals_at_the_edges(probe):

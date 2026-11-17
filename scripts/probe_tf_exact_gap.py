@@ -706,6 +706,12 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     }
 
 
+def _canonical(value: Any) -> Any:
+    """Tuple -> list, so an aggregate compared to itself after a JSON round-trip
+    is equal. ``wilson`` returns tuples and the report stores JSON arrays."""
+    return json.loads(json.dumps(value, sort_keys=True))
+
+
 def check(report_path: Path) -> Tuple[bool, str]:
     """Recompute every aggregate and re-run the primary arm end to end."""
     report = json.loads(Path(report_path).read_text(encoding="utf-8"))
@@ -722,7 +728,7 @@ def check(report_path: Path) -> Tuple[bool, str]:
             errors.append(f"{name}: checkpoint changed since the report was written")
             continue
         recomputed = _aggregate(arm["rows"])
-        if recomputed != arm["aggregate"]:
+        if _canonical(recomputed) != _canonical(arm["aggregate"]):
             errors.append(f"{name}: aggregate does not recompute from its own rows")
         if verdict(recomputed) != arm["verdict"]:
             errors.append(f"{name}: verdict {verdict(recomputed)} != reported {arm['verdict']}")
