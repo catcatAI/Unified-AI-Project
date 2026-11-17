@@ -14784,3 +14784,148 @@ OMP_NUM_THREADS=2 ./.venv/bin/python scripts/probe_tf_exact_gap.py \
 | Q3：`core_train` 與 `core_holdout` 的 exact 區間不重疊 | 兩者都是 0/248、(0, 0.0153) | **落空（否證）** |
 
 Q3 的落空是這一輪資訊量最大的結果：它把「0/248 是跨語料量測」這個方便的解釋刪掉了。
+
+## §89 核心分的 0.00 是哪一個 checkpoint 的 0.00（登記）
+
+### 89.1 這一節問什麼
+
+核心探針（`probe_core_control.py`）把同一批凍結題目直接丟給核心模型；`report_intelligence.py` 的
+`_core_from_probe()` 取 `snn`／`ed3n`／`tok` 三欄的**最大值**，再與 production census 取較高者。目前的
+`docs/06-project-management/intelligence_report.json` 記的是：
+
+- `core_probe_checkpoint` = `apps/backend/data/models/token_snn_108m.pt`
+- `core_control.generated_at` = `2026-11-07T12:09:04`
+- `tok` 欄：math **0/40**（answered 37、distinct 19）、knowledge 0/15、code 0/10
+- `core_score` = **0.00**
+
+**先推翻我自己先前的一個假設**：我以為 0.00 有一部分來自 2026-11-11 那次 `core_control.json` 的 `tok`
+被跳過（`ModuleNotFoundError: No module named 'torch'`；同一次 `llm` 欄也缺）。這是錯的。目前報告引用的
+是 **11-07 的 108M run**（`core_control_token_snn_108m.json`），那一欄有量。11-11 那份
+`core_control.json` 是另一條（沒有 `--core-checkpoint` 的）預設路徑 run，沒有被報告採用。
+這一條要寫進登記，因為它改變了問題：不是「欄位缺席」，而是「欄位存在，但它是哪一個模型的」。
+
+磁碟上另外兩份同型量測，**存在、但沒有進入目前報告**：
+
+| 檔案 | 日期 | `tok` checkpoint | math | knowledge | code | answered（math／know／code） |
+| --- | --- | --- | --- | --- | --- | --- |
+| `core_control_token_snn_108m.json` | 11-07 | `token_snn_108m.pt` | **0/40** | 0/15 | 0/10 | 37／15／6 |
+| `core_control_distill.json` | 10-27 | `token_snn_distill.pt` | **3/40 = 7.5%** | 0/15 | 0/10 | 40／15／9 |
+| `core_control_core149k.json` | 10-28 | `token_snn_core149k.pt` | **1/40 = 2.5%** | 0/15 | 0/10 | 35／13／10 |
+
+所以「核心分 0.00」有兩種可能的意思，而它們要的後續動作不同：
+
+> **Q1**：今天用同一條生產者契約（`TokenSNN.load` → `model.generate(q, max_new=48)`）在**同一批 65 題**
+> 上重跑，四個可載入 checkpoint 各答對幾題？0.00 是「**最佳可載入核心**的 0」，還是「**報告選中的
+> 那個 checkpoint** 的 0」？
+>
+> **Q2**：`distill` 在 248 列凍結 hold-out 上、經由 `generate()` 得到的 `exact_raw` 命中數，是否等於
+> §88 用它自己的貪心迴圈量到的 **28**？（呼叫端與儀器是不是同一個量測。）
+
+### 89.2 為什麼不能直接引用 10-27／10-28 的兩列
+
+三件理由，寫在跑之前：
+
+1. **舊報告沒有 checkpoint hash**：`probe_core_control.py` 不記錄 sha256，那兩份只能靠檔名與 mtime
+   （`token_snn_distill.pt` 10-25 12:32、`token_snn_core149k.pt` 10-27 14:05）認定是同一個檔案。
+2. **程式碼在那之後變過**（§276 的 readout、§277 的評分路徑、§281 的裝置解析），舊數字可能與今天的
+   `score_item` 不同。
+3. **10-27 的 3/40 從未進入任何報告**：它只是一個檔案。不重跑就不能拿它改核心分。
+
+照實記：這一節的登記**不是盲的**——我知道 10-27 有 3/40。所以決策規則不能是「挑最高的」（89.5）。
+
+### 89.3 凍結的臂（跑之前寫定；只做前向）
+
+| 臂 | checkpoint | 題目 | 角色 |
+| --- | --- | --- | --- |
+| `distill_suites` | `token_snn_distill.pt` | 65 題 | Q1：磁碟上唯一有非零 math 欄的 checkpoint |
+| `default_suites` | `token_snn.pt` | 65 題 | 探針不帶參數時實際會用的 checkpoint（從未被評過：`token_snn.json` 的 `eval.n = 0`） |
+| `core149k_suites` | `token_snn_core149k.pt` | 65 題 | 10-28 那列 1/40 的重測 |
+| `m108_suites` | `token_snn_108m.pt` | 65 題 | Q1 對照：目前報告引用的 checkpoint，0/40 的重測 |
+| `holdout_generate` | `token_snn_distill.pt` | 248 列 hold-out | Q2：呼叫端一致性 |
+
+65 題 = math 40 + knowledge 15 + code 10（`benchmarks/data/native_bench_v1.json`），id 串接 digest
+`f67a454de8594115`。**不含 routing 10 題**：`_core_from_probe()` 對 `surface_task` 的 suite 回 `None`，
+它不是核心分的一部分。
+
+### 89.4 逐項量什麼（跑之前寫定）
+
+- `answer` = `model.generate(q, max_new=48)`，`device="cpu"`（與 §88 同裝置，可比較）。
+- `passed`／`skipped` = `run_benchmarks.score_item(item, answer)`（`SCORING_MODE` 實測為 `strict`）。
+- `answered` = `answer.strip() != ""`；`skipped` 與 `passed` 分開記。
+- `prompt_tokens`／`prompt_unk` = `vocab.encode(q)`，與 `_TokenSNN.coverage()` 同一個量。
+- `answer_chars`（輸出長度）；`holdout_generate` 另計 `exact_raw` = `answer.strip() == gold.strip()`。
+
+**登記前已量到的可讀性**（描述，不改裁決）：
+
+| checkpoint | vocab | prompt UNK | 整題不可讀 | math／knowledge／code 的 UNK |
+| --- | --- | --- | --- | --- |
+| distill | 3,577 | 13.28% | 0/65 | 9.89%／11.24%／21.28% |
+| `token_snn.pt` | 12,005 | 11.37% | 3/65 | 13.55%／9.64%／8.24% |
+| core149k | 12,005 | 9.98% | 1/65 | 11.38%／8.43%／8.24% |
+| 108m | 32,773 | 6.38% | 0/65 | 8.81%／6.83%／1.33% |
+
+**洩漏檢查**（登記前量）：65 題的 prompt 與 `distill_train`（5,101 列）、`distill_val`（281）、
+`distill_val_holdout`（248）、`core_train`（148,405）的 prompt **交集都是 0**。這 65 題不是任何
+checkpoint 的訓練列。
+
+### 89.5 分支與門檻（跑之前寫定；不挑最高分）
+
+- **Q2（呼叫端）**：`distill` 的 `exact_raw` 命中數 **== 28**。相等 → `caller-consistent`；不相等 →
+  `caller-mismatch`，在修好之前**不得**進入 §90，因為那時連「模型答了什麼」都還沒有一致的量測。
+- **Q1（分數的來源）**：
+  - 四個 checkpoint 的 math 答對數**全部為 0** → `core-gap`：0.00 不是 checkpoint 選擇造成的。
+  - **至少一個** > 0，且它不是報告引用的 108M → `checkpoint-selection`：0.00 是
+    「`token_snn_108m.pt` 的 0」，不是「最佳可載入核心的 0」。照實寫出每一欄，**不宣布核心分改變**
+    （換引用是 §90 的事；3/40 = 7.5% 仍遠低於 math 及格線 61%）。
+  - 只有 108M > 0 → `single-checkpoint`。
+
+**沒有其他門檻。** 決策只用「0 與非 0」和「等於 28」。
+
+### 89.6 儀器 `I0`
+
+1. **checkpoint 不變**：載入前後 sha256 相同；參數、vocab、config 與 89.2／§88 相符。
+2. **沒有訓練**：`net.eval()`、`torch.no_grad()`；跑完 `net.training is False`；不建 optimizer。
+3. **題目就是登記的題目**：65 題 id digest `f67a454de8594115`；248 列 digest 等於 §88 的
+   `e0c42feb241471d6b182e429ee313ffd30a803b1dec4e22054349fab5b717263`。
+4. **決定性**：`distill_suites` 前 16 題連跑兩次逐題相同；`holdout_generate` 前 32 列連跑兩次相同。
+5. **同一個評分器**：`score_item`（`strict`）；`skipped` 與 `passed` 分開記。
+6. **不截斷**：`len(encode(q)) + max_new` 不得超過 `max_len`；若某臂 > 5% 的題目被截斷則該臂作廢
+   （`generate()` 會把 prompt 切到 `max_len - 1`）。
+7. **跨行程重現**：`holdout_generate` 在第二個行程重跑，逐列相同。
+8. **可讀性與答對分開**：整題 UNK 的題目照樣送進去（生產者不會跳過），但在結果裡標記，避免把
+   「詞表讀不到」寫成「模型答錯」。
+
+### 89.7 預測與否證（跑之前寫定）
+
+- **Q2**：`caller-consistent`（高信心）。同一個 argmax、同一個 `[BOS] prompt [NL]` 前綴、§88 已確認
+  零截斷。**否證**：任何一列不同。
+- **Q1**：`checkpoint-selection`（中高信心）。理由：10-27 的 distill 3/40 與 10-28 的 core149k 1/40
+  都是已存在的量測，而 108M 正是 `TRAINING_INTERNALS.md` 判為崩潰（`beta = 0.5407`）的那一個；
+  重跑只是確認舊列不是程式碼漂移。**否證**：distill 與 core149k 今天都是 0/40。
+- **108M 的 0/40**：重現（高信心；同權重、同契約）。**否證**：> 0——那表示 11-07 之後的程式碼
+  改變了輸出，必須先查清楚才能談分數。
+
+### 89.8 照實記的限制（跑之前寫定）
+
+1. **這一節不改核心分**。就算 distill 是 3/40，核心分仍是 0.00（報告沒重算），而且 7.5% 遠低於
+   math 及格線 61%；這一節只決定「0 是哪一個模型的 0」。
+2. **65 題是分數用的凍結題，不是 hold-out**：用它比較 checkpoint 有 test-set selection 的風險；
+   所以 89.5 **不挑最高分**，只分辨「全部 0」與「至少一個非 0、且不是被引用的那個」。真要換引用，
+   §90 必須另外寫定選擇規則。
+3. **`tok` 只是三個核心生產者之一**：`snn`（GARDEN）與 `ed3n` 不因這一節改變；核心分是六個維度的
+   聚合，這一節最多影響 math／facts／tools 三維裡的 `tok` 欄。
+4. **舊報告沒有 sha256**（89.2 第 1 條）：重跑就是為了不靠檔名與 mtime 這個假設。
+5. **CPU 前向**：§281 量到 CPU／XPU 的輸出 cosine 1.000000、max diff ≤ 4.8e-7，argmax 不受影響。
+6. **只量貪心**（`temperature = 0`），與 `_TokenSNN.answer()` 相同。
+
+### 89.9 命令與執行上限（跑之前寫定）
+
+```bash
+OMP_NUM_THREADS=2 ./.venv/bin/python scripts/probe_core_callers.py \
+  --out-dir data/e1_core_callers --report data/e1_core_callers/report.json
+OMP_NUM_THREADS=2 ./.venv/bin/python scripts/probe_core_callers.py \
+  --check data/e1_core_callers/report.json
+```
+
+預算：**≤ 20 分鐘**、2 個執行緒、只寫 `data/e1_core_callers/`（gitignored）、不使用 GPU。
+超過 1,200 秒停止並記為 **aborted**（不作裁決、不採用部分結果）。
