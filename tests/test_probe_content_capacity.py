@@ -158,6 +158,16 @@ def test_threshold_is_the_preregistered_one(probe):
     assert probe.STORED == 0.90
 
 
+def test_effective_epochs_guarantee_the_step_floor(probe):
+    # 128 rows / batch 32 = 4 steps per epoch: 8 epochs would be 32 steps.
+    assert probe.effective_epochs(128, 32, 8, 800) == 200
+    assert 4 * probe.effective_epochs(128, 32, 8, 800) >= 800
+    # Larger N keeps its 8 epochs when that already clears the floor.
+    assert probe.effective_epochs(4096, 32, 8, 800) == 8
+    assert probe.effective_epochs(2048, 32, 8, 800) == 13
+    assert 64 * probe.effective_epochs(2048, 32, 8, 800) >= 800
+
+
 # -- --check ----------------------------------------------------------------
 def test_check_accepts_a_consistent_report(probe):
     runs = [_run(128, 0.95), _run(512, 0.60)]

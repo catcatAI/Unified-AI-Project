@@ -339,8 +339,9 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
   不因 N 或寬度改變 id。
 - **寬度**：`small = d_emb 96 / d_hidden 192`（3,525,319 params）、
   `medium = 256 / 1024`（16,692,199 params）。兩者都 1 層、`readout=membrane`、`timesteps=1`。
-- **預算**：每列 **8 epochs**、batch 32、lr 3e-3 cosine、seed 0、guards `theta_max=1.0 /
-  leak_floor=0.85 / gain_cap=1.0`。每個 N 拿到相同的「每列曝光」，不是相同的總步數。
+- **預算**：每列 **8 epochs 或至少 800 個 update steps（取較大者）**、batch 32、lr 3e-3 cosine、
+  seed 0、guards `theta_max=1.0 / leak_floor=0.85 / gain_cap=1.0`。每個 N 拿到至少相同的
+  「每列曝光」與相同的最低優化步數；不是相同的總步數。
 - **指標**：train teacher-forced **整題**正確率（主要）、token TF、greedy exact（≤32 列）、
   val whole（≤128 列，描述用）。
 - **判準**：整題 TF ≥ **0.90** 算存住；容量＝連續通過前綴的最大 N；非單調照實標記；
@@ -351,10 +352,29 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
   - val whole 會明顯低於 train whole（儲存 ≠ 轉移）。
 - **不會做的事**：不調門檻、不在看過結果後改 N 或 epochs、不把 train 數字當能力、不把 val 數字
   當 benchmark 分數。
+
+### A.1 跑前修正（第一次啟動之後、任何容量裁決之前）
+
+第一次啟動照原文跑了 `small / N=128 / 8 epochs`。batch 32、128 列 = 每 epoch **4 步**，
+所以「8 epochs」只有 **32 個 update steps**；該臂跑完是 `train whole=0.000`、`tf=0.090`、
+`loss=4.9761`，第二臂啟動後手動停止。**判讀：32 步量的是優化器，不是儲存量。**
+這個 0.000 不是「128 列存不住」的證據，也不能拿去和 800 步的臂比較。
+
+因此：
+
+- 第一次啟動**作廢（void）**：沒有產出 `data/capacity/report.json`、沒有容量裁決、本文件不引用
+  那個 0.000；`data/capacity/report.json` 之後只會來自修正後的完整重跑。
+- 修正只有一項：每個臂至少 **800 個 update steps**（`--min-steps 800`，
+  `effective_epochs = max(8, ceil(800 / ceil(N/32)))`）。N、寬度、巢狀取樣、seed、guards、
+  指標與 **0.90 判準全部不變**。
+- 這是**儀器修正**，不是看結果調門檻：第一次啟動沒有留下任何容量結論，0.90 與「連續通過前綴」
+  的規則仍與 §A 原文逐字相同。
+- 作廢的執行記錄：`small N=128` 一次，10 秒，未寫 checkpoint、未寫報告以外的檔案。
 - **登記時間**：2026-11-19，於任何 P1 計分之前。
 
 ## B. P1 結果（跑後追加；本節不回寫 §A）
 
-> 狀態：**待跑**。跑完後在此貼上 `data/capacity/report.json` 的摘要（容量、每臂 train/val、
-> 秒數、RSS），並照 §A 的判準逐條套；若與預測不符，照實寫「預測錯了，錯在哪」。
-> 在此之前，任何「模型能裝多少」的說法都只是推測，不得引用。
+> 狀態：**待跑**（§A.1 的第一次啟動已作廢，不採用其任何數字）。跑完後在此貼上
+> `data/capacity/report.json` 的摘要（容量、每臂 train/val、秒數、RSS），並照 §A 的判準逐條套；
+> 若與預測不符，照實寫「預測錯了，錯在哪」。在此之前，任何「模型能裝多少」的說法都只是推測，
+> 不得引用。

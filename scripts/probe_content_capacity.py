@@ -84,6 +84,13 @@ STORED = 0.90
 #: Fixed per-row exposure: every size gets the same number of passes, so the
 #: curve is "can N rows be stored with E epochs each", not "with E total".
 EPOCHS = 8
+#: Optimisation floor per arm, in update steps. ``epochs`` alone made the small
+#: arm meaningless: 128 rows at batch 32 is four steps per epoch, so eight
+#: "epochs" is 32 steps — a measurement of the optimiser, not of storage. The
+#: floor keeps every arm at >= this many steps; larger N still gets its full
+#: per-row exposure. Recorded as a pre-run amendment in BETA_TRAINING_PLAN.md §A
+#: after the first launch was stopped (no capacity verdict was produced).
+MIN_STEPS = 800
 BATCH = 32
 LR = 3e-3
 SEED = 0
@@ -238,6 +245,12 @@ def greedy_exact(
     return {"n": len(picks), "exact": round(hits / max(1, len(picks)), 4)}
 
 
+def effective_epochs(size: int, batch: int, epochs: int, min_steps: int) -> int:
+    """Epochs that give ``size`` at least ``min_steps`` update steps."""
+    batches = max(1, math.ceil(size / batch))
+    return max(epochs, math.ceil(min_steps / batches))
+
+
 def _schedule(epoch: int, epochs: int, lr: float) -> float:
     done = min(1.0, (epoch + 1) / max(1, epochs))
     return 0.5 * lr * (1 + math.cos(math.pi * done))
@@ -257,6 +270,7 @@ def run_one(
     d_emb: int,
     d_hidden: int,
     epochs: int,
+    min_steps: int,
     device: str,
     out_dir: Optional[Path],
 ) -> Dict[str, Any]:
@@ -266,6 +280,7 @@ def run_one(
     torch.manual_seed(SEED)
     model = TokenSNN(vocab, cfg, device=device)
     rows = [train[i] for i in indices]
+    run_epochs = effective_epochs(size, BATCH, epochs, min_steps)
     started = time.time()
     curve: List[Dict[str, Any]] = []
 
@@ -276,11 +291,11 @@ def run_one(
 
     history = model.train_on(
         rows,
-        epochs=epochs,
+        epochs=run_epochs,
         batch_size=BATCH,
         lr=LR,
         seed=SEED,
-        lr_at=lambda e: _schedule(e, epochs, LR),
+        lr_at=lambda e: _schedule(e, run_epochs, LR),
         guard=True,
         on_epoch=on_epoch,
     )
@@ -294,7 +309,9 @@ def run_one(
         "d_hidden": d_hidden,
         "params": sum(int(p.numel()) for p in model.net.parameters()),
         "size": size,
-        "epochs": epochs,
+        "epochs": run_epochs,
+        "epochs_requested": epochs,
+        "steps": math.ceil(size / BATCH) * run_epochs,
         "batch": BATCH,
         "lr": LR,
         "seed": SEED,
@@ -401,6 +418,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--sizes", default="128,512,2048", help="comma-separated row counts")
     ap.add_argument("--configs", default="small,medium", help="comma-separated widths")
     ap.add_argument("--epochs", type=int, default=EPOCHS)
+    ap.add_argument(
+        "--min-steps",
+        type=int,
+        default=MIN_STEPS,
+        help="per-arm optimisation floor (update steps); see BETA_TRAINING_PLAN.md §A",
+    )
     ap.add_argument("--device", default="auto")
     ap.add_argument("--inventory", action="store_true", help="envelope only, no training")
     ap.add_argument("--out", default="", help="directory for checkpoints (default: none)")
@@ -482,6 +505,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 d_emb=d_emb,
                 d_hidden=d_hidden,
                 epochs=args.epochs,
+                min_steps=args.min_steps,
                 device=device,
                 out_dir=out_dir,
             )
@@ -499,6 +523,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "protocol": {
             "stored_threshold": STORED,
             "epochs_per_size": args.epochs,
+            "min_steps": args.min_steps,
             "batch": BATCH,
             "lr": LR,
             "seed": SEED,
@@ -508,6 +533,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             "sizes": sizes,
             "configs": configs,
             "measure": "teacher-forced whole-answer accuracy on the training rows",
+            "effective_epochs": "max(epochs, ceil(min_steps / ceil(size/batch)))",
             "note": (
                 "capacity is a storage measure, not a skill measure; the val columns "
                 "are the transfer check and are read next to it, never instead of it"
