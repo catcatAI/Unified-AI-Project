@@ -307,8 +307,9 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 ./.venv/bin/python scripts/probe_content_capacity.py --inventory \
     --report data/capacity/inventory.json
 
-# 容量曲線（本次 P1；先讀 §A 的判準；CPU 是為了守住 RAM 上限，見 §A.2）
-OMP_NUM_THREADS=4 ./.venv/bin/python scripts/probe_content_capacity.py \
+# 容量曲線（本次 P1；先讀 §A 的判準；CPU + 3 核是為了守住 RAM/CPU 上限，見 §A.2/A.3）
+taskset -c 0-2 env OMP_NUM_THREADS=3 MKL_NUM_THREADS=3 \
+  ./.venv/bin/python scripts/probe_content_capacity.py \
     --sizes 128,512,2048 --configs small,medium --epochs 8 --min-steps 800 \
     --device cpu --report data/capacity/report.json
 
@@ -382,6 +383,17 @@ RAM ≤ 60%；本行程 RSS 為 4.0 GB（其餘 6.0 GB 是使用者既有程式�
 修正：容量曲線改用 **CPU**（`--device cpu`），`OMP_NUM_THREADS=4`（≤ 33% 的 12 核），
 不啟用 XPU。裝置不是容量定義的一部分；這個修正只影響速度與 RAM，**不改 N、寬度、步數、
 指標或 0.90 判準**。XPU 的用途仍以正式訓練（P2/P4）為主，屆時同樣受 60% 上限約束。
+
+### A.3 CPU 職責修正（第三次啟動；仍無容量裁決）
+
+第三次啟動用 CPU + `OMP_NUM_THREADS=4`。`small / N=128` 跑完（train whole=1.000、
+tf=1.000、exact=0.844、val whole=0.000、232 秒），但 `ps` 實測該行程 **382% CPU**
+（3.8 核），加上機器上既有負載 2.9，整機約 **58.7%**，超過 CPU ≤ 50% 的上限。
+**依規則停止**，這次啟動同樣作廢（它的 1.000 不引用；完整重跑會重新產生）。
+
+修正：用 `taskset -c 0-2` 把行程釘在 **3 個核**、`OMP_NUM_THREADS=3`（≤ 25% 的 12 核；
+加上既有負載約 49%）。**不改任何容量判準**。三次作廢的啟動都沒有寫 checkpoint、沒有寫
+`data/capacity/report.json`（第三次只有記憶體中的進度）。
 - **登記時間**：2026-11-19，於任何 P1 計分之前。
 
 ## B. P1 結果（跑後追加；本節不回寫 §A）
