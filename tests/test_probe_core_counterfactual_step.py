@@ -296,6 +296,16 @@ def test_wilson_contains_the_point_estimate(probe):
     assert probe.wilson(0, 0) == (0.0, 0.0)
 
 
+def test_joint_count_requires_both_answers(probe):
+    """The stored `one`/`ten` are joint counts; the checker must not count them alone."""
+    rows = [
+        {"correct": True, "correct1": True},
+        {"correct": True, "correct1": False},
+        {"correct": False, "correct1": True},
+    ]
+    assert probe._joint(rows, "correct1") == 1
+
+
 # -- entry points -----------------------------------------------------------
 def test_check_refuses_a_plan_report(probe, tmp_path):
     path = tmp_path / "plan.json"

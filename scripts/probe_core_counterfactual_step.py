@@ -385,6 +385,11 @@ def verdict(runs: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 # -- entry points -----------------------------------------------------------
+def _joint(rows: Sequence[Dict[str, Any]], column: str) -> int:
+    """Originally correct **and** correct after the move (the stored cell's meaning)."""
+    return sum(1 for row in rows if row["correct"] and row[column])
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out-dir", default=str(OUT_DIR))
@@ -555,10 +560,27 @@ def check(report_path: Path) -> Tuple[bool, str]:
         problems.append("the unseen-pair count does not recompute")
     by_i = {row["i"]: row for row in paired}
     for run in report["runs"]:
+        # `one` and `ten` are joint counts (originally correct *and* still correct
+        # after the move); only `original` counts the first answer alone.
         for key, column in (("original", "correct"), ("one", "correct1"), ("ten", "correct10")):
-            got = sum(1 for row in run["rows"] if row[column])
+            if key == "original":
+                got = sum(1 for row in run["rows"] if row["correct"])
+            else:
+                got = _joint(run["rows"], column)
             if got != run[PAIRED][key]:
                 problems.append(f"{run['arm']} seed{run['seed']}: {key} does not recompute")
+        out_cell = run[LEAVES]
+        for key, column in (("original", "correct"), ("ten", "correct_out")):
+            if key == "original":
+                got = sum(1 for row in run["out_rows"] if row["correct"])
+            else:
+                got = _joint(run["out_rows"], column)
+            if got != out_cell[key]:
+                problems.append(f"{run['arm']} seed{run['seed']}: leaves {key} does not recompute")
+        if out_cell["survival_ten"] != (
+            round(out_cell["ten"] / out_cell["original"], 4) if out_cell["original"] else 0.0
+        ):
+            problems.append(f"{run['arm']} seed{run['seed']}: leaves survival is wrong")
         cell = run[PAIRED]
         if cell["survival_one"] != (
             round(cell["one"] / cell["original"], 4) if cell["original"] else 0.0
