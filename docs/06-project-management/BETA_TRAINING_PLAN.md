@@ -214,7 +214,8 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 
 - N ∈ {128, 512, 2048}；寬度 small（3.5M）與 medium（16.7M）；每列 8 epochs。
 - 指標：train whole-answer TF、greedy exact、val whole；容量規則見 §3.2。
-- 預算上限：每個 run ≤ 15 分鐘、峰值 RSS ≤ 4 GB、GPU 職責 ≤ 50%；總計 ≤ 90 分鐘。
+- 預算上限：每個 run ≤ 15 分鐘、總計 ≤ 90 分鐘；**用 CPU、`OMP_NUM_THREADS=4`**（XPU 實測
+  整機 RAM 63.5% 超限，見 §A.2），不啟用 GPU。
 - 產出：`data/capacity/report.json`（gitignored）+ §B（結果，跑後另寫）。
 
 ### P2 — 乾淨基底（容量結果出來後才排）
@@ -306,10 +307,10 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 ./.venv/bin/python scripts/probe_content_capacity.py --inventory \
     --report data/capacity/inventory.json
 
-# 容量曲線（本次 P1；先讀 §A 的判準）
-./.venv/bin/python scripts/probe_content_capacity.py \
-    --sizes 128,512,2048 --configs small,medium --epochs 8 \
-    --report data/capacity/report.json
+# 容量曲線（本次 P1；先讀 §A 的判準；CPU 是為了守住 RAM 上限，見 §A.2）
+OMP_NUM_THREADS=4 ./.venv/bin/python scripts/probe_content_capacity.py \
+    --sizes 128,512,2048 --configs small,medium --epochs 8 --min-steps 800 \
+    --device cpu --report data/capacity/report.json
 
 # 報告算術檢查（不需要重訓）
 ./.venv/bin/python scripts/probe_content_capacity.py --check data/capacity/report.json
@@ -370,6 +371,17 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 - 這是**儀器修正**，不是看結果調門檻：第一次啟動沒有留下任何容量結論，0.90 與「連續通過前綴」
   的規則仍與 §A 原文逐字相同。
 - 作廢的執行記錄：`small N=128` 一次，10 秒，未寫 checkpoint、未寫報告以外的檔案。
+
+### A.2 裝置修正（第二次啟動之後、同樣沒有任何容量裁決）
+
+第二次啟動改用 XPU（`--device auto` → `xpu`）並以 `gpu_limit.py --target 0.5` 壓住 GPU 職責。
+第一個臂還沒跑完，整機 `free -m` 的 used 已到 **10,014 / 15,774 MB（63.5%）**，超過硬性上限
+RAM ≤ 60%；本行程 RSS 為 4.0 GB（其餘 6.0 GB 是使用者既有程式）。**依規則停止**，不採用任何
+該次啟動的數字（同樣沒有 report、沒有裁決）。
+
+修正：容量曲線改用 **CPU**（`--device cpu`），`OMP_NUM_THREADS=4`（≤ 33% 的 12 核），
+不啟用 XPU。裝置不是容量定義的一部分；這個修正只影響速度與 RAM，**不改 N、寬度、步數、
+指標或 0.90 判準**。XPU 的用途仍以正式訓練（P2/P4）為主，屆時同樣受 60% 上限約束。
 - **登記時間**：2026-11-19，於任何 P1 計分之前。
 
 ## B. P1 結果（跑後追加；本節不回寫 §A）
