@@ -33,7 +33,7 @@
 | ------------------------------- | ---------------------------------- | ------------------------------------------------ |
 | 多使用者並發會話隔離            | 單用戶架構，多人同時使用不隔離狀態 | [limitations.md](../architecture/limitations.md) |
 | 分散式部署／多節點協同          | 單機部署                           | [limitations.md](../architecture/limitations.md) |
-| 硬體加速推理（CUDA/ROCm/Metal） | 僅 CPU 推理                        | [hardware.md](hardware.md)                       |
+| 硬體加速推理（CUDA/ROCm/Metal） | CUDA/ROCm/Metal 未驗證；Intel XPU 實驗性 | [hardware.md](hardware.md)                       |
 
 ## 離線模式的能力邊界（誠實聲明）
 

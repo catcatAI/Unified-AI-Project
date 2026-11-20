@@ -33,9 +33,9 @@
 - **[`user_guide/unsupported.md`](user_guide/unsupported.md)** —
   **正式版明確不支援項** — 與 RELEASE_CRITERIA 同步，每項附替代方案
 - **[`architecture/limitations.md`](architecture/limitations.md)** —
-  **架構邊界與限制** — 單用戶、單機、CPU-only 等設計邊界
+  **架構邊界與限制** — 單用戶、單機、預設 CPU（XPU 實驗性）等設計邊界
 - **[`user_guide/hardware.md`](user_guide/hardware.md)** — **硬體指南**
-  — 需求、CPU-only 推理、規格自適應
+  — 需求、預設 CPU／XPU 實驗性、規格自適應
 - **`INDEX.md`** — This file
 - **`FRAMEWORK_OVERVIEW.md`** — 框架概述 (雙語，含誠實成熟度審計)
 - **[`IMPROVEMENT_ROADMAP.md`](06-project-management/IMPROVEMENT_ROADMAP.md)** —

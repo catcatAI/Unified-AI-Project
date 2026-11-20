@@ -100,7 +100,7 @@
 | 視頻通話/螢幕共享                                  | **不支援** | 無相關 handler                | docs/user_guide/unsupported.md   |
 | 多使用者並發會話隔離                               | **不支援** | 單用戶架構                    | docs/architecture/limitations.md |
 | 分散式部署/多節點協同                              | **不支援** | 單機部署                      | docs/architecture/limitations.md |
-| 硬體加速推理（CUDA/ROCm/Metal）                    | **不支援** | 僅 CPU 推理                   | docs/user_guide/hardware.md      |
+| 硬體加速推理（CUDA/ROCm/Metal）                    | **不支援** | 未驗證／不承諾；Intel XPU 為實驗性 | docs/user_guide/hardware.md      |
 | 自動程式碼生成/修改專案代碼                        | **不支援** | 僅支援代碼解析/分析           | docs/user_guide/unsupported.md   |
 | 資料庫直接操作（SQL 執行）                         | **不支援** | 僅支援向量/記憶體查詢         | docs/user_guide/unsupported.md   |
 | 系統級權限操作（sudo、驅動安裝）                   | **不支援** | 僅用戶空間操作                | docs/user_guide/unsupported.md   |

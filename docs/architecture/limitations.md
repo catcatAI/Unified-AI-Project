@@ -28,7 +28,7 @@
 
 | 項目                            | 現況                                                                                                                   |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 硬體加速推理（CUDA/ROCm/Metal） | **不支援** — 僅 CPU 推理；見 `docs/user_guide/hardware.md`                                                             |
+| 硬體加速推理（CUDA/ROCm/Metal） | **不支援（未驗證）** — CUDA/ROCm/Metal 未驗證；Intel XPU 為實驗性、非承諾；預設純 CPU 可跑；見 `docs/user_guide/hardware.md` |
 | 開放域智能                      | 依賴外部／本地 LLM；原生引擎僅確定性任務＋試點泛化，分數拆分見 `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` |
 
 ## 會話與狀態
