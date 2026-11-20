@@ -215,9 +215,14 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 - N ∈ {128, 512, 2048}；寬度 **small（3.5M）**；每列 8 epochs 或至少 800 steps。medium
   （16.7M）在 §A.4 因預算不足延後到 P1b，不在本次 P1。
 - 指標：train whole-answer TF、greedy exact、val whole；容量規則見 §3.2。
-- 預算上限：每個 run ≤ 15 分鐘、總計 ≤ 90 分鐘；**用 CPU、`OMP_NUM_THREADS=4`**（XPU 實測
-  整機 RAM 63.5% 超限，見 §A.2），不啟用 GPU。
+- 預算上限：每個 run ≤ 15 分鐘、總計 ≤ 90 分鐘；**用 CPU、`taskset -c 0-2`、
+  `OMP_NUM_THREADS=3`**（XPU 實測整機 RAM 63.5% 超限，見 §A.2；4 執行緒實測 382% CPU，
+  見 §A.3），不啟用 GPU。
 - 產出：`data/capacity/report.json`（gitignored）+ §B（結果，跑後另寫）。
+
+**P1c（補量；§A.5 已登記）**：P1 的 800 步下限讓曝光不相等。補跑 `512@200` 與 `2048@50`
+（各 3,200 步，合計 ≤ 60 分鐘），把「容量」與「曝光」分開；報告分開寫，不覆蓋 P1 的
+`report.json`，也不改 P1 的判準或數字。
 
 ### P2 — 乾淨基底（容量結果出來後才排）
 
@@ -316,6 +321,16 @@ taskset -c 0-2 env OMP_NUM_THREADS=3 MKL_NUM_THREADS=3 \
 
 # 報告算術檢查（不需要重訓）
 ./.venv/bin/python scripts/probe_content_capacity.py --check data/capacity/report.json
+
+# P1c：曝光對齊（§A.5；各 3,200 步，分開寫報告，不覆蓋 P1）
+taskset -c 0-2 env OMP_NUM_THREADS=3 MKL_NUM_THREADS=3 \
+  ./.venv/bin/python scripts/probe_content_capacity.py \
+    --sizes 512 --configs small --epochs 200 --min-steps 800 \
+    --device cpu --report data/capacity/p1c_512x200.json
+taskset -c 0-2 env OMP_NUM_THREADS=3 MKL_NUM_THREADS=3 \
+  ./.venv/bin/python scripts/probe_content_capacity.py \
+    --sizes 2048 --configs small --epochs 50 --min-steps 800 \
+    --device cpu --report data/capacity/p1c_2048x50.json
 
 # 訓練準備度（108M 的 2 FAIL 是已知的；新 checkpoint 用 --checkpoint 指定）
 ./.venv/bin/python scripts/probe_training_readiness.py --skip-teacher
@@ -512,3 +527,33 @@ tf=1.000、exact=0.844、val whole=0.000、232 秒），但 `ps` 實測該行程
    登記**（P1c），不是把本輪的 0.099 重新解釋成通過。
 
 本輪不重跑、不改判準；這一段是照實記「這個儀器在固定預算下量到什麼、不能量到什麼」。
+
+## A.5 P1c 登記（曝光對齊；寫在任何 P1c 分數之前）
+
+- **問題**：P1 的 800 步下限讓每列曝光不相等（128→200 次、512→50 次、2048→13 次）。
+  512 的失敗是在 50 次曝光下量的（很強），但 2048 的 0.099 只有 13 次曝光，不能排除是
+  優化不足。P1c 只補這兩個問號，不改 P1 的判準或數字。
+- **設計**：同一個儀器、同一份 `core_train.jsonl`、同一個 12,005 詞表、同一個巢狀取樣
+  （`nested_sample` 的排序與 P1 相同，所以 512/2048 的列就是 P1 的同一批列）、同一個寬度
+  `small`（96/192）、同一個 seed 0、同一組 guards、batch 32、lr 3e-3 cosine。
+- **兩個臂**：
+  - `512 @ 200 epochs`：16 batch/epoch × 200 = **3,200 步**；每列曝光 200 次（與 128 的
+    P1 臂相同）。
+  - `2048 @ 50 epochs`：64 batch/epoch × 50 = **3,200 步**；每列曝光 50 次（與 512 的
+    P1 臂相同）。
+- **判準**：與 P1 逐字相同——teacher-forced 整題正確率 ≥ **0.90** 算存住。兩個臂各自回答
+  「在這個曝光量下存不存住」，不合併成一個容量數字。
+- **預測（跑之前寫定；錯了照實記）**：
+  - 512@200：**會過**（≥0.90）。50 次曝光時 token TF 已 0.955、整題 0.666；4 倍曝光應該
+    把整題推過線。若沒過，代表 128→512 的落差在 200 次曝光下仍然存在。
+  - 2048@50：**不會過**（<0.90）。13 次曝光時整題 0.099；4 倍步數會讓 token TF 上升，
+    但 512 在同樣 50 次曝光下都只有 0.666，2048 的列數是 4 倍，整題要全對更難。
+- **預算**：兩個臂各約 26 分鐘，合計 ≤ 60 分鐘；`taskset -c 0-2`、`OMP_NUM_THREADS=3`、
+  `--device cpu`；峰值 RSS 預期 ≤ 2 GB；整機 RAM/CPU 上限照舊。報告分開寫
+  （`data/capacity/p1c_512x200.json`、`data/capacity/p1c_2048x50.json`），**不覆蓋 P1 的
+  `report.json`**。
+- **不會做的事**：不改 0.90、不改 N、不在看過結果後改 epochs、不把 512@200 的結果拿去
+  重新解釋 P1 的 512@50、不把任何一個臂的 train whole 當能力分。
+- **仍然回答不了**：2048@200（約 105 分，太貴）、128@50（200 步，低於下限）、138k 全語料、
+  以及 transfer（val whole 仍是描述欄）。
+- **登記時間**：2026-11-20，於任何 P1c 計分之前。
