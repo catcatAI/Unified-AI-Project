@@ -193,12 +193,12 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 | 13  | 報告 schema                | ✅   | `train_token_snn.py` 的 `report`（含 loss/val/dynamics/tf）                   | 缺欄位＝不可比 |
 | 14  | 門禁                       | ✅   | `scripts/check_fact_gates.py`；`check_layer_separation.py`                   | 新儀器要加契約測試 |
 | 15  | 版本/文件同步              | ✅   | `tests/test_version_consistency.py`；生成檔用 `check_generated_docs.py --fix` | 不手改生成檔 |
-| 16  | `RELEASE_CRITERIA` 的舊敘述 | ⚠️   | 文件仍寫「hardware acceleration not supported, CPU only」                     | 與 §X #281 的 XPU 實測不一致，需另開文件修正（本次不動產品門檻） |
+| 16  | `RELEASE_CRITERIA` 的舊敘述 | ✅   | 已修正（`2e0390f92`）：CUDA/ROCm/Metal 未驗證、XPU 實驗性、預設 CPU | 不再宣稱「僅 CPU 推理」 |
 | 17  | 資料/權重授權              | ⚠️   | ESC-50 CC BY-NC 3.0；CIFAR-10 研究用途                                        | 對外散布前必須處理 |
 | 18  | 回滾方案                   | ✅   | checkpoint 另存、`--out` 不覆蓋舊檔；報告進 `data/`（gitignored）             | 壞 run 不覆蓋好 run |
 
-**判定**：1–15 與 18 已具備；4、16、17 是「已知且被記錄的限制」，不是阻擋開跑的理由——
-4 的解法是「不要續 108M」，16/17 是 beta 對外散佈前的文件/授權工作。
+**判定**：1–16 與 18 已具備；4、17 是「已知且被記錄的限制」，不是阻擋開跑的理由——
+4 的解法是「不要續 108M」，17 是 beta 對外散佈前的授權工作。
 
 ## 6. 執行階段（含預算與門檻）
 
@@ -287,7 +287,8 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 
 - 主流程 15/15（`verify_main_flow_e2e.py`）、全回歸 0 failed、門禁全綠。
 - 延遲/記憶體在 §1.4 的上限內；當機/回滾路徑已測。
-- 文件：README/評測/階梯同步；`RELEASE_CRITERIA` 的「CPU only」等過時敘述修正。
+- 文件：README/評測/階梯同步；`RELEASE_CRITERIA` 的「CPU only」等過時敘述已於 `2e0390f92`
+  修正（CUDA/ROCm/Metal 未驗證、XPU 實驗性、預設 CPU）。
 - 授權：散布的權重與資料可商用（或明確標非商業、不散布）。
 
 **beta 不是**：不是 L2/L3 的宣稱、不是「會說人話」、不是把系統分當核心分。這三件事各自有
@@ -338,12 +339,15 @@ taskset -c 0-2 env OMP_NUM_THREADS=3 MKL_NUM_THREADS=3 \
 # 硬體包絡（RSS/VRAM；每個 config 一個子行程）
 ./.venv/bin/python scripts/probe_scale_envelope.py --report data/capacity/envelope.json
 
-# 正式訓練（乾淨基底；guards 必須顯式傳）
-./.venv/bin/python scripts/train_token_snn.py \
+# 正式訓練（乾淨基底；guards 必須顯式傳；3 核釘選見 §A.3）
+taskset -c 0-2 env OMP_NUM_THREADS=3 MKL_NUM_THREADS=3 \
+  ./.venv/bin/python scripts/train_token_snn.py \
     --vocab token --max-len 192 --max-vocab 12000 \
     --epochs 2 --batch 32 --lr 3e-3 --seed 0 \
     --theta-max 1.0 --leak-floor 0.85 --gain-cap 1.0 \
-    --out data/checkpoints/p2_base.pt --report data/intelligence_reports/p2_base.json
+    --eval-every 1 --device cpu \
+    --out data/checkpoints/p2_base.pt \
+    --report data/intelligence_reports/p2_base.json
 ```
 
 ## A. 跑前登記（P1 容量曲線；寫在任何 P1 分數之前）
