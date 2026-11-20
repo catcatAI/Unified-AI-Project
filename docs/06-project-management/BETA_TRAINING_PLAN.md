@@ -212,7 +212,8 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 
 ### P1 — 容量曲線（本次要跑；§A 已登記）
 
-- N ∈ {128, 512, 2048}；寬度 small（3.5M）與 medium（16.7M）；每列 8 epochs。
+- N ∈ {128, 512, 2048}；寬度 **small（3.5M）**；每列 8 epochs 或至少 800 steps。medium
+  （16.7M）在 §A.4 因預算不足延後到 P1b，不在本次 P1。
 - 指標：train whole-answer TF、greedy exact、val whole；容量規則見 §3.2。
 - 預算上限：每個 run ≤ 15 分鐘、總計 ≤ 90 分鐘；**用 CPU、`OMP_NUM_THREADS=4`**（XPU 實測
   整機 RAM 63.5% 超限，見 §A.2），不啟用 GPU。
@@ -310,7 +311,7 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 # 容量曲線（本次 P1；先讀 §A 的判準；CPU + 3 核是為了守住 RAM/CPU 上限，見 §A.2/A.3）
 taskset -c 0-2 env OMP_NUM_THREADS=3 MKL_NUM_THREADS=3 \
   ./.venv/bin/python scripts/probe_content_capacity.py \
-    --sizes 128,512,2048 --configs small,medium --epochs 8 --min-steps 800 \
+    --sizes 128,512,2048 --configs small --epochs 8 --min-steps 800 \
     --device cpu --report data/capacity/report.json
 
 # 報告算術檢查（不需要重訓）
@@ -394,11 +395,32 @@ tf=1.000、exact=0.844、val whole=0.000、232 秒），但 `ps` 實測該行程
 修正：用 `taskset -c 0-2` 把行程釘在 **3 個核**、`OMP_NUM_THREADS=3`（≤ 25% 的 12 核；
 加上既有負載約 49%）。**不改任何容量判準**。三次作廢的啟動都沒有寫 checkpoint、沒有寫
 `data/capacity/report.json`（第三次只有記憶體中的進度）。
+
+### A.4 寬度縮減（第四次啟動；medium 沒有任何臂完成）
+
+第四次啟動（`taskset -c 0-2`、`OMP_NUM_THREADS=3`、CPU）把 small 的三個臂跑完：
+
+| N    | train whole | token TF | greedy exact | val whole | 秒   |
+| ---- | ----------- | -------- | ------------ | --------- | ---- |
+| 128  | 1.000       | 1.000    | 0.844        | 0.000     | 415  |
+| 512  | 0.666       | 0.955    | 0.531        | 0.000     | 286  |
+| 2048 | 0.099       | 0.559    | 0.062        | 0.000     | 201  |
+
+接著 `medium / N=128` 跑了約 25 分鐘仍未完成，在產出任何結果之前停止。**medium 沒有任何臂
+完成**，所以它沒有容量裁決，本文件不引用任何 medium 數字。
+
+修正後的步時是**實測**的 2.6 s/step（先前 0.85 s 的估計用了 200 對詞表，head 小約 8 倍，
+不可用）。800 步 ≈ 35 分鐘/臂；三個 medium 臂 ≈ 105 分鐘，超過 P1 的 90 分鐘總預算。
+
+因此 **P1 只涵蓋 reference width（small，3.5M）**。寬度縮放另開 **P1b**（在 §B 之後才登記），
+用能塞進預算的 N（128/256）與同樣的 800 步下限；P1b 不是本次 P1 的一部分，也不改 P1 的
+容量裁決。medium 的「容量是否隨寬度成長」因此**未量測**，不是「沒有成長」。
+
 - **登記時間**：2026-11-19，於任何 P1 計分之前。
 
 ## B. P1 結果（跑後追加；本節不回寫 §A）
 
-> 狀態：**待跑**（§A.1 的第一次啟動已作廢，不採用其任何數字）。跑完後在此貼上
-> `data/capacity/report.json` 的摘要（容量、每臂 train/val、秒數、RSS），並照 §A 的判準逐條套；
-> 若與預測不符，照實寫「預測錯了，錯在哪」。在此之前，任何「模型能裝多少」的說法都只是推測，
-> 不得引用。
+> 狀態：**待跑**（重跑 small 以產生 `data/capacity/report.json`；§A.1–A.4 的作廢與 medium
+> 延後記錄不回寫 §A）。跑完後在此貼上報告摘要（容量、每臂 train/val、秒數、RSS），並照 §A 的
+> 判準逐條套；若與預測不符，照實寫「預測錯了，錯在哪」。在此之前，任何「模型能裝多少」的說法
+> 都只是推測，不得引用。

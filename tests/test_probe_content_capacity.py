@@ -200,3 +200,17 @@ def test_check_rejects_a_curve_shorter_than_the_epochs(probe):
 
 def test_check_rejects_an_empty_report(probe):
     assert probe.check_report({"runs": [], "capacity": {}}) == ["report has no runs"]
+
+
+def test_build_report_keeps_the_arms_that_finished(probe):
+    # A run stopped for budget/machine limits must keep its completed arms;
+    # writing only at the end (the first version) lost them.
+    env = {"train_rows": 1}
+    protocol = {"stored_threshold": probe.STORED}
+    first = probe.build_report(env, [_run(128, 0.95)], protocol)
+    assert [r["size"] for r in first["runs"]] == [128]
+    assert first["capacity"]["small"]["capacity"] == "at-least-128"
+    second = probe.build_report(env, [_run(128, 0.95), _run(512, 0.40)], protocol)
+    assert [r["size"] for r in second["runs"]] == [128, 512]
+    assert second["capacity"]["small"]["capacity"] == "between-128-and-512"
+    assert probe.check_report(second) == []

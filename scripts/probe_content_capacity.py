@@ -372,6 +372,25 @@ def capacity_of(runs: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # report check (the arithmetic must be auditable without rerunning training)
 # ---------------------------------------------------------------------------
+def build_report(
+    env: Dict[str, Any], runs: Sequence[Dict[str, Any]], protocol: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Assemble the report; safe to call after every arm.
+
+    A run that is stopped for budget or machine limits keeps the arms that
+    already finished. Writing only at the end (the first version) lost them,
+    which is the same as having measured nothing.
+    """
+    return {
+        "generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "protocol": protocol,
+        "envelope": env,
+        "runs": list(runs),
+        "capacity": capacity_of(runs),
+        "peak_rss_mb": peak_rss_mb(),
+    }
+
+
 def check_report(report: Dict[str, Any]) -> List[str]:
     problems: List[str] = []
     runs = report.get("runs") or []
@@ -487,7 +506,36 @@ def main(argv: Optional[List[str]] = None) -> int:
     out_dir = Path(args.out) if args.out else None
     print(f"device={device} sizes={sizes} configs={configs} epochs={args.epochs}")
 
+    protocol = {
+        "stored_threshold": STORED,
+        "epochs_per_size": args.epochs,
+        "min_steps": args.min_steps,
+        "batch": BATCH,
+        "lr": LR,
+        "seed": SEED,
+        "guards": GUARDS,
+        "max_len": args.max_len,
+        "max_vocab": args.max_vocab,
+        "sizes": sizes,
+        "configs": configs,
+        "measure": "teacher-forced whole-answer accuracy on the training rows",
+        "effective_epochs": "max(epochs, ceil(min_steps / ceil(size/batch)))",
+        "note": (
+            "capacity is a storage measure, not a skill measure; the val columns "
+            "are the transfer check and are read next to it, never instead of it"
+        ),
+    }
+    path = Path(args.report)
+    path.parent.mkdir(parents=True, exist_ok=True)
     runs: List[Dict[str, Any]] = []
+
+    def persist() -> Dict[str, Any]:
+        report = build_report(env, runs, protocol)
+        path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        return report
+
+    persist()  # envelope only, before the first arm
+
     for name in configs:
         if name not in CONFIGS:
             print(f"unknown config {name!r}; choose from {sorted(CONFIGS)}")
@@ -510,6 +558,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 out_dir=out_dir,
             )
             runs.append(result)
+            persist()  # a stopped run keeps the arms that already finished
             print(
                 f"   train whole={result['train']['whole']:.3f} "
                 f"tf={result['train']['tf_acc']:.3f} exact={result['train_exact']['exact']:.3f} "
@@ -517,36 +566,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                 f"| {result['seconds']:.0f}s loss={result['final_loss']}"
             )
 
-    capacity = capacity_of(runs)
-    report = {
-        "generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "protocol": {
-            "stored_threshold": STORED,
-            "epochs_per_size": args.epochs,
-            "min_steps": args.min_steps,
-            "batch": BATCH,
-            "lr": LR,
-            "seed": SEED,
-            "guards": GUARDS,
-            "max_len": args.max_len,
-            "max_vocab": args.max_vocab,
-            "sizes": sizes,
-            "configs": configs,
-            "measure": "teacher-forced whole-answer accuracy on the training rows",
-            "effective_epochs": "max(epochs, ceil(min_steps / ceil(size/batch)))",
-            "note": (
-                "capacity is a storage measure, not a skill measure; the val columns "
-                "are the transfer check and are read next to it, never instead of it"
-            ),
-        },
-        "envelope": env,
-        "runs": runs,
-        "capacity": capacity,
-        "peak_rss_mb": peak_rss_mb(),
-    }
-    path = Path(args.report)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    report = persist()
+    capacity = report["capacity"]
 
     print("\ncapacity (100% of the pre-registered rule, no rounding up):")
     for name, row in capacity.items():
