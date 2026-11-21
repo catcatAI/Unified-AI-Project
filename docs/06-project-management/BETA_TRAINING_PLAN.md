@@ -981,3 +981,29 @@ tf=1.000、exact=0.844、val whole=0.000、232 秒），但 `ps` 實測該行程
 - **B. ≥10^8＋XPU 訓練計畫**（不跑）：CORE_GAP 的路徑；先寫資源/資料/檢定力/止損。
 - **C. 停在這裡**：以 §F–§J 作結，beta B1 未達，核心 0.00/10。
 - 本輪不新增承諾；選哪一條由使用者決定。
+
+## K. Medium 優化診斷登記（寫在任何 run 之前）
+
+- **問題**：§J 顯示 medium 在 d3 3,000 步下嚴重 underfit（train exact 0.075 vs small 0.560）。
+  是 LR 太高（3e-3）、步數不夠（3,000），還是 medium 在這個任務上就是學不起來？
+- **任務**：與 §I 相同的 d3（10–99 + 10–99），同一份 `data/width_ab/d3_{train,val}.jsonl`，
+  同一顆 split，**不換資料**。
+- **三跑**（順序固定，一次一個）：
+  1. `medium d3, lr=1e-3, 3,000 步`（epochs 15）— 只改 LR。
+  2. `medium d3, lr=3e-3, 6,000 步`（epochs 30）— 只改步數。
+  3. `small d3, lr=3e-3, 6,000 步`（epochs 30）— 對照基線，讓步數比較公平。
+  其餘旗標與 §I 完全相同（batch 32、seed 0、guards 1.0/0.85/1.0、max_len 32、
+  max_vocab 200、device cpu）。
+- **判讀規則（跑前寫死）**：
+  - Run 1 train exact ≥ 0.50 → **LR 是問題**（medium 可學，3e-3 太高）。
+  - Run 1 < 0.50 且 Run 2 ≥ 0.50 → **步數是問題**。
+  - Run 1 < 0.50 且 Run 2 < 0.50 → **medium 在這個任務上學不起來**，不是 LR/步數。
+  - 若 Run 2 (medium 6,000) 的 val exact > Run 3 (small 6,000) + 10pp → **寬度有幫助**
+    （推翻 §J 的結論，但需要 LR/步數配合）。
+  - 若 Run 2 (medium) 的 val exact ≤ Run 3 (small) + 10pp → **寬度在這個任務上沒有幫助**。
+- **資源**：`taskset -c 0-2`、`OMP_NUM_THREADS=3`；量 RSS 與秒數；整機 RAM ≤ 60%。
+- **報告**：`data/intelligence_reports/width_ab_medium_d3_lr1e3.json`、
+  `..._medium_d3_6k.json`、`..._small_d3_6k.json`；結果寫入 §L。
+- **不答的問題**：不碰凍結題、不宣稱 capability、不改 pass line；不把這個 A/B 的結論
+  借去當核心分。
+- **登記時間**：2026-11-21，於任何 run 之前。
