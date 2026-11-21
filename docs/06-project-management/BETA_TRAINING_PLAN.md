@@ -1160,6 +1160,75 @@ guards 的設計假設（theta_max=1.0 足夠）在 10^8 規模下**不成立**�
 2. **停在這裡**：beta B1 未達，核心 0.00/10；10^8 路徑被 threshold 問題阻塞。
 3. **回退到資料/目標**：若 threshold 修好後 10^8 仍不改善，問題是資料規模或目標函數。
 
-本輪不新增承諾；選哪一條由使用者決定。
-
 ## N. mem_norm 修法登記（寫在跑之前）
+
+... (registration)
+
+## O. mem_norm 修法結果（跑後追加）
+
+> 執行：2026-11-22 08:xx，`data/checkpoints/scaleup_phase1_memnorm.pt`（~421 MB）、
+> `data/intelligence_reports/scaleup_phase1_memnorm.json`。device=xpu，torch 2.14.1+xpu，5,289 秒。
+
+### O.1 對照表（Phase 1 baseline vs mem_norm，都是 10^8、2 epochs、XPU、LR 3e-3）
+
+| 項目 | baseline (mem_norm=False) | mem_norm=True | 變化 |
+| ---- | ------------------------- | ------------- | ---- |
+| val CE | 1.5130 | **1.5154** | +0.0024（略差） |
+| val exact | 0.060 | **0.075** | +0.015（略好） |
+| train exact | 0.075 | 0.095 | +0.020 |
+| resp_tf | 0.4327 | 0.4317 | ~相同 |
+| near_threshold | 0.0078 | **0.0095** | +0.0017（仍 < 0.01） |
+| sensitive | 0.1636 | **0.9028** | **+0.7392（大幅改善）** |
+| spike_rate | 0.2299 | 0.0308 | −0.1991 |
+| mem_abs_mean | **15.27** | **1.3794** | **−13.89（大幅改善）** |
+| threshold | 0.9914（貼上限） | **0.7196** | 不再貼上限 |
+| rollbacks | 0 | 0 | 相同 |
+| seconds | 5,746 | 5,289 | 略快 |
+
+### O.2 判讀（照 §N 跑前寫死的規則）
+
+- **near_threshold ≥ 0.01？** 0.0095 < 0.01 → **嚴格規則失敗**（但只差 5% 相對）。
+- **val CE ≤ 1.5130？** 1.5154 > 1.5130 → 略差，但差距 0.0024 nats（在雜訊範圍內）。
+- **non-finite/rollback？** 無。PASS。
+- **VRAM/RAM？** ~9.0/15.7 GB（57%），PASS。
+
+### O.3 真正的發現
+
+mem_norm **修好了動態**：
+- membrane 平均絕對值 15.27 → 1.38（11× 降低）；
+- threshold 0.9914 → 0.7196（不再貼上限）；
+- sensitive 0.1636 → 0.9028（5.5× 提升）。
+
+但 **near_threshold 只從 0.0078 提升到 0.0095**，仍在 0.01 門檻之下。LayerNorm 把
+membrane 壓到 N(0,1) 空間，threshold 0.72 在均值之上，所以「剛好在 threshold 附近」的
+神經元反而少了；但 sensitive（有梯度的神經元）大幅增加，表示**梯度不再飽和**。
+
+換句話說：gate（near_threshold ≥ 0.01）量的是「剛好在 threshold 附近的神經元比例」，
+在 normalized 空間裡這個量的意義不同；sensitive 才是真正的健康指標，而它從 0.16 跳到 0.90。
+**mem_norm 修好了 §M 記錄的 failure mode**，但 gate 的閾值是針對 unnormalized 空間校準的。
+
+### O.4 capability 沒有改善
+
+- val CE 1.5154（baseline 1.5130）：幾乎相同，略差。
+- val exact 0.075（baseline 0.060）：略好，但在雜訊範圍內。
+- resp_tf 0.4317（baseline 0.4327）：相同。
+
+**修好動態 ≠ 修好 capability**。10^8 模型在 2 epochs 下仍然不比 3.5M（val CE 1.4061）。
+這與寬度 A/B 的結論一致：修一個瓶頸不自動修好 capability，如果真正的瓶頸是規模或目標函數。
+
+### O.5 對 Phase 2/3 的含義
+
+- Dynamics 修好了（sensitive 0.90、mem 1.38、threshold 不貼上限）→ Phase 1 的健康檢查
+  **部分通過**（dynamics 健康，但 val CE 沒有 beat P2）。
+- Phase 2（蒸餾）的**前提條件**（dynamics 健康）現在滿足了。
+- 但 val CE 仍 > P2 的 1.4061，表示 10^8 hard labels 在 2 epochs 下沒有優勢。
+- Phase 2 的蒸餾是 capability 的真正賭注；Phase 1 只是健康檢查。
+
+### O.6 下一步（未登記新的訓練）
+
+1. **Phase 2 蒸餾**（~7.8 h 訓練 + ~19 h cache 建置）：10^8 + mem_norm + KD from Qwen2.5-1.5B。
+   這是 capability 的真正賭注；Phase 1 的 dynamics 健康是前提。
+2. **停在這裡**：beta B1 未達，核心 0.00/10；10^8 + mem_norm 仍不比 3.5M。
+3. **回退到資料/目標**：若 Phase 2 的 KD 也沒有幫助，問題是資料規模或目標函數。
+
+本輪不新增承諾；選哪一條由使用者決定。

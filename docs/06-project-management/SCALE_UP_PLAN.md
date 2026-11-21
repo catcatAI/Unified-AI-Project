@@ -13,9 +13,10 @@
 
 # Scale-Up Plan (>=10^8 token-SNN)
 
-> 狀態：**Phase 1 已跑，失敗**（2026-11-21）。near_threshold 0.0078 < 0.01、val CE 1.5130 > 1.4061；
-> membrane 飽和（mem_abs_mean 15.27，threshold 貼 1.0 上限）。詳見 BETA_TRAINING_PLAN §M。
-> Phase 2/3 未啟動。
+> 狀態：**Phase 1 跑了兩次**（2026-11-21/22）。mem_norm=False：near 0.0078、val CE 1.5130。
+> mem_norm=True：near 0.0095、val CE 1.5154、sensitive 0.9028、mem 1.38。動態修好，但 capability
+> 仍不比 3.5M（1.4061）。Phase 2（蒸餾）的動態前提已滿足，但 capability 前提未達。
+> 詳見 BETA_TRAINING_PLAN §M/§O。
 > 本文件不改任何 beta 門檻、不改 ratchet、不碰 art group。
 
 ## 0. 為什麼寫這份文件
