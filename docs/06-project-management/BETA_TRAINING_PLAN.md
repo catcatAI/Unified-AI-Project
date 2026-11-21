@@ -715,3 +715,25 @@ tf=1.000、exact=0.844、val whole=0.000、232 秒），但 `ps` 實測該行程
   `CORE_GAP_ANALYSIS.md` 的結論一致。
 - P1b（medium 寬度）與 P3（放大決策）都仍未登記；本節不新增承諾。
 
+## E. B1 登記（P2 checkpoint 在凍結題上的核心量測；寫在跑之前）
+
+- **問題**：P2 的 checkpoint（`data/checkpoints/p2_base.pt`，small，12,005 atoms）在凍結題上
+  有沒有**任何一題**是模型產生且正確？這只回答「核心是否 > 0」，不回答「離及格線多遠」。
+- **儀器**：`scripts/probe_core_control.py`（既有、不改）。它用 `run_benchmarks.load_dataset`
+  的同一批凍結題與同一條 `score_item`（strict，§X #273），並把
+  performance／GARDEN／ED3N／TOK-SNN／LLM 放在同一題組上。
+- **checkpoint**：`--token-checkpoint data/checkpoints/p2_base.pt`；其他 producer 用預設
+  （ED3N 預設檔、LLM 預設 Qwen2.5-1.5B 作為對照組）。LLM 是**對照**，不是本專案的分數。
+- **題組**：knowledge、math、code、routing 全部；routing 只讀作表現層任務，不讀作智能。
+- **報告**：per-suite `correct/n`、`answered/n`（覆蓋率）、`prompt_unk`；**不合併成一個
+  「核心分」**，也不把 LLM 的分數借給核心。輸出 `data/intelligence_reports/p2_core_control.json`
+  （不覆蓋既有的 `core_control.json`）。
+- **判讀規則（跑前寫死）**：
+  - tok 有 ≥1 題正確 → 核心分 > 0 的**第一個**證據；仍不宣稱任何維度過線。
+  - tok 全錯但 coverage > 0 → 模型有讀到題目、產生錯誤答案；這是能力缺口，不是詞表缺口。
+  - tok coverage = 0（整題都是 `<unk>`）→ 這個 checkpoint 的詞表讀不到凍結題，該題對它
+    **不可答**，不得記成「答錯」。
+- **不改的事**：不改任何及格線、不改題目、不改評分、不在看過結果後挑題重跑。
+- **資源**：`taskset -c 0-2`、`OMP_NUM_THREADS=3`；一次只跑這一個；量 RSS 與秒數。
+- **登記時間**：2026-11-21，於任何 B1 計分之前。
+
