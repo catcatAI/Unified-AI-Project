@@ -1263,3 +1263,78 @@ membrane 壓到 N(0,1) 空間，threshold 0.72 在均值之上，所以「剛好
 - **不答的問題**：不碰凍結題、不宣稱 capability、不改 pass line；不把 KD loss 下降
   當品質增益（§8 的止損）。
 - **登記時間**：2026-11-22，於任何 KD 計分之前。
+
+## Q. Phase 2 蒸餾 Smoke 結果（跑後追加）
+
+> 執行：2026-11-22 00:32–01:00，`data/checkpoints/scaleup_phase2_smoke.pt`（~421 MB）、
+> `data/intelligence_reports/scaleup_phase2_smoke.json`。device=xpu，1,634 秒。
+
+### Q.1 數字
+
+| 項目 | Phase 1 mem_norm (baseline) | Phase 2 smoke (KD) | 變化 |
+| ---- | --------------------------- | ------------------ | ---- |
+| epochs | 2 | 2 | 相同 |
+| val CE | **1.5154** | **4.1903** | **+2.6749（大幅惡化）** |
+| val exact | 0.075 | **0.015** | −0.060 |
+| train exact | 0.095 | 0.000 | −0.095 |
+| resp_tf | 0.4317 | 0.3274 | −0.1043 |
+| near_threshold | 0.0095 | **0.0050** | −0.0045 |
+| sensitive | 0.9028 | 0.8632 | −0.0396 |
+| mem_abs_mean | 1.3794 | 1.6297 | +0.2503 |
+| threshold | 0.7196 | 0.8333 | +0.1137 |
+| KD loss | — | 1.4837 → 1.4227 | 下降（項有在運作） |
+| rollbacks | 0 | 0 | 相同 |
+| seconds | 5,289 | 1,634 | 40k subset |
+
+### Q.2 門檻套用（跑前寫死）
+
+| 門檻 | 要求 | 實測 | 判讀 |
+| ---- | ---- | ---- | ---- |
+| KD loss 有限且 < hard-label loss | KD < hard CE | KD 1.42 < hard ~3.2 | **PASS**（項有在運作） |
+| val CE < Phase 1 mem_norm 的 1.5154 | < 1.5154 | **4.1903** | **FAIL** |
+| near_threshold ≥ 0.01 | ≥ 0.01 | **0.0050** | **FAIL** |
+| sensitive ≥ 0.05 | ≥ 0.05 | 0.8632 | PASS |
+| non-finite / rollback | 無 | skipped=0, rolled=[] | PASS |
+| VRAM/RAM | ≤ 7.2/9.4 GB | ~10.1/15.7（64%） | **FAIL**（RAM 超限） |
+
+**Phase 2 Smoke 失敗**：門檻 2、3、6 未達。
+
+### Q.3 真正的發現
+
+1. **KD 有在運作**：KD loss 從 1.4837 降到 1.4227，mapped_mass 0.986（98.6% 的 teacher
+   mass 生存投影）。蒸餾項不是壞的。
+2. **但 KD 讓一切變差**：val CE 1.5154 → 4.1903（+2.67），val exact 0.075 → 0.015，
+   resp_tf 0.4317 → 0.3274，near_threshold 0.0095 → 0.0050。KD 有在運作，但方向是錯的。
+3. **KD 可能與 hard labels 衝突**：total loss 3.92 = hard CE (~3.2) + 0.5 × KD (1.42)。
+   KD 項拉模型朝 teacher 的輸出，但 teacher (Qwen2.5-1.5B) 的 soft targets 在 student 的
+   tokenization 上可能不對齊，導致模型困惑。
+4. **dynamics 退步**：near_threshold 0.0095 → 0.0050，mem 1.3794 → 1.6297，threshold
+   0.7196 → 0.8333。KD 的梯度可能把模型推回 threshold 飽和的 regime。
+
+**重要 caveat**：Phase 2 smoke 訓練在 40k 子集（32,142 fit rows）上，而 Phase 1 訓練在全語料
+（138,671 fit rows）。val set 是同一份 full core_val（7,197 rows）。所以 Phase 2 的 val CE
+（4.19）與 Phase 1 的 val CE（1.5154）的比較**不公平**：Phase 2 在更少的資料上訓練，val CE
+惡化可能部分來自資料量減少，而非 KD 本身。要公平比較，需要在全語料上跑 KD（cache 建置 ~8 h）。
+本 smoke 的結論是「KD(0.5, 1.5B, 40k subset) 沒有幫助」，不是「KD 永遠沒幫助」。
+
+### Q.4 對 §P 判讀規則的套用
+
+- 門檻 1（KD 有限且 < hard CE）：PASS。
+- 門檻 2（val CE < 1.5154）：**FAIL** → per §P：「KD 沒有幫助；回退到資料/目標函數。」
+- 門檻 3（near ≥ 0.01）：**FAIL** → per §P：「KD 破壞了 dynamics；停。」
+- 門檻 4（無 non-finite/rollback）：PASS。
+- 門檻 5（VRAM/RAM）：FAIL（RAM 10.1/15.7 = 64% > 60%）。
+
+**Phase 2 Smoke 失敗**：KD 有在運作，但讓 capability 與 dynamics 都變差。
+
+### Q.5 下一步（未登記新的訓練）
+
+1. **KD weight 消融**（~1.6 h）：kd_weight 0.1 或 0.05，看 KD 項是否過強。
+   但這是 post-hoc tuning，需另外登記。
+2. **Teacher 換 7B**：更強的 teacher，但 cache 建置 ×7（~28 h）。
+3. **停在這裡**：beta B1 未達，核心 0.00/10；10^8 + mem_norm + KD(0.5) 讓 capability
+   與 dynamics 都變差。
+4. **回退到資料/目標**：KD 的 soft targets 可能在 student tokenization 上不對齊；
+   需要先驗證 teacher-student 對齊品質。
+
+本輪不新增承諾；選哪一條由使用者決定。
