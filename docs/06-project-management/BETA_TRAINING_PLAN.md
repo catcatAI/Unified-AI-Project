@@ -1091,3 +1091,73 @@ tf=1.000、exact=0.844、val whole=0.000、232 秒），但 `ps` 實測該行程
 - **A. ≥10^8＋XPU 訓練計畫**（不跑）：CORE_GAP 指向的路；先寫資源/資料/檢定力/止損。
 - **B. 停在這裡**：以 §F–§L 作結，beta B1 未達，核心 0.00/10。
 - 本輪不新增承諾；選哪一條由使用者決定。
+
+## M. Phase 1 結果（10^8 hard labels，跑後追加）
+
+> 執行：2026-11-21 19:00–20:35，`data/checkpoints/scaleup_phase1.pt`（~421 MB）、
+> `data/intelligence_reports/scaleup_phase1.json`。device=xpu，torch 2.14.1+xpu，5,746 秒。
+
+### M.1 數字
+
+| 項目 | Phase 1 (10^8, XPU) | P2 (3.5M, CPU) | 比較 |
+| ---- | ------------------- | -------------- | ---- |
+| epochs | 2 | 2 | 相同 |
+| val CE | **1.5130** | 1.4061 | **更差** (+0.1069) |
+| val exact | **0.060** | 0.230 | **更差** |
+| train exact | 0.075 | 0.225 | 更差 |
+| resp_tf | 0.4327 | 0.4399 | 幾乎相同 |
+| near_threshold | **0.0078** | 0.0243 | **更低** |
+| sensitive | 0.1636 | 0.4418 | 更低 |
+| spike_rate | 0.2299 | 0.1213 | 更高 |
+| mem_abs_mean | **15.27** | 2.5459 | **大 6 倍** |
+| threshold | 0.9914（貼著 1.0 上限） | 0.9997 | 貼上限 |
+| rollbacks | 0 | 0 | 相同 |
+| seconds | 5,746 | 1,739 | 3.3× |
+
+### M.2 門檻套用（跑前寫死）
+
+| 門檻 | 要求 | 實測 | 判讀 |
+| ---- | ---- | ---- | ---- |
+| val CE < P2 的 1.4061（或至少 < floor 3.7482） | < 1.4061 | **1.5130** | **FAIL**（但 < floor 3.7482） |
+| near_threshold | ≥ 0.01 | **0.0078** | **FAIL** |
+| sensitive | ≥ 0.05 | 0.1636 | PASS |
+| non-finite / rollback | 無 | skipped=0, rolled=[] | PASS |
+| VRAM ≤ 7.2 GB | ≤ 7.2 | 未量測（無 nvidia-smi；XPU） | 未驗證 |
+| RAM ≤ 9.4 GB | ≤ 9.4 | ~9.0 GB（57%） | PASS |
+
+**Phase 1 失敗**：兩條門檻未達（val CE 與 near_threshold）。
+
+### M.3 真正值得注意的發現
+
+Phase 1 的失敗**不是**「模型沒學會」那麼簡單；它是 §X #275/#276 記錄過的
+**CORE_GAP §三十 failure mode 在新規模下的重現**：
+
+- threshold 貼著 `theta_max=1.0` 上限（0.9914）；
+- membrane 平均絕對值 15.27（P2 的 6 倍）；
+- `near_threshold` 只有 0.0078（低於 1%）。
+
+也就是：guard 把 threshold 鎖在 1.0，但 membrane 還是長到 15，surrogate gradient
+`sqr(alpha*(mem-theta))` 在 mem-theta≈14 時飽和到 1，梯度消失。**loss 曲線正常下降
+（3.1688 → 2.3292），但非線性已經死掉**——這正是 CORE_GAP §三十描述的
+「loss 看起來沒問題，模型卻不學」。
+
+guards 的設計假設（theta_max=1.0 足夠）在 10^8 規模下**不成立**：membrane 的尺度
+隨 hidden dimension 成長，但 threshold 的上限是常數。這是架構問題，不是調參問題。
+
+### M.4 對 Phase 2/3 的含義
+
+- **Phase 2 不啟動**：Phase 1 失敗，蒸餾不會救一個 threshold 已死的模型。
+- **Phase 3 不啟動**：B1 不能量測一個退化的模型。
+- SCALE_UP_PLAN.md 的止損（§7、§11）被觸發：「任一門檻失敗 → 停，先修」。
+
+### M.5 下一步（未登記新的訓練）
+
+1. **修 threshold/membrane 動態**（研究問題，不是調參）：
+   - 選項 A：membrane normalization（out_norm 已在 head 前，但 membrane 本身沒有 normalize）；
+   - 選項 B：threshold 用比例而非絕對值（theta_max 隨 mem_abs_mean 縮放）；
+   - 選項 C：降低 leak（beta 0.9 → 0.8）讓 membrane 不累積。
+   - 任何一個都必須先寫登記、跑 small scale 驗證，再套到 10^8。
+2. **停在這裡**：beta B1 未達，核心 0.00/10；10^8 路徑被 threshold 問題阻塞。
+3. **回退到資料/目標**：若 threshold 修好後 10^8 仍不改善，問題是資料規模或目標函數。
+
+本輪不新增承諾；選哪一條由使用者決定。
