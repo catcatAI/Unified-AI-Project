@@ -737,3 +737,18 @@ tf=1.000、exact=0.844、val whole=0.000、232 秒），但 `ps` 實測該行程
 - **資源**：`taskset -c 0-2`、`OMP_NUM_THREADS=3`；一次只跑這一個；量 RSS 與秒數。
 - **登記時間**：2026-11-21，於任何 B1 計分之前。
 
+### E.1 第一次啟動作廢（RAM 上限）＋改用量測方式（寫在任何 B1 分數之前）
+
+- 08:55 用 `probe_core_control.py` 啟動（PID 470930）。60 秒時整機 used RAM 已到
+  **10,626/15,774 MB（67%）**，超過 60% 的硬上限；行程 RSS 3.94 GB（GARDEN＋ED3N＋
+  外部字典＋LLM 同時載入）。**立即終止，記為作廢**：沒有跑完、沒有報告、沒有任何 B1 數字。
+- 改用的儀器：`scripts/probe_p2_tok_core.py`（本次新增，契約測試
+  `tests/test_probe_p2_tok_core.py` 12 條）。它只載入 token-SNN（14 MB checkpoint），
+  用**同一批** `load_dataset()` 凍結題與**同一條** `score_item(..., mode="strict")`，
+  逐題記 `correct`／`answered`／`prompt_unk`。
+- **判讀規則不變**（與 §E 逐字相同）：有 ≥1 題正確＝核心 > 0 的第一個證據；全錯但
+  coverage > 0＝能力缺口；coverage = 0＝詞表讀不到，不算答錯。
+- 與 §E 的差異只有「一次只載入一個 producer」：不再同時量 GARDEN／ED3N／LLM，因此
+  **本輪沒有對照組**；任何「SNN 缺口 vs 智能問題」的比較都不在本次輸出裡，不得推論。
+- **登記時間**：2026-11-21，於任何 B1 計分之前。
+

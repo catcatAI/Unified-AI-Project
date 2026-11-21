@@ -1007,6 +1007,11 @@
       "referenced": true,
       "purpose": "Does the native neural engine *learn* a fact from dialogue, or store it?"
     },
+    "probe_p2_tok_core.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "B1: does one token-SNN checkpoint produce any correct frozen answer?"
+    },
     "probe_pantry_address80.py": {
       "category": "probe",
       "referenced": true,
