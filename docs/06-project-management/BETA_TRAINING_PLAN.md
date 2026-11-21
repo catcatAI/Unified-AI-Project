@@ -752,3 +752,59 @@ tf=1.000、exact=0.844、val whole=0.000、232 秒），但 `ps` 實測該行程
   **本輪沒有對照組**；任何「SNN 缺口 vs 智能問題」的比較都不在本次輸出裡，不得推論。
 - **登記時間**：2026-11-21，於任何 B1 計分之前。
 
+## F. B1 結果（P2 checkpoint 在凍結題上；跑後追加）
+
+> 執行：2026-11-21 08:59，`scripts/probe_p2_tok_core.py`，
+> `data/intelligence_reports/p2_tok_core.json`，`--check` 通過。1.6 秒（75 題）。
+
+### F.1 逐題組（strict 評分；`answered` 是非空生成，不是正確）
+
+| suite     | n   | correct | answered | prompt unk | 讀法 |
+| --------- | --- | ------- | -------- | ---------- | ---- |
+| math      | 40  | **0**   | 39       | 11.4%      | 智能題 |
+| knowledge | 15  | **0**   | 15       | 8.4%       | 智能題 |
+| code      | 10  | **0**   | 9        | 5.3%       | 智能題 |
+| routing   | 10  | **0**   | 10       | 35.1%      | **表現層任務，不讀作智能** |
+| total     | 75  | **0**   | 73       | 10.8%      | 智能相關為 0/65 |
+
+### F.2 判讀（照 §E 跑前寫死的規則）
+
+- **coverage > 0**：73/75 有非空生成、prompt 的 `<unk>` 只佔 10.8%，所以這**不是**「詞表讀不到
+  題目」的失敗。模型讀得到、也吐得出東西，但**一題都沒對**。
+- 因此這是**能力缺口**，不是詞表缺口。與 `CORE_GAP_ANALYSIS.md` 的結論一致：換了表徵與
+  可微輸出層之後，規模仍不足，2 epochs 的全語料訓練沒有產生可用的答案。
+- 輸出的形狀是重複片語而不是答案，例如：
+  - `What is 3 + 5 * 2?` → `222`
+  - `What is 2 ** 10?` → `The most of three 5-10.`
+  - `What planet is known as the Red Planet?` → `The probability of the person is an the
+    person's all the person...`（48 atoms 上限截斷）
+  - code 題 → `The example of the process of the process of ...`（沒有函式）
+- 這與 §X #275 的 TOK-SNN 對照（math 0/40）一致；不同的 checkpoint、同一個結論。
+
+### F.3 邊界（不得跨過）
+
+1. **routing 不是智能**：它是分類器的標籤，表現層 100%、核心 0%；本節不把它算進 0/65 的
+   分子或分母。
+2. **`knowledge_mc` 沒有量**：同一份 `native_bench_v1.json` 還有 40 題 4 選 1 的
+   `knowledge_mc`，但 §E 的題組清單（沿用 `probe_core_control` 的預設）漏了它。這是**登記
+   的疏漏**，不是「已量到 0」；B1b 在 §F.4 登記後才跑。
+3. **沒有對照組**：GARDEN／ED3N／LLM 沒有一起跑（§E.1 的 RAM 上限），所以不能說
+   「LLM 會、SNN 不會」；本節只說這顆 checkpoint 在這 65 題上 0 正確。
+4. **裝置是 XPU**：probe 預設解析到 `xpu`（torch 2.14.1+xpu），checkpoint 是在 CPU 訓練的；
+   裝置只改變張量放置，不改變權重。3.5M 參數的 VRAM 佔用可忽略，但這是實測的裝置，照記。
+5. **核心分不變**：仍是 **0.00/10**。B1 的條件（任一題模型產生且正確）**沒有達成**；這不是
+   新的失敗，是既有缺口的再一次量測。
+
+### F.4 B1b 登記（`knowledge_mc`；寫在任何 MC 分數之前）
+
+- **問題**：同一顆 checkpoint 在這 40 題 4 選 1 上答對幾題？是否超過亂猜？
+- **為何另開**：§E 的題組清單漏了 `knowledge_mc`（見 F.3 第 2 點）。這是補量，不是改判準。
+- **儀器**：同一支 `probe_p2_tok_core.py`，`--suites knowledge_mc`、同一顆 checkpoint、同一條
+  strict 評分；輸出 `data/intelligence_reports/p2_tok_mc.json`。
+- **chance**：每題 4 個選項（正解＋3 個干擾項）→ 亂猜 25%，40 題期望 10 題。**跑前寫死**：
+  - ≥ **17/40** 才超出 chance 的 95% 雙尾區間（[5,16]），才算「不是亂猜」的證據；
+  - 0–16/40 **不是**智能證據，即使有 1 題對也不算「核心 > 0」；
+  - 逐題輸出照樣保留，讓讀者看得到是哪些題。
+- **不改的事**：不改題目、不改選項、不改評分、不改 chance 規則；不因為結果低就改看別的分數。
+- **登記時間**：2026-11-21，於任何 `knowledge_mc` 計分之前。
+
