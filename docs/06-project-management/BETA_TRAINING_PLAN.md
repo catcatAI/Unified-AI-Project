@@ -1007,3 +1007,20 @@ tf=1.000、exact=0.844、val whole=0.000、232 秒），但 `ps` 實測該行程
 - **不答的問題**：不碰凍結題、不宣稱 capability、不改 pass line；不把這個 A/B 的結論
   借去當核心分。
 - **登記時間**：2026-11-21，於任何 run 之前。
+
+### K.1 追加一跑（寫在跑之前）
+
+§K 的三跑結果顯示：lr 1e-3 比 3e-3 好（0.385 vs 0.075），但 1e-3 只跑了 3,000 步；
+3e-3 跑 6,000 步反而更差（0.185）。兩者混在一起，無法分辨「LR 問題」與「步數問題」。
+追加一跑把兩者分開：
+
+- Run 4：`medium d3, lr=1e-3, 6,000 步`（epochs 30），其他旗標與 §K 完全相同。
+- 與 Run 1（medium, 1e-3, 3,000 步, train_exact 0.385）比 → 隔離步數。
+- 與 Run 3（small, 3e-3, 6,000 步, train_exact 0.750）比 → 隔離寬度（相同步數）。
+- 判讀規則（跑前寫死）：
+  - Run 4 train exact ≥ 0.50 → 步數有幫助（medium 能學，只是需要更多步）。
+  - Run 4 train exact < 0.50 → 步數不是瓶頸；medium 在這個任務上就是學不起來，
+    即使 LR 穩定、步數加倍。
+  - Run 4 val exact > small@6k (0.595) + 10pp → 寬度有幫助（需 LR 配合）。
+- 報告：`data/intelligence_reports/width_ab_medium_d3_lr1e3_6k.json`。
+- 登記時間：2026-11-21，於 Run 4 之前。
