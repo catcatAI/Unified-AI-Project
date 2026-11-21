@@ -1232,3 +1232,34 @@ membrane 壓到 N(0,1) 空間，threshold 0.72 在均值之上，所以「剛好
 3. **回退到資料/目標**：若 Phase 2 的 KD 也沒有幫助，問題是資料規模或目標函數。
 
 本輪不新增承諾；選哪一條由使用者決定。
+
+## P. Phase 2 蒸餾登記（寫在任何 KD 分數之前）
+
+- **問題**：Phase 1 mem_norm 修好了動態（sensitive 0.90、mem 1.38），但 capability 沒變
+  （val CE 1.5154 vs P2 1.4061）。蒸餾是 capability 的真正賭注。
+- **Teacher**：Qwen2.5-1.5B（`qwen2.5-1.5b-instruct-q4_k_m.gguf`，1.1 GB）。
+  7B 是備選，但 cache 建置時間 ×7，先用 1.5B。
+- **Cache**：`scripts/build_kd_cache.py`，`--limit 40000`（40k 子集），`--top-k 64`，
+  `--max-len 192`，`--max-vocab 12000`，綁定 `scaleup_phase1_memnorm.pt` 的 vocab fingerprint。
+  產出 `data/kd/kd_scaleup_40k.npz`（估算 1–2 GB at top-64）。
+- **校準**：先跑 500 rows 量測真實時間與大小；若 40k 預估 > 8 h，降到 20k。
+- **訓練（Smoke）**：10^8 + mem_norm + `--kd-cache ... --kd-weight 0.5`，**2 epochs**（先求
+  健康，不求分數），XPU，batch 32，LR 3e-3，seed 0，guards 同 Phase 1。
+  Checkpoint：`data/checkpoints/scaleup_phase2_smoke.pt`；報告：
+  `data/intelligence_reports/scaleup_phase2_smoke.json`。
+- **門檻（跑前寫死）**：
+  1. KD loss 有限且 < hard-label loss（sanity：蒸餾項有在運作）。
+  2. val CE < Phase 1 mem_norm 的 1.5154（KD 有幫助）。
+  3. near_threshold ≥ 0.01、sensitive ≥ 0.05（dynamics 健康）。
+  4. 無 non-finite、無 rollback。
+  5. VRAM ≤ 7.2 GB、RAM ≤ 9.4 GB。
+- **判讀規則**：
+  - 門檻 1–5 全通過 → KD 有幫助；啟動 10-epoch 完整訓練。
+  - 門檻 1 失敗 → KD cache 或 teacher 有問題；停。
+  - 門檻 2 失敗 → KD 沒有幫助；回退到資料/目標函數。
+  - 門檻 3 失敗 → KD 破壞了 dynamics；停。
+- **資源**：cache 建置與訓練分開跑；cache 建置期間 RAM ≤ 9.4 GB（cache 1–2 GB +
+  teacher 1.1 GB + overhead）；訓練期間 VRAM ≤ 7.2 GB。
+- **不答的問題**：不碰凍結題、不宣稱 capability、不改 pass line；不把 KD loss 下降
+  當品質增益（§8 的止損）。
+- **登記時間**：2026-11-22，於任何 KD 計分之前。
