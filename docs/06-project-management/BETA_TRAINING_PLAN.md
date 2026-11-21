@@ -251,6 +251,15 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 - 預算：先以「1 epoch 的實測時間 × 期望 epoch 數」估，跑之前印出來；超過 6 小時就切成兩段續跑。
 - 產出：`data/intelligence_reports/` 的報告 + checkpoint；核心分仍是量測後才知道。
 
+### P4b — 規模化實驗（scale-up，見 SCALE_UP_PLAN.md）
+
+- **前置**：P2 通過（✅）、P3 止損已套（✅，不加寬）、B1 為 0/105（已記錄）。
+- **內容**：`docs/06-project-management/SCALE_UP_PLAN.md` 的 Phase 0–3：
+  Phase 0 參數數驗證（✅ 105.2M）、Phase 1 hard-label 健康檢查（~1.6 h）、
+  Phase 2 蒸餾（~7.8 h + 19 h cache 建置）、Phase 3 B1 量測。
+- **授權**：Phase 1 是 capability 的最低成本探針；Phase 2/3 只在 Phase 1 通過時啟動。
+- **不改**：ratchet、版本、art group、任何 beta 門檻。
+
 ### P5 — 接線與影子模式（beta 前置）
 
 - 把 checkpoint 接進生產路径的**影子分支**：同一題同時跑核心與現有路徑，核心輸出不直接給使用者，
