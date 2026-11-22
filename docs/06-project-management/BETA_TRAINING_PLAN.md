@@ -1452,3 +1452,42 @@ membrane 壓到 N(0,1) 空間，threshold 0.72 在均值之上，所以「剛好
 3. **回退到資料/目標**：若對齊品質沒問題，問題是 teacher 品質或資料規模。
 
 本輪不新增承諾；選哪一條由使用者決定。
+
+## T. Teacher-Student 對齊驗證結果（跑後追加）
+
+> 分析：2026-11-22，`data/kd/kd_scaleup_40k.npz`（32,142 rows, 1,061,469 positions）。
+
+### T.1 對齊品質
+
+| 指標 | 值 |
+| ---- | -- |
+| positions | 1,061,469 |
+| atoms/position (mean) | 24.2（top-k 64，~24 生存） |
+| mapped_mass (mean) | **0.9858** |
+| mapped_mass (median) | **0.9985** |
+| positions with mapped_mass < 0.5 | 549（0.1%） |
+| positions with mapped_mass < 0.1 | 161（0.0%） |
+| positions with mapped_mass = 0 | 10（0.001%） |
+| mapped_mass percentiles | [0.0, 0.928, 0.990, 0.999, 1.000, 1.000, 1.000] |
+
+### T.2 結論
+
+1. **對齊是好的**：98.6% 的 teacher mass 生存投影，median 0.999，99% 的 positions
+   mapped_mass ≥ 0.928。只有 0.1% 的 positions 映射品質差。
+2. **kd_targets.py 的 AtomPrefixIndex 沒有 bug**：prefix matching 運作正常。
+3. **KD 失敗不是對齊問題**：soft targets 正確地對應到 student atoms，但 KD 仍然讓
+   capability 與 dynamics 變差。問題是 **teacher 品質**（Qwen2.5-1.5B 的 soft targets
+   有 ~2.9 nats 的 entropy，對 student 沒有提供有用的學習訊號）或 **KD 目標函數**
+   （soft targets 的 entropy 太高，蒸餾效果差）。
+
+### T.3 對 Phase 2 的最終結論
+
+- 對齊驗證通過：98.6% mapped mass，不是對齊 bug。
+- KD 失敗的原因是 **teacher 品質**（1.5B 太弱）或 **KD 目標函數**（high-entropy
+  soft targets），不是對齊或權重。
+- 剩下的選項：
+  1. **Teacher 7B**：更強的 teacher，但 cache 建置 ~28 h（1.5B 的 7×）。
+  2. **停在這裡**：beta B1 未達，核心 0.00/10。
+  3. **回退到資料/目標**：若 7B 也沒幫助，問題是 KD 目標函數或資料規模。
+
+本輪不新增承諾；選哪一條由使用者決定。
