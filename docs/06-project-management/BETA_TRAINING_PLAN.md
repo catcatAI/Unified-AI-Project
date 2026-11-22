@@ -1490,7 +1490,58 @@ membrane 壓到 N(0,1) 空間，threshold 0.72 在均值之上，所以「剛好
 - 剩下的選項：
   1. **Teacher 7B**：更強的 teacher，但 cache 建置 ~28 h（1.5B 的 7×）。
   2. **停在這裡**：beta B1 未達，核心 0.00/10。
-  3. **回退到資料/目標**：若 7B 也沒幫助，問題是 KD 目標函數或資料規模。
+  - **登記時間**：2026-11-22，於任何 7B 計分之前。
+
+## V. Teacher 7B 蒸餾結果（跑後追加）
+
+> 執行：2026-11-22 13:49–23:27（cache 建置）+ 2026-11-23 00:xx–00:25（訓練），
+> `data/kd/kd_scaleup_7b_40k.npz`（62 MB）、`data/checkpoints/scaleup_phase2_7b.pt`、
+> `data/intelligence_reports/scaleup_phase2_7b.json`。
+
+### V.1 對照表
+
+| 項目 | Phase 1 (no KD) | KD 1.5B (0.5) | KD 7B (0.5) |
+| ---- | --------------- | -------------- | ----------- |
+| val CE (best) | **1.5154** | 4.1903 | **4.0855** |
+| val exact | 0.075 | 0.015 | 0.010 |
+| train exact | 0.095 | 0.000 | 0.000 |
+| resp_tf | 0.4317 | 0.3274 | 0.3254 |
+| near_threshold | 0.0095 | 0.0050 | 0.0050 |
+| sensitive | 0.9028 | 0.8632 | 0.8628 |
+| mem_abs_mean | 1.3794 | 1.6297 | 1.6328 |
+| KD loss (epoch 2) | — | 1.4227 | 1.4264 |
+| KD loss (raw, est.) | — | ~2.84 | ~2.85 |
+| mapped_mass | — | 0.9858 | **0.9959** |
+| seconds (train) | 5,289 | 1,634 | 1,535 |
+
+### V.2 判讀
+
+1. **7B 比 1.5B 略好**：val CE 4.1903 → 4.0855（−0.10），mapped_mass 0.9858 → 0.9959。
+   但仍然**遠差於無 KD 的 1.5154**（差距 2.57 nats）。
+2. **KD loss 幾乎相同**：1.4227 (1.5B) vs 1.4264 (7B)。7B 的 soft targets 有相似的
+   entropy (~2.85 nats)。更強的 teacher 沒有產生更低 entropy 的 targets。
+3. **mapped_mass 提升**：98.6% → 99.6%，但這只改善對齊，不改善品質。
+4. **dynamics 退步**：near 0.0095 → 0.0050（與 1.5B 相同），mem 1.3794 → 1.6328。
+   KD 無論 teacher 大小都把模型推回 threshold 飽和的 regime。
+
+### V.3 最終結論
+
+- **KD 不幫助**：無論 teacher 是 1.5B 還是 7B，KD 有在運作（loss 下降、mapped_mass
+  0.986–0.996）但讓 capability 與 dynamics 都變差。
+- **Teacher 品質不是瓶頸**：7B 的 soft targets 有相似的 entropy (~2.85 nats)。更強的
+  teacher 沒有產生更有用的 soft targets。
+- **對齊不是問題**：98.6–99.6% mapped mass（§T 已驗證）。
+- **權重不是問題**：0.5 與 0.1 都失敗（§S）。
+- **真正的問題**：KD 目標函數本身（high-entropy soft targets）或資料規模（40k 子集）。
+  全語料 KD 未測試，但 1.5B 與 7B 的結果一致，暗示 teacher 大小不是關鍵。
+
+### V.4 下一步（未登記新的訓練）
+
+1. **停在這裡**（建議）：beta B1 未達，核心 0.00/10。所有可測的路徑都已測試。
+2. **全語料 KD**（~8 h cache + 7.8 h 訓練）：公平比較，但 1.5B 與 7B 的結果一致，
+   全語料不太可能改變結論。
+3. **回退到資料/目標**：KD 目標函數需要重新設計（例如 hard-label KD、top-1 KD、
+   或只在高 confidence positions 蒸餾）。
 
 本輪不新增承諾；選哪一條由使用者決定。
 
