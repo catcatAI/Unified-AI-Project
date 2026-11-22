@@ -1338,3 +1338,23 @@ membrane 壓到 N(0,1) 空間，threshold 0.72 在均值之上，所以「剛好
    需要先驗證 teacher-student 對齊品質。
 
 本輪不新增承諾；選哪一條由使用者決定。
+
+## R. KD Weight 消融登記（寫在跑之前）
+
+- **問題**：§Q 的 KD smoke（weight 0.5）讓 val CE 從 1.5154 惡化到 4.1903。是 KD 項權重
+  過高，還是 KD 本身對這個 student 無效？
+- **Run**：10^8 + mem_norm + KD，weight **0.1**，2 epochs，40k subset，XPU，LR 3e-3，
+  seed 0，guards 同 Phase 1。Baseline = §Q 的 KD(0.5)：val CE 4.1903、near 0.0050、
+  KD loss 1.4227。
+- **判讀規則（跑前寫死）**：
+  - val CE < 2.0 → weight matters；再試 0.05。
+  - 2.0 ≤ val CE < 4.19 → 邊際改善；結論不明。
+  - val CE ≥ 4.19 → weight 不是問題；KD 本身無效。
+  - near_threshold ≥ 0.01 → dynamics 健康。
+  - near_threshold < 0.01 → KD 仍破壞 dynamics。
+- **資源**：`taskset -c 0-5`、`OMP_NUM_THREADS=6`；量 RSS 與秒數；RAM ~10 GB（超限，
+  與 §Q 相同，記錄但不中止）。
+- **報告**：`data/checkpoints/scaleup_phase2_w01.pt`、
+  `data/intelligence_reports/scaleup_phase2_w01.json`。
+- **不答的問題**：不碰凍結題、不宣稱 capability、不改 pass line。
+- **登記時間**：2026-11-22，於 Run 之前。
