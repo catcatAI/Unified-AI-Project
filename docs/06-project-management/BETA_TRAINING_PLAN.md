@@ -1493,3 +1493,32 @@ membrane 壓到 N(0,1) 空間，threshold 0.72 在均值之上，所以「剛好
   3. **回退到資料/目標**：若 7B 也沒幫助，問題是 KD 目標函數或資料規模。
 
 本輪不新增承諾；選哪一條由使用者決定。
+
+## U. Teacher 7B 蒸餾登記（寫在跑之前）
+
+- **問題**：1.5B teacher 的 soft targets 有 ~2.9 nats entropy，對 student 沒有提供有用的
+  學習訊號。7B teacher 可能產生更低 entropy 的 soft targets。
+- **Teacher**：Qwen2.5-7B（`qwen2.5-7b-instruct-q4_k_m.gguf`，4.4 GB）。
+- **Cache**：`scripts/build_kd_cache.py`，`--limit 40000`，`--top-k 64`，`--max-len 192`，
+  `--max-vocab 12000`，`--teacher data/models/qwen2.5-7b-instruct-q4_k_m.gguf`，
+  綁定 `scaleup_phase1_memnorm.pt` 的 vocab fingerprint。
+  產出 `data/kd/kd_scaleup_7b_40k.npz`。
+- **校準**：先跑 500 rows 量測時間與大小；若 40k 預估 > 12 h，降到 20k。
+- **訓練（Smoke）**：10^8 + mem_norm + KD (weight 0.5)，2 epochs，XPU，batch 32，
+  LR 3e-3，seed 0，guards 同 Phase 1。
+  Checkpoint：`data/checkpoints/scaleup_phase2_7b.pt`；
+  報告：`data/intelligence_reports/scaleup_phase2_7b.json`。
+- **門檻（跑前寫死）**：
+  1. KD loss 有限。
+  2. val CE < Phase 1 mem_norm 的 1.5154（KD 有幫助）。
+  3. near_threshold ≥ 0.01、sensitive ≥ 0.05。
+  4. 無 non-finite、無 rollback。
+  5. RAM ≤ 9.4 GB（或記錄超限）。
+- **判讀規則**：
+  - 門檻 1–5 全通過 → 7B teacher 有幫助；啟動 10-epoch 完整訓練。
+  - 門檻 2 失敗 → teacher 品質不是瓶頸；回退到 KD 目標函數或資料。
+  - 門檻 3 失敗 → KD 仍破壞 dynamics；停。
+- **資源**：cache 建置期間 RAM ≤ 9.4 GB（7B teacher 4.4 GB + overhead）；
+  訓練期間 VRAM ≤ 7.2 GB。
+- **不答的問題**：不碰凍結題、不宣稱 capability、不改 pass line。
+- **登記時間**：2026-11-22，於任何 7B 計分之前。
