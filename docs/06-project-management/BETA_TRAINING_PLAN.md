@@ -1358,3 +1358,38 @@ membrane 壓到 N(0,1) 空間，threshold 0.72 在均值之上，所以「剛好
   `data/intelligence_reports/scaleup_phase2_w01.json`。
 - **不答的問題**：不碰凍結題、不宣稱 capability、不改 pass line。
 - **登記時間**：2026-11-22，於 Run 之前。
+
+## R. KD Weight 消融結果（作廢）
+
+> 2026-11-22 02:xx 啟動（PID 675040）。60 秒時整機 used RAM 已到
+> **13,584/15,774 MB（86%）**，swap 已用 3.66 GB，超過 60% 上限。行程 RSS 3.78 GB。
+> **立即終止，記為作廢**：沒有 epoch 輸出、沒有報告、沒有任何 R 結果。
+
+### R.1 作廢原因
+
+- §Q 的 KD smoke（weight 0.5）跑在 64% RAM（10.1 GB）；這次 weight 0.1 的 run 跑到
+  86%（13.6 GB）。差異可能來自記憶體碎片化或 KD 計算的中間張量分配。
+- 10^8 模型 + Adam optimizer states（~1.26 GB）+ KD cache（64 MB）+ OS/桌面程式
+  （~5 GB）= ~10 GB 已經貼著上限；KD 訓練的中間張量把系統推過 60%。
+- **這是資源限制，不是程式錯誤**：行程沒有 crash，但 RAM 與 swap 都在壓力下。
+
+### R.2 對 Phase 2 的含義
+
+- KD weight 消融（0.1）**無法在現有硬體上執行**；10^8 + KD 的訓練路徑在 RAM 上限下
+  不可行。
+- §Q 的 KD smoke（0.5 weight）已經顯示 KD 讓 capability 與 dynamics 變差；0.1 的測試
+  無法完成，因此「weight 過高」這個假設**既未證實也未反證**。
+- 10^8 路徑的兩個訓練實驗（Phase 1 hard labels、Phase 2 KD）都遇到了資源或 capability
+  問題：Phase 1 val CE 1.5130 > P2 1.4061（capability 未改善）；Phase 2 val CE 4.1903
+  （KD 讓 capability 惡化）。
+
+### R.3 剩下的選項
+
+1. **降低模型規模**（~5×10^7，~420 MB params + 840 MB Adam = 1.26 GB → 仍超限；
+   需要 SGD 或 8-bit optimizer）。
+2. **使用記憶體效率更高的 optimizer**（SGD with momentum：1 state → 省 420 MB；
+   8-bit Adam via bitsandbytes：~100 MB，但新增依賴）。
+3. **在更大 RAM 的機器上跑**（非本機）。
+4. **停在這裡**：beta B1 未達，核心 0.00/10；10^8 路徑被資源與 capability 雙重阻塞。
+
+本輪不新增承諾；選哪一條由使用者決定。
