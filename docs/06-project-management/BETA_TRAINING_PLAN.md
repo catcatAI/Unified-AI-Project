@@ -1393,3 +1393,62 @@ membrane 壓到 N(0,1) 空間，threshold 0.72 在均值之上，所以「剛好
 4. **停在這裡**：beta B1 未達，核心 0.00/10；10^8 路徑被資源與 capability 雙重阻塞。
 
 本輪不新增承諾；選哪一條由使用者決定。
+
+## S. KD Weight 消融結果（跑後追加）
+
+> 執行：2026-11-22 02:xx–03:xx，`data/checkpoints/scaleup_phase2_w01.pt`、
+> `data/intelligence_reports/scaleup_phase2_w01.json`。device=xpu，1,646 秒，RAM 9.2 GB (59%)。
+
+### S.1 對照表
+
+| 項目 | Phase 1 mem_norm (no KD) | KD weight 0.5 | KD weight 0.1 |
+| ---- | ------------------------ | ------------- | ------------- |
+| val CE (best) | **1.5154** | 4.1903 | **3.9262** |
+| val exact | 0.075 | 0.015 | 0.015 |
+| train exact | 0.095 | 0.000 | 0.000 |
+| resp_tf | 0.4317 | 0.3274 | 0.3269 |
+| near_threshold | 0.0095 | 0.0050 | 0.0042 |
+| sensitive | 0.9028 | 0.8632 | 0.8606 |
+| mem_abs_mean | 1.3794 | 1.6297 | 1.6699 |
+| KD loss (epoch 2) | — | 1.4227 | 0.2948 |
+| KD loss (raw, est.) | — | ~2.84 | ~2.95 |
+
+### S.2 判讀（照 §R 跑前寫死的規則）
+
+- val CE best = 3.9262。規則：val CE < 2.0 → weight matters；2.0 ≤ val CE < 4.19 →
+  邊際改善；val CE ≥ 4.19 → weight 不是問題。
+- **3.9262 介於 2.0 與 4.19 之間 → 邊際改善**，但 val CE 仍遠高於無 KD 的 1.5154。
+- near_threshold 0.0042 < 0.01 → dynamics 仍退步。
+- KD loss (raw) ~2.95，與 0.5 weight 的 ~2.84 相似 → teacher 的 soft targets 本身
+  有 ~2.9 nats 的 entropy，不是 weight 的問題。
+
+### S.3 結論
+
+1. **降低 KD weight 沒有幫助**：val CE 從 4.19 降到 3.93（邊際），但仍然遠高於無 KD 的
+   1.52。KD 項的權重不是瓶頸。
+2. **KD 的 soft targets 本身是問題**：raw KD loss ~2.9-3.0 nats，比 hard CE (~3.2) 還高。
+   Teacher (Qwen2.5-1.5B) 的 soft targets 在 student tokenization 上的對齊可能有問題，
+   或 teacher 本身的輸出品質不夠好。
+3. **dynamics 再次退步**：near 0.0095 → 0.0042，mem 1.3794 → 1.6699。KD 的梯度
+   無論 weight 多少都把模型推回 threshold 飽和的 regime。
+4. **§R 的預測（「KD weight 過高」）未被證實**：val CE 3.93 < 4.19（邊際改善），
+   但 3.93 >> 1.52（無 KD）。weight 不是主要問題。
+
+### S.4 對 Phase 2 的最終結論
+
+- KD as configured (1.5B teacher, top-64, weight 0.1 or 0.5, 40k subset) **不幫助**。
+- KD 有在運作（loss 下降、mapped_mass 0.986），但方向是錯的。
+- 可能的原因：
+  1. Teacher-student tokenization 對齊品質（`kd_targets.py` 的 AtomPrefixIndex 可能有 bug）。
+  2. Teacher 品質不足（1.5B 太小，soft targets 噪聲大）。
+  3. 40k 子集太小（全語料 KD 未測試）。
+- 任何進一步的 KD 實驗都需要先驗證 teacher-student 對齊品質，否則就是盲試。
+
+### S.5 下一步（未登記新的訓練）
+
+1. **驗證 teacher-student 對齊**（~1 h，不訓練）：用 `scripts/` 的 KD 診斷工具量測
+   mapped_mass 的 per-position 分布，確認 soft targets 真的對應到正確的 answer atoms。
+2. **停在這裡**：beta B1 未達，核心 0.00/10；10^8 + KD 路徑失敗。
+3. **回退到資料/目標**：若對齊品質沒問題，問題是 teacher 品質或資料規模。
+
+本輪不新增承諾；選哪一條由使用者決定。
