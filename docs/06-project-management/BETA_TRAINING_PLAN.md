@@ -269,6 +269,19 @@ swap ≤ 60%。同時只能有一個受上限約束的重跑；別人在跑時�
 
 ### P6 — 測試版（§7）
 
+### P7 — 自研架構（TLN，見 CUSTOM_ARCHITECTURE_PLAN.md）
+
+- **前置**：P2 通過（✅）、P3 止損已套（✅，不加寬）、B1 為 0/105（已記錄）。
+- **內容**：`docs/06-project-management/CUSTOM_ARCHITECTURE_PLAN.md` 的 Phase 0–5：
+  Phase 0 Temporal Attention（~2 h）、Phase 1 Living State（~2 h）、
+  Phase 2 Latent Space（~3 h）、Phase 3 Episodic Memory（~3 h）、
+  Phase 4 Self-Model（~2 h）、Phase 5 Growth（~5 h，可選）。
+- **核心假設**：標準架構的 next-token CE 不產生 capability；TLN 的 latent space +
+  contrastive + attention 提供更強的訓練信號。
+- **不改**：ratchet、版本、art group、任何 beta 門檻。
+
+### P6 — 測試版（§7）
+
 ## 7. 測試版出關條件（與研究殘留分開）
 
 「測試版」是**工程與量測狀態**，不是「核心變聰明了」。以下 B0–B3 依序達成；任何一項沒過，
