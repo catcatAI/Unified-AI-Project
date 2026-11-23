@@ -565,3 +565,52 @@ Phase 1 (Living State) 的前置條件是 Phase 0 通過。Phase 0 的 proxy 指
 - **報告**：`data/checkpoints/tln_phase0_10ep.pt`、`data/intelligence_reports/tln_phase0_10ep.json`。
 - **資源**：`taskset -c 0-5`、`OMP_NUM_THREADS=6`；量 RSS 與秒數；RAM ≤ 60%。
 - **登記時間**：2026-11-23，於 Run 之前。
+
+---
+
+## Phase 0 結果（更新：10-epoch + B1）
+
+> 10-epoch attention 完成。B1 量測：1/115（knowledge, know-004 "heart"）。
+
+### Phase 0.5：10-Epoch 結果
+
+| 項目 | Attention 2ep | **Attention 10ep** | RNN 10ep (scaleup) |
+| ---- | ------------- | ------------------ | ------------------ |
+| val CE | 1.1957 | **1.0338** | 1.3725 |
+| val exact | 0.515 | **0.520** | 0.430 |
+| train exact | 0.500 | 0.505 | 0.420 |
+| resp_tf | 0.4699 | **0.5225** | 0.4671 |
+| seconds | 170 | 747 | 23,078 |
+| B1 (凍結題) | 1/115 | **1/115** | 1/115 |
+
+### Phase 0.5 判讀
+
+1. **10 epochs 大幅改善 proxy**：val CE 1.1957 → 1.0338（−0.16），resp_tf 0.470 → 0.523。
+   無過擬合（val CE 單調下降）。比 RNN 10-epoch（1.3725）好 0.34 nats。
+2. **B1 仍是 1/115**：proxy 改善了，但 capability 沒有改善。2-epoch 和 10-epoch 都是 1/115。
+3. **正確答案的品質不同**：
+   - 2-epoch: math-002 "(12-4)/2=4" → "4"（乾淨答案）
+   - 10-epoch: know-004 "blood pumps" → "The blue was a sky blue..."（關鍵字巧合）
+   更多 epochs 改善了 proxy 但沒有改善答案品質。
+
+### Phase 0 最終結論
+
+**Temporal Attention 是正確的方向，但不夠。**
+
+- Attention 比 RNN 快 10×、val CE 低 0.34 nats、val exact 高 9pp。
+- 但凍結題上仍然是 1/115（關鍵字巧合），proxy 和 capability 的差距仍然存在。
+- **Next-token CE 即使有 attention 也不產生 capability。** 需要 Phase 2 (Latent Space + Contrastive)。
+
+### Phase 1 啟動條件
+
+Phase 0 通過（proxy 大幅改善，B1 有 1 個正確答案）。**可以啟動 Phase 1 (Living State) 或直接跳到 Phase 2 (Latent Space)。**
+
+由於 Phase 0 顯示 attention 已經大幅改善 proxy 但 capability 仍然 1/115，建議**跳過 Phase 1，直接做 Phase 2 (Latent Space + Contrastive)**，因為：
+- Phase 1 (Living State) 加入情感/身份，但 capability 的瓶頸是「next-token CE 不產生理解」
+- Phase 2 (Latent Space + Contrastive) 直接解決這個瓶頸
+- Living State 可以在 Phase 2 之後加入
+
+### Phase 1 (Living State) 暫緩
+
+Living State 的實作（self token）已加入 attention 架構。但完整的 Living State
+（情感更新、持久化、閉環）需要更多設計。暫緩到 Phase 2 之後。
