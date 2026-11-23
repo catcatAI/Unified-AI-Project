@@ -127,6 +127,7 @@ class TokenConfig:
     use_episodic: bool = False
     episodic_slots: int = 64
     use_self_model: bool = False
+    seq2seq_mode: bool = False
     # Normalise the membrane before the spike decision (rnn arch only).
     mem_norm: bool = False
 
@@ -603,8 +604,23 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
             self.dropout = nn.Dropout(dropout)
 
         def forward(self, x: Any, causal_mask: Any = None) -> Any:
-            # Self-attention with causal mask
-            attn_out, _ = self.attn(x, x, x, attn_mask=causal_mask, is_causal=True)
+            # Self-attention with mask (causal or prefix LM)
+            is_causal = (
+                causal_mask is None
+                or (
+                    causal_mask
+                    == torch.triu(
+                        torch.ones(
+                            causal_mask.shape[0],
+                            causal_mask.shape[1],
+                            device=causal_mask.device,
+                            dtype=torch.bool,
+                        ),
+                        diagonal=1,
+                    )
+                ).all()
+            )
+            attn_out, _ = self.attn(x, x, x, attn_mask=causal_mask, is_causal=is_causal)
             x = self.norm1(x + self.dropout(attn_out))
             ffn_out = self.ffn(x)
             x = self.norm2(x + self.dropout(ffn_out))
@@ -649,6 +665,7 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
 
             # Self-Model (TLN Phase 4): uncertainty estimation
             self.use_self_model = getattr(cfg, "use_self_model", False)
+            self.seq2seq_mode = getattr(cfg, "seq2seq_mode", False)
             if self.use_self_model:
                 self.self_model = nn.Sequential(
                     nn.Linear(d_model, d_model // 2),
@@ -682,7 +699,28 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
                 torch.ones(seq_len, seq_len, device=device, dtype=torch.bool), diagonal=1
             )
 
-        def encode(self, ids: Any) -> Any:
+        def _prefix_lm_mask(self, seq_len: int, q_len: int, device: Any) -> Any:
+            """Prefix LM mask: question tokens (0..q_len-1) have bidirectional
+            attention; answer tokens (q_len..) have causal attention to all
+            question tokens + previous answer tokens.
+
+            The self token is at position 0, so question tokens start at 1.
+            q_len is the number of question tokens (not including self token).
+            """
+            mask = torch.ones(seq_len, seq_len, device=device, dtype=torch.bool)
+            # Self token (position 0) can attend to everything
+            mask[0, :] = False
+            # Question tokens (1..q_len) can attend to all question tokens
+            for i in range(1, q_len + 1):
+                for j in range(1, q_len + 1):
+                    mask[i, j] = False
+            # Answer tokens (q_len+1..) can attend to all question tokens + previous answer tokens
+            for i in range(q_len + 1, seq_len):
+                for j in range(0, i + 1):
+                    mask[i, j] = False
+            return mask
+
+        def encode(self, ids: Any, question_len: int = 0) -> Any:
             batch, steps = ids.shape
             x = self.embed(ids)
             # Living State: always start from learned initial value.
@@ -694,9 +732,12 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
             )
             x = torch.cat([self_tok, x], dim=1)  # (batch, 1+steps, d_model)
             x = self.pos_enc(x)
-            mask = self._causal_mask(1 + steps, ids.device)
+            if self.seq2seq_mode and question_len > 0:
+                attn_mask = self._prefix_lm_mask(1 + steps, question_len, ids.device)
+            else:
+                attn_mask = self._causal_mask(1 + steps, ids.device)
             for layer in self.layers:
-                x = layer(x, causal_mask=mask)
+                x = layer(x, causal_mask=attn_mask)
             x = self.out_norm(x)
 
             # Episodic Memory read/write (if enabled)
