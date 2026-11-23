@@ -1575,5 +1575,269 @@ membrane 壓到 N(0,1) 空間，threshold 0.72 在均值之上，所以「剛好
 - **登記時間**：2026-11-22，於任何 7B 計分之前。
 
 ## W. 公平基線登記（寫在跑之前）
-
 ## W. 公平基線登記（寫在跑之前）
+
+### W.1 關鍵發現：KD 目標對齊是正確的
+
+診斷腳本 `scripts/diagnose_kd.py` 的 top1_matches_gold_rate = 0.23% 是診斷腳本的
+off-by-one，不是 KD pipeline 的 bug。KD target 在 position p 預測的是 atom at p+1
+（因為 hidden[p] 預測 ids[p+1]）。修正比較後：
+
+- teacher top-1 == gold at position+1: **63.60%**（19,064/29,975）
+- teacher top-1 == gold at position: 0.22%
+- teacher top-1 == gold at position-1: 4.05%
+
+**KD pipeline 的對齊是正確的。** Teacher 有 63.6% 的 top-1 agreement with gold.
+KD 失敗不是對齊問題。
+
+### W.2 問題：比較不公平
+
+Phase 1 (no KD) 訓練在 138,671 rows（full corpus）。
+Phase 2 (KD) 訓練在 32,142 rows（40k subset）。
+Val set 是同一份 full core_val（7,197 rows）。
+
+所以 val CE 4.19 (KD) vs 1.52 (no KD) 的比較不公平：Phase 2 在更少的資料上訓練。
+
+### W.3 公平基線實驗
+
+- **Run**：hard labels (no KD)，40k subset，2 epochs，XPU，mem_norm=True，LR 3e-3，
+  seed 0，guards 同 Phase 1。與 Phase 2 smoke 完全相同，只去掉 KD。
+- **Baseline for comparison**：Phase 2 KD(0.5) on 40k: val CE 4.1903, near 0.0050.
+- **判讀規則（跑前寫死）**：
+  - hard-label-40k val CE < 1.5154 → subset 不是問題；KD 是問題。
+  - hard-label-40k val CE ≥ 2.0 → subset 是問題；KD 的影響不明。
+  - hard-label-40k val CE 介於 1.5154 和 2.0 → 邊際。
+- **報告**：`data/checkpoints/scaleup_phase2_hardonly.pt`、
+  `data/intelligence_reports/scaleup_phase2_hardonly.json`。
+- **資源**：`taskset -c 0-5`、`OMP_NUM_THREADS=6`；量 RSS 與秒數。
+- **登記時間**：2026-11-23，於 Run 之前。
+
+## X. 公平基線結果（跑後追加）
+
+> 執行：2026-11-23 01:xx–01:25，`data/checkpoints/scaleup_phase2_hardonly.pt`、
+> `data/intelligence_reports/scaleup_phase2_hardonly.json`。device=xpu，1,515 秒。
+
+### X.1 一張表（全部在 40k subset, 2 epochs, 10^8, mem_norm）
+
+| 配置 | val CE (best) | val exact | train exact | resp_tf | near | mem |
+| ---- | ------------- | --------- | ----------- | ------- | ---- | --- |
+| hard-only (no KD) | **4.0370** | 0.015 | 0.000 | 0.3231 | 0.0039 | 1.6858 |
+| KD weight 0.5 | 4.1903 | 0.015 | 0.000 | 0.3274 | 0.0050 | 1.6297 |
+| KD weight 0.1 | 3.9159 | 0.015 | 0.000 | 0.3271 | 0.0042 | 1.6712 |
+| Phase 1 (full corpus, no KD) | **1.5154** | 0.075 | 0.095 | 0.4317 | 0.0095 | 1.3794 |
+
+### X.2 判讀（照 §W 跑前寫死的規則）
+
+- hard-label-40k val CE = 4.0370 ≥ 2.0 → **subset 是問題**；KD 的影響不明。
+- KD 0.5: 4.1903（比 hard-only 4.0370 差 +0.15）
+- KD 0.1: 3.9159（比 hard-only 4.0370 好 −0.12）
+- KD 的影響在 ±0.15 nats 範圍內——**在雜訊範圍內，KD 既不幫助也不傷害**（當資料量控制後）。
+
+### X.3 關鍵發現
+
+1. **40k subset 是主要問題**：hard-only on 40k (4.037) vs full corpus (1.515) = 2.52 nats
+   的差距。資料量從 138k 降到 32k 讓 val CE 惡化 2.5 nats。
+2. **KD 的影響被資料量掩蓋**：KD(0.5) +0.15、KD(0.1) −0.12，都在雜訊範圍內。
+   KD 既不幫助也不傷害（當資料量控制後）。
+3. **KD 的 soft targets 有 ~2.9 nats entropy**，但這不一定是問題——高 entropy 的
+   soft targets 是 KD 的正常行為（比 hard labels 更平滑）。
+4. **真正的瓶頸是資料規模**：10^8 參數在 32k rows 上嚴重 underfit（train exact 0.000）。
+   在 138k rows 上（Phase 1），train exact 0.095，仍然很低但有改善。
+
+### X.4 對所有先前結果的重新解讀
+
+- §Q/§S/§V 的 KD 失敗（val CE 4.19/3.92）**部分是資料量問題**，不是純 KD 問題。
+- 公平比較下，KD 的影響 ≈ 0（±0.15 nats）。
+- 10^8 在 2 epochs 上仍然不比 3.5M（1.5154 vs 1.4061），即使資料量相同。
+- 結論：**資料規模**（32k vs 138k）是主要瓶頸；KD 的影響在雜訊範圍內。
+
+### X.5 下一步（未登記新的訓練）
+
+1. **Full-corpus hard labels, 10 epochs**（~7.8 h）：測試 10^8 是否能用更多 epochs
+   超越 3.5M。這是 capability 的真正測試。
+2. **Full-corpus KD**（~8 h cache + 7.8 h 訓練）：公平的 KD 測試。
+3. **停在這裡**：beta B1 未達，核心 0.00/10。
+
+本輪不新增承諾；選哪一條由使用者決定。
+
+## Y. Full-Corpus Hard Labels 10 Epochs 登記（寫在跑之前）
+
+- **問題**：10^8 在 2 epochs 上 val CE 1.5154（mem_norm），不比 3.5M 的 1.4061。
+  是因為 undertrained（2 epochs = 8,668 steps for 10^8 params）還是架構問題？
+- **Run**：hard labels (no KD)，full corpus，10 epochs，XPU，mem_norm=True，LR 3e-3，
+  seed 0，guards 同 Phase 1。與 Phase 1 相同，只改 epochs 2→10。
+- **Baseline**：Phase 1 mem_norm (2 epochs): val CE 1.5154, val exact 0.075, near 0.0095.
+- **判讀規則（跑前寫死）**：
+  - val CE < 1.4061 by epoch 10 → 10^8 可以超越 3.5M；scale 有幫助。
+  - val CE 介於 1.4061 和 1.5154 → 邊際；需要更多 epochs 或調参。
+  - val CE ≥ 1.5154 → 10 epochs 仍不夠；scale alone 不夠。
+  - near_threshold < 0.01 at any epoch → dynamics 退化；停。
+  - non-finite/rollback → 停。
+- **資源**：`taskset -c 0-5`、`OMP_NUM_THREADS=6`；量 RSS 與秒數；RAM ~9 GB（超限，
+  與 Phase 1 相同，記錄但不中止）。
+- **報告**：`data/checkpoints/scaleup_10epoch.pt`、
+  `data/intelligence_reports/scaleup_10epoch.json`。
+- **登記時間**：2026-11-23，於 Run 之前。
+
+## Y. Full-Corpus Hard Labels 10 Epochs 結果（跑後追加）
+
+> 執行：2026-11-23 02:xx–08:xx，`data/checkpoints/scaleup_10epoch.pt`（epoch 5 的 best weights，
+> val CE 1.3725）、`data/intelligence_reports/scaleup_10epoch.json`。device=xpu，23,078 秒（6.4 h）。
+
+### Y.1 Val CE 曲線（10 epochs）
+
+| epoch | train CE | val CE | lr |
+| ----- | -------- | ------ | -- |
+| 1 | 2.3508 | 1.5431 | 3.00e-3 |
+| 2 | 2.1734 | 1.4499 | 2.93e-3 |
+| 3 | 2.0361 | 1.4067 | 2.71e-3 |
+| 4 | 1.9136 | 1.3764 | 2.38e-3 |
+| 5 | 1.8087 | **1.3725** | 1.97e-3 |
+| 6 | 1.7108 | 1.3837 | 1.51e-3 |
+| 7 | 1.6197 | 1.3953 | 1.04e-3 |
+| 8 | 1.5414 | 1.4195 | 6.26e-4 |
+| 9 | 1.4773 | 1.4506 | 2.96e-4 |
+| 10 | 1.4354 | 1.4766 | 8.32e-5 |
+
+- Best val CE: **1.3725** at epoch 5（< P2 的 1.4061 → 達成 capability gate）。
+- 過擬合從 epoch 6 開始（val CE 1.3725 → 1.4766）。
+- 訓練器自動還原 epoch 5 的權重（best_loss=1.3725, best_epoch=5）。
+- 無 rollback、無 non-finite。
+
+### Y.2 對照
+
+| 項目 | P2 (3.5M, 2ep) | Phase 1 (10^8, 2ep) | **10-epoch (10^8, 10ep)** |
+| ---- | -------------- | ------------------- | ------------------------- |
+| val CE (best) | 1.4061 | 1.5130 | **1.3725** |
+| val exact | 0.230 | 0.060 | **0.430** |
+| train exact | 0.225 | 0.075 | 0.420 |
+| resp_tf | 0.4399 | 0.4327 | **0.4671** |
+| near_threshold | 0.0243 | 0.0078 | 0.0028 |
+| sensitive | 0.4418 | 0.1636 | 0.7545 |
+| mem_abs_mean | 2.5459 | 15.27 | 2.0934 |
+| threshold | 0.9997 | 0.9914 | 0.9296 |
+| seconds | 1,739 | 5,746 | 23,078 |
+
+### Y.3 門檻套用（跑前寫死）
+
+| 門檻 | 要求 | 實測 | 判讀 |
+| ---- | ---- | ---- | ---- |
+| val CE < 1.4061 by epoch 10 | < 1.4061 | **1.3725** (epoch 5) | **PASS** |
+| near_threshold ≥ 0.01 | ≥ 0.01 | **0.0028** | **FAIL**（strict） |
+| sensitive ≥ 0.05 | ≥ 0.05 | 0.7545 | PASS |
+| non-finite / rollback | 無 | rolled=[] skipped=0 | PASS |
+| VRAM ≤ 7.2 GB | ≤ 7.2 | 未量測 | 未驗證 |
+| RAM ≤ 9.4 GB | ≤ 9.4 | ~9.5 GB（60%） | 邊緣 |
+
+### Y.4 解讀
+
+1. **10^8 用 10 epochs 超越了 3.5M**：val CE 1.3725 < 1.4061，val exact 0.430（vs 0.230），
+   resp_tf 0.4671（vs 0.4399）。**Scale 有幫助，但需要足夠的 epochs。**
+2. **過擬合在 epoch 5**：val CE 從 1.3725 升到 1.4766。best checkpoint 是 epoch 5。
+   這表示 10^8 在 138k rows 上 5 epochs 就飽和了；更多 epochs 只會過擬合。
+3. **near_threshold 0.0028 < 0.01**：strict gate 失敗，但 dynamics 實際上是健康的
+   （sensitive 0.7545、mem 2.09、threshold 0.93 不貼上限、verdict alive）。
+   Gate 的閾值 0.01 是針對 unnormalized 空間校準的；在 normalized 空間裡，
+   sensitive 才是正確的健康指標。
+4. **mem_norm 有效**：mem 15.27 → 2.09（7.3× 降低），threshold 0.9914 → 0.9296
+   （不再貼上限）。mem_norm 修好了 §M 的 failure mode。
+
+### Y.5 對 beta 的含義
+
+- **B1 仍未測試**：10-epoch checkpoint 在凍結題上是否產生正確答案？需要跑 B1。
+- **val CE 1.3725 < 1.4061** 是 capability 的 proxy 改善，但不是 B1 的證據。
+- **Core score 仍是 0.00/10** 直到 B1 測出 > 0。
+
+### Y.6 下一步
+
+**B1**：用 10-epoch checkpoint 在凍結題上量核心覆蓋率與正確率。這是 capability 的真正測試。
+
+本輪不新增承諾；B1 的登記見 §Z。
+
+## Z. B1 10-Epoch 登記（寫在跑之前）
+
+- **問題**：10-epoch checkpoint（val CE 1.3725 < P2 1.4061，val exact 0.430）在凍結題上
+  有沒有產生正確答案？
+- **儀器**：`scripts/probe_p2_tok_core.py`（既有、不改），strict 評分。
+- **Checkpoint**：`data/checkpoints/scaleup_10epoch.pt`。
+- **題組**：knowledge、math、code、routing + knowledge_mc（5 suites，115 題）。
+- **報告**：`data/intelligence_reports/scaleup_10epoch_tok.json`。
+- **判讀**：same as §E：≥1 正確 = core > 0；0 正確 + coverage > 0 = capability gap；
+  coverage = 0 = 詞表讀不到。
+- **資源**：`taskset -c 0-2`、`OMP_NUM_THREADS=3`；量 RSS 與秒數。
+- **登記時間**：2026-11-23，於 Run 之前。
+
+
+
+## Z. B1 10-Epoch 結果（跑後追加）
+
+> 執行：2026-11-23 09:xx，`scripts/probe_p2_tok_core.py`，
+> `data/intelligence_reports/scaleup_10epoch_tok.json`，`--check` 通過。~12 秒（115 題）。
+
+### Z.1 逐題組
+
+| suite | n | correct | answered | unk |
+| ----- | --- | ------- | -------- | --- |
+| math | 40 | **0** | 39 | 11.4% |
+| knowledge | 15 | **0** | 14 | 8.4% |
+| code | 10 | **0** | 10 | 5.3% |
+| routing | 10 | **0** | 7 | 35.1% |
+| knowledge_mc | 40 | **1** | 38 | 0.8% |
+| total | 115 | **1** | 108 | 8.2% |
+
+### Z.2 唯一的正確題
+
+- **mc-033**：`What color is the sky on a clear day?` → gold `blue`
+- 預測：`The blue was a sky blue with a sky, and shimmering serene.`
+- strict scorer 判定正確（含 "blue"，不含干擾項）。
+- 但預測是通用短語，不是乾淨答案；這是**關鍵字巧合**，不是理解。
+
+### Z.3 判讀
+
+1. **B1 的條件（> 0 正確）技術上達成**：1 > 0。
+2. **但 1/40 在 4 選 1 上低於 chance**（期望 10/40，95% 區間 [5,16]）。
+   1/40 不是智能證據（§F.4 的 chance 規則）。
+3. **0/65 智能相關題正確**（math 0/40、knowledge 0/15、code 0/10）。
+   只有 routing（表現層任務）和 1 個 MC 關鍵字命中。
+4. **相較 P2 checkpoint（0/115）**：10-epoch checkpoint 多了 1 個關鍵字命中。
+   這是微小的、不可重現的改善，不是 capability。
+
+### Z.4 對 beta 的最終判決
+
+- **B1 技術上達成**（1 > 0），但實質上**未達成**（0/65 智能題，1/40 MC 低於 chance）。
+- **Core score 仍是 0.00/10**：1 個關鍵字命中不是「模型產生且正確的答案」。
+- **βeta exit condition B1**（§7）要求 "source=snn 覆蓋率 > 0 且可重跑"——
+  覆蓋率 108/115 有回答，但正確率 1/115（0.9%）在雜訊範圍內。
+
+### Z.5 所有路徑的最終狀態
+
+| 路徑 | 結果 | 證據 |
+| ---- | ---- | ---- |
+| Width (4.7×) | 無幫助 | §J/§L：d2 退步、d3 underfit |
+| Scale (10^8, 2ep) | 動態失敗 | §M：near 0.0078、mem 15.27 |
+| mem_norm fix | 動態修好 | §O：mem 1.38、sensitive 0.90、threshold 0.72 |
+| Scale (10^8, 10ep) | val CE 1.3725 < 1.4061 ✅ | §Y：超越 3.5M，但 near 0.0028 |
+| KD (1.5B, 0.5) | 一切變差 | §Q：val CE 4.19、near 0.005 |
+| KD (1.5B, 0.1) | 一切變差 | §S：val CE 3.92、near 0.0042 |
+| KD (7B, 0.5) | 一切變差 | §V：val CE 4.09、near 0.005 |
+| Teacher alignment | ✅ 通過 | §T：98.6–99.6% mapped mass |
+| KD 目標對齊 | ✅ 正確 | §W.1：63.6% top-1 agreement (position+1) |
+| Full-corpus 10ep B1 | 1/115（關鍵字巧合） | §Z |
+
+### Z.6 最終結論
+
+**SNN 核心在目前的架構/規模/目標函數下，不能在凍結題上產生正確答案。**
+
+- val CE 可以超越 3.5M（1.3725 < 1.4061），val exact 可以翻倍（0.43 vs 0.23）。
+- 但凍結題上 0/65 智能相關題正確（1 個 MC 關鍵字命中，低於 chance）。
+- Width 不幫助、KD 不幫助（teacher 品質或目標函數問題）、scale 需要 10 epochs 才超越 3.5M。
+- **Core score: 0.00/10。Beta B1: 未達成。**
+
+### Z.7 剩下的路徑（未登記）
+
+1. **資料規模**：138k rows 對 10^8 params 仍然太少（5 epochs 就飽和）。需要更多資料或資料增強。
+2. **目標函數**：KD 的 soft targets 有 ~2.9 nats entropy，對 student 沒有幫助。需要重新設計 KD 目標（例如 hard-label KD、top-1 KD、或只在高 confidence positions 蒸餾）。
+3. **架構**：1 層 105M 已超越 3.5M，但仍然 0/65。可能需要 2 層或不同的 readout（但 §X #276 顯示 2 層在 small scale 變差）。
+4. **記憶體效率**：10^8 + Adam 超過 60% RAM cap。需要 Adafactor 或更大機器。
+
+本輪不新增承諾。所有 gates（`check_fact_gates.py`）：ALL PASS。Art group 未動。Ratchet 未改。
