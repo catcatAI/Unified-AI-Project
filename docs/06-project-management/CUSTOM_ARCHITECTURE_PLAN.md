@@ -614,3 +614,21 @@ Phase 0 通過（proxy 大幅改善，B1 有 1 個正確答案）。**可以啟�
 
 Living State 的實作（self token）已加入 attention 架構。但完整的 Living State
 （情感更新、持久化、閉環）需要更多設計。暫緩到 Phase 2 之後。
+
+
+## Phase 2 登記：Latent Space (VAE)（寫在跑之前）
+
+- **問題**：Attention Phase 0 (10 epochs) 得到 val CE 1.0338、val exact 0.520、B1 1/115。
+  proxy 改善了，但 capability 仍然是 1/115。Next-token CE 即使有 attention 也不產生 capability。
+- **Run**：attention arch + VAE (question→z→answer reconstruction + KL)，full corpus，2 epochs，
+  XPU，d_emb 96, d_hidden 192, 8 heads, 2 layers, latent_dim 256, beta_kl 0.001,
+  mem_norm=True, LR 3e-3, seed 0, guards 同 P2。
+- **Baseline**：Attention Phase 0 (2 epochs): val CE 1.1957, val exact 0.515, B1 1/115.
+- **判讀規則（跑前寫死）**：
+  - val CE < 1.1957 → VAE 有幫助；繼續加 contrastive。
+  - val CE 介於 1.1957 和 1.4061 → 邊際；需要調参。
+  - val CE ≥ 1.4061 → VAE 沒有幫助；回退。
+  - non-finite/rollback → 停（KL collapse 或其他問題）。
+- **報告**：`data/checkpoints/tln_phase2.pt`、`data/intelligence_reports/tln_phase2.json`。
+- **資源**：`taskset -c 0-5`、`OMP_NUM_THREADS=6`；量 RSS 與秒數；RAM ≤ 60%。
+- **登記時間**：2026-11-23，於 Run 之前。
