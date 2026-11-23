@@ -327,6 +327,41 @@ Question → Encoder → z → Decoder → Answer
 
 **前置**：Phase 4 通過，且有明確的成長需求。
 
+## 3.5 研究發現：Next-token CE 的限制與解決方向
+
+### 問題
+
+TLN Phase 0-4 的實驗證實：**next-token CE 是根本瓶頸**。所有架構改進（attention, living state,
+memory, self-model）都只改善 proxy，不改善 capability（B1 = 0/65）。
+
+### 研究方向（按優先順序）
+
+| # | 方向 | 代表 | 適用性 | 說明 |
+|---|------|------|--------|------|
+| 1 | Seq2Seq Framing (A2) | T5, BART | 高 | 將訓練改為「問題→答案」的 seq2seq 格式，分離理解與生成 |
+| 2 | Chain-of-Thought (C1) | GPT-3 CoT | 高 | 訓練資料加入推理過程，迫使模型「思考」而非「記憶」 |
+| 3 | Hard Negative Mining (B3) | — | 高 | 分析 B1 盲點，重點訓練 |
+| 4 | RLHF/RLAIF (A3) | InstructGPT | 高 | 直接優化「回答品質」而非「token 預測準確度」 |
+| 5 | Encoder-Decoder (D1) | T5, BART | 高 | 分離理解與生成，cross-attention 連接 |
+| 6 | Data Augmentation (B2) | — | 中 | 大規模改述生成 |
+| 7 | Multi-Task Learning (B4) | — | 中 | 多任務訓練改善泛化 |
+| 8 | Masked LM (A1) | BERT, T5 | 中 | 遮蔽重建，改善理解 |
+| 9 | Contrastive (A4) | SimCLR, CLIP | 中 | 在輸出空間做 contrastive |
+| 10 | Energy-Based (A5) | EBM | 低-中 | 學習全局約束 |
+
+### 核心洞察
+
+**不需要更大的模型，不需要更多的 epochs，需要不同的訓練目標。**
+
+從 next-token CE 改為 answer-level supervision + RL 是唯一可能的解決方案。
+
+### 實作計畫
+
+1. **Seq2Seq Framing**：將訓練資料改為 seq2seq 格式，使用 bidirectional question encoding
+2. **Chain-of-Thought**：在訓練資料中加入推理過程
+3. **Hard Negative Mining**：分析 B1 盲點，重點訓練
+4. **RLHF**：實現 reward model + PPO/DPO
+
 ## 4. 什麼問題能解決 / 不能解決
 
 ### 能解決的
@@ -735,5 +770,22 @@ Living State 的實作（self token）已加入 attention 架構。但完整的 
   - val CE >= 1.1957 → Self-Model 沒有幫助；回退。
   - non-finite/rollback -> 停。
 - **報告**：data/checkpoints/tln_phase4.pt、data/intelligence_reports/tln_phase4.json。
+- **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
+- **登記時間**：2026-11-23，於 Run 之前。
+
+
+## Phase 5 登記：Chain-of-Thought Data Augmentation（寫在跑之前）
+
+- **問題**：Next-token CE 是根本瓶頸。CoT 資料增強是否改善 capability？
+- **Run**：attention arch，CoT 增強資料，full corpus，10 epochs，XPU，
+  d_emb 96, d_hidden 192, 8 heads, 2 layers, mem_norm=True, LR 3e-3, seed 0, guards 同 P2。
+- **Baseline**：Phase 0 (attention, 原始資料, 10 epochs): val CE 1.0338, val exact 0.520, B1 1/115.
+- **判讀規則（跑前寫死）**：
+  - val CE < 1.0338 → CoT 有幫助；繼續。
+  - val CE 介於 1.0338 和 1.4061 → 邊際。
+  - val CE >= 1.4061 → CoT 沒有幫助；回退。
+  - B1 > 1/115 → CoT 改善 capability；這是關鍵指標。
+  - non-finite/rollback -> 停。
+- **報告**：data/checkpoints/tln_phase5.pt、data/intelligence_reports/tln_phase5.json。
 - **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
 - **登記時間**：2026-11-23，於 Run 之前。
