@@ -549,3 +549,19 @@ Phase 1 (Living State) 的前置條件是 Phase 0 通過。Phase 0 的 proxy 指
 4. 量測 val CE, val exact, B1
 
 預估成本：~2 h。
+
+
+## Phase 0.5 登記：Attention 10 Epochs（寫在跑之前）
+
+- **問題**：Attention Phase 0 (2 epochs) 得到 val CE 1.1957、val exact 0.515、B1 1/115。
+  10 epochs 是否能讓 B1 > 0？
+- **Run**：attention arch，full corpus，10 epochs，XPU，d_emb 96, d_hidden 192, 8 heads,
+  2 layers, mem_norm=True, LR 3e-3, seed 0, guards 同 P2。
+- **Baseline**：Phase 0 (2 epochs): val CE 1.1957, val exact 0.515, B1 1/115.
+- **判讀規則（跑前寫死）**：
+  - B1 > 1（≥2 正確）→ attention 有真實 capability；繼續 Phase 1。
+  - B1 = 1（與 2 epochs 相同）→ attention 改善了 proxy 但沒有 capability；需要 Phase 1 (Living State)。
+  - B1 = 0（退步）→ attention 的 proxy 改善是過擬合；回退。
+- **報告**：`data/checkpoints/tln_phase0_10ep.pt`、`data/intelligence_reports/tln_phase0_10ep.json`。
+- **資源**：`taskset -c 0-5`、`OMP_NUM_THREADS=6`；量 RSS 與秒數；RAM ≤ 60%。
+- **登記時間**：2026-11-23，於 Run 之前。
