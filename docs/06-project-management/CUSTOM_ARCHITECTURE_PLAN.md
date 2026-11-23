@@ -205,6 +205,22 @@ Question → Encoder → z → Decoder → Answer
 
 **實作**：這是最難的部分。先不實作，用 fixed architecture 驗證其他組件。
 
+## 2.5 Phase 0 登記（寫在跑之前）
+
+- **問題**：RNN 的 next-token CE 不產生 capability（B1 0/65）。Attention 能 attend to
+  question，是否改善 capability？
+- **Run**：attention arch，full corpus，2 epochs，XPU，d_emb 96, d_hidden 192, 8 heads,
+  1 layer, mem_norm=True, LR 3e-3, seed 0, guards 同 P2。與 P2 (RNN) 完全相同，只換 arch。
+- **Baseline**：P2 (RNN): val CE 1.4061, val exact 0.230, B1 0/75.
+- **判讀規則（跑前寫死）**：
+  - val CE < 1.4061 → attention 有幫助；繼續 Phase 1。
+  - val CE 介於 1.4061 和 1.5154 → 邊際；需要更多 epochs。
+  - val CE ≥ 1.5154 → attention 沒有幫助；回退。
+  - non-finite/rollback → 停。
+- **資源**：`taskset -c 0-5`、`OMP_NUM_THREADS=6`；量 RSS 與秒數；RAM ≤ 60%。
+- **報告**：`data/checkpoints/tln_phase0.pt`、`data/intelligence_reports/tln_phase0.json`。
+- **登記時間**：2026-11-23，於 Run 之前。
+
 ## 3. 實作順序（研究 → 實作 → 測試）
 
 ### Phase 0：Temporal Attention（替換 RNN）
@@ -424,5 +440,3 @@ TLN 不取代現有系統，而是取代 TokenSNN 的核心計算：
 > **這個計畫的核心假設**：標準架構的 next-token CE 訓練目標不產生 capability；
 > TLN 的 latent space + contrastive + attention 提供更強的訓練信號，應該能改善 capability。
 > 這個假設需要 Phase 0-2 的實驗來驗證。
-EOF
-echo "written"
