@@ -233,7 +233,51 @@ def main() -> int:
         help="what the head reads each step: membrane potential (SLAYER, measured "
         "winner, default) or binary spikes (the old head, for A/B control)",
     )
-    ap.add_argument("--layers", type=int, default=1, help="stacked LIF layers")
+    ap.add_argument(
+        "--optimizer",
+        choices=("adam", "adafactor"),
+        default="adam",
+        help="optimizer: 'adam' (default) or 'adafactor' (memory-efficient, "
+        "factored second moments; no momentum)",
+    )
+    ap.add_argument(
+        "--mem-norm",
+        action="store_true",
+        help="LayerNorm the membrane before the spike decision (mem_norm=True). "
+        "Keeps the threshold in a bounded space at large scale.",
+    )
+    ap.add_argument(
+        "--arch",
+        choices=("rnn", "attention"),
+        default="rnn",
+        help="core architecture: 'rnn' (default, historical SNN) or "
+        "'attention' (Temporal Attention, TLN Phase 0)",
+    )
+    ap.add_argument(
+        "--use-vae", action="store_true", help="enable VAE (question->z->answer) in attention arch"
+    )
+    ap.add_argument("--latent-dim", type=int, default=256, help="latent dimension for VAE")
+    ap.add_argument("--beta-kl", type=float, default=0.001, help="KL divergence weight for VAE")
+    ap.add_argument(
+        "--contrastive-weight",
+        type=float,
+        default=0.1,
+        help="contrastive loss weight for VAE (InfoNCE)",
+    )
+    ap.add_argument(
+        "--use-episodic", action="store_true", help="enable episodic memory (TLN Phase 3)"
+    )
+    ap.add_argument(
+        "--episodic-slots", type=int, default=64, help="number of episodic memory slots"
+    )
+    ap.add_argument("--use-self-model", action="store_true", help="enable self-model (TLN Phase 4)")
+    ap.add_argument("--n-heads", type=int, default=8, help="attention heads (attention arch only)")
+    ap.add_argument(
+        "--layers",
+        type=int,
+        default=1,
+        help="stacked LIF layers (rnn) or transformer blocks (attention)",
+    )
     ap.add_argument(
         "--timesteps",
         type=int,
@@ -377,16 +421,33 @@ def main() -> int:
         max_len=args.max_len,
         beta=args.beta,
         readout=args.readout,
+        arch=args.arch,
+        n_heads=args.n_heads,
+        use_vae=args.use_vae,
+        latent_dim=args.latent_dim,
+        beta_kl=args.beta_kl,
+        contrastive_weight=args.contrastive_weight,
+        use_episodic=args.use_episodic,
+        episodic_slots=args.episodic_slots,
+        use_self_model=args.use_self_model,
         layers=args.layers,
         timesteps=args.timesteps,
         theta_max=args.theta_max,
         leak_floor=args.leak_floor,
         gain_cap=args.gain_cap,
+        mem_norm=args.mem_norm,
     )
     if args.max_vocab:
         cfg.max_vocab = int(args.max_vocab)
     texts = [p + "\n" + a for p, a in train]
-    if args.vocab == "token":
+    if args.resume and Path(args.out).is_file():
+        # When resuming, the vocabulary is fixed by the checkpoint: rebuilding
+        # it from a (possibly smaller) training slice changes the atom set and
+        # silently invalidates any KD cache bound to the original vocabulary.
+        _loaded = TokenSNN.load(args.out, map_location="cpu", device="cpu")
+        vocab = _loaded.vocab
+        print(f"vocab from checkpoint (resume): {len(vocab)} atoms", flush=True)
+    elif args.vocab == "token":
         # min_count 1: rare words must stay composable (knowledge answers
         # are often hapax); unseen *probe* words become <unk> either way.
         vocab = TokenVocab.build(
@@ -615,6 +676,7 @@ def main() -> int:
         ss_final=args.ss_final,
         lr_at=schedule,
         guard=args.guard,
+        optimizer=args.optimizer,
         diverge_factor=args.diverge_factor,
         min_lr=args.min_lr,
         should_stop=lambda: stop["now"],

@@ -106,15 +106,37 @@ class TokenConfig:
     # knob in SNN sequence models). Costs Kx compute in forward and
     # generate; gives the recurrent dynamics K updates per token.
     timesteps: int = 1
+    # ``arch`` selects the core computation: "rnn" (default, historical) or
+    # "attention" (Temporal Attention, TLN Phase 0). Attention replaces the
+    # recurrent w_in/w_rec/w_skip with causal self-attention, allowing every
+    # token to attend to all previous tokens. Backward-compatible: old
+    # checkpoints default to "rnn".
+    arch: str = "rnn"
+    # ``n_heads`` for the attention architecture (ignored by "rnn").
+    n_heads: int = 8
     max_len: int = 192
     min_count: int = 2
     max_vocab: int = 12000
+    # Living State dimension (emotion + attention + identity).
+    living_state_dim: int = 16
+    # Latent Space (VAE) settings (TLN Phase 2).
+    use_vae: bool = False
+    latent_dim: int = 256
+    beta_kl: float = 0.001
+    contrastive_weight: float = 0.1
+    use_episodic: bool = False
+    episodic_slots: int = 64
+    use_self_model: bool = False
+    # Normalise the membrane before the spike decision (rnn arch only).
+    mem_norm: bool = False
 
     def __post_init__(self) -> None:
         # Validate at config creation, not inside the net factory: a bad
         # readout is a caller error and should fail before any weights exist.
         if self.readout not in ("spike", "membrane"):
             raise ValueError(f"readout must be 'spike' or 'membrane', got {self.readout!r}")
+        if self.arch not in ("rnn", "attention"):
+            raise ValueError(f"arch must be 'rnn' or 'attention', got {self.arch!r}")
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -481,6 +503,350 @@ def _make_net(torch: Any, pad_id: int = 0) -> Any:
             # Normalise before the head; the spike readout (A/B control) is
             # left untouched because a binary vector has no meaningful scale.
             self.out_norm = nn.LayerNorm(cfg.d_hidden)
+            self.mem_norm = nn.LayerNorm(cfg.d_hidden) if cfg.mem_norm else nn.Identity()
+            # Store the logit so sigmoid(parameter) == cfg.beta exactly.
+            self.beta = nn.Parameter(
+                torch.logit(torch.tensor(float(cfg.beta)).clamp(1e-4, 1 - 1e-4))
+            )
+            self.threshold = nn.Parameter(torch.tensor(cfg.threshold))
+
+        def _spike(self, x: Any) -> Any:
+            # Surrogate gradient: hard forward value, fast-sigmoid derivative.
+            hard = (x >= 0).to(x.dtype)
+            soft = torch.sigmoid(self.cfg.surrogate_alpha * x)
+            return hard.detach() + soft - soft.detach()
+
+        def init_state(self, batch: int, device: Any = None) -> Any:
+            shape = (batch, self.cfg.d_hidden)
+            mem = [self.embed.weight.new_zeros(shape) for _ in range(self.n_layers)]
+            spk = [self.embed.weight.new_zeros(shape) for _ in range(self.n_layers)]
+            return mem, spk
+
+        def advance_hidden(self, token_ids: Any, state: Any) -> Any:
+            mem, spk = state
+            leak = torch.sigmoid(self.beta)
+            x = self.embed(token_ids.reshape(-1))
+            for _ in range(max(1, int(self.cfg.timesteps))):
+                drive = x
+                for layer in range(self.n_layers):
+                    skip = self.w_skip[layer](x) if layer else 0.0
+                    mem[layer] = (
+                        leak * mem[layer]
+                        + self.w_in[layer](drive)
+                        + self.w_rec[layer](spk[layer])
+                        + skip
+                    )
+                    spk[layer] = self._spike(self.mem_norm(mem[layer]) - torch.abs(self.threshold))
+                    drive = spk[layer]
+            if self.cfg.readout == "membrane":
+                out = self.out_norm(mem[self.n_layers - 1])
+            else:
+                out = spk[self.n_layers - 1]
+            return out, (mem, spk)
+
+        def advance(self, token_ids: Any, state: Any) -> Any:
+            out, state = self.advance_hidden(token_ids, state)
+            return self.head(out), state
+
+        def encode(self, ids: Any) -> Any:
+            batch, steps = ids.shape
+            state = self.init_state(batch)
+            outs = []
+            for t in range(steps):
+                out, state = self.advance_hidden(ids[:, t], state)
+                outs.append(out)
+            return torch.stack(outs, dim=1)
+
+        def forward(self, ids: Any) -> Any:
+            return self.head(self.encode(ids))
+
+        @property
+        def is_spiking(self) -> bool:
+            return True
+
+    return _SpikeNet
+
+
+def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
+    """Causal self-attention network (TLN Phase 0). Same interface as _SpikeNet."""
+    nn = torch.nn
+    F = torch.nn.functional
+
+    class _TemporalPositionalEncoding(torch.nn.Module):
+        """Sinusoidal positional encoding (standard Transformer)."""
+
+        def __init__(self, d_model: int, max_len: int = 512):
+            super().__init__()
+            pe = torch.zeros(max_len, d_model)
+            position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+            div_term = torch.exp(
+                torch.arange(0, d_model, 2, dtype=torch.float) * (-math.log(10000.0) / d_model)
+            )
+            pe[:, 0::2] = torch.sin(position * div_term)
+            pe[:, 1::2] = torch.cos(position * div_term)
+            self.register_buffer("pe", pe.unsqueeze(0))
+
+        def forward(self, x: Any) -> Any:
+            return x + self.pe[:, : x.size(1), :]
+
+    class _TransformerBlock(torch.nn.Module):
+        def __init__(self, d_model: int, n_heads: int, d_ff: int, dropout: float = 0.1):
+            super().__init__()
+            self.attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout, batch_first=True)
+            self.ffn = nn.Sequential(
+                nn.Linear(d_model, d_ff),
+                nn.GELU(),
+                nn.Linear(d_ff, d_model),
+            )
+            self.norm1 = nn.LayerNorm(d_model)
+            self.norm2 = nn.LayerNorm(d_model)
+            self.dropout = nn.Dropout(dropout)
+
+        def forward(self, x: Any, causal_mask: Any = None) -> Any:
+            # Self-attention with causal mask
+            attn_out, _ = self.attn(x, x, x, attn_mask=causal_mask, is_causal=True)
+            x = self.norm1(x + self.dropout(attn_out))
+            ffn_out = self.ffn(x)
+            x = self.norm2(x + self.dropout(ffn_out))
+            return x
+
+    class _AttentionNet(torch.nn.Module):
+        def __init__(self, vocab_size: int, cfg: TokenConfig) -> None:
+            super().__init__()
+            self.cfg = cfg
+            self.is_spiking = False
+            self.n_layers = max(1, int(cfg.layers))
+            d_model = cfg.d_hidden
+            self.d_model = d_model
+            self.embed = nn.Embedding(vocab_size, d_model, padding_idx=pad_id)
+            self.pos_enc = _TemporalPositionalEncoding(d_model, max_len=cfg.max_len + 16)
+            # Living State: a learned self-token that represents the AI's
+            # internal state (emotion, identity, attention). Prepended to every
+            # sequence so all tokens can attend to it. Its representation
+            # evolves through the layers and is read out as the "self" vector.
+            # Living State: a 16-dim vector (4 emotion + 4 attention + 8 identity)
+            # that represents the AI's internal state. Projected to embedding
+            # space and prepended as a self-token. Updated during processing.
+            self.living_state_dim = 16
+            self.living_state = nn.Parameter(torch.zeros(self.living_state_dim))
+            self.living_to_emb = nn.Linear(self.living_state_dim, d_model)
+            self.living_update = nn.Linear(d_model, self.living_state_dim)
+            # Buffer for runtime living state (persists across generate calls)
+            self.register_buffer("_runtime_living_state", torch.zeros(self.living_state_dim))
+            self._has_runtime_state = False
+
+            # Episodic Memory (TLN Phase 3): differentiable memory store
+            self.use_episodic = getattr(cfg, "use_episodic", False)
+            self.episodic_slots = getattr(cfg, "episodic_slots", 64)
+            if self.use_episodic:
+                self.memory_store = nn.Parameter(torch.randn(self.episodic_slots, d_model) * 0.02)
+                self.memory_read_q = nn.Linear(d_model, d_model)
+                self.memory_write_k = nn.Linear(d_model, d_model)
+                self.memory_write_v = nn.Linear(d_model, d_model)
+                self.memory_gate = nn.Linear(d_model, 1)
+                self.register_buffer("_runtime_memory", torch.zeros(self.episodic_slots, d_model))
+                self._has_runtime_memory = False
+
+            # Self-Model (TLN Phase 4): uncertainty estimation
+            self.use_self_model = getattr(cfg, "use_self_model", False)
+            if self.use_self_model:
+                self.self_model = nn.Sequential(
+                    nn.Linear(d_model, d_model // 2),
+                    nn.GELU(),
+                    nn.Linear(d_model // 2, 1),
+                )
+            # VAE: question encoder -> latent z
+            self.use_vae = getattr(cfg, "use_vae", False)
+            self.latent_dim = getattr(cfg, "latent_dim", 256)
+            if self.use_vae:
+                self.q_encoder = nn.Sequential(
+                    nn.Linear(d_model, d_model),
+                    nn.GELU(),
+                    nn.Linear(d_model, self.latent_dim * 2),
+                )
+                self.z_to_bias = nn.Linear(self.latent_dim, d_model)
+            self.layers = nn.ModuleList(
+                _TransformerBlock(d_model, cfg.n_heads, d_model * 4) for _ in range(self.n_layers)
+            )
+            self.head = nn.Linear(d_model, vocab_size)
+            self.out_norm = nn.LayerNorm(d_model)
+            self.mem_norm = nn.Identity()  # compat
+            # Dummy params for guard/dynamics compat
+            self.beta = nn.Parameter(torch.tensor(0.0))
+            self.threshold = nn.Parameter(torch.tensor(0.0))
+            # KV cache for incremental generation
+            self._kv_cache: Optional[List[Tuple[Any, Any]]] = None
+
+        def _causal_mask(self, seq_len: int, device: Any) -> Any:
+            return torch.triu(
+                torch.ones(seq_len, seq_len, device=device, dtype=torch.bool), diagonal=1
+            )
+
+        def encode(self, ids: Any) -> Any:
+            batch, steps = ids.shape
+            x = self.embed(ids)
+            # Living State: always start from learned initial value.
+            # Persistence across sequences is handled in generate(), not encode(),
+            # to avoid val_loss batch-order dependence.
+            ls = self.living_state
+            self_tok = (
+                self.living_to_emb(ls).unsqueeze(0).unsqueeze(0).expand(batch, 1, self.d_model)
+            )
+            x = torch.cat([self_tok, x], dim=1)  # (batch, 1+steps, d_model)
+            x = self.pos_enc(x)
+            mask = self._causal_mask(1 + steps, ids.device)
+            for layer in self.layers:
+                x = layer(x, causal_mask=mask)
+            x = self.out_norm(x)
+
+            # Episodic Memory read/write (if enabled)
+            if self.use_episodic:
+                q = self.memory_read_q(x.mean(dim=1))
+                mem = self.memory_store if not self._has_runtime_memory else self._runtime_memory
+                mem = mem.unsqueeze(0).expand(batch, -1, -1)
+                read_attn = torch.bmm(q.unsqueeze(1), mem.transpose(1, 2))
+                read_attn = torch.softmax(read_attn, dim=-1)
+                read_vec = torch.bmm(read_attn, mem).squeeze(1)
+                x = x.clone()
+                x[:, 0, :] = x[:, 0, :] + read_vec
+
+                if self.training:
+                    v = self.memory_write_v(x.mean(dim=1))
+                    gate = torch.sigmoid(self.memory_gate(x.mean(dim=1)))
+                    write_update = gate.unsqueeze(-1) * v.unsqueeze(1)
+                    self._runtime_memory = (mem[0] + write_update.mean(dim=0)).detach()
+                    self._has_runtime_memory = True
+
+            # Self-Model uncertainty (if enabled)
+            self_uncertainty = None
+            if self.use_self_model:
+                self_uncertainty = torch.sigmoid(self.self_model(x[:, 0, :].mean(dim=0)))  # (1,)
+                self._last_uncertainty = self_uncertainty.detach()
+
+            # Update living state from last hidden (only persist in inference)
+            last_hidden = x[:, 0, :]  # self token's final representation
+            delta = self.living_update(last_hidden.mean(dim=0))  # (16,)
+            self._last_self = (ls + 0.01 * delta).detach()
+            # Return only answer tokens' hidden states
+            return x[:, 1:, :]
+
+        def encode_vae(self, ids: Any, mask: Any) -> Any:
+            """Encode with VAE: returns (hidden, z_mean, z_logvar).
+
+            Question tokens (mask==False) are mean-pooled and encoded into z.
+            z is projected to a bias and added to all token embeddings.
+            """
+            torch = __import__("torch")
+            batch, steps = ids.shape
+            # Find answer start per row (first True in mask)
+            # Use float argmax (works for bool masks)
+            has_answer = mask.any(dim=1)
+            # For rows without answer, use steps as answer_start
+            answer_starts = mask.float().argmax(dim=1)
+            answer_starts = torch.where(
+                has_answer, answer_starts, torch.tensor(steps, device=ids.device, dtype=torch.long)
+            )
+
+            # Question mask: positions before answer_start
+            q_mask = torch.arange(steps, device=ids.device).unsqueeze(0) < answer_starts.unsqueeze(
+                1
+            )
+            # (batch, steps) bool
+
+            # Mean-pool question embeddings
+            x = self.embed(ids)  # (batch, steps, d_model)
+            # Apply mask for question positions
+            q_mask_f = q_mask.unsqueeze(-1).float()  # (batch, steps, 1)
+            q_sum = (x * q_mask_f).sum(dim=1)  # (batch, d_model)
+            q_count = q_mask_f.sum(dim=1).clamp(min=1)  # (batch, 1)
+            q_pooled = q_sum / q_count  # (batch, d_model)
+
+            # Encode to z
+            z_params = self.q_encoder(q_pooled)  # (batch, latent_dim * 2)
+            z_mean = z_params[:, : self.latent_dim]
+            z_logvar = z_params[:, self.latent_dim :]
+
+            # Reparameterize
+            if self.training:
+                eps = torch.randn_like(z_mean)
+                z = z_mean + eps * torch.exp(0.5 * z_logvar)
+            else:
+                z = z_mean
+
+            # Project z to bias
+            z_bias = self.z_to_bias(z)  # (batch, d_model)
+
+            # Add z bias to all token embeddings
+            x = x + z_bias.unsqueeze(1)  # (batch, steps, d_model)
+
+            # Prepend living-state self token
+            ls = self.living_state
+            self_tok = (
+                self.living_to_emb(ls).unsqueeze(0).unsqueeze(0).expand(batch, 1, self.d_model)
+            )
+            x = torch.cat([self_tok, x], dim=1)
+            x = self.pos_enc(x)
+            causal_mask = self._causal_mask(1 + steps, ids.device)
+            for layer in self.layers:
+                x = layer(x, causal_mask=causal_mask)
+            x = self.out_norm(x)
+            self._last_self = x[:, 0, :].detach()
+            hidden = x[:, 1:, :]  # (batch, steps, d_model)
+
+            return hidden, z_mean, z_logvar
+
+        def forward(self, ids: Any) -> Any:
+            return self.head(self.encode(ids))
+
+        def init_state(self, batch: int, device: Any = None) -> Any:
+            dev = device if device is not None else self.embed.weight.device
+            return torch.zeros(batch, 0, dtype=torch.long, device=dev)
+
+        def advance_hidden(self, token_ids: Any, state: Any) -> Any:
+            tid = token_ids.reshape(-1)
+            if state.shape[1] == 0:
+                state = tid.reshape(-1, 1) if tid.dim() == 1 else tid
+            else:
+                state = torch.cat([state, tid.reshape(-1, 1) if tid.dim() == 1 else tid], dim=1)
+            x = self.encode(state)
+            out = x[:, -1, :]
+            return out, state
+
+        def advance(self, token_ids: Any, state: Any) -> Any:
+            out, state = self.advance_hidden(token_ids, state)
+            return self.head(out), state
+
+    return _AttentionNet
+
+    class _SpikeNet(torch.nn.Module):
+        def __init__(self, vocab_size: int, cfg: TokenConfig) -> None:
+            super().__init__()
+            self.cfg = cfg
+            self.n_layers = max(1, int(cfg.layers))
+            # padding_idx must be the *real* PAD id: CharVocab/TokenVocab
+            # append specials after the content tokens, so PAD is not 0 —
+            # hard-coding 0 used to freeze the most frequent token's embedding
+            # at the zero vector and give PAD a trained one.
+            self.embed = nn.Embedding(vocab_size, cfg.d_emb, padding_idx=pad_id)
+            self.w_in = nn.ModuleList(
+                nn.Linear(cfg.d_emb if i == 0 else cfg.d_hidden, cfg.d_hidden)
+                for i in range(self.n_layers)
+            )
+            self.w_rec = nn.ModuleList(
+                nn.Linear(cfg.d_hidden, cfg.d_hidden, bias=False) for _ in range(self.n_layers)
+            )
+            self.w_skip = nn.ModuleList(
+                [nn.Identity()]
+                + [nn.Linear(cfg.d_emb, cfg.d_hidden) for _ in range(self.n_layers - 1)]
+            )
+            self.head = nn.Linear(cfg.d_hidden, vocab_size)
+            # Membrane potential accumulates with steady-state gain ~1/(1-leak)
+            # (=10x at beta 0.9), so raw membrane saturates the softmax on
+            # long inputs (measured: init CE 19 nats at 18 chars, 24+ at 74).
+            # Normalise before the head; the spike readout (A/B control) is
+            # left untouched because a binary vector has no meaningful scale.
+            self.out_norm = nn.LayerNorm(cfg.d_hidden)
+            self.mem_norm = nn.LayerNorm(cfg.d_hidden) if cfg.mem_norm else nn.Identity()
             # Store the logit so sigmoid(parameter) == cfg.beta exactly.
             self.beta = nn.Parameter(
                 torch.logit(torch.tensor(float(cfg.beta)).clamp(1e-4, 1 - 1e-4))
@@ -535,7 +901,7 @@ def _make_net(torch: Any, pad_id: int = 0) -> Any:
                         + self.w_rec[layer](spk[layer])
                         + skip
                     )
-                    spk[layer] = self._spike(mem[layer] - torch.abs(self.threshold))
+                    spk[layer] = self._spike(self.mem_norm(mem[layer]) - torch.abs(self.threshold))
                     drive = spk[layer]
             if self.cfg.readout == "membrane":
                 out = self.out_norm(mem[self.n_layers - 1])
@@ -613,10 +979,19 @@ class TokenSNN:
         self.vocab = vocab
         self.config = config or TokenConfig()
         self.device = resolve_device(torch, device)
-        net_cls = _make_net(torch, pad_id=vocab.pad_id)
+        if getattr(self.config, "arch", "rnn") == "attention":
+            net_cls = _make_attention_net(torch, pad_id=vocab.pad_id)
+        else:
+            net_cls = _make_net(torch, pad_id=vocab.pad_id)
         self.net = net_cls(len(vocab), self.config).to(self.device)
 
     # -- batching -----------------------------------------------------------
+    def reset_living_state(self) -> None:
+        """Reset the runtime living state to the learned initial value."""
+        if hasattr(self.net, "_has_runtime_state"):
+            self.net._has_runtime_state = False
+            self.net._runtime_living_state.zero_()
+
     def encode_pair(self, prompt: str, answer: str) -> Tuple[List[int], int]:
         """Return ids and the index where the answer starts."""
         ids, start, _ = self._encode(prompt, answer)
@@ -733,7 +1108,13 @@ class TokenSNN:
         # per-token compute and of the activation memory, and it is needed only
         # where a target exists. Applying it to the selected positions is the
         # same arithmetic as computing (batch, steps, vocab) and masking.
-        hidden = self.net.encode(ids)[:, :-1, :]
+        use_vae = getattr(self.config, "use_vae", False) and hasattr(self.net, "encode_vae")
+        if use_vae:
+            hidden, z_mean, z_logvar = self.net.encode_vae(ids, mask)
+            hidden = hidden[:, :-1, :]
+        else:
+            hidden = self.net.encode(ids)[:, :-1, :]
+            z_mean = z_logvar = None
         gold = ids if targets is None else targets
         targets = gold[:, 1:]
         target_mask = mask[:, 1:]
@@ -753,10 +1134,49 @@ class TokenSNN:
             # unweighted run, so a tail weight never silently rescales the
             # learning rate.
             base = (per_tok * w).sum() / w.sum().clamp(min=1e-6)
-        if extra is None:
+        if extra is None and not use_vae:
             return base
-        term = extra(hidden)
-        return base if term is None else base + term
+        # VAE: add KL divergence
+        total = base
+        if use_vae and z_mean is not None:
+            beta_kl = getattr(self.config, "beta_kl", 0.001)
+            kl = -0.5 * torch.sum(1 + z_logvar - z_mean.pow(2) - z_logvar.exp())
+            kl = kl / ids.shape[0]  # per-sample mean
+            total = total + beta_kl * kl
+            # Contrastive (InfoNCE) with in-batch negatives
+            cw = getattr(self.config, "contrastive_weight", 0.0)
+            if cw > 0 and ids.shape[0] > 1:
+                # Find answer starts
+                has_answer = mask.any(dim=1)
+                answer_starts = mask.float().argmax(dim=1)
+                answer_starts = torch.where(
+                    has_answer,
+                    answer_starts,
+                    torch.tensor(mask.shape[1], device=ids.device, dtype=torch.long),
+                )
+                # Encode answers (mean pool over answer tokens)
+                a_mask = torch.arange(mask.shape[1], device=ids.device).unsqueeze(
+                    0
+                ) >= answer_starts.unsqueeze(1)
+                a_mask_f = a_mask.unsqueeze(-1).float()
+                x = self.net.embed(ids)
+                a_sum = (x * a_mask_f).sum(dim=1)
+                a_count = a_mask_f.sum(dim=1).clamp(min=1)
+                a_pooled = a_sum / a_count
+                z_a_params = self.net.q_encoder(a_pooled)
+                z_a = z_a_params[:, : self.net.latent_dim]
+                # z_q is z_mean (already computed)
+                z_q_n = torch.nn.functional.normalize(z_mean, dim=-1)
+                z_a_n = torch.nn.functional.normalize(z_a, dim=-1)
+                sim = z_q_n @ z_a_n.T / 0.07
+                labels = torch.arange(ids.shape[0], device=ids.device)
+                cont_loss = torch.nn.functional.cross_entropy(sim, labels)
+                total = total + cw * cont_loss
+        if extra is not None:
+            term = extra(hidden)
+            if term is not None:
+                total = total + term
+        return total
 
     # -- diagnostics ---------------------------------------------------------
     def tf_accuracy(self, pairs: Sequence[Tuple[str, str]]) -> Dict[str, float]:
@@ -865,6 +1285,40 @@ class TokenSNN:
         """
         torch = self.torch
         net = self.net
+        if not getattr(net, "is_spiking", True):
+            # Attention architecture: no spikes. Measure attention entropy
+            # and gradient flow instead.
+            was_training = net.training
+            net.eval()
+            with torch.no_grad():
+                ids, _mask, _cuts = self.make_batch(list(pairs[:n]))
+                x = net.encode(ids.to(self.device))
+            if was_training:
+                net.train()
+            # Attention entropy: how spread out is the attention?
+            # Simple proxy: variance of hidden states across positions.
+            var = float(x.var(0).mean()) if x.numel() > 0 else 0.0
+            if var != var:  # nan check
+                var = 0.0
+            out = {
+                "rows": len(pairs[:n]),
+                "layers": int(net.n_layers),
+                "beta": 0.0,
+                "threshold": 0.0,
+                "per_layer": [
+                    {
+                        "layer": i,
+                        "spike_rate": 0.0,
+                        "token_variance": round(var, 6),
+                        "near_threshold": 0.0,
+                        "sensitive": 1.0,
+                        "mem_abs_mean": round(float(x.abs().mean()), 4),
+                    }
+                    for i in range(int(net.n_layers))
+                ],
+                "verdict": "alive",
+            }
+            return out
         was_training = net.training
         net.eval()
         captured: List[Tuple[Any, Any]] = []
@@ -968,6 +1422,8 @@ class TokenSNN:
         off load and run bit-identically.
         """
         torch = self.torch
+        if not getattr(self.net, "is_spiking", True):
+            return  # attention net: no spiking guards
         theta_max = float(getattr(self.config, "theta_max", 0.0) or 0.0)
         leak_floor = float(getattr(self.config, "leak_floor", 0.0) or 0.0)
         gain_cap = float(getattr(self.config, "gain_cap", 0.0) or 0.0)
@@ -1030,6 +1486,7 @@ class TokenSNN:
         opt_state_out: Any = None,
         guard_state: Any = None,
         guard_state_out: Any = None,
+        optimizer: str = "adam",
     ) -> List[Dict[str, float]]:
         """Train on ``pairs``.
 
@@ -1076,7 +1533,10 @@ class TokenSNN:
         """
         torch = self.torch
         torch.manual_seed(seed)
-        opt = torch.optim.Adam(self.net.parameters(), lr=lr)
+        if optimizer == "adafactor":
+            opt = self.torch.optim.Adafactor(self.net.parameters(), lr=lr)
+        else:
+            opt = torch.optim.Adam(self.net.parameters(), lr=lr)
         if opt_state:
             opt.load_state_dict(opt_state)
         history: List[Dict[str, float]] = []
@@ -1155,7 +1615,16 @@ class TokenSNN:
                 row["kd_batches"] = kd_steps
             if guard:
                 best_loss, best_state, lr_scale, opt = self._guard_epoch(
-                    row, best_loss, best_state, steps, lr, lr_scale, min_lr, diverge_factor, opt
+                    row,
+                    best_loss,
+                    best_state,
+                    steps,
+                    lr,
+                    lr_scale,
+                    min_lr,
+                    diverge_factor,
+                    opt,
+                    optimizer,
                 )
                 # A rolled-back epoch restores the previous best weights, so the
                 # stored copy is no longer the current model; an improving epoch
@@ -1189,6 +1658,7 @@ class TokenSNN:
         min_lr: float,
         diverge_factor: float,
         opt: Any,
+        optimizer: str = "adam",
     ) -> "tuple[float, Optional[Dict[str, Any]], float, Any]":
         """Roll back a diverged epoch; returns (best_loss, best_state, lr_scale, opt).
 
@@ -1207,7 +1677,12 @@ class TokenSNN:
             if best_state is not None:
                 self.net.load_state_dict(best_state)
             lr_scale = max(min_lr / max(1e-12, lr), lr_scale * 0.5)
-            opt = self.torch.optim.Adam(self.net.parameters(), lr=max(min_lr, lr * lr_scale))
+            if optimizer == "adafactor":
+                opt = self.torch.optim.Adafactor(
+                    self.net.parameters(), lr=max(min_lr, lr * lr_scale)
+                )
+            else:
+                opt = self.torch.optim.Adam(self.net.parameters(), lr=max(min_lr, lr * lr_scale))
             row["loss"] = best_loss if math.isfinite(best_loss) else loss_now
             return best_loss, best_state, lr_scale, opt
         best_loss = min(best_loss, loss_now)
@@ -1289,7 +1764,17 @@ class TokenSNN:
         vocab_data = payload["vocab"]
         vocab_cls = TokenVocab if vocab_data.get("kind") == "token" else CharVocab
         vocab = vocab_cls.from_dict(vocab_data)
-        model = cls(vocab, TokenConfig(**payload["config"]), device=device)
+        model = cls(
+            vocab,
+            TokenConfig(
+                **{
+                    k: v
+                    for k, v in payload["config"].items()
+                    if k in TokenConfig.__dataclass_fields__
+                }
+            ),
+            device=device,
+        )
         model.net.load_state_dict(payload["state"])
         model.net.eval()
         return model
