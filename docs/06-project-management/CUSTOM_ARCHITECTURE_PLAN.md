@@ -632,3 +632,21 @@ Living State 的實作（self token）已加入 attention 架構。但完整的 
 - **報告**：`data/checkpoints/tln_phase2.pt`、`data/intelligence_reports/tln_phase2.json`。
 - **資源**：`taskset -c 0-5`、`OMP_NUM_THREADS=6`；量 RSS 與秒數；RAM ≤ 60%。
 - **登記時間**：2026-11-23，於 Run 之前。
+
+
+## Phase 2b 登記：VAE + Contrastive（寫在跑之前）
+
+- **問題**：Phase 2 (VAE only) 得到 val CE 1.2708（vs Phase 0 1.1957），VAE 單獨沒有幫助。
+  Contrastive 應該強迫模型在 latent space 中區分正確/錯誤答案。
+- **Run**：attention arch + VAE + contrastive (InfoNCE, in-batch negatives)，full corpus，2 epochs，
+  XPU，d_emb 96, d_hidden 192, 8 heads, 2 layers, latent_dim 256, beta_kl 0.001,
+  contrastive_weight 0.1, mem_norm=True, LR 3e-3, seed 0, guards 同 P2。
+- **Baseline**：Phase 0 (attention only): val CE 1.1957, val exact 0.515.
+- **判讀規則（跑前寫死）**：
+  - val CE < 1.1957 → contrastive 有幫助；繼續。
+  - val CE 介於 1.1957 和 1.4061 → 邊際。
+  - val CE ≥ 1.4061 → contrastive 沒有幫助；回退。
+  - non-finite/rollback → 停。
+- **報告**：`data/checkpoints/tln_phase2b.pt`、`data/intelligence_reports/tln_phase2b.json`。
+- **資源**：`taskset -c 0-5`、`OMP_NUM_THREADS=6`；量 RSS 與秒數；RAM ≤ 60%。
+- **登記時間**：2026-11-23，於 Run 之前。
