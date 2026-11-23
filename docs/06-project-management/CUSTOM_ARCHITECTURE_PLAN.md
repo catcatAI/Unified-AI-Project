@@ -721,3 +721,19 @@ Living State 的實作（self token）已加入 attention 架構。但完整的 
 - **報告**：data/checkpoints/tln_phase3.pt、data/intelligence_reports/tln_phase3.json。
 - **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
 - **登記時間**：2026-11-23，於 Run 之前。
+
+
+## Phase 4 登記：Self-Model（寫在跑之前）
+
+- **問題**：Phase 3 (Episodic Memory) 得到 val CE 1.0342、B1 0/75。Self-Model (uncertainty) 是否改善 capability？
+- **Run**：attention arch + living state + episodic memory + self-model，full corpus，2 epochs，XPU，
+  d_emb 96, d_hidden 192, 8 heads, 2 layers, mem_norm=True, LR 3e-3, seed 0, guards 同 P2。
+- **Baseline**：Phase 3 (10 epochs): val CE 1.0342, val exact 0.525.
+- **判讀規則（跑前寫死）**：
+  - val CE < 1.0342 → Self-Model 有幫助；繼續。
+  - val CE 介於 1.0342 和 1.1957 → 邊際。
+  - val CE >= 1.1957 → Self-Model 沒有幫助；回退。
+  - non-finite/rollback -> 停。
+- **報告**：data/checkpoints/tln_phase4.pt、data/intelligence_reports/tln_phase4.json。
+- **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
+- **登記時間**：2026-11-23，於 Run 之前。
