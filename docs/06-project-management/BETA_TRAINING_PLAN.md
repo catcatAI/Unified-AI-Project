@@ -1854,3 +1854,13 @@ Val set 是同一份 full core_val（7,197 rows）。
 4. **記憶體效率**：10^8 + Adam 超過 60% RAM cap。需要 Adafactor 或更大機器。
 
 本輪不新增承諾。所有 gates（`check_fact_gates.py`）：ALL PASS。Art group 未動。Ratchet 未改。
+
+
+## AA. TLN Phase 0 結果（跑後追加）
+
+> Temporal Attention (Phase 0) 完成。Attention 架構大幅超越 RNN：
+> val CE 1.4061 → 1.1957（−0.21），val exact 0.230 → 0.515（+124%），10× 更快（170s）。
+> 第一個 genuine correct answer：math-002 "(12-4)/2=4" → "4"。
+> B1: 1/115（1 個正確，vs RNN 0/115）。
+> 詳見 `CUSTOM_ARCHITECTURE_PLAN.md` Phase 0 結果。
+> 下一步：Phase 1 (Living State) 或直接跑 B1 on 更多 epochs。
