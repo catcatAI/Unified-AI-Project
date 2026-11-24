@@ -806,3 +806,18 @@ Living State 的實作（self token）已加入 attention 架構。但完整的 
 - **報告**：data/checkpoints/tln_phase6.pt、data/intelligence_reports/tln_phase6.json。
 - **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
 - **登記時間**：2026-11-23，於 Run 之前。
+
+
+## Phase 7 登記：Hard Negative Mining（寫在跑之前）
+
+- **問題**：模型在 B1 上 0-1/75 正確。Hard Negative Mining 是否改善 capability？
+- **Run**：attention arch，HNM 增強資料（+1000 math variants），full corpus，10 epochs，XPU，
+  d_emb 96, d_hidden 192, 8 heads, 2 layers, mem_norm=True, LR 3e-3, seed 0, guards 同 P2。
+- **Baseline**：Phase 0 (attention, 原始資料, 10 epochs): val CE 1.0338, val exact 0.520, B1 1/115.
+- **判讀規則（跑前寫死）**：
+  - val CE < 1.0338 → HNM 有幫助；繼續。
+  - B1 > 1/115 → HNM 改善 capability；這是關鍵指標。
+  - non-finite/rollback -> 停。
+- **報告**：data/checkpoints/tln_phase7.pt、data/intelligence_reports/tln_phase7.json。
+- **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
+- **登記時間**：2026-11-24，於 Run 之前。
