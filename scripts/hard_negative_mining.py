@@ -5,6 +5,7 @@ For each failed B1 question, generate similar but different questions
 with correct answers. This avoids teaching to the test while addressing
 the model's blind spots.
 """
+
 import json
 import random
 import re
@@ -17,17 +18,18 @@ OUT = REPO / "apps/backend/data/processed/core_train_hnm.jsonl"
 
 random.seed(42)
 
+
 def gen_math_variants(n=500):
     """Generate math problems similar to B1 failures but different."""
     variants = []
-    ops = ['+', '-', '*', '/']
+    ops = ["+", "-", "*", "/"]
     for _ in range(n):
         # Order of operations problems
         a, b, c = random.randint(1, 20), random.randint(1, 20), random.randint(1, 10)
-        op1 = random.choice(['+', '-', '*'])
-        op2 = random.choice(['+', '-', '*'])
+        op1 = random.choice(["+", "-", "*"])
+        op2 = random.choice(["+", "-", "*"])
         # Ensure valid
-        if op2 == '/' and c == 0:
+        if op2 == "/" and c == 0:
             c = 1
         expr = f"{a} {op1} {b} {op2} {c}"
         try:
@@ -35,9 +37,10 @@ def gen_math_variants(n=500):
             if isinstance(result, float) and result == int(result):
                 result = int(result)
             variants.append((f"What is {expr}?", str(result)))
-        except:
+        except (ValueError, ZeroDivisionError, SyntaxError):
             pass
     return variants
+
 
 def gen_knowledge_variants(n=200):
     """Generate knowledge questions from training data."""
@@ -46,13 +49,14 @@ def gen_knowledge_variants(n=200):
     with open(TRAIN) as f:
         for line in f:
             row = json.loads(line.strip())
-            pairs.append((row['input'], row['output']))
+            pairs.append((row["input"], row["output"]))
     # Sample random subset
     return random.sample(pairs, min(n, len(pairs)))
 
+
 # Load B1 failures
 b1 = json.load(open(B1))
-failures = [item for item in b1['items'] if not item['passed'] and not item['skipped']]
+failures = [item for item in b1["items"] if not item["passed"] and not item["skipped"]]
 
 # Generate variants
 math_variants = gen_math_variants(1000)
@@ -64,7 +68,9 @@ all_pairs = []
 with open(TRAIN) as f:
     for line in f:
         row = json.loads(line.strip())
-        all_pairs.append({"input": row['input'], "output": row['output'], "source": row.get('source', '')})
+        all_pairs.append(
+            {"input": row["input"], "output": row["output"], "source": row.get("source", "")}
+        )
 
 # Add math variants
 for q, a in math_variants:

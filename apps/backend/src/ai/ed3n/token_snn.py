@@ -710,14 +710,16 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
             mask = torch.ones(seq_len, seq_len, device=device, dtype=torch.bool)
             # Self token (position 0) can attend to everything
             mask[0, :] = False
-            # Question tokens (1..q_len) can attend to all question tokens
-            for i in range(1, q_len + 1):
-                for j in range(1, q_len + 1):
-                    mask[i, j] = False
+            # Question tokens (1..q_len) can attend to all question tokens (1..q_len)
+            if q_len > 0:
+                mask[1 : q_len + 1, 1 : q_len + 1] = False
             # Answer tokens (q_len+1..) can attend to all question tokens + previous answer tokens
+            # Build causal lower-triangular for answer positions
             for i in range(q_len + 1, seq_len):
-                for j in range(0, i + 1):
-                    mask[i, j] = False
+                mask[i, : i + 1] = False
+            # All answer tokens can attend to all question tokens
+            if q_len > 0:
+                mask[q_len + 1 :, 1 : q_len + 1] = False
             return mask
 
         def encode(self, ids: Any, question_len: int = 0) -> Any:
@@ -1154,7 +1156,19 @@ class TokenSNN:
             hidden, z_mean, z_logvar = self.net.encode_vae(ids, mask)
             hidden = hidden[:, :-1, :]
         else:
-            hidden = self.net.encode(ids)[:, :-1, :]
+            # Compute question length for Seq2Seq prefix LM (if enabled)
+            if getattr(self.net, "seq2seq_mode", False) and mask is not None:
+                # question_len = position of first True in mask (per row)
+                # Use minimum across batch for shared attention mask
+                first_true = mask.float().argmax(dim=1)
+                has_answer = mask.any(dim=1)
+                q_lens = torch.where(
+                    has_answer, first_true, torch.tensor(mask.shape[1], device=ids.device)
+                )
+                q_len = int(q_lens.min().item()) if has_answer.any() else 0
+                hidden = self.net.encode(ids, question_len=q_len)[:, :-1, :]
+            else:
+                hidden = self.net.encode(ids)[:, :-1, :]
             z_mean = z_logvar = None
         gold = ids if targets is None else targets
         targets = gold[:, 1:]

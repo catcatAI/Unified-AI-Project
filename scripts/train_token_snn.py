@@ -271,6 +271,7 @@ def main() -> int:
         "--episodic-slots", type=int, default=64, help="number of episodic memory slots"
     )
     ap.add_argument("--use-self-model", action="store_true", help="enable self-model (TLN Phase 4)")
+    ap.add_argument("--seq2seq-mode", action="store_true", help="enable Seq2Seq prefix LM")
     ap.add_argument("--n-heads", type=int, default=8, help="attention heads (attention arch only)")
     ap.add_argument(
         "--layers",
@@ -430,6 +431,7 @@ def main() -> int:
         use_episodic=args.use_episodic,
         episodic_slots=args.episodic_slots,
         use_self_model=args.use_self_model,
+        seq2seq_mode=args.seq2seq_mode,
         layers=args.layers,
         timesteps=args.timesteps,
         theta_max=args.theta_max,
