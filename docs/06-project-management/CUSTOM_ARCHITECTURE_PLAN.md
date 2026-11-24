@@ -404,6 +404,32 @@ memory, self-model）都只改善 proxy，不改善 capability（B1 = 0/65）。
 2. **Better evaluation**：使用 LLM-as-judge 而非 exact match
 3. **Transfer learning**：從預訓練 LLM 開始，而非從頭訓練
 
+## 3.7 Phase 9 結果：Computation Container（原生內建）
+
+### 結果
+
+| 指標 | Phase 0 (SFT) | Phase 9 (Container) |
+| ---- | ------------- | ------------------- |
+| val CE | 1.0338 | 1.0641 (更差) |
+| val exact | 0.520 | **0.000** (退化) |
+| resp_tf | 0.5225 | 0.0428 (退化) |
+| B1 | 1/115 | 0/75 |
+
+**Computation Container 讓模型退化。** in-place 修改 container.data 在 forward pass 中破壞了 gradient flow。
+
+### 問題
+
+1. Container 是全域參數，不是 per-sequence，導致 batch 間干擾
+2. in-place 修改 () 破壞 autograd
+3. Read/write 機制太簡單（mean pooling），無法有效儲存/讀取中間結果
+
+### 結論
+
+容器概念正確，但實作需要重做：
+- Per-sequence container（不是全域）
+- 可微分的 read/write（不是 in-place）
+- 更複雜的 addressing 機制
+
 ## 4. 什麼問題能解決 / 不能解決
 
 ### 能解決的
