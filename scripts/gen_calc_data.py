@@ -3,6 +3,7 @@
 
 Feed the model with calculator I/O pairs to see if it learns computation.
 """
+
 import json
 import random
 from pathlib import Path
@@ -13,15 +14,16 @@ VAL = REPO / "apps/backend/data/processed/core_val_calc.jsonl"
 
 random.seed(42)
 
+
 def gen_problems(n):
     problems = []
-    ops = ['+', '-', '*', '/']
+    ops = ["+", "-", "*", "/"]
     for _ in range(n):
         # Simple arithmetic
         a = random.randint(0, 100)
         b = random.randint(0, 100)
         op = random.choice(ops)
-        if op == '/':
+        if op == "/":
             if b == 0:
                 b = 1
             # Ensure divisible
@@ -35,9 +37,10 @@ def gen_problems(n):
                 else:
                     result = round(result, 4)
             problems.append((expr, str(result)))
-        except:
+        except (ValueError, ZeroDivisionError, SyntaxError):
             pass
     return problems
+
 
 def gen_order_of_ops(n):
     problems = []
@@ -46,17 +49,18 @@ def gen_order_of_ops(n):
         b = random.randint(1, 20)
         c = random.randint(1, 10)
         # a op1 b op2 c
-        op1 = random.choice(['+', '-', '*'])
-        op2 = random.choice(['+', '-', '*'])
+        op1 = random.choice(["+", "-", "*"])
+        op2 = random.choice(["+", "-", "*"])
         expr = f"{a} {op1} {b} {op2} {c}"
         try:
             result = eval(expr)
             if isinstance(result, float) and result == int(result):
                 result = int(result)
             problems.append((f"What is {expr}?", str(result)))
-        except:
+        except (ValueError, ZeroDivisionError, SyntaxError):
             pass
     return problems
+
 
 def gen_parenthesized(n):
     problems = []
@@ -71,6 +75,7 @@ def gen_parenthesized(n):
         result2 = a + (b * c)
         problems.append((f"Calculate {a} + ({b} * {c})", str(result2)))
     return problems
+
 
 # Generate training data
 all_problems = []
