@@ -3,6 +3,7 @@
 
 Uses keyword-based routing instead of try_deterministic to avoid slow model loading.
 """
+
 import json
 import random
 import re
@@ -23,23 +24,41 @@ BOUNDARY_RESPONSES = [
     "I'm not able to answer that right now.",
 ]
 
+
 def route_question(prompt):
     """Simple keyword-based routing (mirrors deterministic_router logic)."""
     p = prompt.lower().strip()
     # Math: contains numbers and operators
-    if re.search(r'\d+\s*[+\-*/]\s*\d+', p):
+    if re.search(r"\d+\s*[+\-*/]\s*\d+", p):
         return "math"
     # Logic: contains boolean operators
-    if any(kw in p for kw in ['true', 'false', 'and', 'or', 'not', 'xor', '> ', '< ', '==']):
+    if any(kw in p for kw in ["true", "false", "and", "or", "not", "xor", "> ", "< ", "=="]):
         if any(c.isdigit() for c in p):
             return "logic"
     # Knowledge: factual questions
-    if any(kw in p for kw in ['what is', 'who is', 'where is', 'when is', 'capital', 'population', 'president']):
+    if any(
+        kw in p
+        for kw in ["what is", "who is", "where is", "when is", "capital", "population", "president"]
+    ):
         return "knowledge"
     # Reasoning: comparison, causal
-    if any(kw in p for kw in ['taller', 'shorter', 'bigger', 'smaller', 'faster', 'slower', 'why', 'because', 'cause']):
+    if any(
+        kw in p
+        for kw in [
+            "taller",
+            "shorter",
+            "bigger",
+            "smaller",
+            "faster",
+            "slower",
+            "why",
+            "because",
+            "cause",
+        ]
+    ):
         return "reasoning"
     return None
+
 
 # Load training data
 rows = []
@@ -61,18 +80,22 @@ for row in rows:
 
     if engine is not None:
         # Engine can answer: train model to format
-        routing_pairs.append({
-            "input": prompt,
-            "output": f"Based on my knowledge, the answer involves {engine}.",
-            "source": "routing_format",
-        })
+        routing_pairs.append(
+            {
+                "input": prompt,
+                "output": f"Based on my knowledge, the answer involves {engine}.",
+                "source": "routing_format",
+            }
+        )
     else:
         boundary = random.choice(BOUNDARY_RESPONSES)
-        routing_pairs.append({
-            "input": prompt,
-            "output": boundary,
-            "source": "routing_boundary",
-        })
+        routing_pairs.append(
+            {
+                "input": prompt,
+                "output": boundary,
+                "source": "routing_boundary",
+            }
+        )
 
 random.shuffle(routing_pairs)
 
