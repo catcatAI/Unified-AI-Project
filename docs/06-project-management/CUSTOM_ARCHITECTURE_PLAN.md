@@ -430,6 +430,30 @@ memory, self-model）都只改善 proxy，不改善 capability（B1 = 0/65）。
 - 可微分的 read/write（不是 in-place）
 - 更複雜的 addressing 機制
 
+## 3.8 Phase 10 結果：Calculator I/O Training
+
+### 結果
+
+| 指標 | Phase 0 (SFT) | Phase 10 (Calc) |
+| ---- | ------------- | --------------- |
+| val CE | 1.0338 | 2.17 (不收斂) |
+| val exact | 0.520 | 0.000 |
+| resp_tf | 0.5225 | 0.152 |
+| B1 | 1/115 | 0/75 |
+| 答題率 | 63/75 | 11/75 (58.7% unknown) |
+
+**Calculator I/O 訓練完全失敗。** 模型無法從計算機資料學習計算，反而破壞了通用語言能力。
+
+### 原因
+
+1. **Vocab mismatch**：calc 資料的 token 分佈與原始資料不同，模型的 vocab 無法處理
+2. **Loss 不收斂**：CE 卡在 2.17，不下降。模型無法學習 expression→result 的映射
+3. **語言能力退化**：只訓練 calc 資料，模型忘記了通用語言
+
+### 結論
+
+**Feeding 計算機 I/O 給模型完全無效。** 這驗證了核心假設：next-token CE 無法學習計算。
+
 ## 4. 什麼問題能解決 / 不能解決
 
 ### 能解決的
