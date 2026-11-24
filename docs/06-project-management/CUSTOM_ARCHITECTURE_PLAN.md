@@ -877,3 +877,20 @@ Living State 的實作（self token）已加入 attention 架構。但完整的 
 - **報告**：data/checkpoints/tln_phase8.pt、data/intelligence_reports/tln_phase8.json。
 - **資源**：CPU only；量 RSS 與秒數。
 - **登記時間**：2026-11-24，於 Run 之前。
+
+
+## Phase 9 登記：Computation Container（原生內建）（寫在跑之前）
+
+- **問題**：所有方法都無法產生 capability。加入原生內建的計算容器（computation container），
+  作為模型的內部計算空間，始終啟用，不對外，只對模型本身負責。
+  是否改善 capability？
+- **Run**：attention arch + computation container (64 slots)，原始資料，full corpus，
+  10 epochs，XPU，d_emb 96, d_hidden 192, 8 heads, 2 layers, mem_norm=True, LR 3e-3, seed 0。
+- **Baseline**：Phase 0 (attention, 10 epochs): val CE 1.0338, val exact 0.520, B1 1/115.
+- **判讀規則（跑前寫死）**：
+  - val CE < 1.0338 → Container 有幫助；繼續。
+  - B1 > 1/115 → Container 改善 capability；這是關鍵指標。
+  - non-finite/rollback -> 停。
+- **報告**：data/checkpoints/tln_phase9.pt、data/intelligence_reports/tln_phase9.json。
+- **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
+- **登記時間**：2026-11-24，於 Run 之前。
