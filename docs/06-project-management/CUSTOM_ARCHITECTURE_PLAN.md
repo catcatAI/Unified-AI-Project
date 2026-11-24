@@ -920,3 +920,17 @@ Living State 的實作（self token）已加入 attention 架構。但完整的 
 - **報告**：data/checkpoints/tln_phase9.pt、data/intelligence_reports/tln_phase9.json。
 - **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
 - **登記時間**：2026-11-24，於 Run 之前。
+
+
+## Phase 10 登記：Calculator I/O Training（寫在跑之前）
+
+- **問題**： feeding 計算機輸入輸出給模型，模型能否學會計算？
+- **Run**：attention arch，calc 資料（180k 問題），full corpus，10 epochs，XPU，
+  d_emb 96, d_hidden 192, 8 heads, 2 layers, mem_norm=True, LR 3e-3, seed 0。
+- **Baseline**：Phase 0 (attention, 原始資料, 10 epochs): val CE 1.0338, B1 1/115.
+- **判讀規則（跑前寫死）**：
+  - B1 > 1/115 → 計算機資料改善 capability；這是關鍵指標。
+  - non-finite/rollback -> 停。
+- **報告**：data/checkpoints/tln_phase10.pt、data/intelligence_reports/tln_phase10.json。
+- **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
+- **登記時間**：2026-11-24，於 Run 之前。
