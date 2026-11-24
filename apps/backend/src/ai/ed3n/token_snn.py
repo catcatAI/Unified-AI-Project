@@ -128,6 +128,7 @@ class TokenConfig:
     episodic_slots: int = 64
     use_self_model: bool = False
     seq2seq_mode: bool = False
+    use_container: bool = True
     # Normalise the membrane before the spike decision (rnn arch only).
     mem_norm: bool = False
 
@@ -674,11 +675,13 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
                 )
             # Computation Container (原生內建): 模型的內部計算空間
             # 始終啟用，不對外，只對模型本身負責
-            self.container_slots = 64
-            self.container = nn.Parameter(torch.randn(self.container_slots, d_model) * 0.02)
-            self.container_read_q = nn.Linear(d_model, d_model)
-            self.container_write_v = nn.Linear(d_model, d_model)
-            self.container_gate = nn.Linear(d_model, 1)
+            self.use_container = getattr(cfg, "use_container", True)
+            if self.use_container:
+                self.container_slots = 64
+                self.container = nn.Parameter(torch.randn(self.container_slots, d_model) * 0.02)
+                self.container_read_q = nn.Linear(d_model, d_model)
+                self.container_write_v = nn.Linear(d_model, d_model)
+                self.container_gate = nn.Linear(d_model, 1)
 
             # VAE: question encoder -> latent z
             self.use_vae = getattr(cfg, "use_vae", False)
@@ -734,14 +737,15 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
             batch, steps = ids.shape
             x = self.embed(ids)
             # Computation Container (原生內建，始終啟用)
-            # Read from container before processing
-            container = self.container  # (slots, d_model)
-            read_q = self.container_read_q(x.mean(dim=1))  # (batch, d_model)
-            c = container.unsqueeze(0).expand(x.shape[0], -1, -1)  # (batch, slots, d_model)
-            read_attn = torch.bmm(read_q.unsqueeze(1), c.transpose(1, 2))  # (batch, 1, slots)
-            read_attn = torch.softmax(read_attn, dim=-1)
-            read_vec = torch.bmm(read_attn, c)  # (batch, 1, d_model)
-            x = x + read_vec  # broadcast add to all positions
+            if self.use_container:
+                # Read from container before processing
+                container = self.container  # (slots, d_model)
+                read_q = self.container_read_q(x.mean(dim=1))  # (batch, d_model)
+                c = container.unsqueeze(0).expand(x.shape[0], -1, -1)  # (batch, slots, d_model)
+                read_attn = torch.bmm(read_q.unsqueeze(1), c.transpose(1, 2))  # (batch, 1, slots)
+                read_attn = torch.softmax(read_attn, dim=-1)
+                read_vec = torch.bmm(read_attn, c)  # (batch, 1, d_model)
+                x = x + read_vec  # broadcast add to all positions
 
             # Living State: always start from learned initial value.
             # Persistence across sequences is handled in generate(), not encode(),
@@ -759,11 +763,14 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
             for layer in self.layers:
                 x = layer(x, causal_mask=attn_mask)
             # Computation Container: write to container after processing
-            write_v = self.container_write_v(x.mean(dim=1))  # (batch, d_model)
-            gate = torch.sigmoid(self.container_gate(x.mean(dim=1)))  # (batch, 1)
-            write_update = gate.unsqueeze(-1) * write_v.unsqueeze(1)  # (batch, 1, d_model)
-            with torch.no_grad():
-                self.container.data = self.container.data + write_update.mean(dim=0).detach() * 0.01
+            if self.use_container:
+                write_v = self.container_write_v(x.mean(dim=1))  # (batch, d_model)
+                gate = torch.sigmoid(self.container_gate(x.mean(dim=1)))  # (batch, 1)
+                write_update = gate.unsqueeze(-1) * write_v.unsqueeze(1)  # (batch, 1, d_model)
+                with torch.no_grad():
+                    self.container.data = (
+                        self.container.data + write_update.mean(dim=0).detach() * 0.01
+                    )
 
             x = self.out_norm(x)
 
@@ -858,11 +865,14 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
             for layer in self.layers:
                 x = layer(x, causal_mask=causal_mask)
             # Computation Container: write to container
-            write_v = self.container_write_v(x.mean(dim=1))
-            gate = torch.sigmoid(self.container_gate(x.mean(dim=1)))
-            write_update = gate.unsqueeze(-1) * write_v.unsqueeze(1)
-            with torch.no_grad():
-                self.container.data = self.container.data + write_update.mean(dim=0).detach() * 0.01
+            if self.use_container:
+                write_v = self.container_write_v(x.mean(dim=1))
+                gate = torch.sigmoid(self.container_gate(x.mean(dim=1)))
+                write_update = gate.unsqueeze(-1) * write_v.unsqueeze(1)
+                with torch.no_grad():
+                    self.container.data = (
+                        self.container.data + write_update.mean(dim=0).detach() * 0.01
+                    )
 
             x = self.out_norm(x)
             self._last_self = x[:, 0, :].detach()
@@ -1851,18 +1861,18 @@ class TokenSNN:
         vocab_data = payload["vocab"]
         vocab_cls = TokenVocab if vocab_data.get("kind") == "token" else CharVocab
         vocab = vocab_cls.from_dict(vocab_data)
+        cfg_dict = {
+            k: v for k, v in payload["config"].items() if k in TokenConfig.__dataclass_fields__
+        }
+        # Backward compat: if checkpoint has no container keys, disable container
+        if "container" not in payload["state"]:
+            cfg_dict["use_container"] = False
         model = cls(
             vocab,
-            TokenConfig(
-                **{
-                    k: v
-                    for k, v in payload["config"].items()
-                    if k in TokenConfig.__dataclass_fields__
-                }
-            ),
+            TokenConfig(**cfg_dict),
             device=device,
         )
-        model.net.load_state_dict(payload["state"])
+        model.net.load_state_dict(payload["state"], strict=False)
         model.net.eval()
         return model
 
