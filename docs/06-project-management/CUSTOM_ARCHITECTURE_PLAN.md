@@ -821,3 +821,17 @@ Living State 的實作（self token）已加入 attention 架構。但完整的 
 - **報告**：data/checkpoints/tln_phase7.pt、data/intelligence_reports/tln_phase7.json。
 - **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
 - **登記時間**：2026-11-24，於 Run 之前。
+
+
+## Phase 8 登記：DPO (Direct Preference Optimization)（寫在跑之前）
+
+- **問題**：Next-token CE 是根本瓶頸。DPO 是否改善 capability？
+- **Run**：DPO on Phase 3 checkpoint，119 preference pairs，3 epochs，CPU，
+  beta=0.1, lr=1e-5。
+- **Baseline**：Phase 3 (attention + living + episodic, 10 epochs): val CE 1.0342, B1 0/75.
+- **判讀規則（跑前寫死）**：
+  - B1 > 0/75 → DPO 改善 capability；這是關鍵指標。
+  - non-finite/rollback -> 停。
+- **報告**：data/checkpoints/tln_phase8.pt、data/intelligence_reports/tln_phase8.json。
+- **資源**：CPU only；量 RSS 與秒數。
+- **登記時間**：2026-11-24，於 Run 之前。
