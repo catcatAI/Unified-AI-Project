@@ -362,6 +362,48 @@ memory, self-model）都只改善 proxy，不改善 capability（B1 = 0/65）。
 3. **Hard Negative Mining**：分析 B1 盲點，重點訓練
 4. **RLHF**：實現 reward model + PPO/DPO
 
+## 3.6 Phase 8 結果：DPO
+
+### 結果
+
+| 指標 | Phase 3 (SFT) | Phase 8 (DPO) |
+| ---- | ------------- | ------------- |
+| B1 (凍結題) | 0/75 | **0/75** |
+| DPO loss | N/A | 0.9439 (3 epochs) |
+| Preference pairs | N/A | 119 |
+
+**DPO 沒有改善 B1。** 即使直接優化「回答品質」（偏好正確答案），模型仍然無法在凍結題上生成正確答案。
+
+### 全部 Phase 總結
+
+| Phase | 方法 | val CE | B1 | 結論 |
+| ----- | ---- | ------ | -- | ---- |
+| 0 | Attention (SFT) | 1.0338 | 1/115 | 基線 |
+| 1 | + Living State | 1.0355 | 0/75 | 無改善 |
+| 2 | + VAE + Contrastive | 1.3778 | — | 有害 |
+| 3 | + Episodic Memory | 1.0342 | 0/75 | 無改善 |
+| 4 | + Self-Model | 1.1999 | 0/75 | 無改善 |
+| 5 | CoT Data | 0.5297 | 1/75 | proxy 改善，capability 無改善 |
+| 6 | Seq2Seq Prefix LM | 0.6984 | 1/75 | proxy 改善，capability 無改善 |
+| 7 | Hard Negative Mining | 1.0395 | 0/75 | 無改善 |
+| 8 | DPO | N/A | 0/75 | 無改善 |
+
+### 最終結論
+
+**所有方法（架構、訓練目標、資料增強、RL）都無法在 10^8 參數、138k 訓練對上產生 capability。**
+
+可能的原因：
+1. **模型太小**：10^8 參數可能不足以學習「理解+生成」
+2. **資料太少**：138k 訓練對可能不足以覆蓋所有問題類型
+3. **任務太難**：需要 order of operations、世界知識、推理等
+4. **評測太嚴格**：exact match 可能過於嚴格
+
+### 建議下一步
+
+1. **Scale up**：使用更大的模型（10^9+）和更多資料
+2. **Better evaluation**：使用 LLM-as-judge 而非 exact match
+3. **Transfer learning**：從預訓練 LLM 開始，而非從頭訓練
+
 ## 4. 什麼問題能解決 / 不能解決
 
 ### 能解決的
