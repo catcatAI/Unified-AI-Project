@@ -129,6 +129,7 @@ class TokenConfig:
     use_self_model: bool = False
     seq2seq_mode: bool = False
     use_container: bool = True
+    num_classes: int = 0  # 0 = disabled (language model mode)
     # Normalise the membrane before the spike decision (rnn arch only).
     mem_norm: bool = False
 
@@ -698,6 +699,10 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
             )
             self.head = nn.Linear(d_model, vocab_size)
             self.out_norm = nn.LayerNorm(d_model)
+            # Classification head (for routing)
+            self.num_classes = getattr(cfg, "num_classes", 0)
+            if self.num_classes > 0:
+                self.classifier = nn.Linear(d_model, self.num_classes)
             self.mem_norm = nn.Identity()  # compat
             # Dummy params for guard/dynamics compat
             self.beta = nn.Parameter(torch.tensor(0.0))
@@ -1094,6 +1099,18 @@ class TokenSNN:
         response.
         """
         return encode_ids(self.vocab, prompt, answer, self.config.max_len)
+
+    def classify(self, ids: Any) -> Any:
+        """Classify input into one of num_classes categories.
+
+        Returns logits over classes. Uses mean-pooled hidden state.
+        """
+        hidden = self.net.encode(ids)  # (batch, steps, d_model)
+        # Mean pool over sequence
+        pooled = hidden.mean(dim=1)  # (batch, d_model)
+        if hasattr(self.net, "classifier"):
+            return self.net.classifier(pooled)  # (batch, num_classes)
+        return pooled  # fallback
 
     def make_batch(self, pairs: Sequence[Tuple[str, str]]) -> Tuple[Any, Any, Any]:
         torch = self.torch
