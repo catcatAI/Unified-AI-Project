@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L3] [α] [B] [L3]
+# =============================================================================
 """Generate routing/boundary training data (fast version).
 
 Uses keyword-based routing instead of try_deterministic to avoid slow model loading.

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L3] [α] [B] [L3]
+# =============================================================================
 """Hard Negative Mining: generate training examples from B1 failures.
 
 For each failed B1 question, generate similar but different questions

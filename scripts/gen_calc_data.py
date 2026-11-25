@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L3] [α] [B] [L3]
+# =============================================================================
 """Generate calculator input/output training data.
 
 Feed the model with calculator I/O pairs to see if it learns computation.

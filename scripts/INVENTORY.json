@@ -52,6 +52,11 @@
       "referenced": false,
       "purpose": "ANGELA-MATRIX: [L1] [β] [B] [L0]"
     },
+    "add_cot_data.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Generate Chain-of-Thought augmented training data."
+    },
     "ai_al_round_loop.py": {
       "category": "tool",
       "referenced": true,
@@ -271,6 +276,11 @@
       "category": "tool",
       "referenced": true,
       "purpose": "Where do the *correct* benchmark replies actually come from?"
+    },
+    "chat_qwen.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Chat with the fine-tuned Qwen model."
     },
     "check_auth_status.py": {
       "category": "diagnostics",
@@ -517,6 +527,11 @@
       "referenced": false,
       "purpose": "diag route（無說明：原始碼未附 docstring）"
     },
+    "diagnose_kd.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Diagnostic: why doesn't KD help? Analyse the teacher's soft targets."
+    },
     "distill_core_data.py": {
       "category": "tool",
       "referenced": true,
@@ -541,6 +556,11 @@
       "category": "tool",
       "referenced": true,
       "purpose": "Download a public Wikipedia dump for the offline knowledge index."
+    },
+    "dpo_train.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Simplified DPO (Direct Preference Optimization) training."
     },
     "exchange_drive_code.py": {
       "category": "tool",
@@ -642,6 +662,11 @@
       "referenced": true,
       "purpose": "全量綜合驗收 — 硬件規格自適應（<100MB, <30s, 分批+sleep）"
     },
+    "finetune_qwen.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Fine-tune Qwen3-0.6B with LoRA on our QA data (manual training loop)."
+    },
     "fix_all_imports.py": {
       "category": "maintenance",
       "referenced": true,
@@ -677,6 +702,26 @@
       "referenced": true,
       "purpose": "三種讀出的比較：換讀出能不能讓下游任務問得出來？（改生產前先量）"
     },
+    "gen_calc_data.py": {
+      "category": "generation",
+      "referenced": false,
+      "purpose": "Generate calculator input/output training data."
+    },
+    "gen_cls_data.py": {
+      "category": "generation",
+      "referenced": false,
+      "purpose": "Generate classification training data for routing."
+    },
+    "gen_cls_data2.py": {
+      "category": "generation",
+      "referenced": false,
+      "purpose": "Generate classification training data using actual deterministic router."
+    },
+    "gen_format_data.py": {
+      "category": "generation",
+      "referenced": false,
+      "purpose": "Generate format training data."
+    },
     "gen_pantry_ecosystem.py": {
       "category": "generation",
       "referenced": true,
@@ -686,6 +731,11 @@
       "category": "generation",
       "referenced": true,
       "purpose": "專案地圖生成器 — 依賴排錯 + 碰撞定位 + 行為理解，萬行預算封頂。"
+    },
+    "gen_routing_data.py": {
+      "category": "generation",
+      "referenced": false,
+      "purpose": "Generate routing/boundary training data (fast version)."
     },
     "gen_status_matrix.py": {
       "category": "generation",
@@ -737,6 +787,11 @@
       "referenced": true,
       "purpose": "A computed ceiling for one process's GPU use, from the kernel's own counters."
     },
+    "hard_negative_mining.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Hard Negative Mining: generate training examples from B1 failures."
+    },
     "hardware_intelligence_report.py": {
       "category": "tool",
       "referenced": false,
@@ -786,6 +841,11 @@
       "category": "analysis",
       "referenced": false,
       "purpose": "ORG cards"
+    },
+    "make_width_ab_data.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Deterministic synthetic addition splits for the width learnability A/B."
     },
     "measure_bigram_floor.py": {
       "category": "tool",
@@ -1432,6 +1492,11 @@
       "referenced": true,
       "purpose": "L2-4 真實 CIFAR 500 訓練 — 硬件規格自適應（分批+sleep，<500MB）"
     },
+    "train_classifier.py": {
+      "category": "training",
+      "referenced": false,
+      "purpose": "Train TokenSNN as a classifier for routing (optimized)."
+    },
     "train_compositional.py": {
       "category": "training",
       "referenced": false,
@@ -1542,6 +1607,11 @@
       "referenced": true,
       "purpose": "Graduated curriculum for the token-SNN arithmetic learner (CPU-friendly)."
     },
+    "train_two_layer.py": {
+      "category": "training",
+      "referenced": false,
+      "purpose": "Two-layer model: classify then generate."
+    },
     "train_unified.py": {
       "category": "training",
       "referenced": true,
@@ -1626,6 +1696,11 @@
       "category": "tool",
       "referenced": false,
       "purpose": "Visual verification: render images from concept space → primitives → image."
+    },
+    "wardrobe_compositor.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Wardrobe Layer Compositor (分層紙娃娃換裝合成器) for Angela AI."
     }
   }
 }

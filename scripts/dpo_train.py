@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L3] [α] [B] [L3]
+# =============================================================================
 """Simplified DPO (Direct Preference Optimization) training.
 
 Uses rule-based rewards: correct answer = chosen, incorrect = rejected.
 Trains the model to prefer correct answers over incorrect ones.
 """
+
 import json
 import math
 import random
@@ -20,12 +24,14 @@ OUT_REPORT = REPO / "data/intelligence_reports/tln_phase8.json"
 
 # Add src to path
 import sys
+
 sys.path.insert(0, str(REPO / "apps/backend/src"))
 from ai.ed3n.token_snn import TokenSNN, TokenVocab, TokenConfig
 
 
 def load_model(ckpt_path, device):
     import torch
+
     model = TokenSNN.load(str(ckpt_path), map_location=device, device=device)
     model.net.eval()
     return model
@@ -72,17 +78,20 @@ def generate_preference_pairs(model, n_pairs=500):
             continue
         # If model's answer differs from correct, create preference pair
         if model_answer.strip() != correct_answer.strip():
-            pairs.append({
-                "prompt": prompt,
-                "chosen": correct_answer,
-                "rejected": model_answer,
-            })
+            pairs.append(
+                {
+                    "prompt": prompt,
+                    "chosen": correct_answer,
+                    "rejected": model_answer,
+                }
+            )
 
     return pairs
 
 
-def dpo_loss(policy_logp_chosen, policy_logp_rejected,
-             ref_logp_chosen, ref_logp_rejected, beta=0.1):
+def dpo_loss(
+    policy_logp_chosen, policy_logp_rejected, ref_logp_chosen, ref_logp_rejected, beta=0.1
+):
     """DPO loss."""
     torch = __import__("torch")
     pi_ratio = policy_logp_chosen - policy_logp_rejected
@@ -126,7 +135,7 @@ def main():
         total_loss = 0
         n_batches = 0
         for i in range(0, len(pairs), batch_size):
-            batch = pairs[i:i + batch_size]
+            batch = pairs[i : i + batch_size]
             if len(batch) < 2:
                 continue
 
