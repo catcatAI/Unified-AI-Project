@@ -10,9 +10,9 @@ for g, grp in groups.items():
     print(f"  {g}: {len(neurons)} neurons, {total_conns} connections")
 
 # Check reflex patterns structure
-rp = d.get("reflex_patterns", {})
+rp = d.get("reflex_patterns", [])
 print(f"\nReflex patterns: {len(rp)} total")
 if rp:
-    sample = list(rp.items())[:3]
+    sample = rp[:3] if isinstance(rp, list) else list(rp.items())[:3]
     for k, v in sample:
         print(f"  {k}: {type(v).__name__}")
