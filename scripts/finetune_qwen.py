@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L3] [α] [B] [L3]
+# =============================================================================
 """Fine-tune Qwen3-0.6B with LoRA on our QA data (manual training loop)."""
 import json
 import torch

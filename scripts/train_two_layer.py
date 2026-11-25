@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L3] [α] [B] [L3]
+# =============================================================================
 """Two-layer model: classify then generate.
 
 Layer 1: Classify question type (math/logic/knowledge/reasoning/none)
