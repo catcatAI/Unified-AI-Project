@@ -973,3 +973,18 @@ Living State 的實作（self token）已加入 attention 架構。但完整的 
 - **報告**：data/checkpoints/tln_phase11.pt、data/intelligence_reports/tln_phase11.json。
 - **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
 - **登記時間**：2026-11-24，於 Run 之前。
+
+
+## Phase 13 登記：Format Training（寫在跑之前）
+
+- **問題**：模型不能生成答案，但能分類。訓練模型格式化確定性引擎結果為自然語言。
+- **Run**：attention arch，format 資料（~2k），full corpus，10 epochs，XPU，
+  d_emb 96, d_hidden 192, 8 heads, 2 layers, mem_norm=True, LR 3e-3, seed 0。
+- **Baseline**：Phase 0 (attention, 原始資料, 10 epochs): val CE 1.0338, B1 1/115.
+- **判讀規則（跑前寫死）**：
+  - val CE < 1.0338 → Format 有幫助；繼續。
+  - 模型能生成有意義的格式化回應 → Format 成功。
+  - non-finite/rollback -> 停。
+- **報告**：data/checkpoints/tln_phase13.pt、data/intelligence_reports/tln_phase13.json。
+- **資源**：taskset -c 0-5、OMP_NUM_THREADS=6；量 RSS 與秒數；RAM <= 60%。
+- **登記時間**：2026-11-25，於 Run 之前。
