@@ -370,7 +370,7 @@
     "check_vocab.py": {
       "category": "diagnostics",
       "referenced": false,
-      "purpose": "Check what surface forms map to"
+      "purpose": "!/usr/bin/env python3"
     },
     "civil_autosize.py": {
       "category": "tool",
