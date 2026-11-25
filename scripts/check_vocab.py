@@ -1,6 +1,13 @@
+#!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L3] [α] [B] [L3]
+# =============================================================================
 import json
+from pathlib import Path
 
-with open(r"D:\Projects\Unified-AI-Project\data\checkpoints\garden_checkpoint\snn.json") as f:
+REPO = Path(__file__).resolve().parent.parent
+
+with open(REPO / "data" / "checkpoints" / "garden_checkpoint" / "snn.json") as f:
     meta = json.load(f)
 idx_to_key = meta["idx_to_key"]
 k2i = meta["key_to_idx"]
@@ -14,11 +21,11 @@ for k in ["m0", "m1", "m2", "m3", "m5", "op1", "op5", "true", "false", "or", "no
 # Check what surface forms map to
 import sys
 
-sys.path.insert(0, r"D:\Projects\Unified-AI-Project\apps\backend\src")
+sys.path.insert(0, str(REPO / "apps" / "backend" / "src"))
 from ai.garden.garden_engine import GARDENEngine
 
 g = GARDENEngine(compatibility_mode=True)
-g.load(r"D:\Projects\Unified-AI-Project\data\checkpoints\garden_checkpoint")
+g.load(REPO / "data" / "checkpoints" / "garden_checkpoint")
 for q in ["2+3=5", "true OR false", "hello"]:
     keys = g.dictionary.encode(q)
     print(f"encode('{q}') = {list(keys.keys())[:10]}")

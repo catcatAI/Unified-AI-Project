@@ -3,8 +3,11 @@
 import json
 import re
 from collections import Counter, defaultdict
+from pathlib import Path
 
-with open(r"D:\Projects\Unified-AI-Project\data\parsed_cards.json", "r", encoding="utf-8") as f:
+REPO = Path(__file__).resolve().parent.parent
+
+with open(REPO / "data" / "parsed_cards.json", "r", encoding="utf-8") as f:
     cards = json.load(f)
 
 # === Token Extraction ===
@@ -125,7 +128,7 @@ for card in cards:
     )
 
 # Save
-with open(r"D:\Projects\Unified-AI-Project\data\token_analysis.json", "w", encoding="utf-8") as f:
+with open(REPO / "data" / "token_analysis.json", "w", encoding="utf-8") as f:
     json.dump(output, f, ensure_ascii=False, indent=2)
 
 # Print summary
@@ -145,4 +148,4 @@ print("\nTop cards by field count:")
 for item in output["cards_with_most_fields"][:5]:
     print(f"  {item['card_id']:12s} | {item['name']:45s} | {item['fields']} fields")
 
-print("\nSaved to: D:\\Projects\\Unified-AI-Project\\data\\token_analysis.json")
+print(f"\nSaved to: {REPO / 'data' / 'token_analysis.json'}")
