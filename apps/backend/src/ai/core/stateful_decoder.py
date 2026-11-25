@@ -1156,7 +1156,7 @@ class TokenCacheCore(GRUCore):
         ones = torch.ones((batch, 1), dtype=tensors["h"].dtype, device=tensors["h"].device)
         for position in range(tokens.shape[1]):
             tensors = self.consume(tokens[:, position], tensors)
-            tensors = self.cache_write(tensors, tensors["h"].unsqueeze(1), ones)
+            tensors = self.cache_write(tensors, torch.as_tensor(tensors["h"]).unsqueeze(1), ones)
             outputs.append(self.token_logits(tensors))
         logits = torch.stack(outputs, dim=1)
 

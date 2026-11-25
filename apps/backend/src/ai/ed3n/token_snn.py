@@ -629,6 +629,11 @@ def _make_attention_net(torch: Any, pad_id: int = 0) -> Any:
             return x
 
     class _AttentionNet(torch.nn.Module):
+        # Runtime episodic-memory buffer (registered in __init__ when
+        # use_episodic is enabled); the class-level annotation lets mypy
+        # type uses in encode()/generate() instead of flagging has-type.
+        _runtime_memory: torch.Tensor
+
         def __init__(self, vocab_size: int, cfg: TokenConfig) -> None:
             super().__init__()
             self.cfg = cfg
@@ -1414,7 +1419,7 @@ class TokenSNN:
             var = float(x.var(0).mean()) if x.numel() > 0 else 0.0
             if var != var:  # nan check
                 var = 0.0
-            out = {
+            attn_out = {
                 "rows": len(pairs[:n]),
                 "layers": int(net.n_layers),
                 "beta": 0.0,
@@ -1432,7 +1437,7 @@ class TokenSNN:
                 ],
                 "verdict": "alive",
             }
-            return out
+            return attn_out
         was_training = net.training
         net.eval()
         captured: List[Tuple[Any, Any]] = []
