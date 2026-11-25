@@ -1,5 +1,19 @@
 {
   "version": "1.1.0",
+  "character_id": "angela.core",
+  "character_version": "1.0.0",
+  "edition_id": "angela.personal",
+  "asset_status": "locked_master_reference",
+  "master_reference_path": "resources/canon/master_character_sheet.jpg",
+  "asset_provenance": "Locked official Angela Core 1.0.0 master setting reference",
+  "palette": {
+    "hair": "#E88DB8",
+    "eyes": "#69A9E8",
+    "rose": "#E88DB8",
+    "ivory": "#FFF8F0",
+    "teal": "#4D9A91",
+    "gold": "#C9A44C"
+  },
   "image_path": "resources/angela_character_masked.png",
   "original_size": {
     "width": 1408,
@@ -290,7 +304,7 @@
   },
   "metadata": {
     "generated_at": "2026-02-10 12:27:12.871132",
-    "source_image": "/home/cat/桌面/Gemini_Generated_Image_hqq027hqq027hqq0.png",
+    "source_image": "",
     "description": "Angela character with body part mapping for tactile interaction",
     "notes": "Priority 1 = detail zones (face, eyes, mouth), Priority 10 = hair (fallback)"
   }

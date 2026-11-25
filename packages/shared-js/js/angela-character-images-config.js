@@ -15,11 +15,126 @@
 
 window.ANGELA_CHARACTER_IMAGES = {
   // ================================================================
-  // Layer 1: 主立繪層 (Base Layer)
+  // Layer 1: 官方唯一鎖定基準立繪切換組 (Canonical Standees - angela.core@1.0.0-locked)
+  // ================================================================
+  angela_canon_workshop: {
+    name: 'Angela 天使工房正裝 (基準主立繪)',
+    path: 'resources/canon/outfits/standee_workshop.png',
+    type: 'single_image',
+    layer: 'base',
+    zIndex: 0,
+    totalSize: { width: 896, height: 1200 },
+    renderParams: {
+      targetWidth: 896,
+      targetHeight: 1200,
+      offsetX: 0,
+      offsetY: 0,
+      scaleToHeight: 720,
+    },
+    touchRegions: {
+      head: {
+        x: 640,
+        y: 100,
+        width: 180,
+        height: 180,
+        priority: 1,
+        sensitivity: 0.8,
+        reaction: 'look_at',
+      },
+      body: {
+        x: 640,
+        y: 280,
+        width: 220,
+        height: 280,
+        priority: 2,
+        sensitivity: 0.6,
+        reaction: 'giggle',
+      },
+      hands: {
+        x: 640,
+        y: 560,
+        width: 140,
+        height: 80,
+        priority: 3,
+        sensitivity: 0.5,
+        reaction: 'wave_back',
+      },
+    },
+  },
+  angela_canon_casual: {
+    name: 'Angela 日常休閒衛衣',
+    path: 'resources/canon/outfits/standee_casual_hoodie.png',
+    type: 'single_image',
+    layer: 'base',
+    zIndex: 0,
+    totalSize: { width: 896, height: 1200 },
+    renderParams: {
+      targetWidth: 896,
+      targetHeight: 1200,
+      offsetX: 0,
+      offsetY: 0,
+      scaleToHeight: 720,
+    },
+  },
+
+  // ================================================================
+  // Layer 2: 官方鎖定表情差分組 (Canonical Expressions - 512x512 RGBA)
+  // ================================================================
+  angela_expr_smile: {
+    name: '表情：溫柔微笑',
+    path: 'resources/canon/expressions/smile.png',
+    type: 'single_image',
+    layer: 'expression',
+    zIndex: 1,
+    totalSize: { width: 512, height: 512 },
+  },
+  angela_expr_happy: {
+    name: '表情：欣喜開朗',
+    path: 'resources/canon/expressions/happy.png',
+    type: 'single_image',
+    layer: 'expression',
+    zIndex: 1,
+    totalSize: { width: 512, height: 512 },
+  },
+  angela_expr_thinking: {
+    name: '表情：思索好奇',
+    path: 'resources/canon/expressions/thinking.png',
+    type: 'single_image',
+    layer: 'expression',
+    zIndex: 1,
+    totalSize: { width: 512, height: 512 },
+  },
+  angela_expr_blush: {
+    name: '表情：羞澀微紅',
+    path: 'resources/canon/expressions/blush.png',
+    type: 'single_image',
+    layer: 'expression',
+    zIndex: 1,
+    totalSize: { width: 512, height: 512 },
+  },
+  angela_expr_serious: {
+    name: '表情：專注認真',
+    path: 'resources/canon/expressions/serious.png',
+    type: 'single_image',
+    layer: 'expression',
+    zIndex: 1,
+    totalSize: { width: 512, height: 512 },
+  },
+  angela_expr_witty: {
+    name: '表情：俏皮機靈',
+    path: 'resources/canon/expressions/witty.png',
+    type: 'single_image',
+    layer: 'expression',
+    zIndex: 1,
+    totalSize: { width: 512, height: 512 },
+  },
+
+  // ================================================================
+  // Legacy / Compat Fallback Layer
   // ================================================================
   fullbody_ai_assistant: {
-    name: 'AI 助手',
-    path: 'resources/Gemini_Generated_Image_hqq027hqq027hqq0.png',
+    name: 'AI 助手 (Legacy)',
+    path: 'resources/angela_character_masked.png',
     type: 'single_image',
     layer: 'base',
     zIndex: 0,
@@ -61,6 +176,26 @@ window.ANGELA_CHARACTER_IMAGES = {
         reaction: 'wave_back',
       },
     },
+  },
+
+  // ================================================================
+  // Layer 1B: 紙娃娃素體與換裝合成層 (Paper Doll Layered Wardrobe)
+  // ================================================================
+  angela_wardrobe_mannequin: {
+    name: 'Angela 素體（貼身泳裝基底）',
+    path: 'resources/wardrobe/base_mannequin.png',
+    type: 'single_image',
+    layer: 'mannequin_base',
+    zIndex: 0,
+    totalSize: { width: 768, height: 1376 },
+  },
+  angela_wardrobe_workshop: {
+    name: 'Angela 天使工房迎賓立繪（分層換裝合成）',
+    path: 'resources/wardrobe/angela_dressed_workshop.png',
+    type: 'single_image',
+    layer: 'wardrobe_dressed',
+    zIndex: 0,
+    totalSize: { width: 768, height: 1376 },
   },
 
   // ================================================================

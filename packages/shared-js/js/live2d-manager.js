@@ -199,6 +199,16 @@ class Live2DManager {
 
   _init() {
     console.log('[Live2DManager] Initializing...')
+    if (
+      typeof ANGELA_CHARACTER_CONFIG !== 'undefined' &&
+      ANGELA_CHARACTER_CONFIG.live2d_config &&
+      ANGELA_CHARACTER_CONFIG.live2d_config.enabled === false
+    ) {
+      console.log('[Live2DManager] Canonical 2D standee mode enabled (live2d disabled)')
+      this.isFallback = true
+      this._createFallbackManager()
+      return
+    }
     this._waitForSDKAndInitialize()
   }
 
@@ -774,8 +784,14 @@ class Live2DManager {
   _renderFallback() {
     if (!this.fallbackCtx || !this.fallbackCanvas) return
 
-    // 如果 LayerRenderer 可用，使用三層渲染
-    if (this.layerRenderer) {
+    const currentEntry = this.characterImages[this.currentCharacterImageId]
+    const isStandaloneCanon =
+      this.currentCharacterImageId &&
+      (this.currentCharacterImageId.startsWith('angela_canon_') ||
+        this.currentCharacterImageId.startsWith('angela_expr_'))
+
+    // 如果 LayerRenderer 可用且非獨立標準立繪，使用三層渲染
+    if (this.layerRenderer && !isStandaloneCanon) {
       // 更新 LayerRenderer 的狀態
       this.layerRenderer.setExpressionIndex(this.expressionIndex)
       this.layerRenderer.setPoseIndex(this.poseIndex)
@@ -785,7 +801,7 @@ class Live2DManager {
       return
     }
 
-    // 否則使用舊的單層渲染（降級方案）
+    // 獨立立繪 / 單層渲染
     const ctx = this.fallbackCtx
     const canvas = this.fallbackCanvas
 
@@ -793,7 +809,7 @@ class Live2DManager {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     // 繪制當前選擇的立繪
-    const imageData = this.characterImages[this.currentCharacterImageId]
+    const imageData = currentEntry
     if (!imageData) {
       console.warn('[Live2DManager] No character image loaded:', this.currentCharacterImageId)
       return
@@ -801,7 +817,7 @@ class Live2DManager {
 
     const img = imageData.image
     const config = imageData.config
-    const params = config.renderParams
+    const params = config.renderParams || { scaleToHeight: canvas.height * 0.9 }
     const udmScale = this.udm ? this.udm.getResourceToBaseScale() : 1.0
 
     if (config.type === 'single_image') {

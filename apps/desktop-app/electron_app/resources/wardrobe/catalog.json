@@ -1,0 +1,75 @@
+{
+  "version": "1.0.0",
+  "character_id": "angela.core",
+  "canvas_size": { "width": 768, "height": 1376 },
+  "base_mannequin": {
+    "id": "mannequin_swimsuit_neutral",
+    "name": "Angela 素體（貼身素色連身衣）",
+    "path": "resources/wardrobe/base_mannequin.png",
+    "alpha_bounds": [173, 68, 595, 1343],
+    "description": "極簡貼身素體，無任何寬鬆袖擺、裙擺或外突裝飾，專為無破綻分層換裝設計。"
+  },
+  "slots": {
+    "top": {
+      "label": "上裝",
+      "z_index": 20,
+      "items": [
+        {
+          "id": "workshop_blouse_capelet",
+          "name": "天使工房迎賓襯衫與海軍藍短斗篷",
+          "description": "象牙色挺拔襯衫搭配精緻深藍短斗篷",
+          "covers_swimsuit_torso": true
+        },
+        {
+          "id": "hoodie_casual_blue",
+          "name": "休閒連帽長袖衛衣",
+          "description": "柔軟落肩版型，完全覆蓋素體上身",
+          "covers_swimsuit_torso": true
+        }
+      ]
+    },
+    "bottom": {
+      "label": "下裝",
+      "z_index": 10,
+      "items": [
+        {
+          "id": "tailored_skirt_navy",
+          "name": "工坊修身深藍及膝裙",
+          "description": "俐落A字裙擺，完全覆蓋素體泳裝下盤",
+          "covers_swimsuit_hips": true
+        },
+        {
+          "id": "skirt_casual_plaid",
+          "name": "英倫格紋百褶短裙",
+          "description": "學院風百褶裙，完整包裹髖部",
+          "covers_swimsuit_hips": true
+        }
+      ]
+    },
+    "shoes": {
+      "label": "鞋履",
+      "z_index": 15,
+      "items": [
+        { "id": "concierge_pumps", "name": "工房漆皮低跟鞋", "tint": "#1E2A38" },
+        { "id": "sneakers_white", "name": "透氣輕量白球鞋", "tint": "#F5F5F5" }
+      ]
+    },
+    "accessory": {
+      "label": "配飾",
+      "z_index": 30,
+      "items": [
+        {
+          "id": "gold_star_wing_hairpin",
+          "name": "左鬢金星羽翼髮飾",
+          "canonical_signature": true,
+          "position": [280, 220]
+        },
+        {
+          "id": "workshop_gold_brooch",
+          "name": "工坊胸前金星徽章",
+          "position": [384, 400]
+        }
+      ]
+    }
+  }
+}

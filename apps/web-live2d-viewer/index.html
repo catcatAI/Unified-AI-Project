@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Angela AI · Core 1.0.0</title>
+    <link rel="icon" type="image/svg+xml" href="assets/angela-viewer-icon.svg" />
     <style>
       * {
         margin: 0;
@@ -1289,6 +1290,158 @@
         <span id="pet-mood">情緒: 平靜</span>
         <span id="pet-energy">能量: 100%</span>
       </div>
+
+      <!-- Canonical Standee & Expression Switcher -->
+      <div
+        id="canon-switcher-bar"
+        style="
+          position: fixed;
+          top: 60px;
+          right: 20px;
+          z-index: 180;
+          pointer-events: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          background: rgba(17, 22, 32, 0.86);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(201, 164, 76, 0.45);
+          border-radius: 10px;
+          padding: 10px 12px;
+          font-size: 12px;
+          color: #f4efe6;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+        "
+      >
+        <div style="font-weight: 600; color: #c9a44c; margin-bottom: 2px">立繪切換</div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap">
+          <button
+            type="button"
+            class="canon-switch-btn active"
+            data-canon-id="angela_canon_workshop"
+            style="
+              padding: 5px 10px;
+              border-radius: 6px;
+              border: 1px solid rgba(232, 141, 184, 0.4);
+              background: rgba(232, 141, 184, 0.22);
+              color: #fff;
+              cursor: pointer;
+            "
+          >
+            工坊正裝
+          </button>
+          <button
+            type="button"
+            class="canon-switch-btn"
+            data-canon-id="angela_canon_casual"
+            style="
+              padding: 5px 10px;
+              border-radius: 6px;
+              border: 1px solid rgba(255, 255, 255, 0.18);
+              background: rgba(255, 255, 255, 0.08);
+              color: #ddd;
+              cursor: pointer;
+            "
+          >
+            日常衛衣
+          </button>
+        </div>
+        <div style="font-weight: 600; color: #c9a44c; margin-top: 4px; margin-bottom: 2px">
+          表情差分
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px">
+          <button
+            type="button"
+            class="canon-switch-btn"
+            data-canon-id="angela_expr_smile"
+            style="
+              padding: 4px 8px;
+              border-radius: 6px;
+              border: 1px solid rgba(255, 255, 255, 0.18);
+              background: rgba(255, 255, 255, 0.08);
+              color: #ddd;
+              cursor: pointer;
+            "
+          >
+            微笑
+          </button>
+          <button
+            type="button"
+            class="canon-switch-btn"
+            data-canon-id="angela_expr_happy"
+            style="
+              padding: 4px 8px;
+              border-radius: 6px;
+              border: 1px solid rgba(255, 255, 255, 0.18);
+              background: rgba(255, 255, 255, 0.08);
+              color: #ddd;
+              cursor: pointer;
+            "
+          >
+            開朗
+          </button>
+          <button
+            type="button"
+            class="canon-switch-btn"
+            data-canon-id="angela_expr_thinking"
+            style="
+              padding: 4px 8px;
+              border-radius: 6px;
+              border: 1px solid rgba(255, 255, 255, 0.18);
+              background: rgba(255, 255, 255, 0.08);
+              color: #ddd;
+              cursor: pointer;
+            "
+          >
+            思考
+          </button>
+          <button
+            type="button"
+            class="canon-switch-btn"
+            data-canon-id="angela_expr_blush"
+            style="
+              padding: 4px 8px;
+              border-radius: 6px;
+              border: 1px solid rgba(255, 255, 255, 0.18);
+              background: rgba(255, 255, 255, 0.08);
+              color: #ddd;
+              cursor: pointer;
+            "
+          >
+            害羞
+          </button>
+          <button
+            type="button"
+            class="canon-switch-btn"
+            data-canon-id="angela_expr_serious"
+            style="
+              padding: 4px 8px;
+              border-radius: 6px;
+              border: 1px solid rgba(255, 255, 255, 0.18);
+              background: rgba(255, 255, 255, 0.08);
+              color: #ddd;
+              cursor: pointer;
+            "
+          >
+            認真
+          </button>
+          <button
+            type="button"
+            class="canon-switch-btn"
+            data-canon-id="angela_expr_witty"
+            style="
+              padding: 4px 8px;
+              border-radius: 6px;
+              border: 1px solid rgba(255, 255, 255, 0.18);
+              background: rgba(255, 255, 255, 0.08);
+              color: #ddd;
+              cursor: pointer;
+            "
+          >
+            俏皮
+          </button>
+        </div>
+      </div>
     </section>
 
     <!-- Chat Panel -->
@@ -1669,8 +1822,36 @@
           },
         }
         window.angelaApp = new AngelaApp()
+        _initCanonSwitcher()
         _initTerminal()
       })
+
+      function _initCanonSwitcher() {
+        const buttons = document.querySelectorAll('.canon-switch-btn')
+        buttons.forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation()
+            const targetId = btn.getAttribute('data-canon-id')
+            const mgr = window.angelaApp && window.angelaApp.live2dManager
+            if (mgr && typeof mgr.setCharacterImage === 'function') {
+              const ok = mgr.setCharacterImage(targetId)
+              if (ok) {
+                if (typeof mgr._renderFallback === 'function') {
+                  mgr._renderFallback()
+                }
+                buttons.forEach((b) => {
+                  b.style.background = 'rgba(255,255,255,0.08)'
+                  b.style.borderColor = 'rgba(255,255,255,0.18)'
+                  b.style.color = '#ddd'
+                })
+                btn.style.background = 'rgba(232,141,184,0.22)'
+                btn.style.borderColor = 'rgba(232,141,184,0.4)'
+                btn.style.color = '#fff'
+              }
+            }
+          })
+        })
+      }
 
       function _initTerminal() {
         const app = window.angelaApp

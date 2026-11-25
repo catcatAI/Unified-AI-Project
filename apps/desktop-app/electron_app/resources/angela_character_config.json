@@ -3,8 +3,9 @@
   "character_id": "angela.core",
   "character_version": "1.0.0",
   "edition_id": "angela.personal",
-  "asset_status": "exploratory_unverified",
-  "asset_provenance": "Gemini-generated static character art; redistribution terms not verified",
+  "asset_status": "locked_master_reference",
+  "master_reference_path": "resources/canon/master_character_sheet.jpg",
+  "asset_provenance": "Locked official Angela Core 1.0.0 master setting reference",
   "palette": {
     "hair": "#E88DB8",
     "eyes": "#69A9E8",

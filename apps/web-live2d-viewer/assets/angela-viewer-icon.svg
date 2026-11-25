@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- Celestial Midnight Background Gradient -->
+    <radialGradient id="tokenBg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#243042" />
+      <stop offset="75%" stop-color="#18202C" />
+      <stop offset="100%" stop-color="#111620" />
+    </radialGradient>
+
+    <!-- Metallic Gold Wing Gradient -->
+    <linearGradient id="goldWing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE899" />
+      <stop offset="45%" stop-color="#E5C158" />
+      <stop offset="100%" stop-color="#B88E36" />
+    </linearGradient>
+
+    <!-- Brilliant Star Gradient -->
+    <linearGradient id="goldStar" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF3C4" />
+      <stop offset="50%" stop-color="#C9A44C" />
+      <stop offset="100%" stop-color="#9A7828" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="goldGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.2" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Circular Token Base -->
+  <circle cx="32" cy="32" r="30" fill="url(#tokenBg)" stroke="#E88DB8" stroke-width="1.6" />
+
+  <!-- Outer Orbital Rose & Teal Aura -->
+  <circle cx="32" cy="32" r="27" fill="none" stroke="#E88DB8" stroke-width="0.8" opacity="0.6" />
+  <circle cx="32" cy="32" r="24.5" fill="none" stroke="#4D9A91" stroke-width="0.6" stroke-dasharray="2 3" opacity="0.75" />
+
+  <!-- Left-sweeping Angel Wing (左鬢羽翼飾) -->
+  <g filter="url(#goldGlow)">
+    <!-- Base Lower Feather -->
+    <path d="M 33 34 C 27 34 20 37 14 39 C 20 35 25 32 31 31 Z" fill="#A47B28" opacity="0.9" />
+
+    <!-- Secondary Mid Feather -->
+    <path d="M 32 30 C 23 27 15 28 11 28 C 17 25 24 24 33 27 Z" fill="url(#goldWing)" />
+
+    <!-- Main Upper Flight Feather -->
+    <path d="M 34 26 C 26 19 18 17 12 16 C 19 18 26 21 35 24 Z" fill="url(#goldWing)" />
+
+    <!-- Wing Arc Shimmer / Highlight -->
+    <path d="M 34 25 C 27 20 20 18 15 17.5 C 20 19 26 21.5 33 24.5 Z" fill="#FFF9E0" opacity="0.8" />
+  </g>
+
+  <!-- 4-point Radiant Gold Star (左鬢金星) -->
+  <g filter="url(#goldGlow)">
+    <!-- Diagonal Subtle 4-Ray Sparkle -->
+    <path d="M 35 32 L 31 28 L 35 32 L 39 28 Z" fill="#FFE8A3" opacity="0.5" />
+    <path d="M 35 32 L 39 36 L 35 32 L 31 36 Z" fill="#FFE8A3" opacity="0.5" />
+
+    <!-- Primary 4-Point Star Facets -->
+    <!-- Top Ray -->
+    <polygon points="35,16 36.6,29.5 35,32 33.4,29.5" fill="#FFEAA3" />
+    <!-- Bottom Ray -->
+    <polygon points="35,48 33.4,34.5 35,32 36.6,34.5" fill="#C9A44C" />
+    <!-- Right Ray -->
+    <polygon points="51,32 37.5,33.6 35,32 37.5,30.4" fill="#E5C158" />
+    <!-- Left Ray (connecting to wing base) -->
+    <polygon points="19,32 32.5,30.4 35,32 32.5,33.6" fill="#A88230" />
+
+    <!-- Central Brilliant Ivory Sparkle (#FFF8F0) -->
+    <circle cx="35" cy="32" r="2.4" fill="#FFF8F0" />
+    <circle cx="35" cy="32" r="1.2" fill="#FFFFFF" />
+
+    <!-- Center Glint (Teal Micro-accent) -->
+    <polygon points="35,28 35.8,32 35,36 34.2,32" fill="#4D9A91" opacity="0.75" />
+  </g>
+</svg>

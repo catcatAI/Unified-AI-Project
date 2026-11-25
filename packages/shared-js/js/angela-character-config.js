@@ -8,8 +8,8 @@ const ANGELA_CHARACTER_CONFIG = {
   character_id: 'angela.core',
   character_version: '1.0.0',
   edition_id: 'angela.personal',
-  asset_status: 'exploratory_unverified',
-  asset_provenance: 'Gemini-generated static character art; redistribution terms not verified',
+  asset_status: 'canonical_locked',
+  asset_provenance: 'angela.core@1.0.0-locked canonical standee & expression suite',
   palette: {
     hair: '#E88DB8',
     eyes: '#69A9E8',
@@ -19,9 +19,9 @@ const ANGELA_CHARACTER_CONFIG = {
     teal: '#4D9A91',
     gold: '#C9A44C',
   },
-  image_path: 'resources/angela_character_masked.png',
+  image_path: 'resources/canon/outfits/standee_workshop.png',
   live2d_config: {
-    enabled: true,
+    enabled: false,
     fallback_enabled: true,
     model_path: 'models/Epsilon_free/runtime/Epsilon_free.model3.json',
     fallback_models: [

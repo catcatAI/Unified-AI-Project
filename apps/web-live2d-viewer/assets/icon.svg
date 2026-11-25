@@ -1,46 +1,75 @@
-<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" aria-hidden="true" focusable="false">
   <defs>
-    <linearGradient id="pinkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FF6B9D;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#FFB6D9;stop-opacity:1" />
+    <radialGradient id="tokenBg256" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#263447" />
+      <stop offset="70%" stop-color="#1A222F" />
+      <stop offset="100%" stop-color="#10151E" />
+    </radialGradient>
+
+    <linearGradient id="goldWing256" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF0A8" />
+      <stop offset="45%" stop-color="#E5C158" />
+      <stop offset="100%" stop-color="#B88E36" />
     </linearGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
+
+    <linearGradient id="goldStar256" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF7D6" />
+      <stop offset="50%" stop-color="#C9A44C" />
+      <stop offset="100%" stop-color="#9A7828" />
+    </linearGradient>
+
+    <filter id="goldGlow256" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
       <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
       </feMerge>
     </filter>
   </defs>
 
-  <!-- Background circle with gradient -->
-  <circle cx="128" cy="128" r="120" fill="url(#pinkGradient)" />
+  <!-- Circular Token Base -->
+  <circle cx="128" cy="128" r="120" fill="url(#tokenBg256)" stroke="#E88DB8" stroke-width="6" />
 
-  <!-- Outer ring -->
-  <circle cx="128" cy="128" r="100" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.8" />
+  <!-- Outer Orbital Rose & Teal Aura -->
+  <circle cx="128" cy="128" r="108" fill="none" stroke="#E88DB8" stroke-width="3" opacity="0.6" />
+  <circle cx="128" cy="128" r="98" fill="none" stroke="#4D9A91" stroke-width="2.5" stroke-dasharray="8 10" opacity="0.8" />
 
-  <!-- Inner ring -->
-  <circle cx="128" cy="128" r="80" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity="0.6" />
+  <!-- Left-sweeping Angel Wing (左鬢羽翼飾) -->
+  <g filter="url(#goldGlow256)">
+    <!-- Base Lower Feather -->
+    <path d="M 132 136 C 108 136 80 148 56 156 C 80 140 100 128 124 124 Z" fill="#9C7426" opacity="0.9" />
 
-  <!-- Simple face shape -->
-  <g filter="url(#glow)">
-    <!-- Eyes -->
-    <ellipse cx="100" cy="110" rx="15" ry="18" fill="#2D1B36" />
-    <ellipse cx="156" cy="110" rx="15" ry="18" fill="#2D1B36" />
+    <!-- Secondary Mid Feather -->
+    <path d="M 128 120 C 92 108 60 112 44 112 C 68 100 96 96 132 108 Z" fill="url(#goldWing256)" />
 
-    <!-- Eye highlights -->
-    <ellipse cx="104" cy="105" rx="5" ry="6" fill="#FFFFFF" opacity="0.8" />
-    <ellipse cx="160" cy="105" rx="5" ry="6" fill="#FFFFFF" opacity="0.8" />
+    <!-- Main Upper Flight Feather -->
+    <path d="M 136 104 C 104 76 72 68 48 64 C 76 72 104 84 140 96 Z" fill="url(#goldWing256)" />
 
-    <!-- Smile -->
-    <path d="M 100 150 Q 128 175 156 150" fill="none" stroke="#2D1B36" stroke-width="4" stroke-linecap="round" />
+    <!-- Wing Arc Shimmer / Highlight -->
+    <path d="M 136 100 C 108 80 80 72 60 70 C 80 76 104 86 132 98 Z" fill="#FFFBE6" opacity="0.85" />
+  </g>
 
-    <!-- Blush -->
-    <ellipse cx="75" cy="130" rx="15" ry="10" fill="#FFB6D9" opacity="0.5" />
-    <ellipse cx="181" cy="130" rx="15" ry="10" fill="#FFB6D9" opacity="0.5" />
+  <!-- 4-point Radiant Gold Star (左鬢金星) -->
+  <g filter="url(#goldGlow256)">
+    <!-- Diagonal Subtle 4-Ray Sparkle -->
+    <path d="M 140 128 L 124 112 L 140 128 L 156 112 Z" fill="#FFEAA8" opacity="0.45" />
+    <path d="M 140 128 L 156 144 L 140 128 L 124 144 Z" fill="#FFEAA8" opacity="0.45" />
 
-    <!-- Small heart on top -->
-    <path d="M 128 65 C 128 60 125 58 125 58 C 122 58 120 60 120 65 C 120 68 122 70 122 70 C 122 70 124 68 124 68 C 124 68 126 70 126 70 C 126 70 128 68 128 68 C 128 68 130 70 130 70 C 130 70 132 68 132 68 C 132 68 134 70 134 70 C 134 70 136 68 136 68 C 136 68 138 70 138 70 C 138 70 140 68 140 68 C 140 68 142 70 142 70 C 142 70 144 68 144 68 C 144 68 146 70 146 70 C 146 70 148 68 148 68 C 148 68 150 70 150 70 C 150 70 152 68 152 68 C 152 68 154 70 154 70 C 154 70 156 68 156 68 C 156 68 158 70 158 70 C 158 70 160 68 160 68 C 160 68 162 70 162 70 C 162 70 164 68 164 68 C 164 68 166 70 166 70 C 166 70 168 68 168 68 C 168 68 170 70 170 70 C 170 70 172 68 172 68 C 172 68 174 70 174 70 C 174 70 176 68 176 68 C 176 68 178 70 178 70 C 178 70 180 68 180 68 C 180 68 182 70 182 70 C 182 70 184 68 184 68 C 184 68 186 70 186 70 C 186 70 188 68 188 68 C 188 68 190 70 190 70 C 190 70 192 68 192 68 C 192 68 194 70 194 70 C 194 70 196 68 196 68"
-        fill="#FF6B9D" opacity="0.8" />
+    <!-- Primary 4-Point Star Facets -->
+    <!-- Top Ray -->
+    <polygon points="140,64 146,118 140,128 134,118" fill="#FFF0B3" />
+    <!-- Bottom Ray -->
+    <polygon points="140,192 134,138 140,128 146,138" fill="#C9A44C" />
+    <!-- Right Ray -->
+    <polygon points="204,128 150,134 140,128 150,122" fill="#E5C158" />
+    <!-- Left Ray (connecting to wing base) -->
+    <polygon points="76,128 130,122 140,128 130,134" fill="#A88230" />
+
+    <!-- Central Brilliant Ivory Sparkle (#FFF8F0) -->
+    <circle cx="140" cy="128" r="9.6" fill="#FFF8F0" />
+    <circle cx="140" cy="128" r="4.8" fill="#FFFFFF" />
+
+    <!-- Center Glint (Teal Micro-accent) -->
+    <polygon points="140,112 143.2,128 140,144 136.8,128" fill="#4D9A91" opacity="0.75" />
   </g>
 </svg>

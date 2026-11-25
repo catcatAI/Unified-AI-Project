@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "character_id": "angela.core",
+  "canon_version": "angela.core@1.0.0-locked",
+  "master_reference": "resources/canon/master_character_sheet.jpg",
+  "spec_doc": "resources/canon/MASTER_SPEC.md",
+  "rendering_mode": "standee_switching",
+  "standees": {
+    "workshop": {
+      "id": "workshop",
+      "name": "天使工房正裝 (Workshop Concierge)",
+      "path": "resources/canon/outfits/standee_workshop.png",
+      "size": [896, 1200],
+      "format": "RGBA",
+      "default": true
+    },
+    "casual_hoodie": {
+      "id": "casual_hoodie",
+      "name": "日常休閒衛衣 (Casual Companion)",
+      "path": "resources/canon/outfits/standee_casual_hoodie.png",
+      "size": [896, 1200],
+      "format": "RGBA",
+      "default": false
+    }
+  },
+  "expressions": {
+    "smile": {
+      "id": "smile",
+      "name": "溫柔微笑 (Gentle Smile)",
+      "path": "resources/canon/expressions/smile.png",
+      "size": [512, 512],
+      "format": "RGBA"
+    },
+    "happy": {
+      "id": "happy",
+      "name": "欣喜開朗 (Joyful)",
+      "path": "resources/canon/expressions/happy.png",
+      "size": [512, 512],
+      "format": "RGBA"
+    },
+    "thinking": {
+      "id": "thinking",
+      "name": "思索好奇 (Thinking)",
+      "path": "resources/canon/expressions/thinking.png",
+      "size": [512, 512],
+      "format": "RGBA"
+    },
+    "blush": {
+      "id": "blush",
+      "name": "羞澀微紅 (Shy / Blushing)",
+      "path": "resources/canon/expressions/blush.png",
+      "size": [512, 512],
+      "format": "RGBA"
+    },
+    "serious": {
+      "id": "serious",
+      "name": "專注認真 (Serious / Focused)",
+      "path": "resources/canon/expressions/serious.png",
+      "size": [512, 512],
+      "format": "RGBA"
+    },
+    "witty": {
+      "id": "witty",
+      "name": "俏皮機靈 (Witty / Playful)",
+      "path": "resources/canon/expressions/witty.png",
+      "size": [512, 512],
+      "format": "RGBA"
+    }
+  }
+}
