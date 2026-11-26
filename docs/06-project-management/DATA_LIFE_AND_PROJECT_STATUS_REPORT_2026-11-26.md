@@ -5,6 +5,13 @@
 > **報告日期**: 2026-11-26  
 > **性質**: 基於當前倉庫文件、狀態矩陣、程式碼與本地驗證命令的校正報告；不是對外宣傳稿。
 
+> **數字更新註記（2026-11-26）**：本文是基準 commit `65d228db9` 的快照，表內測試數
+> 10,861 / 11,520 是**建立時的舊值**，與其後續量測不符。目前權威值為
+> **`tests/` 10,868 collected，全 testpaths 11,526 passed / 112 skipped / 0 failed**
+> （2026-11-26 同步，見 `AGENTS.md`、`docs/STATUS_MATRIX.md`，由
+> `scripts/check_test_count.py --update` 寫入）；核心分 0.00/10、系統分 6.41/10 不變。
+> 引用本文數字時請用這段更新值，不要引用快照表內的舊值。
+
 ---
 
 ## 0. 校正摘要：這份報告修正了什麼
@@ -18,7 +25,7 @@
 | 把設計願景、模擬機制、已驗證能力混寫 | 每項都標註「設計/實作/模擬/驗證」層級 | `docs/STATUS_MATRIX.md`, `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` |
 | 把 LLM provider / 多模態 / 桌面等能力一律視為成熟 | 依 `STATUS_MATRIX`，多數能力是 `wired/implemented/verified` 混合，不可一概而論 | `docs/STATUS_MATRIX.md`（`gen_status_matrix.py check` 通過） |
 | 把生物模擬描述得接近真實生命 | 程式內是模擬參數與啟發式控制，不是生理量測或主觀感受證據 | `core/life/digital_life_integrator.py`, `core/bio/*` |
-| 測試數字可能漂移 | 本次本地收集 `tests/` **10,861** 項；`STATUS_MATRIX` 記錄全 testpaths **11,520 passed, 112 skipped, 0 failed**（2026-11-25） | `pytest --collect-only -q`, `docs/STATUS_MATRIX.md` |
+| 測試數字可能漂移 | 建立時快照：`tests/` **10,861** 項；`STATUS_MATRIX` **11,520 passed, 112 skipped, 0 failed**（2026-11-25）→ **請用上方更新註記的 10,868 / 11,526** | `pytest --collect-only -q`, `docs/STATUS_MATRIX.md` |
 
 ---
 
@@ -73,8 +80,8 @@ Unified-AI-Project / Angela AI 不是單純的聊天機器人封裝，也不是�
 |---|---:|---|
 | Git HEAD | `65d228db9cc8569c6d19e3aa63df11e96b6b2769` | `git rev-parse HEAD` |
 | STATUS_MATRIX 核對 | 通過，30 條目 + pipeline 10 階段 + tree 11 節點 + lifecycle 33 項全綠 | `./.venv/bin/python scripts/gen_status_matrix.py check` |
-| `tests/` 收集數 | 10,861 tests collected | `./.venv/bin/python -m pytest tests/ --collect-only -q` |
-| STATUS_MATRIX 記錄的全量測試 | 11,520 passed, 112 skipped, 0 failed（2026-11-25，全 testpaths） | `docs/STATUS_MATRIX.md` |
+| `tests/` 收集數 | 10,861 tests collected（建立時快照；**現值 10,868**） | `./.venv/bin/python -m pytest tests/ --collect-only -q` |
+| STATUS_MATRIX 記錄的全量測試 | 11,520 passed, 112 skipped, 0 failed（2026-11-25 快照；**現值 11,526**，2026-11-26） | `docs/STATUS_MATRIX.md` |
 | 智能評估口徑 | 能力/來源/誠實度三軸；核心分仍 0.00/10 | `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` |
 
 ### 2.2 成熟度不是單一分數
