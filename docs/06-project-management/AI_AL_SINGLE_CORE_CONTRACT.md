@@ -579,3 +579,56 @@ ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
   **陷阱照實記**：`other_value_rate` 低（0.002–0.004）不代表「不賭」，是因為兩組的值都沒
   答出來——所以 B5 同時要求兩個 `by_ask ≥ 0.50`。結論是設計要求（可定址的槽／注意力），
   不是預算。核心分**不變**（0.00/10）。結果見 `CORE_GAP_ANALYSIS.md` §45。
+
+- 2026-11-26（§46 — 單一模型收斂，「線路太多 → 只留一個模型 + 對話不落後」）：前面多線路並存
+  （UnifiedEngine／TokenSNN／legacy ED3N／GARDEN）；本輪收斂為**底層只有一個模型**，多線路變成
+  它的層。沿用 R1：**一份權重＋一個 state 物件**，兩個 step（`ai_step`／`al_step`）只是入口。
+  下文 §46.1–§46.5（收斂定義、數據生命保留清單、對話守門新增、遷移路徑、反模式）。
+
+## 14. 單一模型收斂（2026-11-26）
+
+### 14.1 那個「一個模型」是什麼（沿用 R1）
+
+| 線路 | 收斂後 |
+| --- | --- |
+| **UnifiedEngine**（確定性反射／數學／邏輯 + 統計核心 + SLS 檢索） | **單一模型的底層**（`ai/unified_engine/unified_engine.py`） |
+| **TokenSNN**（tokens + surrogate gradient + next-token CE，`scripts/train_token_snn.py`） | **同一模型的原生動力學載體**（共享 `weights_hash`） |
+| legacy ED3N（`ANGELA_LEGACY_ED3N=1`：反射／關聯 SNN） | 收斂進單核心（結構／關聯層），flag 刪除 |
+| GARDEN（結構學習） | 收斂進單核心（學習層），不另建 engine |
+
+### 14.2 數據生命不動（保留 — 單一模型的資料線不得殺掉）
+
+- `scripts/prepare_core_training_data.py`（去重／洩漏／95–5 split）
+- `scripts/census_reply_provenance.py`（正解來源；核心分只算單一模型產生）
+- `apps/backend/data/models/`（ED3N/TlN checkpoints）、`data/models/`（GARDEN/qwen 資產）
+- 記憶（taught_facts）／知識（wiki／百百基底）／思考（symbolic_reasoner）／學習 loop（既有）
+  —— 它們是**內容庫**，不是模型。
+
+### 14.3 對話能力守門（新增 — 「別像之前連對話都做不好」）
+
+單一模型不得以犧牲對話為代價換單一能力：
+
+- **門禁**：`scripts/probe_native_dialogue.py`（純本地，鸚鵡／雞同鴨講／QA 機器偵測 + 預算 gate）
+  + `scripts/native_dialogue_budget_gate.py`。收斂後，對話計分必須**不退化**（對照檔記錄）。
+- **指標**：`scripts/census_reply_provenance.py`（既有檢測）＋ `probe_native_dialogue.py` 輸出。
+- **規則**：收斂任何線路，對話 gate 先進（P3 在「動動力學」之前）。
+
+### 14.4 遷移路徑（每階有 gate）
+
+1. **P0（對齊）**：`check_fact_gates.py` 新增 fact：單一模型 + 對話門禁（§14.3）；
+   `AI_AL_SINGLE_CORE_CONTRACT` R1／R2 仍紅。
+2. **P1（資料線合併）**：token-SNN 訓練資料接入 `prepare_core_training_data.py`（session 單位）；
+   `census_reply_provenance.py` 補 TokenSNN provenance 欄位。
+3. **P2（收斂 ED3N/GARDEN）**：legacy ED3N 結構／關聯資料切入單核心學習層；GARDEN 結構學習折入同一模型。
+4. **P3（對話 gate 雙軌）**：`probe_native_dialogue.py` 在現有 `unified` 後端維持門檻，確認對話不退，
+   再動動力學。
+5. **P4（驗證）**：`report_intelligence.py`（核心分跟蹤）＋ `probe_native_dialogue.py`（對話維持）＋
+   `check_fact_gates.py`（單一模型 gate）。
+
+### 14.5 反模式（看到就退）
+
+- 把 TokenSNN 與 UnifiedEngine 變成兩份權重（違反 R1）。
+- 合併前刪 ED3N／GARDEN 的訓練資料（數據生命死了）。
+- 為把對話做好而拔掉統計核心／檢索（那是多線路）。
+
+*結果見此次收斂的證據（commit 紀錄）：本輪起底層模型為單一一個（UnifiedEngine＋TokenSNN），ED3N／GARDEN 資料線保留。*
