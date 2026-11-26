@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import time
 
@@ -34,3 +35,19 @@ def test_a_cache_older_than_its_producer_is_stale(report, tmp_path, monkeypatch)
     monkeypatch.setattr(report, "REPORT_DIR", cache_dir)
     monkeypatch.setattr(report, "REPO_ROOT", tmp_path)
     assert any("paraphrase" in s for s in report.stale_caches())
+
+
+def test_a_failed_control_arm_makes_the_cache_unusable(report, tmp_path, monkeypatch) -> None:
+    cache_dir = tmp_path / "data" / "intelligence_reports"
+    cache_dir.mkdir(parents=True)
+    (cache_dir / "core_control.json").write_text(
+        json.dumps({"provenance": {"tok": "x (ModuleNotFoundError: No module named 'torch')"}})
+    )
+    monkeypatch.setattr(report, "REPORT_DIR", cache_dir)
+    problems = report.unusable_caches()
+    assert any("tok" in p for p in problems)
+
+
+def test_the_venv_has_fresh_dependencies(report) -> None:
+    """Tests run under ./.venv/bin/python — the interpreter the report needs."""
+    assert report.missing_fresh_dependencies() == []

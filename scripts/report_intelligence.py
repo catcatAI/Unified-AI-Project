@@ -94,6 +94,34 @@ def stale_caches() -> List[str]:
     return stale
 
 
+def unusable_caches() -> List[str]:
+    """Caches whose control arms failed to load must not be reused as numbers."""
+    problems: List[str] = []
+    path = REPORT_DIR / "core_control.json"
+    if not path.is_file():
+        return problems
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return [f"{path.name}: unreadable"]
+    for arm, desc in (payload.get("provenance") or {}).items():
+        if "Error" in str(desc):
+            problems.append(f"{path.name}: {arm} failed ({desc})")
+    return problems
+
+
+def missing_fresh_dependencies() -> List[str]:
+    """Fresh probes need torch (TOK-SNN) and llama_cpp (LLM control arm).
+
+    Running with the system interpreter silently degrades both arms to
+    "未量" while the report still prints a total — an environment artifact
+    masquerading as a capability measurement (2026-11-26 incident).
+    """
+    import importlib.util
+
+    return [name for name in ("torch", "llama_cpp") if importlib.util.find_spec(name) is None]
+
+
 def _load(path: Optional[Path]) -> Optional[dict]:
     if path is None or not path.exists():
         return None
@@ -143,11 +171,17 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.from_cache:
-        stale = stale_caches()
+        stale = stale_caches() + unusable_caches()
         if stale:
-            print("❌ --from-cache：快取比產生它的腳本還舊，拒絕使用（請重新量測）")
+            print("❌ --from-cache：快取過期或對照臂失效，拒絕使用（請重新量測）")
             for item in stale:
                 print(f"  - {item}")
+            return 2
+    else:
+        missing = missing_fresh_dependencies()
+        if missing:
+            print("❌ 新鮮量測缺少必要依賴：" + ", ".join(missing))
+            print("   請用 ./venv/bin/python scripts/report_intelligence.py（AGENTS.md）")
             return 2
 
     from ai.meta.intelligence import (

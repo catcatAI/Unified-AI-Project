@@ -3,9 +3,9 @@
     "facts": 0.5333,
     "math": 0.8,
     "tools": 0.0,
-    "paraphrase": 0.4107,
-    "dialogue": 0.8309666666666667,
-    "boundary": 0.0833
+    "paraphrase": 0.75,
+    "dialogue": 0.8757666666666667,
+    "boundary": 0.8889
   },
   "thresholds": {
     "facts": {
@@ -39,7 +39,7 @@
         "url": "https://aclanthology.org/N19-1131/",
         "protocol": "analogous"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     "dialogue": {
       "pass_line": 0.4395,
@@ -61,7 +61,7 @@
         "url": "https://aclanthology.org/2024.emnlp-main.1229/",
         "protocol": "analogous"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     "tools": {
       "pass_line": 0.5425,
@@ -76,17 +76,17 @@
     }
   },
   "diagnostics": {
-    "改述（教過詞、新句子）": 0.9048,
-    "改述（沒教過的詞，開發診斷）": 0.5759
+    "改述（教過詞、新句子）": 1.0,
+    "改述（沒教過的詞，開發診斷）": 0.875
   },
   "sources": {
-    "deterministic": 430,
-    "neural": 513,
+    "deterministic": 469,
+    "neural": 246,
     "other": 6,
-    "retrieval": 26,
-    "template": 121
+    "retrieval": 23,
+    "template": 352
   },
-  "source_verdict": "非模板來源佔比 47% ≥ 20%：有一部分回答不是模板（但見下方核心佔比）",
+  "source_verdict": "非模板來源佔比 22% ≥ 20%：有一部分回答不是模板（但見下方核心佔比）",
   "gaps": {
     "知識缺口（標準集 state 類）": 0.0
   },
@@ -153,42 +153,44 @@
           "performance": 1.0,
           "snn": 0.0,
           "ed3n": 1.0,
-          "tok": 0.0,
-          "llm": 0.0
+          "tok": 0.9,
+          "llm": 1.0
         },
         "accuracy_answered": {
           "performance": 0.8,
           "snn": null,
           "ed3n": 0.0,
-          "tok": null,
-          "llm": null
+          "tok": 0.0,
+          "llm": 0.675
         },
         "answered": {
           "performance": 40,
           "snn": 0,
           "ed3n": 40,
-          "tok": 0,
-          "llm": 0
+          "tok": 36,
+          "llm": 40
         },
         "distinct": {
           "performance": 36,
           "snn": 0,
           "ed3n": 23,
-          "tok": 0,
-          "llm": 0
+          "tok": 33,
+          "llm": 40
         },
         "snn": 0.0,
         "ed3n": 0.0,
-        "tok": null,
-        "llm": null,
-        "surface_only": 0,
-        "intelligence_problem": 0,
-        "snn_gap": 0,
+        "tok": 0.0,
+        "llm": 0.675,
+        "surface_only": 10,
+        "intelligence_problem": 3,
+        "snn_gap": 27,
         "gaps": {
-          "snn": 0,
-          "ed3n": 0,
-          "tok": 0
-        }
+          "snn": 27,
+          "ed3n": 27,
+          "tok": 27
+        },
+        "tok_prompt_unk": 0.1355,
+        "tok_unreadable_items": 1
       },
       "knowledge": {
         "n": 15,
@@ -198,42 +200,44 @@
           "performance": 0.8666666666666667,
           "snn": 0.0,
           "ed3n": 1.0,
-          "tok": 0.0,
-          "llm": 0.0
+          "tok": 0.7333333333333333,
+          "llm": 1.0
         },
         "accuracy_answered": {
           "performance": 0.6153846153846154,
           "snn": null,
           "ed3n": 0.0,
-          "tok": null,
-          "llm": null
+          "tok": 0.0,
+          "llm": 0.7333333333333333
         },
         "answered": {
           "performance": 13,
           "snn": 0,
           "ed3n": 15,
-          "tok": 0,
-          "llm": 0
+          "tok": 11,
+          "llm": 15
         },
         "distinct": {
           "performance": 13,
           "snn": 0,
           "ed3n": 15,
-          "tok": 0,
-          "llm": 0
+          "tok": 11,
+          "llm": 15
         },
         "snn": 0.0,
         "ed3n": 0.0,
-        "tok": null,
-        "llm": null,
-        "surface_only": 0,
-        "intelligence_problem": 0,
-        "snn_gap": 0,
+        "tok": 0.0,
+        "llm": 0.7333333333333333,
+        "surface_only": 1,
+        "intelligence_problem": 3,
+        "snn_gap": 11,
         "gaps": {
-          "snn": 0,
-          "ed3n": 0,
-          "tok": 0
-        }
+          "snn": 11,
+          "ed3n": 11,
+          "tok": 11
+        },
+        "tok_prompt_unk": 0.0964,
+        "tok_unreadable_items": 2
       },
       "code": {
         "n": 10,
@@ -243,42 +247,44 @@
           "performance": 0.0,
           "snn": 0.0,
           "ed3n": 1.0,
-          "tok": 0.0,
-          "llm": 0.0
+          "tok": 0.8,
+          "llm": 1.0
         },
         "accuracy_answered": {
           "performance": null,
           "snn": null,
           "ed3n": 0.0,
-          "tok": null,
-          "llm": null
+          "tok": 0.0,
+          "llm": 0.9
         },
         "answered": {
           "performance": 0,
           "snn": 0,
           "ed3n": 10,
-          "tok": 0,
-          "llm": 0
+          "tok": 8,
+          "llm": 10
         },
         "distinct": {
           "performance": 0,
           "snn": 0,
           "ed3n": 7,
-          "tok": 0,
-          "llm": 0
+          "tok": 7,
+          "llm": 10
         },
         "snn": 0.0,
         "ed3n": 0.0,
-        "tok": null,
-        "llm": null,
+        "tok": 0.0,
+        "llm": 0.9,
         "surface_only": 0,
-        "intelligence_problem": 0,
-        "snn_gap": 0,
+        "intelligence_problem": 1,
+        "snn_gap": 9,
         "gaps": {
-          "snn": 0,
-          "ed3n": 0,
-          "tok": 0
-        }
+          "snn": 9,
+          "ed3n": 9,
+          "tok": 9
+        },
+        "tok_prompt_unk": 0.0824,
+        "tok_unreadable_items": 0
       },
       "routing": {
         "n": 10,
@@ -288,54 +294,56 @@
           "performance": 1.0,
           "snn": 0.0,
           "ed3n": 1.0,
-          "tok": 0.0,
-          "llm": 0.0
+          "tok": 0.8,
+          "llm": 1.0
         },
         "accuracy_answered": {
           "performance": 1.0,
           "snn": null,
           "ed3n": 0.0,
-          "tok": null,
-          "llm": null
+          "tok": 0.0,
+          "llm": 0.0
         },
         "answered": {
           "performance": 10,
           "snn": 0,
           "ed3n": 10,
-          "tok": 0,
-          "llm": 0
+          "tok": 8,
+          "llm": 10
         },
         "distinct": {
           "performance": 6,
           "snn": 0,
           "ed3n": 10,
-          "tok": 0,
-          "llm": 0
+          "tok": 5,
+          "llm": 10
         },
         "snn": 0.0,
         "ed3n": 0.0,
-        "tok": null,
-        "llm": null,
-        "surface_only": 0,
+        "tok": 0.0,
+        "llm": 0.0,
+        "surface_only": 10,
         "intelligence_problem": 0,
         "snn_gap": 0,
         "gaps": {
           "snn": 0,
           "ed3n": 0,
           "tok": 0
-        }
+        },
+        "tok_prompt_unk": 0.3936,
+        "tok_unreadable_items": 2
       }
     },
     "provenance": {
       "performance": "lookup/rules/templates (NativeBackend)",
       "snn": "GARDEN engine (ok)",
       "ed3n": "ed3n_core.json (ok)",
-      "tok": "token_snn.pt (ModuleNotFoundError: No module named 'torch')",
-      "llm": "qwen2.5-1.5b-instruct-q4_k_m.gguf (ModuleNotFoundError: No module named 'llama_cpp'; mode=chat, gpu_layers=0)"
+      "tok": "token_snn.pt (ok)",
+      "llm": "qwen2.5-1.5b-instruct-q4_k_m.gguf (ok; mode=chat, gpu_layers=-1)"
     },
-    "generated_at": "2026-11-26T19:01:20"
+    "generated_at": "2026-11-26T19:37:08"
   },
-  "system_score": 4.43,
+  "system_score": 6.41,
   "core_score": 0.0,
   "integrity": {
     "sample_valid": true,
@@ -344,17 +352,15 @@
     "problems": []
   },
   "result": {
-    "score": 4.43,
+    "score": 6.41,
     "status": "measured",
-    "band": "L2 本地可用",
-    "band_summary": "多輪對話不跑題，記憶／推理／多模態能串起來當助手用",
-    "attained_level": "L0",
+    "band": "L3 LLM 編排",
+    "band_summary": "自然對話、工具調用、多智能體協作",
+    "attained_level": "L2",
     "level_missing": [
-      "paraphrase 4.1/10 < 7.0/10"
+      "tools 0.0/10 < 5.4/10"
     ],
     "failed_dimensions": [
-      "paraphrase 4.1/10 < 7.0/10",
-      "boundary 0.8/10 < 5.3/10",
       "tools 0.0/10 < 5.4/10"
     ],
     "counted": [
@@ -368,15 +374,15 @@
       ],
       [
         "paraphrase",
-        0.4107
+        0.75
       ],
       [
         "dialogue",
-        0.831
+        0.8758
       ],
       [
         "boundary",
-        0.0833
+        0.8889
       ],
       [
         "tools",
