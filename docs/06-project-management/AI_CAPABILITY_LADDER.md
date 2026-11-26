@@ -56,6 +56,15 @@
 | L3-2 工具呼叫       | `pytest tests/services/test_handlers.py`                                               | 100%                                          | **60 passed**                                                                                                                                                                                                                          | ✅                                                                                                                                 |
 | 整體回歸            | `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/`                               | 0 failed                                      | **8,688 passed / 112 skipped / 0 failed**                                                                                                                                                                                              | ✅                                                                                                                                 |
 
+> **現況（2026-11-26 新鮮量測）**：`python3 scripts/report_intelligence.py` →
+> **4.43/10（系統分）**，系統階梯 **L2**；六維對外部及格線 **3 過 3 不過**
+> （facts 53.3%／math 80%／dialogue 83.1% 過；paraphrase 41.1%／boundary
+> 8.3%／tools 0% 未達）。
+> **核心 0.00/10、核心階梯 L0**。先前 6.41/10 是過期 probe 快取的灌水數字——已由 stale-cache 防呆與一致性檢查的足夠樣本修正（門檻未改），以
+> `intelligence_report.json` 為準。
+>
+> **以下為 2026-11-02 歷史原文（引用請用上面的現況）**：
+>
 > **統一總分（2026-11-02 實測）**：`python scripts/report_intelligence.py` →
 > **6.41/10（系統分；每次重跑會因對話探針的隨機性小幅變動，以
 > `intelligence_report.json`

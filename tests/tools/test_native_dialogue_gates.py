@@ -281,6 +281,12 @@ def test_a_repeated_answer_is_a_qa_machine(probe) -> None:
     assert "qa_machine" in second.classes
 
 
+def test_the_progress_consistency_uses_an_adequate_sample(probe) -> None:
+    """20-turn rate sample keeps 1 teach→ask pair; the 2·SE guard needs ≥4."""
+    assert probe.PROGRESS_SAMPLE_TURNS >= 100
+    assert not hasattr(probe, "_SMALL_SAMPLE_PAIRS"), "dead intent constant must stay removed"
+
+
 def test_the_consistency_check_compares_the_learning_effect(probe) -> None:
     """The documented 2·SE guard must be real, not a no-op: a small-sample
     learning effect that disagrees with the standard one must be flagged."""

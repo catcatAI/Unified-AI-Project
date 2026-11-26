@@ -77,7 +77,7 @@
   },
   "diagnostics": {
     "改述（教過詞、新句子）": 0.9048,
-    "改述（沒教過的詞，開發診斷）": 0.6875
+    "改述（沒教過的詞，開發診斷）": 0.5759
   },
   "sources": {
     "deterministic": 430,
@@ -333,22 +333,30 @@
       "tok": "token_snn.pt (ModuleNotFoundError: No module named 'torch')",
       "llm": "qwen2.5-1.5b-instruct-q4_k_m.gguf (ModuleNotFoundError: No module named 'llama_cpp'; mode=chat, gpu_layers=0)"
     },
-    "generated_at": "2026-11-26T18:21:01"
+    "generated_at": "2026-11-26T19:01:20"
   },
-  "system_score": null,
-  "core_score": null,
+  "system_score": 4.43,
+  "core_score": 0.0,
   "integrity": {
     "sample_valid": true,
-    "consistent": false,
+    "consistent": true,
     "non_vacuous": true,
-    "problems": [
-      "learning effect: 少量 +0.400 (1 pairs, SE 0.000) vs 標準 +0.554（差 > 2·SE → 標準量不可信）"
-    ]
+    "problems": []
   },
   "result": {
-    "score": null,
-    "status": "undefined",
-    "reason": "量測無效：learning effect: 少量 +0.400 (1 pairs, SE 0.000) vs 標準 +0.554（差 > 2·SE → 標準量不可信）",
+    "score": 4.43,
+    "status": "measured",
+    "band": "L2 本地可用",
+    "band_summary": "多輪對話不跑題，記憶／推理／多模態能串起來當助手用",
+    "attained_level": "L0",
+    "level_missing": [
+      "paraphrase 4.1/10 < 7.0/10"
+    ],
+    "failed_dimensions": [
+      "paraphrase 4.1/10 < 7.0/10",
+      "boundary 0.8/10 < 5.3/10",
+      "tools 0.0/10 < 5.4/10"
+    ],
     "counted": [
       [
         "facts",
@@ -376,6 +384,6 @@
       ]
     ],
     "skipped": [],
-    "integrity": "量測無效：learning effect: 少量 +0.400 (1 pairs, SE 0.000) vs 標準 +0.554（差 > 2·SE → 標準量不可信）"
+    "integrity": "量測有效（樣本有效性 ✅／少量-標準量一致性 ✅／非空轉 ✅）"
   }
 }

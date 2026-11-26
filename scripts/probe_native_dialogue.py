@@ -209,9 +209,11 @@ CLASSES = (
 # yet a stable measurement (an 11-turn sample said 0% offtopic where 44
 # turns said 30% — the conclusion flipped with the sample size).
 SMALL_SAMPLE_TURNS = 20
-# How many teach→ask pairs the small sample keeps whole (the learning effect
-# is only measurable on complete pairs).
-_SMALL_SAMPLE_PAIRS = 4
+# The learning-effect consistency check needs *complete* teach→ask pairs: the
+# 20-turn rate sample keeps only 1 (SE = 0 → the 2·SE verdict is impotent).
+# 140 turns keeps ~4 pairs, enough for a real 2·SE comparison. The threshold
+# itself (2·SE) is unchanged — this fixes the instrument, not the goalpost.
+PROGRESS_SAMPLE_TURNS = 140
 
 
 def _build_units() -> List[List[StandardItem]]:
@@ -869,7 +871,9 @@ def _consistency(
     比較方式：
     - **率**：兩個 95% 區間重疊就算一致（統計上正確 ✓）。
     - **學習效應**：小樣本的每組對差值波動大，用 2 個標準誤比較
-      （|差| ≤ 2·SE ✓）——固定容差對這種估計量不公平 ✓。
+      （|差| ≤ 2·SE ✓）——固定容差對這種估計量不公平 ✓。因為 20 回合的
+      率小樣本只留 1 組對（SE=0），此比較改用 `PROGRESS_SAMPLE_TURNS`
+      的较大樣本（保留約 4 組對）；門檻仍為 2·SE，沒有放寬。
     """
     disagreements: List[str] = []
 
@@ -1147,7 +1151,7 @@ async def main() -> int:
         "consistency": _consistency(
             _subset_metrics(_systematic_sample(first, SMALL_SAMPLE_TURNS), "small"),
             _subset_metrics(first, "standard"),
-            small_deltas=_learning_deltas(_systematic_sample(first, SMALL_SAMPLE_TURNS)),
+            small_deltas=_learning_deltas(_systematic_sample(first, PROGRESS_SAMPLE_TURNS)),
         ),
         "data": {"pairs": data_pairs, "chars": data_chars},
         "elapsed_sec": round(time.time() - started, 2),
