@@ -25,6 +25,10 @@ from typing import Dict, List, Optional, Tuple
 SCHEMA_VERSION = "artifact-manifest-v1"
 HASH_LIMIT_BYTES = 128 * 1024 * 1024  # larger binaries: record size, not hash
 
+# Runtime state mutates on every server tick — record for traceability but
+# never gate its hash (otherwise the gate cries wolf on a normal run).
+VOLATILE_PREFIXES = ("data/checkpoints/lifecycle/", "data/state/", "data/angela_memory/")
+
 # Critical artifacts a reader expects to trace (the current score chain).
 CRITICAL = (
     "data/intelligence_reports/core_control.json",
@@ -82,6 +86,21 @@ def collect(root: Path) -> List[dict]:
             if rel in seen:
                 continue
             seen.add(rel)
+            if rel.startswith(VOLATILE_PREFIXES):
+                entries.append(
+                    {
+                        "path": rel,
+                        "type": path.suffix.lstrip("."),
+                        "namespace": "runtime-volatile",
+                        "producer": "runtime",
+                        "schema_version": SCHEMA_VERSION,
+                        "size": path.stat().st_size,
+                        "sha256": None,
+                        "skip_reason": "runtime volatile state — hash not gated",
+                        "verified": False,
+                    }
+                )
+                continue
             digest, reason = _sha256(path)
             entries.append(
                 {
@@ -128,8 +147,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"no manifest at {out} — run without --check first", file=sys.stderr)
             return 1
         stored = json.loads(out.read_text(encoding="utf-8"))
-        old = {e["path"]: e["sha256"] for e in stored.get("entries", [])}
-        new = {e["path"]: e["sha256"] for e in manifest["entries"]}
+        old = {e["path"]: e["sha256"] for e in stored.get("entries", []) if e.get("verified")}
+        new = {e["path"]: e["sha256"] for e in manifest["entries"] if e.get("verified")}
         critical = [
             p for p in stored.get("critical", []) if p in (stored.get("critical_present") or [])
         ]

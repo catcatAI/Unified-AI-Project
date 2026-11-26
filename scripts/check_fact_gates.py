@@ -580,8 +580,8 @@ def _data_lifecycle_facts():
         ]
 
     current = build(REPO)
-    now = {e["path"]: e["sha256"] for e in current["entries"]}
-    before = {e["path"]: e["sha256"] for e in stored.get("entries", [])}
+    now = {e["path"]: e["sha256"] for e in current["entries"] if e.get("verified")}
+    before = {e["path"]: e["sha256"] for e in stored.get("entries", []) if e.get("verified")}
     missing = [p for p in (stored.get("critical") or CRITICAL) if p not in now]
     changed = [p for p in before if p in now and before[p] != now[p]]
     training_drift: List[str] = []
