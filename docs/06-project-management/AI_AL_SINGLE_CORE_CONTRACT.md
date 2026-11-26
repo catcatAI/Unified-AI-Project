@@ -1,43 +1,42 @@
 # AI+AL 單一核心狀態契約
 
-> **先讀這一頁，再改 `core/state`、`ai/core`、`generation_gate`、`chat_routes` 的狀態或生成路徑。**
+> **先讀這一頁，再改 `core/state`、`ai/core`、`generation_gate`、`chat_routes`
+> 的狀態或生成路徑。**
 > 這份是**契約**，不是願景。違反 §2 的設計，不管分數多好都不算完成；文件結尾有審查清單。
 
 - 版本：7.5.0-dev　｜　建立：2026-11-12　｜　狀態：active（contract）
 - ANGELA-MATRIX：`[L3-L4] [αβγδ] [B] [L0-L11]`
-- 相關文件：`AL_LADDER_ROADMAP.md` §8（通道 A/B/C）、`AL_AI_LADDER_STATE.md`（現況）、
-  `CORE_GAP_ANALYSIS.md` §35–§36（能力量測）、`LAYER_SEPARATION.md`（分層）
+- 相關文件：`AL_LADDER_ROADMAP.md`
+  §8（通道 A/B/C）、`AL_AI_LADDER_STATE.md`（現況）、 `CORE_GAP_ANALYSIS.md`
+  §35–§36（能力量測）、`LAYER_SEPARATION.md`（分層）
 
 ---
 
 ## 0. 這份文件要防的三個歷史問題
 
-1. **狀態走上下文**：把情緒／喚醒／生命階段寫成文字塞進 system prompt，模型只是
-   「讀到一段描述自己的話」，不是「處於那個狀態」。它會增長、會被忽略、重啟只剩最後
-   寫進去的那個數字，而且模型可以把數字覆述出來，看起來像有狀態。
-2. **AI 與 AL 分成兩個實體再加一座橋**：AI 一個模型、AL 一個模型（或一堆 JSON／
-   事件／提示詞），兩邊各自保存一份狀態，靠 prompt／參數／logit／routing 傳遞。
-   外觀相同，性質不同：橋是可被忽略、可被注入者重現的，而且**狀態重複**。
-3. **單回合 pairs 訓練 + 每次 reset**：`TokenSNN.generate()` 每次 `init_state(1)`，
-   `train_on()` 的 `pairs` 彼此獨立。遞歸只用在一句答案之內，從未跨回合；量到的分數
-   只回答「單回合 mapping」，不能拿來宣稱「persistent core」。
+1. **狀態走上下文**：把情緒／喚醒／生命階段寫成文字塞進 system
+   prompt，模型只是「讀到一段描述自己的話」，不是「處於那個狀態」。它會增長、會被忽略、重啟只剩最後寫進去的那個數字，而且模型可以把數字覆述出來，看起來像有狀態。
+2. **AI 與 AL 分成兩個實體再加一座橋**：AI 一個模型、AL 一個模型（或一堆 JSON／事件／提示詞），兩邊各自保存一份狀態，靠 prompt／參數／logit／routing 傳遞。外觀相同，性質不同：橋是可被忽略、可被注入者重現的，而且**狀態重複**。
+3. **單回合 pairs 訓練 + 每次 reset**：`TokenSNN.generate()` 每次
+   `init_state(1)`， `train_on()` 的 `pairs`
+   彼此獨立。遞歸只用在一句答案之內，從未跨回合；量到的分數只回答「單回合 mapping」，不能拿來宣稱「persistent
+   core」。
 
-**結論先寫**：核心必須是**同一個模型、同一份權重、同一個狀態物件**，AI 週期與 AL
-週期只是同一個底層的兩個入口；狀態**不進 context**。這就是本契約的主軸。
+**結論先寫**：核心必須是**同一個模型、同一份權重、同一個狀態物件**，AI 週期與 AL 週期只是同一個底層的兩個入口；狀態**不進 context**。這就是本契約的主軸。
 
 ---
 
 ## 1. 名詞（避免同一個字指兩種東西）
 
-| 名詞 | 定義 | 不是什麼 |
-| --- | --- | --- |
-| **AI** | 能力面：感知、語言、推理、生成 | 不是另一個模型 |
-| **AL** | 生命面：時間、節律、情緒、穩態、生命週期、可塑性 | 不是另一份 JSON／提示詞 |
-| **core** | 實際產生答案的模型；`core` provenance 只在「模型產生且正確」時成立 | 不是模板、檢索、路由 |
-| **state** | 固定大小、可持久化、模型自己擁有的張量＋慢變量 | 不是 context、不是 KV cache、不是摘要 |
-| **context** | 這一次請求要看的內容（檢索結果、指令、當前對話） | 不是「我是誰／我現在怎樣」 |
-| **memory** | 事實與情節的內容庫（教過的事、對話回憶） | 不是 working state |
-| **observable** | 由 state 投影出來、給表層／審計／可視化的讀數 | 不是狀態本體 |
+| 名詞           | 定義                                                               | 不是什麼                              |
+| -------------- | ------------------------------------------------------------------ | ------------------------------------- |
+| **AI**         | 能力面：感知、語言、推理、生成                                     | 不是另一個模型                        |
+| **AL**         | 生命面：時間、節律、情緒、穩態、生命週期、可塑性                   | 不是另一份 JSON／提示詞               |
+| **core**       | 實際產生答案的模型；`core` provenance 只在「模型產生且正確」時成立 | 不是模板、檢索、路由                  |
+| **state**      | 固定大小、可持久化、模型自己擁有的張量＋慢變量                     | 不是 context、不是 KV cache、不是摘要 |
+| **context**    | 這一次請求要看的內容（檢索結果、指令、當前對話）                   | 不是「我是誰／我現在怎樣」            |
+| **memory**     | 事實與情節的內容庫（教過的事、對話回憶）                           | 不是 working state                    |
+| **observable** | 由 state 投影出來、給表層／審計／可視化的讀數                      | 不是狀態本體                          |
 
 三句話區分：
 
@@ -49,17 +48,16 @@
 
 ## 2. 五條硬規則（違反即退回）
 
-- **R1 單一底層**：同一份權重（一個 `weights_hash`）、同一個 state 物件、兩個 step
-  函式（`ai_step`／`al_step`）。**不得**用第二個模型充當 AL。
-- **R2 狀態不進 context**：core 路徑的 prompt 不得包含 state 的文字／數字摘要；
-  KV cache 不得冒充 state。LLM fallback 可以用 `state_for_llm`，但必須標
+- **R1 單一底層**：同一份權重（一個
+  `weights_hash`）、同一個 state 物件、兩個 step 函式（`ai_step`／`al_step`）。**不得**用第二個模型充當 AL。
+- **R2 狀態不進 context**：core 路徑的 prompt 不得包含 state 的文字／數字摘要；KV
+  cache 不得冒充 state。LLM fallback 可以用 `state_for_llm`，但必須標
   `route=prompt` 且不計核心。
-- **R3 單一寫入者**：state 的突變必須序列化（per-session 鎖＋版本號）；持久化用原子
-  寫入；載入失敗寧可拒絕，不得靜默重置。
-- **R4 沒有 ablation 就沒有宣稱**：只憑「輸出有變」不算狀態證據；必須有
-  state ablation、restart、cycle-switch 三項（§6）。
-- **R5 重置是顯式操作**：只有新使用者／新 session／測試可以 `reset_state()`；
-  進程啟動、每回合、每次生成都不得自動重置。
+- **R3 單一寫入者**：state 的突變必須序列化（per-session 鎖＋版本號）；持久化用原子寫入；載入失敗寧可拒絕，不得靜默重置。
+- **R4 沒有 ablation 就沒有宣稱**：只憑「輸出有變」不算狀態證據；必須有 state
+  ablation、restart、cycle-switch 三項（§6）。
+- **R5 重置是顯式操作**：只有新使用者／新 session／測試可以
+  `reset_state()`；進程啟動、每回合、每次生成都不得自動重置。
 
 ---
 
@@ -67,15 +65,15 @@
 
 ### 3.1 四類欄位（沿用 `core/life/al_state.py` 的分類）
 
-| 類別 | 內容 | 是否落盤 | 誰更新 |
-| --- | --- | --- | --- |
-| `invariant` | `schema_version`、`model_kind`、`weights_hash`、`user_id`、`session_id`、`born_at` | 是 | 建立時一次 |
-| `slow` | 時鐘 `last_update`／`ticks`、振盪器相位、生命週期、arousal 目標 | 是 | `al_step` |
-| `fast` | 模型張量：GRU `h`、SNN `mem/spk`、SSM `s` | 是 | `ai_step`／`al_step` |
-| `derived` | observable：顯示用的情緒／強度／漂移 | **否**（只快取） | 讀取時投影 |
+| 類別        | 內容                                                                               | 是否落盤         | 誰更新               |
+| ----------- | ---------------------------------------------------------------------------------- | ---------------- | -------------------- |
+| `invariant` | `schema_version`、`model_kind`、`weights_hash`、`user_id`、`session_id`、`born_at` | 是               | 建立時一次           |
+| `slow`      | 時鐘 `last_update`／`ticks`、振盪器相位、生命週期、arousal 目標                    | 是               | `al_step`            |
+| `fast`      | 模型張量：GRU `h`、SNN `mem/spk`、SSM `s`                                          | 是               | `ai_step`／`al_step` |
+| `derived`   | observable：顯示用的情緒／強度／漂移                                               | **否**（只快取） | 讀取時投影           |
 
-`derived` 不落盤，與 `al_state.py` 的 I3 一致；`slow` 與 `fast` 一起構成
-「同一個 core 的狀態」，不是兩份。
+`derived` 不落盤，與 `al_state.py` 的 I3 一致；`slow` 與 `fast`
+一起構成「同一個 core 的狀態」，不是兩份。
 
 ### 3.2 schema（最小欄位）
 
@@ -91,23 +89,25 @@
   "ticks": 1234,
   "last_dt_s": 12.5,
   "state_version": 42,
-  "tensors": {"h": "<path or inline>"}
+  "tensors": { "h": "<path or inline>" }
 }
 ```
 
 - **大小上限**：單一 session ≤ 10 MB；超過就量化或縮維，不得默默長大。
-- **格式**：`meta.json` ＋ `tensors.npz`（或 `torch.save(weights_only=True)`）；
-  不用 pickle 載入任意物件。
+- **格式**：`meta.json` ＋ `tensors.npz`（或
+  `torch.save(weights_only=True)`）；不用 pickle 載入任意物件。
 - **完整性**：`sha256` 涵蓋 meta＋tensors；不符即拒絕載入。
-- **版本**：`schema_version` 或 `weights_hash` 不符 → 拒絕（或走顯式 migration），
-  **不得**當成新狀態重來。
-- **並發**：`state_version` 單調遞增；寫入採樂觀鎖（讀到的版本已被改過就重讀／重算）。
+- **版本**：`schema_version` 或 `weights_hash`
+  不符 → 拒絕（或走顯式 migration）， **不得**當成新狀態重來。
+- **並發**：`state_version`
+  單調遞增；寫入採樂觀鎖（讀到的版本已被改過就重讀／重算）。
 
 ### 3.3 與 observable 的關係
 
-`core/life/al_state.py` 的 `get_al_state()` 繼續存在，但角色改成**投影＋審計**：
-它的值來自 core state 的 readout（或 core 推過去的事件），不是另一份獨立的真相。
-`core/life` 不得 import `ai.*`（I8 不變）；由 AI 側把投影／事件推進去。
+`core/life/al_state.py` 的 `get_al_state()`
+繼續存在，但角色改成**投影＋審計**：它的值來自 core
+state 的 readout（或 core 推過去的事件），不是另一份獨立的真相。 `core/life`
+不得 import `ai.*`（I8 不變）；由 AI 側把投影／事件推進去。
 
 ---
 
@@ -123,8 +123,9 @@ def al_step(dt, state, events) -> state:          # 沒有外部 token，只有�
 
 - `ai_step`：prefill 與逐 token 解碼都用它；`state` 是可選輸入（第一次可為
   `None` → 由 `init_state()` 建立，但**只在 session 建立時**）。
-- `al_step`：把 `dt`、振盪器相位、事件摘要（有界）餵進**同一個 recurrence**；
-  可以用一個學到的 tick embedding，或零輸入＋時間特徵；輸出更新後的 state。
+- `al_step`：把
+  `dt`、振盪器相位、事件摘要（有界）餵進**同一個 recurrence**；可以用一個學到的 tick
+  embedding，或零輸入＋時間特徵；輸出更新後的 state。
 - 兩者共用同一組權重與同一個 state；`al_step` **不得**呼叫另一個模型。
 
 ### 4.2 時間線（v1：回合邊界）
@@ -140,15 +141,14 @@ def al_step(dt, state, events) -> state:          # 沒有外部 token，只有�
 ```
 
 - v2 才做背景 `al_step`（低頻心跳）；此時必須用同一把鎖，或版本檢查＋重算。
-- `al_step(0)` 必須是 no-op（或誤差 ≤ 預設容差）；`al_step(dt1)` 後 `al_step(dt2)`
-  應接近 `al_step(dt1+dt2)`（半群性質，對應 AL ladder r1）。
+- `al_step(0)` 必須是 no-op（或誤差 ≤ 預設容差）；`al_step(dt1)` 後
+  `al_step(dt2)` 應接近 `al_step(dt1+dt2)`（半群性質，對應 AL ladder r1）。
 - 單次 `dt` 過大要分段（例：每段 ≤ 60 s），避免數值不穩。
 
 ### 4.3 「內在傳遞」是什麼意思
 
-切換 AI／AL 週期時，**不需要搬運狀態**：`state` 是同一個物件／同一組張量，兩個 step
-都直接讀寫它。任何需要「序列化 → 傳給另一邊 → 反序列化」的設計，都不符合本契約
-（那就是 R1 的兩個實體）。
+切換 AI／AL 週期時，**不需要搬運狀態**：`state`
+是同一個物件／同一組張量，兩個 step 都直接讀寫它。任何需要「序列化 → 傳給另一邊 → 反序列化」的設計，都不符合本契約（那就是 R1 的兩個實體）。
 
 ---
 
@@ -157,19 +157,19 @@ def al_step(dt, state, events) -> state:          # 沒有外部 token，只有�
 ### 5.1 資料單位是 session，不是 pair
 
 - 一筆訓練樣本是**多回合序列**：`(turn_1, gap_1, turn_2, gap_2, …)`，帶時間戳。
-- 切分按 **session／user**，不按 row；同一 session 的回合不得跨 train/held-out
-  （否則 state 會把答案從訓練帶到測試）。
+- 切分按
+  **session／user**，不按 row；同一 session 的回合不得跨 train/held-out（否則 state 會把答案從訓練帶到測試）。
 - 沒有真實 gap 的資料，用合成 gap 做對照；gap 長度要覆蓋短／中／長。
 
 ### 5.2 兩個 loss
 
-| loss | 作用 | 訊號 |
-| --- | --- | --- |
-| `L_ai` | 下一個 token 的 CE（只算助理回覆） | 有標註對話 |
-| `L_al` | 狀態隨時間的自我預測／一致性 | 無需標註：`al_step(dt)` 後的 state 要能預測實際演化；`dt=0` 不變；`dt1+dt2` 近似半群 |
+| loss   | 作用                               | 訊號                                                                                 |
+| ------ | ---------------------------------- | ------------------------------------------------------------------------------------ |
+| `L_ai` | 下一個 token 的 CE（只算助理回覆） | 有標註對話                                                                           |
+| `L_al` | 狀態隨時間的自我預測／一致性       | 無需標註：`al_step(dt)` 後的 state 要能預測實際演化；`dt=0` 不變；`dt1+dt2` 近似半群 |
 
-- 同一個 optimizer、同一個 trunk；`L_al` 可以由一個小 head 讀 state，
-  但**不得**是第二個 trunk。
+- 同一個 optimizer、同一個 trunk；`L_al`
+  可以由一個小 head 讀 state，但**不得**是第二個 trunk。
 - `L_al` 的權重在實驗前固定；不得看 held-out 調。
 - 跨回合用 truncated BPTT（窗口例如 2–4 回合），避免記憶體無限增長。
 
@@ -183,17 +183,16 @@ def al_step(dt, state, events) -> state:          # 沒有外部 token，只有�
 
 ## 6. 量測：六個測試，先預登記
 
-任何「AI+AL 在同一個模型」的宣稱，至少要通過這六項；缺一項就只能說「AL 影響了
-輸入／參數」。
+任何「AI+AL 在同一個模型」的宣稱，至少要通過這六項；缺一項就只能說「AL 影響了輸入／參數」。
 
-| # | 測試 | 做法 | 通過條件（預先登記） |
-| --- | --- | --- | --- |
-| T1 | **state ablation** | 在回合 k 把 state 歸零／打亂，其餘不變 | 正確率或 AL 預測有**顯著下降**（幅度先寫定） |
-| T2 | **prompt leak** | core 路徑的 prompt 不含任何 state 文字；另跑「state 只放 prompt」的 baseline | 兩者可區分；core 不依賴 prompt 裡的 state |
-| T3 | **gap / retention** | 第 1 回合給事實／情緒事件，第 k 回合提問；前面回合從 context 移除 | 分數隨 gap 的衰減符合預測；優於 stateless |
-| T4 | **restart** | 存檔 → 重啟 → 載入 → 同一輸入 | 行為在容差內一致；版本／hash 不符時**拒絕** |
-| T5 | **cycle switch** | 回合間跑 `al_step(dt)`；對照：不跑、打亂 dt、假時鐘 | 行為按預測方向改變；對照組不變 |
-| T6 | **provenance** | 記錄 `weights_hash`、`state_version`、`ticks`、`route` | 一次生成只對應一個 model、一份 state |
+| #   | 測試                | 做法                                                                         | 通過條件（預先登記）                         |
+| --- | ------------------- | ---------------------------------------------------------------------------- | -------------------------------------------- |
+| T1  | **state ablation**  | 在回合 k 把 state 歸零／打亂，其餘不變                                       | 正確率或 AL 預測有**顯著下降**（幅度先寫定） |
+| T2  | **prompt leak**     | core 路徑的 prompt 不含任何 state 文字；另跑「state 只放 prompt」的 baseline | 兩者可區分；core 不依賴 prompt 裡的 state    |
+| T3  | **gap / retention** | 第 1 回合給事實／情緒事件，第 k 回合提問；前面回合從 context 移除            | 分數隨 gap 的衰減符合預測；優於 stateless    |
+| T4  | **restart**         | 存檔 → 重啟 → 載入 → 同一輸入                                                | 行為在容差內一致；版本／hash 不符時**拒絕**  |
+| T5  | **cycle switch**    | 回合間跑 `al_step(dt)`；對照：不跑、打亂 dt、假時鐘                          | 行為按預測方向改變；對照組不變               |
+| T6  | **provenance**      | 記錄 `weights_hash`、`state_version`、`ticks`、`route`                       | 一次生成只對應一個 model、一份 state         |
 
 **baseline 三組**（缺一不可）：
 
@@ -201,90 +200,692 @@ def al_step(dt, state, events) -> state:          # 沒有外部 token，只有�
 2. state-in-prompt（把狀態寫成文字，這是現在的做法）；
 3. hand-state（`StateMatrix` 當輸入，但不給模型自己的 state）。
 
-**反偽造**：一個 stateless 模型 + 完整 state 文字，必須在 T1／T4／T5 失敗；
-如果它也通過，代表測試沒有鑑別力，先修測試。
+**反偽造**：一個 stateless 模型 + 完整 state 文字，必須在 T1／T4／T5 失敗；如果它也通過，代表測試沒有鑑別力，先修測試。
 
-**停損**：T1 沒有下降 → 模型沒在用 state，不准宣稱；T4 不一致 → 不准宣稱重啟延續；
-T5 對照組也變 → 先把實驗做乾淨。
+**停損**：T1 沒有下降 → 模型沒在用 state，不准宣稱；T4 不一致 → 不准宣稱重啟延續；T5 對照組也變 → 先把實驗做乾淨。
 
 ---
 
 ## 7. 架構選擇（在這條契約下）
 
-| 架構 | 原生 state | 變動 dt | 可訓練性 | 成本 | 適配 | 建議 |
-| --- | --- | --- | --- | --- | --- | --- |
-| **GRU** | `h` | 需把 dt 當輸入 | 已量到（0.68／0.81） | 低 | 好 | **第一個實作** |
-| **SNN（LIF）** | `mem/spk` | 天生 leak | 較難（梯度帶） | 中 | 主題／效率線 | 同契約的第二個臂 |
-| **SSM（Mamba 類）** | `s` | **原生**（dt 進遞歸） | 中 | 中 | 最貼合「時間作用在狀態上」 | 值得原型 |
-| **Transformer** | 無 | 無 | 好 | 中高 | 能力強，但 state 要靠 adapter | 只當 teacher／fallback，或加固定大小 recurrent state 並通過 T1–T5 |
-| **檢索／工具** | 不適用 | — | — | 低 | 事實與精確計算 | 不是核心 |
+| 架構                | 原生 state | 變動 dt               | 可訓練性             | 成本 | 適配                          | 建議                                                              |
+| ------------------- | ---------- | --------------------- | -------------------- | ---- | ----------------------------- | ----------------------------------------------------------------- |
+| **GRU**             | `h`        | 需把 dt 當輸入        | 已量到（0.68／0.81） | 低   | 好                            | **第一個實作**                                                    |
+| **SNN（LIF）**      | `mem/spk`  | 天生 leak             | 較難（梯度帶）       | 中   | 主題／效率線                  | 同契約的第二個臂                                                  |
+| **SSM（Mamba 類）** | `s`        | **原生**（dt 進遞歸） | 中                   | 中   | 最貼合「時間作用在狀態上」    | 值得原型                                                          |
+| **Transformer**     | 無         | 無                    | 好                   | 中高 | 能力強，但 state 要靠 adapter | 只當 teacher／fallback，或加固定大小 recurrent state 並通過 T1–T5 |
+| **檢索／工具**      | 不適用     | —                     | —                    | 低   | 事實與精確計算                | 不是核心                                                          |
 
-- **KV cache 不是 state**：它隨 session 增長、重啟消失、且只記 token。要用
-  Transformer 當 core，必須另外設計固定大小的 recurrent state（state tokens／
-  segment recurrence），並在 T1／T4／T5 上證明它真的被使用。
+- **KV
+  cache 不是 state**：它隨 session 增長、重啟消失、且只記 token。要用 Transformer 當 core，必須另外設計固定大小的 recurrent
+  state（state tokens／segment
+  recurrence），並在 T1／T4／T5 上證明它真的被使用。
 - 選擇規則：先過 T1–T6，再比「能力／秒」與「能力／瓦」；不要用架構偏好決定。
 
 ---
 
 ## 8. 與現有模組的關係（不要重造，也不要混淆）
 
-| 現有模組 | 現在的角色 | 在本契約下的角色 |
-| --- | --- | --- |
-| `core/life/al_state.py` | AL 單一狀態面、快照、事件入口 | **observable 投影＋審計**；不是 core state 本體 |
-| `core/life/al_snn_modulation.py` | C-state-lite：改 GARDEN 發火閾值 | 可作為 `al_step` 的 prior／控制輸入；**不是**持久 state |
-| `core/life/al_oscillator.py` | 節律源 | `al_step` 的時間／相位輸入 |
-| `core/life/al_generation_params.py`／`al_logit_bias.py` | C-param／C-logit | 只給 LLM fallback；不計核心 |
-| `core/life/digital_life_integrator.py` | 生命週期協調 | 提供 `slow` 變量與事件，不是第二個模型 |
-| `StateMatrix4D` | 手定義的狀態摘要 | core state 的投影／prior；**不得**在 core 路徑當文字注入 |
-| `services/llm/prompt_builder.py`／`chat_routes.state_for_llm` | 把狀態寫進 prompt | 只保留給 LLM fallback，標 `route=prompt` |
-| `services/llm/generation_gate.py` | 定義誰是生成後端 | 新增 `stateful` 能力旗標；只有 stateful 後端能宣稱 core state |
-| `ai/garden/snn_core.py` | 聯想網路 | 可消費 AL 狀態；不是語言 core |
-| `ai/ed3n/token_snn.py` | token-SNN 語言模型 | 加 `state` 進出；**不得**每次 `init_state` |
+| 現有模組                                                      | 現在的角色                       | 在本契約下的角色                                              |
+| ------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------- |
+| `core/life/al_state.py`                                       | AL 單一狀態面、快照、事件入口    | **observable 投影＋審計**；不是 core state 本體               |
+| `core/life/al_snn_modulation.py`                              | C-state-lite：改 GARDEN 發火閾值 | 可作為 `al_step` 的 prior／控制輸入；**不是**持久 state       |
+| `core/life/al_oscillator.py`                                  | 節律源                           | `al_step` 的時間／相位輸入                                    |
+| `core/life/al_generation_params.py`／`al_logit_bias.py`       | C-param／C-logit                 | 只給 LLM fallback；不計核心                                   |
+| `core/life/digital_life_integrator.py`                        | 生命週期協調                     | 提供 `slow` 變量與事件，不是第二個模型                        |
+| `StateMatrix4D`                                               | 手定義的狀態摘要                 | core state 的投影／prior；**不得**在 core 路徑當文字注入      |
+| `services/llm/prompt_builder.py`／`chat_routes.state_for_llm` | 把狀態寫進 prompt                | 只保留給 LLM fallback，標 `route=prompt`                      |
+| `services/llm/generation_gate.py`                             | 定義誰是生成後端                 | 新增 `stateful` 能力旗標；只有 stateful 後端能宣稱 core state |
+| `ai/garden/snn_core.py`                                       | 聯想網路                         | 可消費 AL 狀態；不是語言 core                                 |
+| `ai/ed3n/token_snn.py`                                        | token-SNN 語言模型               | 加 `state` 進出；**不得**每次 `init_state`                    |
 
-**I8 不變**：`core/life` 不 import `ai.*`；core state 在 AI 側，observable 由 AI 側
-推事件／投影給 AL。
+**I8 不變**：`core/life` 不 import `ai.*`；core
+state 在 AI 側，observable 由 AI 側推事件／投影給 AL。
 
 ---
 
 ## 9. 遷移路徑（每階都有 gate）
 
-| 階段 | 做什麼 | Gate（沒過就不進下一階） |
-| --- | --- | --- |
-| **P0** | 凍結本契約＋schema＋測試骨架（不改行為） | 文件與 schema 審查通過；T1–T6 的定義寫定 |
-| — | **P0 狀態（2026-11-12）**：完成。`ai/core/core_state.py` ＋ 15 條 schema／拒絕載入測試；**行為未改**。 | `pytest tests/ai/test_core_state_contract.py` 綠；`mypy` 0 error |
-| **P1** | 用 GRU 實作 `CoreState`＋`ai_step`／`al_step`；合成多回合資料；跑 T1–T6 | T1 有顯著下降、T4 一致、T5 對照組不變 |
-| — | **P1 第一臂狀態（2026-11-12）**：完成，**17/17 預登記檢查通過**。主臂時間題／內容題 0.9998；歸零 `h` → 0.5092／0.0785（可回答半）；不跑 `al_step` 與歸零**逐位同分**；hand-state 臂歸零 `h` **完全不受影響**（1.0000）。預登記 §37.4–§37.5、結果 §37.6–§37.7。**這不是能力分**：核心分仍 0.00/10，生產路徑未接。§38 的等段數重跑（每 session
-固定 8 個 chunk，排除「數更新次數」的捷徑）**18/18 通過**，主臂 1.0000、歸零 0.4986。 | `probe_state_cycles.py` 的 `all_pass=True`；`tests/ai/test_state_cycles.py` 17 條綠 |
-| **P2** | 把同一契約接到 SNN（先修梯度帶）；與 GRU 同預算比較 | 同參數同步數下可訓練；T1–T6 過 |
-| **P3** | SSM 原型（dt 原生） | 在 T3／T5 上優於或等於 GRU；成本可接受 |
-| — | **P3 狀態（2026-11-12）**：SSM 臂**21/21 預登記檢查通過**（主臂 1.0000、歸零 0.0000＝常數錯答而非 chance、不跑 `al_step` 0.4970、打亂 0.4948、假時鐘 0.0000、restart 0）。半群 **1.9–3.8e-6**（登記 ≤1e-2）——但這是**架構保證**（指數相乘），不是學到的連續性。T3 1.0000（與 GRU 相同）；不跑 `al_step` 0.4970 vs GRU 0.4988（差 0.0018，在 ±0.0123 半寬內，不下降）。**成本已乾淨量測**（`--cost`，三次獨立 run、交替順序、每次 30 reps 取中位數）：參數 4,634 vs 21,402（0.217×）、checkpoint 20.8 vs 86.9 KiB（0.239×）、forward 1.14–1.15 vs 2.02–2.07 ms（**0.55×**）、訓練步 2.82–3.01 vs 6.31–6.42 ms（**0.45×**）。這是**合成任務尺寸**的計算量，不是生產延遲；P4 未接線前不宣稱「成本可接受」（見 `CORE_GAP_ANALYSIS.md` §40.7）。 | `probe_state_cycles.py --round 4` 的 `all_pass=True`；`tests/ai/test_ssm_core.py` 9 條綠 |
-| **P4** | 接生產：`generation_gate` 加 `stateful`；`chat_routes` 傳 state 物件；`state_for_llm` 只給 fallback | 生產路徑不再把 state 寫進 core prompt；provenance 正確 |
-| — | **P4 狀態（2026-11-12）**：接線完成，**opt-in、預設關**（`ANGELA_STATEFUL_CORE=1`）。`ai/core/stateful_runtime.py` 每回合推進一次 state 物件並存檔（每 session 一個目錄，共用同一份權重）；開啟時 `chat_routes._ctx_state_matrix` **不再發布** `state_for_llm`，回覆的 provenance 記 `state_source="core"` ＋ `core_state`（`ticks`／`state_version`／`dt_s`／`arch`／`tokenizer`／`weights_hash`）。**核心不寫回覆**：目前沒有任何核心能生成開放域文字，所以它只承載狀態，回覆仍由既有路由產生；`state_source` 就是為了不讓這件事被誤讀。預設關閉時回覆形狀完全不變。**核心分仍 0.00/10**（見 `CORE_GAP_ANALYSIS.md` §41）。 | 開啟後 `/api` 回覆帶 `state_source="core"`；`tests/ai/test_stateful_runtime.py` 16 條綠；關閉時 `_ctx_state_matrix` 行為與 §40 前相同 |
-| **P5** | 量產級：per-user 持久化、重啟、版本遷移、成本 | 文件與分數同步；核心分只在模型產生時變動 |
-| — | **P5 狀態（2026-11-13）**：量產級的三件事完成——**單一寫入者**（R3）、**狀態能說出它是誰的**、**真實回合的量測**。① R3 現在有三道鎖，各補別人的盲點：per-session 執行緒鎖（固定條帶，不會因為淘汰而讓同一 session 出現兩個鎖）、session 目錄裡的 advisory 檔案鎖（POSIX `flock`／Windows `msvcrt`）、以及存檔前的版本比對。第三道不是多餘的——它是唯一會發現「完全沒拿鎖的寫入者」的一道（測試用一次**合法**存檔、有效 checksum 的干擾寫入證明：只靠 checksum 會漏）。等待上限 2 秒，逾時就拒絕該回合而不是讓回覆卡住；`availability()` 回報 `lock`／`multi_writer_safe`，沒有檔案鎖的主機自己說出來。② `advance(user_id=...)`：新狀態記下主人，續接時主人不符就拒絕（session id 可猜，主人不行），空主人的舊狀態（§41 跑出來的那些）接受而不回溯作廢。③ `scripts/probe_core_turns.py` 走真正的 `_handle_chat_request`，把凍結標準集跑 **2,208 回合**（五個 stratum 各一個 session），逐回合寫 JSONL；gate 要求回合數、零拒絕、版本嚴格遞增（一次更新都沒掉）、五個 stratum 都在。**仍然沒變的**：核心不生成回覆，沒有任何東西把 state 讀回生成，核心分仍 **0.00/10**；`schema_version` 只有 v1，不符就拒絕（**沒有** migration 實作，照實記）；§40.7 的成本是合成任務的計算量，不是生產回合延遲。 | `tests/ai/test_stateful_runtime.py` 27 條綠；`scripts/probe_core_turns.py` 的 `all_pass=True`；`multi_writer_safe=True` 時可開多 worker |
-| **內容** | state 裡裝的東西有沒有語言內容、生成會不會讀它（§43–§44） | `heldout_names` exact 過線、零狀態與冷啟掉回 0 |
-| — | **內容狀態（2026-11-13）**：**有內容，但只在合成任務上，而且用法有邊界**。同一個 `GRUCore`（81,765 參數，`hidden=128`／`emb=64`，契約 R1 的那個臂）在 「教一次 `remember <name> = <value> .`（不算損失）→ `al_step(120 s)` → 問 `<name> ?` → 生成 `<value> .`」上，對**沒見過的名字＋沒見過的值** exact **0.995**（`dev` 0.994，3,000 題）；把 `h` 歸零（**同一個 state 物件、同一份權重、同一個 prompt**）**0.000**、跳過教學回合（`cold`，同題）**0.000**。teacher-forced 0.999、只讀 `h` 的線性 probe 0.851 → 失敗與成功都不是量測接錯。**三條邊界照實記**：① `wrong_name` **0.994**——教 A、問沒教過的 B 照樣吐 A 的值，所以是**單槽攜帶**、不是鍵值查詢（名字沒有被使用）；② 拿掉 `al_step` 掉到 **0.003**——不是間隙不變，學到的是「經過**一次** 120 秒」可讀；③ 詞彙是封閉 CV 音節（19 字母）、句型只有一種，這是**機制**不是語言。**核心分仍 0.00/10**：這條路沒有接進生產，`stateful_runtime` 仍是 `hash-bucket` tokenizer，回覆仍由表層產生——把只會講 `remember X = Y` 的 checkpoint 接上去會比不接更糟。 | `scripts/train_state_content.py` 的 `all_pass=True`；`tests/test_state_content_task.py` 13 條綠；checkpoint 重載後 `heldout` 0.995／零狀態 0.000 |
-| **兩組** | state 能不能同時持**兩組**配對，並由查詢選一組（§45） | `heldout_names` exact 過線，且兩個問法各自都選對 |
-| — | **兩組狀態（2026-11-13）**：**不能，而且不是預算問題**。同一個 81,765 參數的 `GRUCore`、同一個 seed（20261115）：**一組**配對 held-out exact **1.000**（probe 0.874），**兩組**配對 **0.0033**（`single` 目標）／**0.0100**（`both` 目標，兩組查詢都進損失），門檻 0.30，B1／B2／B3／B5 全 FAIL，零狀態與冷啟 0.000。`h` 的線性 probe 對「第一組教的值／第二組教的值／被問的值」只有 0.319／0.413／0.303（`single`）與 0.351／0.383／0.280（`both`）字元（chance 0.027）——**兩個槽都不可讀**，所以是「根本沒寫進去」，不是「寫進去選不出來」。**兩個已排除的解釋**：目標（兩臂排序在兩個 seed 上翻轉，差別在雜訊內；`both` 只是一致地比較好擬合，dev 損失 0.741 vs 1.007）與寬度（256 寬：訓練損失 0.196、held-out 0.057）。**照實記的一個陷阱**：兩臂的 `other_value_rate` 只有 0.002–0.004，但那是因為它們**兩組的值都沒答出來**，不是「避免賭」——所以 B5 必須同時要求兩個 `by_ask ≥ 0.50`，這一輪剛好是它的反例。結論是一條**設計要求**：可定址性（key 位址化的槽、或對教學回合做注意力）不會從「同一個向量連續覆寫」長出來。**核心分仍 0.00/10**，未接生產。 | `scripts/train_state_binding.py` 的兩份報告 `all_pass=False`（如實）；`tests/test_state_binding_task.py` 24 條綠；同 seed 單組對照 `state_content_20261113-033723` `all_pass=True` |
+| 階段                                                                                  | 做什麼                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Gate（沒過就不進下一階）                                                                                                                                                           |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P0**                                                                                | 凍結本契約＋schema＋測試骨架（不改行為）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | 文件與 schema 審查通過；T1–T6 的定義寫定                                                                                                                                           |
+| —                                                                                     | **P0 狀態（2026-11-12）**：完成。`ai/core/core_state.py` ＋ 15 條 schema／拒絕載入測試；**行為未改**。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `pytest tests/ai/test_core_state_contract.py` 綠；`mypy` 0 error                                                                                                                   |
+| **P1**                                                                                | 用 GRU 實作 `CoreState`＋`ai_step`／`al_step`；合成多回合資料；跑 T1–T6                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | T1 有顯著下降、T4 一致、T5 對照組不變                                                                                                                                              |
+| —                                                                                     | **P1 第一臂狀態（2026-11-12）**：完成，**17/17 預登記檢查通過**。主臂時間題／內容題 0.9998；歸零 `h` → 0.5092／0.0785（可回答半）；不跑 `al_step` 與歸零**逐位同分**；hand-state 臂歸零 `h` **完全不受影響**（1.0000）。預登記 §37.4–§37.5、結果 §37.6–§37.7。**這不是能力分**：核心分仍 0.00/10，生產路徑未接。§38 的等段數重跑（每 session                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 固定 8 個 chunk，排除「數更新次數」的捷徑）**18/18 通過**，主臂 1.0000、歸零 0.4986。 | `probe_state_cycles.py` 的 `all_pass=True`；`tests/ai/test_state_cycles.py` 17 條綠                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **P2**                                                                                | 把同一契約接到 SNN（先修梯度帶）；與 GRU 同預算比較                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | 同參數同步數下可訓練；T1–T6 過                                                                                                                                                     |
+| **P3**                                                                                | SSM 原型（dt 原生）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | 在 T3／T5 上優於或等於 GRU；成本可接受                                                                                                                                             |
+| —                                                                                     | **P3 狀態（2026-11-12）**：SSM 臂**21/21 預登記檢查通過**（主臂 1.0000、歸零 0.0000＝常數錯答而非 chance、不跑 `al_step` 0.4970、打亂 0.4948、假時鐘 0.0000、restart 0）。半群 **1.9–3.8e-6**（登記 ≤1e-2）——但這是**架構保證**（指數相乘），不是學到的連續性。T3 1.0000（與 GRU 相同）；不跑 `al_step` 0.4970 vs GRU 0.4988（差 0.0018，在 ±0.0123 半寬內，不下降）。**成本已乾淨量測**（`--cost`，三次獨立 run、交替順序、每次 30 reps 取中位數）：參數 4,634 vs 21,402（0.217×）、checkpoint 20.8 vs 86.9 KiB（0.239×）、forward 1.14–1.15 vs 2.02–2.07 ms（**0.55×**）、訓練步 2.82–3.01 vs 6.31–6.42 ms（**0.45×**）。這是**合成任務尺寸**的計算量，不是生產延遲；P4 未接線前不宣稱「成本可接受」（見 `CORE_GAP_ANALYSIS.md` §40.7）。                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `probe_state_cycles.py --round 4` 的 `all_pass=True`；`tests/ai/test_ssm_core.py` 9 條綠                                                                                           |
+| **P4**                                                                                | 接生產：`generation_gate` 加 `stateful`；`chat_routes` 傳 state 物件；`state_for_llm` 只給 fallback                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | 生產路徑不再把 state 寫進 core prompt；provenance 正確                                                                                                                             |
+| —                                                                                     | **P4 狀態（2026-11-12）**：接線完成，**opt-in、預設關**（`ANGELA_STATEFUL_CORE=1`）。`ai/core/stateful_runtime.py` 每回合推進一次 state 物件並存檔（每 session 一個目錄，共用同一份權重）；開啟時 `chat_routes._ctx_state_matrix` **不再發布** `state_for_llm`，回覆的 provenance 記 `state_source="core"` ＋ `core_state`（`ticks`／`state_version`／`dt_s`／`arch`／`tokenizer`／`weights_hash`）。**核心不寫回覆**：目前沒有任何核心能生成開放域文字，所以它只承載狀態，回覆仍由既有路由產生；`state_source` 就是為了不讓這件事被誤讀。預設關閉時回覆形狀完全不變。**核心分仍 0.00/10**（見 `CORE_GAP_ANALYSIS.md` §41）。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | 開啟後 `/api` 回覆帶 `state_source="core"`；`tests/ai/test_stateful_runtime.py` 16 條綠；關閉時 `_ctx_state_matrix` 行為與 §40 前相同                                              |
+| **P5**                                                                                | 量產級：per-user 持久化、重啟、版本遷移、成本                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | 文件與分數同步；核心分只在模型產生時變動                                                                                                                                           |
+| —                                                                                     | **P5 狀態（2026-11-13）**：量產級的三件事完成——**單一寫入者**（R3）、**狀態能說出它是誰的**、**真實回合的量測**。① R3 現在有三道鎖，各補別人的盲點：per-session 執行緒鎖（固定條帶，不會因為淘汰而讓同一 session 出現兩個鎖）、session 目錄裡的 advisory 檔案鎖（POSIX `flock`／Windows `msvcrt`）、以及存檔前的版本比對。第三道不是多餘的——它是唯一會發現「完全沒拿鎖的寫入者」的一道（測試用一次**合法**存檔、有效 checksum 的干擾寫入證明：只靠 checksum 會漏）。等待上限 2 秒，逾時就拒絕該回合而不是讓回覆卡住；`availability()` 回報 `lock`／`multi_writer_safe`，沒有檔案鎖的主機自己說出來。② `advance(user_id=...)`：新狀態記下主人，續接時主人不符就拒絕（session id 可猜，主人不行），空主人的舊狀態（§41 跑出來的那些）接受而不回溯作廢。③ `scripts/probe_core_turns.py` 走真正的 `_handle_chat_request`，把凍結標準集跑 **2,208 回合**（五個 stratum 各一個 session），逐回合寫 JSONL；gate 要求回合數、零拒絕、版本嚴格遞增（一次更新都沒掉）、五個 stratum 都在。**仍然沒變的**：核心不生成回覆，沒有任何東西把 state 讀回生成，核心分仍 **0.00/10**；`schema_version` 只有 v1，不符就拒絕（**沒有** migration 實作，照實記）；§40.7 的成本是合成任務的計算量，不是生產回合延遲。 | `tests/ai/test_stateful_runtime.py` 27 條綠；`scripts/probe_core_turns.py` 的 `all_pass=True`；`multi_writer_safe=True` 時可開多 worker                                            |
+| **內容**                                                                              | state 裡裝的東西有沒有語言內容、生成會不會讀它（§43–§44）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `heldout_names` exact 過線、零狀態與冷啟掉回 0                                                                                                                                     |
+| —                                                                                     | **內容狀態（2026-11-13）**：**有內容，但只在合成任務上，而且用法有邊界**。同一個 `GRUCore`（81,765 參數，`hidden=128`／`emb=64`，契約 R1 的那個臂）在 「教一次 `remember <name> = <value> .`（不算損失）→ `al_step(120 s)` → 問 `<name> ?` → 生成 `<value> .`」上，對**沒見過的名字＋沒見過的值** exact **0.995**（`dev` 0.994，3,000 題）；把 `h` 歸零（**同一個 state 物件、同一份權重、同一個 prompt**）**0.000**、跳過教學回合（`cold`，同題）**0.000**。teacher-forced 0.999、只讀 `h` 的線性 probe 0.851 → 失敗與成功都不是量測接錯。**三條邊界照實記**：① `wrong_name` **0.994**——教 A、問沒教過的 B 照樣吐 A 的值，所以是**單槽攜帶**、不是鍵值查詢（名字沒有被使用）；② 拿掉 `al_step` 掉到 **0.003**——不是間隙不變，學到的是「經過**一次** 120 秒」可讀；③ 詞彙是封閉 CV 音節（19 字母）、句型只有一種，這是**機制**不是語言。**核心分仍 0.00/10**：這條路沒有接進生產，`stateful_runtime` 仍是 `hash-bucket` tokenizer，回覆仍由表層產生——把只會講 `remember X = Y` 的 checkpoint 接上去會比不接更糟。                                                                                                                                                                                | `scripts/train_state_content.py` 的 `all_pass=True`；`tests/test_state_content_task.py` 13 條綠；checkpoint 重載後 `heldout` 0.995／零狀態 0.000                                   |
+| **兩組**                                                                              | state 能不能同時持**兩組**配對，並由查詢選一組（§45）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `heldout_names` exact 過線，且兩個問法各自都選對                                                                                                                                   |
+| —                                                                                     | **兩組狀態（2026-11-13）**：**不能，而且不是預算問題**。同一個 81,765 參數的 `GRUCore`、同一個 seed（20261115）：**一組**配對 held-out exact **1.000**（probe 0.874），**兩組**配對 **0.0033**（`single` 目標）／**0.0100**（`both` 目標，兩組查詢都進損失），門檻 0.30，B1／B2／B3／B5 全 FAIL，零狀態與冷啟 0.000。`h` 的線性 probe 對「第一組教的值／第二組教的值／被問的值」只有 0.319／0.413／0.303（`single`）與 0.351／0.383／0.280（`both`）字元（chance 0.027）——**兩個槽都不可讀**，所以是「根本沒寫進去」，不是「寫進去選不出來」。**兩個已排除的解釋**：目標（兩臂排序在兩個 seed 上翻轉，差別在雜訊內；`both` 只是一致地比較好擬合，dev 損失 0.741 vs 1.007）與寬度（256 寬：訓練損失 0.196、held-out 0.057）。**照實記的一個陷阱**：兩臂的 `other_value_rate` 只有 0.002–0.004，但那是因為它們**兩組的值都沒答出來**，不是「避免賭」——所以 B5 必須同時要求兩個 `by_ask ≥ 0.50`，這一輪剛好是它的反例。結論是一條**設計要求**：可定址性（key 位址化的槽、或對教學回合做注意力）不會從「同一個向量連續覆寫」長出來。**核心分仍 0.00/10**，未接生產。                                                                                                                                 | `scripts/train_state_binding.py` 的兩份報告 `all_pass=False`（如實）；`tests/test_state_binding_task.py` 24 條綠；同 seed 單組對照 `state_content_20261113-033723` `all_pass=True` |
 
-| **可定址** | 同一個 state 裡開**可寫的槽**，查詢用位址去讀（§46，唯一變數＝結構） | 兩個問法各自選對（`by_ask` 皆 ≥ 0.50），且消融「拿掉 store」真的更差（B7 gap ≥ 0.20） |
-| — | **可定址（2026-11-13）**：**結構改對了，但選取與接線壞了**。`SlotMemoryCore`（同一個 GRU ＋ 四個 gate 寫入、attention 讀取的槽，134,124 參數）在**同一份切分**（digest 相同）上：dev exact **0.0007**、held-out **0.0000**，B1／B2／B3／B5／B7 FAIL，B4／B6／B8 PASS。**這一輪的重點不是分數，是三個讀數**：① store **真的存了兩組值**——`read` 的線性探針對兩組各 **0.589／0.593** 字元（chance 0.1333）、full exact 0.008／0.010（chance 2.4e-6），所以「沒寫進去」已經排除；② **選不出來**——`distinct_read_slot_rate` **0.0000／0.0003**、`read_cosine_between_asks` **0.9998**、`attention_max_prob_mean` **0.97**，兩個問題讀同一格而且很果斷；③ **store 反而更差**——同參數、只把讀寫拿掉的消融臂 held-out **0.1233**，B7 的差是 **−0.1233**（不是 +0.20），`other_value_rate` 0.0 表示吐出來的字串**兩組都不是**（解碼壞了，不是 hedging）。B8 PASS（matched GRU 0.1557 < 0.30）→ 不是參數問題。**下一輪登記的變數是「定址訊號」**（對教學回合做 per-turn keys）**與讀取→控制器的接法**；在登記寫下來之前不開計分 run。**核心分仍 0.00/10**，未接生產。 | `scripts/train_state_binding.py` 的三份報告（A／C2／C3）`all_pass=False`（如實）；`tests/test_state_binding_task.py` 40 條綠；`scripts/check_layer_separation.py` 的 `stateful_core_two_bindings` 仍 `fail` |
+| **可定址**
+| 同一個 state 裡開**可寫的槽**，查詢用位址去讀（§46，唯一變數＝結構） | 兩個問法各自選對（`by_ask`
+皆 ≥ 0.50），且消融「拿掉 store」真的更差（B7 gap ≥ 0.20） | | — |
+**可定址（2026-11-13）**：**結構改對了，但選取與接線壞了**。`SlotMemoryCore`（同一個 GRU ＋ 四個 gate 寫入、attention 讀取的槽，134,124 參數）在**同一份切分**（digest 相同）上：dev
+exact **0.0007**、held-out **0.0000**，B1／B2／B3／B5／B7 FAIL，B4／B6／B8
+PASS。**這一輪的重點不是分數，是三個讀數**：① store **真的存了兩組值**——`read`
+的線性探針對兩組各 **0.589／0.593** 字元（chance 0.1333）、full exact
+0.008／0.010（chance 2.4e-6），所以「沒寫進去」已經排除；②
+**選不出來**——`distinct_read_slot_rate`
+**0.0000／0.0003**、`read_cosine_between_asks`
+**0.9998**、`attention_max_prob_mean` **0.97**，兩個問題讀同一格而且很果斷；③
+**store 反而更差**——同參數、只把讀寫拿掉的消融臂 held-out **0.1233**，B7 的差是
+**−0.1233**（不是 +0.20），`other_value_rate`
+0.0 表示吐出來的字串**兩組都不是**（解碼壞了，不是 hedging）。B8 PASS（matched
+GRU 0.1557 <
+0.30）→ 不是參數問題。**下一輪登記的變數是「定址訊號」**（對教學回合做 per-turn
+keys）**與讀取→控制器的接法**；在登記寫下來之前不開計分 run。**核心分仍 0.00/10**，未接生產。 |
+`scripts/train_state_binding.py`
+的三份報告（A／C2／C3）`all_pass=False`（如實）；`tests/test_state_binding_task.py`
+40 條綠；`scripts/check_layer_separation.py` 的 `stateful_core_two_bindings` 仍
+`fail` |
 
-| **語言** | 同一個 core 能不能讀進一段 byte 文字、再產生文字（§47 登記、§48 結果） | L1–L7 全過，且**英文與證詞各自**贏過自己的 trigram floor（合併數字不算） |
-| — | **語言（2026-11-13）**：**設備有了，能力沒有跟著宣稱**。同一個 `GRUCore`／`CoreState` v1（**124,611** 參數、259 個 byte token）在 4.01 MB 上訓練 5 epochs（**402.65 s**、xpu），**L1–L7 全 PASS**：留出 BPC **1.3164** vs 插值 bigram 3.4317／trigram 2.1547；L3 100 個 prefix 有 **98** 個不同續寫、平均 LCP **8.14** vs trigram 1.71；L4 帶 state 1.3164 vs 每窗重置 1.4219（**7.4%**）；L5 在 `--check` 裡真的把 checkpoint 載回同一個類別；L6 文字流無 oracle／camera tag；L7 成本已記錄。**分解（§47.9 要求，也是這一輪最重要的讀數）**：英文 general **2.2201**（贏自己的 trigram 2.9739 約 **25%**）、證詞 **0.2480**（贏 1.1892 約 79%）；L3 拆開後英文只比 trigram 多對 **1.1 byte**（1.64 vs 0.55）且是固定填充詞，證詞的 16.09 才是拉高合併數字的原因。**照實記**：證詞低 BPC 是模板格式規律，不是中文能力；英文續寫不是理解。**核心分仍 0.00/10**、系統分 6.41 不動；這一階是 P 的載體，不是結果。 | `scripts/train_text_stage.py` 的報告 `all_pass=True`；`--check` 在 2026-11-13 之後**會回報 `weights_hash` 不符**——那是 §48.7 的欄位標錯（報告記的是初始化，不是 checkpoint），L1–L7 的判定不讀那個欄位，所以分數不動；`tests/test_text_stage.py` 22 條綠 |
+| **語言**
+| 同一個 core 能不能讀進一段 byte 文字、再產生文字（§47 登記、§48 結果） |
+L1–L7 全過，且**英文與證詞各自**贏過自己的 trigram floor（合併數字不算） | | — |
+**語言（2026-11-13）**：**設備有了，能力沒有跟著宣稱**。同一個
+`GRUCore`／`CoreState` v1（**124,611** 參數、259 個 byte token）在 4.01
+MB 上訓練 5 epochs（**402.65 s**、xpu），**L1–L7 全 PASS**：留出 BPC **1.3164**
+vs 插值 bigram 3.4317／trigram 2.1547；L3 100 個 prefix 有 **98**
+個不同續寫、平均 LCP **8.14** vs trigram 1.71；L4 帶 state 1.3164
+vs 每窗重置 1.4219（**7.4%**）；L5 在 `--check`
+裡真的把 checkpoint 載回同一個類別；L6 文字流無 oracle／camera
+tag；L7 成本已記錄。**分解（§47.9 要求，也是這一輪最重要的讀數）**：英文 general
+**2.2201**（贏自己的 trigram 2.9739 約 **25%**）、證詞
+**0.2480**（贏 1.1892 約 79%）；L3 拆開後英文只比 trigram 多對 **1.1
+byte**（1.64 vs
+0.55）且是固定填充詞，證詞的 16.09 才是拉高合併數字的原因。**照實記**：證詞低 BPC 是模板格式規律，不是中文能力；英文續寫不是理解。**核心分仍 0.00/10**、系統分 6.41 不動；這一階是 P 的載體，不是結果。 |
+`scripts/train_text_stage.py` 的報告 `all_pass=True`；`--check`
+在 2026-11-13 之後**會回報 `weights_hash`
+不符**——那是 §48.7 的欄位標錯（報告記的是初始化，不是 checkpoint），L1–L7 的判定不讀那個欄位，所以分數不動；`tests/test_text_stage.py`
+22 條綠 |
 
-| **推理** | 同一個 core 讀完多輪口供，指出違規的人（§49 登記、§49.13 結果） | 留出 free exact 與 ranking 的 Wilson 下界都高過最強 surface baseline 的上界 **0.2500**，且 `reset`／撤回／常數三條控制照登記方向 |
-| — | **推理（2026-11-13）**：**儀器封頂，沒有任何推理宣稱**。同一個 `GRUCore`／`CoreState` v1 從 L 的 checkpoint 出發（G1 鎖檔案 sha256 與訓練後 hash）、800 段 11 輪口供、20 epochs、xpu **3,200.6 s**：留出 free exact **0.0850**（17/200）、ranking **0.1650**（chance 0.1591、surface 上界 0.2500），train exact **0.1150** → G3 不過。**三個讀數**：① 17/200 就是常數 `Kevin` 在留出的出現次數（訓練集邊際眾數；逐鏈 4/54、5/52、4/46、4/48 也剛好是它）；② 答案的 loss **2.526 nats** ≈ 12 個名字的熵（留出 2.4641、`ln 12` = 2.4849）→ 預測沒有條件於輸入；③ `full`、`reset`（問前歸零）、`skip_al`（不呼叫 `al_step`）的 200 題預測**逐位元組相同**，`changed_rate` 0.0。格式對照 0.0650／0.1550（G8 PASS）→ 不是格式。依 §49.7 這是「儀器封頂」分支：後面的數字都是上限，不是「推理失敗」。**下一個變數是過擬合校準**（32–64 段訓練集要接近 1.0），不是先加選取結構。**核心分仍 0.00/10**。**接著（2026-11-14，§50 Q1）**：過擬合校準**失敗**——32 段、100 epochs、輔助讀出 λ=1，train exact **0.1562**（5/32，正好是常數 `David` 的邊際），λ=0 的配對診斷也只有 **0.2188**；輔助讀出確實讓**每一輪**都拿到梯度（測試釘住：λ=0 時第 0–1 輪恰好 0），所以失敗點在**信用分配之後**——訊號到了，模型仍背不起 32 段。依登記停損，完整臂**沒有跑**，也沒有事後調 epochs／lr／寬度。這不證明路徑長度不重要，只證明它不是唯一的阻礙；**接著（§50.13 狀態探針）量到瓶頸在表徵**：對第 6–10 輪的 `h` 用 800 段擬合線性讀出、在 200 段留出上評分，三個載體（stage-L／λ=1／λ=0）**每一個邊界都在 chance**（0.055–0.140，chance 0.0833，null 0.040–0.105），但同一支探針讀「線索鏈」在同樣邊界是 **1.000**（第 5、7 輪）→ 探針有效，是**答案不在 state 裡**，而且第 9–10 輪連主題都讀不到。**接著（§51 階段 R）**：只把輔助項改成「只在 `derive()` 已有唯一答案的邊界監督」（32 段上第 0–5 輪 0 個、第 6 輪 16 個、第 7–9 輪各 32 個），R1 校準仍是 **FAIL**：train exact **0.2500**（8/32，`Ivan` 0.5625；門檻 0.90），依 §51.5 的否證條件（≤0.30）「空邊界監督」被排除為原因，完整臂不跑、四個超參數不調；但它沒有像 Q1 那樣在第 50 個 epoch 平掉（main 0.4170→0.3788→0.3609），main 2.026 nats/session 只比邊際低 0.343 → 失敗點仍在表徵。**接著（§52–§53 階段 S，容量階梯）**：固定 400 步、只變要背的段數，儀器在 1／4 段是 **1.00**（4 段有 4 個不同名字，不是常數），8 段 **7/8＝0.875**、16 段 **7/16＝0.4375** → 斷點 N\*=8；8 段的 4× 步（1,600）**PASS 8/8**，但 32 段的 1,600 步 **12/32＝0.375**、2× 寬（hidden 256，330,563 參數）**10/32＝0.3125**（`Kevin` 被預測 18 次、只有 4 個不同名字）→ 依 §52.4 判定**不是步數、不是寬度**；但 §54 的複習次數更正**否證了容量的讀法**：同樣 32 段、同樣載體，在 **1,600 複習／段**（6,400 步）下 **31/32＝0.9688**（12 個名字全出現、main 0.0092、3,969 秒），而同一個 GRU 在 400 複習／段是 12/32 → **容量不是約束，信用分配效率才是**（P 臂 800 段只有 20 複習／段）。下一個變數仍是架構，但理由與門檻改成「在 400 複習／段用更少的更新達到同樣擬合」，不是「背不起」；核心分仍 0.00/10 | `scripts/train_pantry_deduction.py` 的三份報告 `all_pass=False`（如實）；`tests/test_pantry_deduction.py` **63 條綠**；`scripts/probe_credit_assignment.py --state-probe`（`tests/test_credit_assignment.py` **12 條綠**）；`LAYER_REGISTRY.json` 的 `stateful_core_pantry_deduction` 為 `fail`（Q1 校準／狀態探針／S 階梯亦記入） |
-| **短信用** | 同一個 state 物件裡每輪寫一槽、只讀進輸出頭（§55 登記、§55.10 結果） | 400 複習／段（1,600 步）下 store 臂 train exact **≥ 0.90**、同參數消融 **≤ 0.65** 且 gap **≥ 0.25**、消融與 GRU 對照（12/32）差 **≤ 0.15** |
-| — | **短信用（2026-11-14）**：**接線成立、擬合所需的更新數下降；不是能力、不是泛化**。`TurnStoreCore` 保留 GRU 的遞歸（`cell(embedding)`、`dt_proj`、`al_step` 不變），只加「每輪結尾一次寫入」與「讀取只進輸出頭」；`memory=False` 保留全部參數、`r ≡ 0` 且不寫入。實測（seed 20261118、lr 5e-4、batch 8、λ=1、`--aux-mode resolvable`、400 複習／段）：store **1.0000**（32/32，12 個名字）、消融 **0.5000**（9 個名字）、登記的 GRU 對照 **0.3750**（12/32），T1／T2／T3／T4 全過（gap 0.5000；T3 0.1250 ≤ 0.15）。**消融是同一個函數的證據**：與 GRU 的逐 epoch loss 到第 25 個 epoch **逐位相同**，之後的差來自 `head` GEMM 形狀（192 vs 128 欄）的浮點求和順序；消融 checkpoint 的 `head.weight[:, 128:]` 非零 **0 個**。**照實記**：三個預測都偏保守（store 預測 0.55–0.90、實際 1.0000；消融預測 0.30–0.45、實際 0.5000；T3 預測 ≤0.10、實際 0.1250）。這一階證明的是「32 段用 1,600 步而不是 6,400 步達到同樣擬合」，**核心分仍 0.00/10**；泛化是 §56 登記的下一問（同樣複習預算、前 200 段訓練、200 段留出） | `scripts/train_pantry_deduction.py --stage-t` 的配對判定（重新計算 T1–T4，不讀報告裡的判定）；`data/pantry_stage/t_store/arm/pantry_deduction_20261114-100025.json` 與 `.../ablate/pantry_deduction_20261114-094152.json`（`--check` OK）；`tests/ai/test_turn_store_core.py` **10 條綠**、`tests/test_pantry_deduction.py` **63 條綠** |
-| — | **綁定（2026-11-14／17，§56–§84）**：**擬合得到，綁定得不到；寫入粒度不是原因**。§56（G）：200 段 × 400 複習，store 擬合 **1.0000**、留出 **0.0850**（Wilson 下界 0.0537 低於 chance 0.1591）。§57（H）：同 10,000 步改成 400 段 × 200 複習，擬合 **0.9125**、留出 **0.0950**、in-roster **0.5350**（不管內容的期望 0.5457）→ 換曝露多樣性不改變形狀。§58（K）：同一 checkpoint 的線性探針，訓練段 in-sample **0.9725**、留出 **0.1100** → 答案不在 state 裡。§59（B）：名冊改成一 token 一槽（`TokenCacheCore`，165,956 參數）後擬合反而掉到 **0.5000**、留出 **0.0750**、in-roster **0.5300**，四個預測全部落空 → **寫入粒度被否證**。§60（W）：回到 per-turn store，把每個早段邊界的 CE 限縮到本段名冊並依 `1/|C|` 加權——擬合 **0.9000**（360/400，剛好壓在 0.90 地板）、留出 **0.1050**（21/200，Wilson 下界 0.0697 低於 chance 0.1591）、in-roster **0.5700**（不管內容的期望 0.5396）→ W1 過、W2 不過（W3 的 0.90–1.00 預測落空，實際 0.5700，ranking 0.1700）。依 §60.5 的機械分支做**反事實語料**（§61）：前 200 段各加一個配對版本（同一名冊、只有兩格互換 → 不同兇手，其餘文字逐位元組相同），400 項＝200 結構＋200 配對、10,000 步、同一個加權區域損失。擬合 **0.5000**（200/400，C1 不過）、留出 **0.0900**（18/200，Wilson 下界 0.0577 低於 chance 0.1591）、in-roster **0.5550**（不管內容的期望 0.5396）、ranking 0.1550。配對診斷：`same_prediction` 112/200、`both_correct` 48/200（88 組給不同答案的配對裡 48 組兩題都對）→ **不是「完全不看名冊」，是一部分在讀名冊、一半以上塌成同一個答案**。依 §61.9 的機械分支下一步是**最小綁定診斷**（§62：2 人名冊、1 個 live 值、4 輪、單一邊界；400 項＝200 結構＋200 配對，留出 200＋200 個留出配對，chance 0.5，M1 擬合 ≥ 0.90、M2 留出 Wilson 下界 > 0.5），登記後再跑。§62 的機械輸出是 M1 **1.0000**（400/400）、M2 **1.0000**（200/200），但**跑完後的稽核判定它無效**：`_minimal_session()` 把 dead 值寫第一格、live 值寫第二格，所以名冊的第二格**永遠是兇手**（四組都是 200/200）；把留出名冊順序反轉、對應不動（正解不變）後同一個 checkpoint 由 200/200 掉到 **0/200**，預測 200/200 跟著**新的**第二格 → 它答的是位置，不是名冊對應。**§62 不是「不過」，是無效**；§62.9 的「容量曲線往上」因此暫緩。§63 只修語料並把位置對照升成門檻：名冊順序由 `index` 奇偶決定（兇手在兩格各半，四組都要求 100/100；配對保留 live 鍵，所以一對配對剛好贏一半＝chance）、舊語料以 `corpus.minimal_roster_order=culprit_second` 保留可重現，新臂用 `balanced`；**M5** 要求留出名冊順序反轉後 exact ≥ 0.80（M1 不過時為 `None`）。M1／M2 門檻與 §62 完全相同，語料與目標函數仍同時偏離 §61（`--aux-mode resolvable`，§62.2 已登記的混淆）→ §63 是診斷，不是歸因臂。**§63 的機械輸出**：M1 **0.9775**（391/400，Wilson 0.9578–0.9881）過、M2 **0.4250**（85/200，Wilson 上界 0.4943，**低於** chance 0.5）不過、M5 **0.3100**（62/200）不過；擬合配對 `same_prediction` 6/200、`both_correct` 192/200（訓練段確實讀名冊），留出配對同答 26/200。跑完後的**語料稽核否定「還有位置線索」**：四組上沒有任何表面規則超過 0.56、位置 100/100，M5 的掉分是**模型的順序偏好**（正解在第 1 格 0.57 vs 第 0 格 0.28），不是語料缺陷——因此沒有修語料、沒有調地板。§64 登記為**順序擴增**：同 200 個結構各出現兩次（原順序＋名冊反轉，對應與兇手不動，其餘文字逐位元組相同），仍 400 項／10,000 步／同一個目標；在這種語料上「答第 N 格」的擬合上限是 0.5，所以 **M1 變成真正的綁定門檻**；讀數加上**順序保留率**（`original_exact`、`retention = 反轉後 / 原順序`），M1／M2 門檻不變。**§64 的機械輸出**：M1 **1.0000**（400/400），而且 200 組順序配對**全部同答、全部兩份都對**——在「答第 N 格」的擬合上限只有 0.5 的語料上，這是擬合真的綁定的第一個直接證據；retention **1.0755**（§63 是 0.7294），順序偏好在擬合段消失。但 M2 **0.2650**（53/200，Wilson 上界 0.3302，低於 chance 0.5）比 §63 更差：**44.5% 的答案不在名冊裡**（89/200），名冊內答對率 53/111 = 0.477，等於 2 選 1 → 沒見過的結構上輸出頭不再被名冊約束。依 §64.9 的機械分支登記 **§65 容量曲線**（2／3／4／5 人，同一個預算；語料家族、400 項、10,000 步、目標與讀法都不動，只改名冊長度與由它決定的 chance 1/k；k=2 的語料與 §64 逐位元組相同，所以不重跑，只跑 3／4／5）。**曲線的用途是界定失敗**（「名冊太小」能不能被排除），不是找會過的格子；若某格反而過，先稽核語料再說。**§65 的機械輸出**：k=3／4／5 每一格都是 M1 過（0.9750／0.9725／0.9750，400 項）、M2 不過（0.1900／0.0950／0.1300；Wilson 上界 0.2500／0.1436／0.1837，低於各格 chance 1/3、1/4、1/5）、M5 不過；`exact/chance` 是 0.570／0.380／0.650（k=2 是 0.530），沒有趨勢。真正隨 k 變化的是**答案落在名冊裡的比例**0.555→0.550→0.500→0.450（不管內容的期望 0.167→0.250→0.333→0.417，領先幅度 0.388→0.300→0.167→0.033），而名冊內正確率從未超過 chance（0.477／0.345／0.190／0.289）→ **「名冊太小」被排除**：不是容量不足，是名冊對輸出的約束隨候選變多而消失。依 §65.9 的機械分支，下一步是**讀出／狀態探針**（已訓練的 k=2 與 k=5 checkpoint，名冊輪換文字，不新增訓練預算）。**§66 的機械輸出是 R3b-head-ignores，兩個 checkpoint 都是**：只改名冊那一輪、在答案邊界讀三層——`h_cos_final` 中位數 **1.0000**（k=2 最小值也是 1.0000，k=5 最小 0.9991），而且**完全無關的兩題之間**也只有 0.9870／0.9999 → **`h` 從來不裝這一題**；`read_cos_final` 是 **0.8405／0.8553**（k=2）與 **0.9938／0.8105**（k=5，twin／reorder）、`store_v_rel_final` 0.6004／0.5560 與 0.1203／0.6968 → **store 才是載體，而且答題時真的被讀出來餵給頭**（`token_logits = head([h, read])`）；但名冊限定的 argmax 跟著換名走的比例 `moved_to_twin_target` 是 **0.4950**（chance 1/2）與 **0.2300**（chance 1/5），正好是 1/k，identity 準確率 0.4950／0.2650 也在 chance 附近 → **內容在 state 裡、頭看到了、卻不照 mapping 選**。R1 逐欄重現報告（0.4950 = 0.4950、0.2650 = 0.2650，含新增的「探針名冊 argmax = `ranking_exact`」交叉檢查）、R2 **0 違規 / 200**、checkpoint sha256 與 `weights_hash` 前後不變、成本 2.56 s／2.86 s。**照實記一個探針 bug**：第一次跑的 `pick_all()` 把候選**索引**當名字回傳，`accuracy`／`moved_to_twin_target` 全 0.0；修正後新增的交叉檢查會抓到它，0.0 全部作廢、兩個 checkpoint 重跑。**下一步（§66.9 機械分支）：讀出**——以 `read` 為輸入、在名冊候選上做選擇的頭，不是加 session／步數／寬度。**§67 換讀出**（載體凍結，只訓練一個 16,641 參數的選擇頭 `v·tanh(W_h h + W_r read + W_e e_c + b)`，softmax 只在該 session 的名冊候選上，所以名冊外答案在構造上不可能；三個臂 `read`／`h`（`read` 歸零）／`cand`（`h` 與 `read` 都歸零）同架構、同參數量、同初始化，外加一個不訓練的 `permuted` 介入＝把每一列留出的 `read` 換成下一列）：兩個 k（§64 的 k=2、§65 的 k=5）都是 R1／R2／R3 過（語料 digest 記錄、`weights_hash` 與 checkpoint sha256 前後相同、名冊外答案 0、`read_permutation_share` 1.0，成本 12.1 s／12.08 s）、**S1 過**（fit **1.0000／1.0000**，第 500 步就到）、**S2 不過**（留出 **0.4850／0.2300**，Wilson 下界 **0.4167／0.1771** 低於 chance 0.5／0.2）、**S3 不過**（反序同人 0.5200／0.2450）、**S4 不過**（下界低於三個對照的上界 0.5735／0.2770）→ **R4b-fits-not-transfers**：**讀出不是缺口**，state 裡是 per-session 記憶，不是可轉移的 value → person 綁定。`read` 臂的 fit 1.0000 是**在 `h` 歸零下**達到的（`h` 臂只有 0.7250／0.3000），所以 `read` 單獨就能分辨「這是哪一題」；但同一份 `read` 換到沒見過的結構上就回到 chance，而且**沒有比只有名字的 `cand` 臂好**（0.5050／0.2150，k=2 還更低）。這與 §64 不衝突、是同一件事的兩面：§64 的 M2 名冊內正確率 53/111 = **0.4775**，§67 構造上只能在名冊裡選、得到 **0.4850** → 把答案限制在名冊裡沒有帶來轉移，只是拿掉了名冊外的猜測。預測命中六項、**落空兩項照實記**：`h` 臂 fit 預測 ≥ 0.80，實際 0.7250／0.3000（k=5 的預測塌成 `Chris` 0.405、只有 9 個不同答案，不是背起來）；`cand` 預測 ≈ 1/k，實際略高（0.5050／0.2150），原因是訓練段兇手邊際是斜的（`Chris` 56／`Betty` 52 對均勻 33.3），一條「挑訓練段最常見的名字」的機械規則在留出上就有 0.5400／0.2100 → `cand` 是名字先驗，不是內容。寫下數字前先查過語料捷徑：兇手在名冊**文字**裡的位置 k=2 是 200/200 對半、k=5 每格 80/80，而且這個頭逐候選共用 `proj_e`、沒有位置輸入，所以 `cand` 是真正的「只有名字」對照。**這一節把 §66 的 R3b 收窄，不是放寬**：`read` 隨名冊變動、足以辨認這一題，但不含可轉移的「值 → 人」對應。**§68 問「state 裡裝的是什麼」**（同一個凍結載體、同一批 400／200 項、答題邊界、2,000 步的四個線性讀出；載體 `weights_hash` 與 checkpoint sha256 前後相同）：`colour`（8 色 argmax）in-sample **0.2550**／capacity 0.2200（k=2）、0.2550／0.2375（k=5），留出 **0.1450／0.0850**（chance 0.1250）；`roster`（12 選 k 的 **top-k 集合**，chance 1/66、1/792）in-sample **0.2875／0.0175**（capacity 0.0500／0.0000），留出 **0.1300／0.0100**；`culprit` 對照 in-sample **1.0000／0.9925**、留出 **0.2650／0.1100**（Wilson 下界 0.2087／0.0738，**低於**名冊上限 1/k＝0.5／0.2，所以不與 §67 矛盾）；`shift` 對照（§67 的頭、標籤全部移到名冊下一格，`labels_changed` 1.00、`labels_in_row_roster` 1.00）照樣擬合 **1.0000／0.9625**，同批列對**真**標籤 **0.0000** → §67 的 in-sample 1.0000 是**容量**，不是「裝了真對應」。G1／G2 PASS、G3／G4 都是 readable=False／transfers=False → 機械分支 **N3-facts-not-linearly-readable**：**在答題邊界，線性讀出看不到顏色與名冊**（`colour` 只比自己的容量天花板高 0.035／0.0175，`roster` 在 k=5 幾乎是零），所以「state 沒有事實」**尚未**成立——失敗可能在**邊界**，不在 state；這與 §67 不衝突，而是把它收窄（連讀出事實都做不到，再換讀出就沒有用）。**照實記**：`roster` 在 k=2 的留出 0.1300 是 chance 的 8.6 倍、Wilson 下界 0.0903 確實高過 chance，是登記的 **0.50 效果量**把它判成 transfers=False（不是事後改判）；`colour` 在兩個 k 的 in-sample 都是 0.2550，像是讀到與 k 無關的某個 3 類劃分，不是顏色本身。跑前只用**訓練段**校準就把預測從 N1 改成 N3，門檻與協定在校準前已定；兩次 30 步煙霧測試的數字**作廢**（登記設定是 2,000 步，且 smoke 的 `culprit` in-sample 只有 0.675、連 G1 都不過）。**§69 問「事實住在哪一回合」**（同一個凍結載體、同一批 400／200 項、2,000 步，只換邊界；`state`＝`[h, read]` 是模型答案頭真正吃的向量，`read` 單獨一欄保留為 §68 的對照；兩份 `--check` OK、k=2 重跑除 `seconds` 外逐欄位相同、`weights_hash` 與 checkpoint sha256 前後不變）：顏色在**證據邊界**（它被說出來的那一回合）**0.8900／0.9950**（chance 0.1250，Wilson 下界 0.8391／0.9722），在**答題邊界**只剩 **0.1400／0.1100** → **G1 PASS、G2 FAIL**：顏色是被後面的回合弄丟的，不是從沒寫進去（答題邊界的 in-sample 仍有 0.3150，比自己的置換容量 0.1925／0.2025 高，所以「塌掉」不是「歸零」）。名冊在**名冊邊界**是 **0.2850**（chance 0.0152 的 18.7 倍，Wilson 0.2269–0.3512）／**0.0050**，都低於登記的 0.50 效果量 → **G3／G4 FAIL**：「兩個事實都在、只缺組合」不成立。`pairing`（per-slot）在兩個 k 的閘門都是 **`capacity_limited`**（cap 0.5713／0.5905 > 0.50），所以 G5 的 FAIL **不能**讀成「對應沒有編碼」。陽性對照 `culprit` in-sample **1.0000／0.9975**（cap 0.1700／0.2425）→ **G0 PASS**；`read` 欄逐格重現 §68（顏色 0.1500／0.1000、名冊 0.1350／0.0100、兇手 0.2700／0.1100）→ §68 的 N3 是**位址**問題（`read` 看不到），不是 state 沒有內容，但答題邊界的 `state` 也沒有可轉移內容，所以 N3 的結論站得住、理由要換。機械分支兩個 k 都是 **B5-partial-facts-held**；8 項預測與分支全部命中，但 §69.4 照實記了 400 步儀器檢查印過一次留出段，所以預測不是盲的。下一步（B5）：對失敗的 `roster` 在**它自己的回合**換讀出家族（先直接讀 store 的值，再試非線性），不是加步數／寬度／資料。§70（B5 的執行）：同一個名冊邊界換三個讀出家族＋一個**無參數**結構檢定；k=2 名冊在幾何上分得開（留出 AUC **0.7699**、p 0.001、270 對同名冊），但值臂 in-sample **0.4975**、非線性容量 **0.5650**（兩者都不可裁決）→ **B3-roster-present-but-not-fittable**；k=5 留出只有 **24** 對同名冊，AUC **0.5498**、p 0.1918 → **B4-roster-absent-at-its-own-turn**，但那是**量不到**而非證明沒有（訓練段 296 對是 0.8034／p 0.001）。§71（B3／B4 的共同下一步，**干預而非再加讀出家族**）：三個**等 token 數**的名冊行編輯（換一個同長度名字／反轉子句／換一個未用顏色）；k=2 結果是 **J1-roster-line-sets-the-roster**——換名字把 state 帶到編輯後名冊的鄰域（lift **0.130641**、p 0.001、199 列、無擬合、top1 45/199 對 chance 0.0152），反轉順序（**+0.007788**）與換顏色（**−0.001729**）都沒有把它推離自己的名冊→ 痕跡是**名字的集合**，不是那一行字面；k=5 只有 34 列有參考（< 50）→ **J4-neighbourhood-underpowered**（登記的預測）。登記時的 **J2 預測是錯的**，照實記為 miss。**核心分仍 0.00/10**§72（J1 的機械輸出，**逐槽看寫入**，無擬合）：`end_turn` 的寫入門在名冊邊界是 **one-hot**（k=2 留出 200/200 段，`max_share` 平均 0.999998、最小 0.999949；k=5 99%），16 個槽裡 **15 個空著**，值矩陣 **rank 1**（k=2 每段 `σ₂/σ₁` ≤ 9.00e-06；k=5 93.5%），讀出**就是**那一槽的值（k=2 `|cos|` 每段 **1.000000**；k=5 99.5%），位址跨段是常數輪廓（`address` 臂留出 **0.0500／0.0000**，chance 0.5／0.2）→ **S1-single-address-temporal-superposition**：名冊跟先前每一回合的文字共用同一個 64 維移動平均，**損失在寫入、不在讀出**。k=5 因 0.9350／0.9400（< 95%）落到 **S4-two-addresses**。兩個重現臂**逐位**重現 §70（`values` 0.1400／0.0050、`state` 0.2850／0.0050），store 單獨的留出在線性探針下只有 0.1400（k=2，chance 0.0152）／0.0050（k=5）；**store 的非線性讀出沒有量過**（照實記的缺口）。登記的 8 項預測全部命中，但來源是訓練分割的先驗，不是本輪的成就。**核心分仍 0.00/10**§73（S1 的機械執行；**只換寫入位址**，其餘逐項固定）：`address="turn"` 讓回合 k 寫槽 k % 16，`address="gate"`（預設）是每一節到目前為止的 softmax 門，兩臂參數量都是 168,150、語料 digest 與 §70 同一個 k 逐位相同、同樣 10,000 步／同一組超參數（沒有加 epoch／寬度／資料）。**k=2 的寫入真的換了**：留出 200 段**全部** `active_slots = 2`（§72 是 `{1: 200}`）、每段 `σ₂/σ₁` 最小 **0.1497**（§72 是 ≤ 9.00e-06）；三個臂的留出一起上升（`values` **0.1400 → 0.3350**、`state` 0.2850 → 0.4650、`nonlinear_quad` 0.3000 → 0.4900），無參數結構檢定 AUC 0.7699 → **0.8645**（p 0.001）。但裁決不是「位址是損失」：線性值臂在 turn 載體上仍然**擬合不到自己的訓練名冊**（in-sample **0.5325 < 0.95**），非線性臂 in-sample 0.9625 但容量 **0.5550 > 0.50**（capacity-limited），所以依跑前固定的優先序，機械分支是 **W2-not-readable-in-sample**，不是登記預測的 `W3-write-was-part-of-the-loss`。**登記本身有缺陷，照實記**：W2 的 0.95 地板是 §70 給「載體被訓練去產生的那個標籤」的正控制用的，而 W2 自己在 §73.8 登記的預期是 **0.4975**——0.4975 < 0.95，也就是說照登記的預期它本來就不可能通過（除非換位址讓 in-sample 多跳 +0.45，而登記沒有預測這件事）。因此 W3 過、W4 不過（0.1400 < 0.3350 < 0.50）只記成**事後觀察**，由下一個登記檢定；這一節**不得**宣稱位址是損失的一部分，也**不得**宣稱不是。k=5 的位址同樣換了（`active_slots` 全部 2），但留出**沒有移動**（`values` 0.0050 → 0.0050，in-sample 反而 0.0850 → 0.0225），所以 S1 指名的修法不是 k=5 的答案。跑後另記一個**只影響 verdict 的修正**（amendment）：`probe_pantry_families.py` 的 `--check` 原本只看 `instrument_ok`，而 `instrument_ok` 把依構造必假的 H1（重現 §69 的 cell）算進去，於是四份 §73 報告只因這一行 FAIL；改成「H1 只在記了 `--reference` 時才要求，其餘要求 H0 與兩個 hash 不變」，四份存檔**一個位元組都沒改**（sha256 前後相同，`instrument_ok` 欄位仍是 `False`），§70／§72 的舊報告仍然 `--check OK`。§74（§73.17 的**判準重登記**；**不重訓**，載體、語料、特徵、標準化全部凍結，`N0` 要求三臂的 in-sample／held-out **逐位**重現 §73）：每個讀數改成對 **400 次標籤置換分佈**檢定（§70／§72／§73 只有**單次**置換，所以「高於自己的置換容量」當時根本無法檢定），並加上第三個分割 **leave-roster-out**（擬合時拿走整個名冊 `R` 的段，再讀 `R` 的段——那一對名字**從未一起當過訓練標籤**，所以過關不可能只是標籤集合的查表）。**k=2：Q1／Q2 三臂全過**（in-sample 0.8075／0.5325／0.9625 對各自的 null 平均 0.2669／0.0609／0.5581，p 都是最小可達值 0.002494；held-out 0.4650／0.3350／0.4900 對 null 平均 0.018，p 同樣 0.002494），**Q3 三臂全不過**（LRO 的 overlap 1.2700／1.2050／1.0525 < 登記的 `0.75k`＝1.5，雖然 LRO 的 p 也都是 0.002494）→ 分支 **`Q2-transfer-below-the-composition-floor`**。三個要留下來的讀數：① **§70 的 `capacity_limited` 與 §73 的 `W2-not-readable-in-sample` 都是絕對門檻的產物**——`nonlinear_quad` 的 in-sample 0.9625 高於 400 次置換的**每一次**（平均 0.5581、最大 0.6200、p99 0.6075），0.50 的上限不是這個家族的分佈（§70 的文字不改，兩節判準並存）；② **擬合最好的一臂組合最差**（`nonlinear_quad` 0.9625 → LRO **0.1075**；`linear_values` 0.5325 → LRO **0.2350**），所以「答得出名冊」與「記住名冊的每一對」是兩件事；③ **LRO 只掉 0.10**（held-out 0.3350 → LRO 0.2350，null 平均 0.0207，94/400 整對沒錯、overlap 1.2050）——這是**事後觀察**：登記的門檻說「不稱 binding」，數字說「組合訊號存在但弱」。**k=5 什麼都沒轉移**：Q1 只有 `linear_state`（0.1700 對 null 0.1028）與 `nonlinear_quad`（0.5200 對 0.3237）過，`linear_values` **不過**（0.0225 對 null 0.0099，p 0.027431 > 0.005），Q2 三臂全不過（留出都是 1/200，p 0.224–0.314；overlap 2.46–2.57 只比 chance 2.0833 多抓 0.4 個名字），LRO 1–2/400 → 分支 **`Q2-fit-but-no-transfer`**。**照實記**：observed 格在登記前已由一次 3-draw 管路測試印出（輸出到 `/tmp`、不進版控），所以本節**不宣稱盲預測**；登記時未看過的是 400 次 null 分佈，因此 p 值與 Q1／Q2 的裁決不是事後選的，而 Q3 的 k=2 裁決是算術（門檻在管路測試前就寫定）。§75（§74.17 指名的兩問；**A 不重訓**，只把 §74 的 200 列留出按「名冊 key 是否出現在 57 個訓練名冊」切開，並用**同一份擬合**各讀一次；**B 只換語料種子 `--pantry-seed 20261126`**，其餘引數與 §73 逐項相同）：A 的 `N0a` 過（pooled 0.4650／0.3350 **逐位**重現 §74），**seen 176 列 0.5170／0.3693（p 都是 0.002494）→ `S1` 過**，**unseen 24 列兩臂都 2/24＝0.0833（Wilson 0.0232–0.2585，null 平均 0.013446、最大 0.0833、ge 10、p 0.027431）→ `S2` 不過** → 分支 **`U2-seen-rosters-only`**：§74 的 pooled 0.3350 是「**載體看過的那一對**」在撐；24 列那一格答對的兩段各只抓到**一個**名字（overlap 1.0000／0.8750 對 null 最大 0.6667，事後觀察，不是登記的閘門）。B 的 `N0b` 過（載體與 checkpoint 未變、語料 digest 有記錄、`reproduction_applicable` 照實記 `false`）、**`Q1`／`Q2` 三臂全過**（in-sample 0.5475／0.3275／0.8350 對 null 0.2448／0.0995／0.4991；held-out 0.2200／0.1600／0.2250 對 null ≈0.017；p 都是 0.002494）、**`Q3` 三臂全不過**（LRO 0.0625／0.0525／0.0350，overlap 1.0475／0.9375／0.9625，都 < 1.5）→ 分支 **`Q3-below-floor-again`**：**形狀複現（高於 null、遠低於門檻），幅度沒有**（§74 的 0.2800／0.2350 → 0.0625／0.0525）。**並列的共變數**：這支語料的載體沒有擬合到同樣程度（訓練 loss 0.0001 → 0.6345、生產讀數 0.3700 → 0.1650、`M1`／`M2` FAIL），所以「幅度沒複現」不能全歸給語料；§75.7 的停損禁止用加 epoch／寬度／資料去追。登記的 7 條預測 **6 中 1 落空**：A 的 `S2` 落空，讀法在登記時已寫死——24 列上「不過」**不等於**組合不存在（存檔的 null 一次都沒到 3/24，也就是差**一段**就翻面）；照實記見 §75.15。§76（§75.7 的停損擋掉「再加預算」之後，換問**一次寫入裝多少**；兩臂**只差 `--write-slots`**，其餘逐項相同：語料種子 `20261127`、10,000 步、168,150 參數、`device=cpu`，並在同一個 `CPUQuota=500%`／`MemoryMax=9216M`／`MemorySwapMax=0` 的 transient user service 下跑完）：機制真的換了——留出名冊邊界的 `active_slots` 中位數 **2.0 → 8.0**（控制 200/200 都是 2，治療 200/200 都是 8，剛好是「2 個回合 × 1／4 槽」的算術），`rank1_residual` 中位數 0.3508 → **0.7721**（4 塊不是原值的重排）；但 **LRO exact 三個家族都沒動**（`linear_state` 0.1175 → 0.0925、`linear_values` 0.0950 → 0.0925、`nonlinear_quad` 0.0575 → 0.0375），Δ 是 **−0.0250／−0.0025／−0.0200**，全部遠小於登記的 `CONTRAST_MARGIN` 0.05，而三個 in-sample 差（0.0275／0.1075／0.0075）都 ≤ `FIT_COMPARABILITY` 0.15 → `readable=true`、`gain_arms`／`loss_arms` 皆空 → 分支 **`W2-the-write-was-not-the-limit`**：**解析度不是組合的損失所在**，下一步是**內容定址（per-name）寫入**，不是更多 epoch／寬度／資料。兩臂的 `Q1`／`Q2` 三家族全過（p 都是 0.002494）、`Q3` 全不過（overlap 1.075／0.955／0.960 與 1.0525／0.985／0.940，都 < 1.5）、`S2`／`U` 也全不過（unseen 最好 2/24＝0.0833，兩臂相同）。**照實記兩件**：① 登記時預測「`W2` 或 `W4`」，結果是 `W2`，**沒有被否證但資訊量很低**（七個分支裡寫了兩個，`W4` 還需要 `readable` 加至少一個 `gain_arm`）；② 描述量**違反** §76.6 登記的預期——`linear_values` 的 in-sample 位移 **+0.1075** 反而比 `linear_state` 的 **−0.0275** 大（held-out −0.030 對 +0.045、LRO −0.0025 對 −0.0250，兩個反向），那一句「前者位移遠小於後者」**不成立**，而它不裁決任何分支。作廢的跑照實記：16:30 的 12 執行緒 control 與 epoch 196/200 被重啟終止的首次啟動，都沒有產生任何讀數。§76.12 寫的「GPU 只能靠閒置保證 ≤ 50%」同日被 `scripts/gpu_limit.py` 取代（實測 `--target 0.5`：duty 0.8735 → 0.4773、25,411 → 13,609 次 matmul；`--target 0.25`：0.2428、7,057 次；誤差在保守側），但 §76 的裝置仍是登記的 `cpu`。**核心分仍 0.00/10**。§77 換問「一次寫入的**內容**（哪一個 `h`）」（§76 只排除了寬度）：兩臂在同一個上限 service 內重訓，語料種子 20261127、10,000 步、168,150 參數、`device=cpu`，只差 `--address`——control `turn`（回合 k 在最後一個 token 的 `h` 上寫一次進槽 k）、treatment `item`（每個清單項各寫一次，來源是該項最後一個字元的 `h`，槽號是每 session 的項序號 `counter % 16`）；參數、語料、初始化、預算逐項相同，治療是**寫入計畫**、不是第二次 forward（token 流與 `h` 軌跡不變）。登記前量到兩件事決定治療：字面的內容 hash 會撞槽（訓練 209/400、留出 101/200 段丟槽，所以槽號只需避免覆寫——讀本來就是內容定址——改用項序號），以及治療在 §76 的控制載體上真的改變 store（`active_slots` 2→3、`rank1_residual` 0.3278→0.4552）。照實記一個 §76 的儀器缺陷：`probe_pantry_write76.py` 的 `load_corpus` 沒傳報告的種子，所以 §76 的格是在**種子 20261113** 的語料上量的、載體卻訓練在 20261127；§76 的 `W2` 照原文引用，本節探針讀報告的種子並把 `corpus_digests_match` 放進 `N0`。機制過：`M_slots` 2.0（200/200）對 3.0（200/200 剛好 3、比例 1.0000）、`rank1_residual` 0.3278→0.5148、`M_landed` 兩臂 200/200、min cosine 1.0（槽內容＝`sigmoid(write_gate(h))·value_proj(h)` 在計畫指名的位置）、載體與 checkpoint 前後不變。`Q1`／`Q2` 兩臂三家族全過；**`Q3` 兩臂三家族全不過**（最好的是治療的 `linear_values` overlap **1.423** < 1.5）；`S1` 過、`S2`／`U` 不過（unseen 兩臂都 **0/7**——這支種子切 193/7，`U` 幾乎空轉，不讀成「沒有轉移」）。登記的對比**不可讀**：治療的 `linear_values` in-sample 0.7200 對控制 0.4175，擬合差 **0.3025 > 0.15**，所以 LRO 的差（+0.0575／+0.2800／+0.0325）是共變數、不是證據；固定優先序因此是 **`P2-both-width-and-content-were-not-the-limit`**：寫入的寬度（§76）與內容（§77）都不是組合的瓶頸，下一步換**讀出端**、不是更多預算。登記的預測（`P4` 或 `P1`）**落空**、照實記為 miss；登記的描述量預期（`linear_values` 位移大於 `linear_state`）**命中**（LRO +0.2800 對 +0.0575、in-sample +0.3025 對 +0.0375）。重訓的控制**沒有**重現 §76 存檔的格（0.2325／0.1500／0.0900 對 0.1175／0.0950／0.0575），這是預期中的語料種子差、記為 `reproduction.applicable=false`，不是迴歸。第一次探針在寫 `items_per_session` 時把回合字典傳給 `item_end_positions` 而中止、**沒有寫出任何讀數**；修成走 `turn_payload` 的 helper 並加回歸測試，閘門／常數／讀數定義都沒動，第二次執行才是登記的讀數。**核心分仍 0.00/10**。§78（§77.19 指名的**等擬合對照**；**不重訓任何載體**——兩個 §77 載體凍結，`weights_hash` 與 checkpoint sha256 前後相同，只讓**讀出步數**在 250／500／1,000／2,000／4,000／8,000 的階梯上移動，家族只用 §77 唯一讓對比不可讀的 `linear_values`）：兩階段協定——階段 A 只讀 in-sample 與置換容量並**先選配對**（`FIT_MATCH_TOLERANCE` **0.05**，比 §77 的 0.15 緊三倍；`CAPACITY_MAX` 0.50 只當可用性濾網），階段 B 才在錨（2,000）與匹配格上算 held-out／leave-roster-out，每格 400 次置換。`N0` 過（錨的兩臂**逐位**重現 §77：control 0.4175／0.2100／0.1500／1.1475、treatment 0.7200／0.5500／0.4300／1.4225）、`L` 過（單調、跨度 0.2100／0.3500）、六個階梯全部可用（容量 ≤ 0.1125）。`W1` 找到配對：**control@8000（0.5150）對 treatment@250（0.5250）**，gap **0.0100**，而且兩邊的置換容量也剛好都是 **0.0700**；兩條擬合範圍只在 **[0.5150, 0.5250]** 重疊（per-item store 用 **250 步**就達到 per-turn store **8,000 步**的線性可讀度），所以「等擬合」只在兩條階梯的**邊緣**成立。匹配對的讀數：control LRO exact **0.1025**（41/400）／overlap **1.0875**，treatment **0.2925**（117/400）／**1.2650**，Δ overlap **+0.1775**、Δ exact **+0.1900**，兩臂的 in-sample／held-out／LRO null p 都是最小可達值 **0.002494**（held-out 0.2100／0.3400 都高於 chance 0.0152）→ `W2` 過、`gain` 成立（0.1775 ≥ 0.05）；但 treatment overlap **1.2650 < 1.5** → `above_floor` 不成立 → 機械分支 **`F3-gain-below-floor-at-matched-fit`**：**等擬合下寫入有幫助、幅度不夠**。描述量（不裁決）：逐階梯 Δ overlap **+0.1825**（250）／**+0.2750**（2,000）／**+0.3450**（8,000）、Δ exact **+0.1925／+0.2800／+0.3325**，三個步數 treatment 都較高、差值隨讀出預算**上升**；全系列最好的是 treatment@8000 **1.4325**（仍差 0.0675）；unseen 兩臂在 250／2,000 都是 0/7，treatment@8000 是 1/7（p 0.1397、未達 0.005）。登記的預測**落空**：寫的是「`F1` 或 `F4`、明確不是 `F2`」，實際是 `F3`（`F1` 不成立：0.3025 的差可被步數壓到 0.01；`F4` 不成立：Δ +0.1775）——「不是 `F2`」成立，但理由是**地板**而不是 `gain` 不成立，所以記為 miss；D2（匹配格 exact 差 < 0.2800）**命中**（0.1900），D1 是登記前就算出的低資訊量項。對 §77 的 `P2` 的處理是**收窄措辭、不改原文**：內容**不是惰性的**（等擬合下 +0.1775），但仍**不是充分條件**（1.5 從未達到）；§77 的 +0.2800 裡大約 **0.10** 與「治療比較好擬合」共變（overlap 0.2750 → 0.1775、exact 0.2800 → 0.1900），而這個 0.0975 **不能**拆成純擬合與純換格子，因為匹配把兩臂移到不同步數。照實記：CLI 對兩臂都算 **{250, 2,000, 8,000} 的聯集**，所以 control@250 與 treatment@8000 也被算了（只當描述量，沒有閘門或分支配到它們）；兩臂在匹配對上都不在各自最好的傳遞點（control 最好 @2000 的 1.1475、treatment 最好 @8000 的 1.4325）；事後描述量是 treatment 的**最差**格（@250 的 1.2650）仍高於 control 的**最好**格（@2000 的 1.1475），但未登記、單一語料種子，不升級成結論。執行 **2,715.1 s**（`CPUQuota=200%`、`MemoryMax=4096M`、`MemorySwapMax=0`、`OMP_NUM_THREADS=2`、`device=cpu`；成本幾乎全在 in-sample null 的 400 次**重新擬合**），`--check` **OK**、`instrument_ok` **true**。被排除的下一步是**再加讀出預算**（階梯最好 1.4325 < 1.5）；分支的 `next` 是「一個項還缺什麼（同一筆裡的 value→name 配對）」，不加預算。**§79 接著問同一件事**（同一個凍結的 §77 治療載體、不重訓、不掃讀出階梯）：每個 roster 項一筆 entry（該項自己槽上的 `v`，`k`／`h` 當診斷），線性探針只用 800 筆訓練 entry 擬合，計分是留出 400 筆的**同一 session 二選一**（自己的標籤 vs 另一項的標籤，chance 0.5）。`I0` 全過（`weights_hash` 與 checkpoint 前後相同、語料 digest 相符、item↔映射 400+200 段 0 bad、entry coverage 1.0 且 `cos_v`／`cos_k` 最小 1.0、§77 三格逐位重現）。機械輸出 **`D1-entry-carries-owner`**：名字 **0.9350**（374/400，Wilson 0.9065–0.9553）、顏色 **0.6200**（248/400，0.5715–0.6662），六個讀數的 400 次置換都是 0 次 ≥ 觀察值（p 0.002494），診斷呈 `v < k < h` 單調（名字 0.9350／0.9900／1.0000、顏色 0.6200／0.7375／0.8375）。準確讀法是**owner 強、value 弱但可讀**：按 session 計，名字兩項都對 **174/200（0.87）**、顏色只有 **74/200（0.37）**、13% 的 session 兩個顏色都錯（結果後追加的描述量，不改閘門）。因此 **§78 的 shortfall 不在 entry 的內容**，而在 pooled 讀出／聚合；它**不是**「store 會組合」（LRO 仍 1.2650 < 1.5）。照實記：寫入門中位數 **0.9907**，所以 `v ≈ value_proj(h)`，本節**不能**分離「寫入規則保存了它」與「寫入點的狀態本來就有它」（`h` 的 1.0000／0.8375 是上界）。計分跑 **1,144.72 s**（2 核／4 GiB／無 swap／`device=cpu`），`--check` **OK**、`instrument_ok` **true**。**核心分仍 0.00/10**§80（§79 的 `next` 之前，先量**現有的那次讀**；**不重訓**、不掃階梯、不加預算）：同一個凍結的 §77 治療載體，取**提問回合之前**的 store（`snapshots[q-1]`）、重放提問回合取最後一個 token 的 `h`，用**模型自己的** softmax `softmax(exp(log_read_scale)·k·W_q h)`（**沒有擬合參數**）當讀；計分是 held-out **200** 次讀的**同一 session 二選一**（證據顏色對應的那一筆 vs 另一筆，chance 0.5）。`I0` 全過（`weights_hash`／checkpoint 前後相同、語料 digest 相符、item↔映射 400+200 段 0 bad、讀點稽核 coverage 1.0 且 `cos` 1.0、§77 三格逐位重現）。結果 **`H1-read-ignores-query`**：**100/200 = 0.5000**（Wilson 0.4314–0.5686）、400 次標籤置換 **400/400** 不低於觀察值（p **1.0**）；兩槽的注意力質量 mean／min／max 都 **1.0**、argmax 槽 2 **200/200**、`m0` 全 0.0／`m1` 全 1.0；train 的 200 對雙生 `SW` **0.0**（`slot_fixed=True`）。描述量 `h_final → 證據顏色` **0.1050**（42/400，chance 0.125）。讀法是**這次讀沒有用問句去選任何一筆**（槽 2 的 key 範數中位數 **9.8219** 對槽 1 的 **2.8158**，softmax 在 `exp(log_read_scale)=4` 下已飽和），所以 §78 的 shortfall 在**讀之前**，`r` 就是固定那一槽的 value。執行 **211.83 s**（登記是 200 % quota；起跑時整機已被佔 44 %，改用 `CPUQuota=50%`／`OMP_NUM_THREADS=1` 的 transient service，`MemoryMax=4096M`、無 swap、`device=cpu`），`--check` **OK**、`instrument_ok` **true**。§81（**先分離 §80 診斷裡那個機械原因**，再決定 80.20 的兩條路哪一條；**不重訓**、**零擬合參數**、同一批凍結的讀）：同一批 400／200 次讀用三條只差「拿掉什麼」的規則重算——`model`（＝§80）、`cosine`（拿掉 key 範數、留學到的溫度）、`cosine_unit`（連 query 範數與溫度都拿掉，logit 就是純餘弦）；`model` 是錨，必須逐位重現 §80 的 200 對質量（2e-9）與 **100** 勝。`I0` 全過（hash／checkpoint 前後相同、digest 相符、coverage 1.0、錨 `max_abs_diff` **0.0**、mismatch 0、勝場 100）。結果 **`N3-keys-do-not-address`**：三條規則**都是 100/200 = 0.5000**（Wilson 0.4314–0.5686）、400 次置換**都是 400/400**、p **1.0**，`argmax` 三條規則**都是槽 2 200/200**。差別只在質量：`cosine` 仍飽和（roster 兩槽 mean **0.9992**、最低 0.9064，因為 `exp(scale)·‖q‖ ≈ 71`），`cosine_unit` 終於分開（**0.1785**，最低 0.1288）——但**槽 2 一次都沒輸**。雙生 `SW`：`model` **0.0**、`cosine` **0.0112**（122/200 剛好 0，只有 8 對 > 0.01）、`cosine_unit` **0.0209**（154 對 > 0.01，每一對都動一點）——**動不等於指對**：`cosine_unit` 每對都動而二選一仍是 100/200。query 重配對三條都是 100/200（p 1.0）。**登記的主預測 `N1` 落空**（登記時已標成弱預測：key 的方向從沒被量過），否證條件（兩條 cosine 都不過）**命中**。**照實記的限制**：本節**不能**分離「鍵沒有顏色」與「query 沒有顏色」（雙生只對調名冊順序，問句逐字相同），所以 `N3` 只到「這個形狀的讀規則在這批凍結的 keys 上定址不了」；§80.2（d）的 `h → 證據顏色` **0.105**（低於 chance 0.125）是這個模糊的來源。執行 **25.39 s**（登記的 `CPUQuota=200%`／`MemoryMax=4096M`／`MemorySwapMax=0`／`OMP_NUM_THREADS=2`／`device=cpu`，整機全程 25 %、峰值 RSS 520 MiB、swap 0），同命令重跑的三條規則讀數與 `SW` **逐位相同**（讀沒有隨機性）。**§82 把 §81 的模糊拆開**（不重訓、零擬合參數）：`entry_key` **0.7375（295/400、Wilson 0.6923–0.7782、p 0.002494）** 與 §79 的 `k` 格**逐項相同** → 存進去的鍵**真的帶著名冊顏色**；`entry_value` 錨 **0.6200／248** 重現；`query` **0.5450（109/200、Wilson 0.4758–0.6125、p 0.069825、8 路 top-1 0.1550 vs chance 0.1250）** **兩道門都不過**（有痕跡、不是可用的量）；零參數的 `boundary_query` 兩條規則 **0.5000／0.5050**（質量 1.0／0.180198、argmax 槽 2 200/200 與 199/200）→ 分支 **`C3-query-missing`**，缺口在 **query 側**，而「光把讀點往前移」的免費版本被否證。**§83 依此把讀點移到證據邊界並重訓投影**（`--read-at boundary`：解碼的每個 token 固定使用 `snapshots[q-1]` 的一次讀向量，`W_q`／head／store 不變、**零新增參數**、同 10,000 步／168,150 參數／同語料／同起點）：先設**擬合前置條件** `train_fit_subset ≥ 0.90`，結果 **0.8325（333/400）**（控制臂同預算 **0.9925**；兩臂同從 2.58 出發，最後 `mean_loss` **0.1790** vs **0.0078**）→ **`T0-fit-fails`**：這個預算下治療臂沒有擬合，所以邊界讀的定址能力**沒有被測到、也沒有被否證**；`I0` 全過（控制載體 hash／checkpoint 前後相同、digest 相符、同起點同預算，控制錨 `model` `max_abs_diff` **0.0**／勝場 **100**、`cosine_unit` **101** 逐筆重現 §82）。**登記的主預測 `T1` 落空、替代 `T3` 也沒成立**；在 `T0` 之下只作描述：治療 `model` **100/200**、`cosine_unit` **100/200**（質量 0.17784），治療載體上的不迴歸兩格反而更高（`entry_key` **0.7700（308/400）**、`entry_value` **0.7225（289/400）**，都過）。照實記：登記的 `T0` `next`（同臂重跑）`weights_hash` **逐位相同**（確定性、不是壞運）；2e-9 的錨容差對執行緒數敏感（`OMP_NUM_THREADS=4` 下 `cosine_unit` 質量差 **3.0e-8**、41/200 筆超差、勝場不變）→ 那次探針記 `E0-instrument` **作廢保留**，登記的讀數改在 §82 的 `OMP_NUM_THREADS=2` 下跑（270.84 s）。**§84 把讀點再往前一格（提問回合自己的邊界）並固定**（§83.21 的下一步；`--read-at question`：解碼的每個 token 固定使用 `snapshots[q]` 的一次讀向量——store 已含提問回合自己的寫入——`W_q`／head／store 不變、**零新增參數**、同 10,000 步／168,150 參數／同語料 seed 20261127／同一個 stage-L 起點；執行環境刻意與 §83 的治療臂相同，兩節只差讀點）：先設同一道**擬合前置條件** `train_fit_subset ≥ 0.90`，結果 **0.6525（261/400）**、`train_fit` **0.6650**、最後 `mean_loss` **0.3300**（main 0.1665／aux 0.1636；§83 的臂 0.1790、控制臂 0.0078）→ **`Q0-fit-fails`**：**不但沒過，還比 §83 更低**。因此 §83.19 的「讀在提問寫入之前」**被否證**（不是被支持）——把提問回合的寫入放進 store 並沒有讓臂擬合；兩條臂剩下的共同因素是**一個固定讀向量**。讀的定址能力仍然**沒有被測到、也沒有被否證**。`I0` 全過，且比 §83 多一道機械檢查：控制錨逐筆重現 §82 的 `boundary_query`（`model` `max_abs_diff` **0.0**／勝場 **100**、`cosine_unit` **101**／質量 **0.180198**），**query 恆等** 200/200 筆、`max_abs_diff` **0.0**（容差 2e-9）——提問邊界讀用的 `W_q h` 就是 §82 的 query 向量，**只有 store 換了**。**登記的主預測 `Q3-fits-but-no-gain` 落空、替代 `Q0` 成立**（連續兩節主預測落在「沒擬合」一側；照實記、不改寫預測、不改門檻）。登記的 `next`（同臂重跑）**權重逐位相同**（`sha256:b8d98a79…`），所以那個損失地板是**確定性的**，不是一次性的壞運。`Q0` 之下只作描述（不是讀點的證據）：治療 `model` **101/200**（Wilson 0.4363–0.5735、p 0.493766）、`cosine_unit` **102/200**（p 0.254364），控制 `model`／`cosine_unit` 都 **100/200**；但**治療載體上 §79 的兩格都過**（`entry_key` **0.8425（337/400、p 0.002494）**、`entry_value` **0.7800（312/400）**，比凍結載體的 0.7375／0.6200 更高）→ **寫入側仍帶著顏色，缺的是讀**。**槽診斷（不裁決，`slots_diagnostic.json`）**：名冊兩筆的槽是 `[1, 2]`、提問回合自己的寫入落在槽 **4**，而控制讀的 argmax 恆居槽 **2**（200/200）、治療讀恆居槽 **1**（197/200）——兩者都在名冊內，但**都固定在一個名冊槽**；名冊順序是平衡的（每槽一半），所以「永遠偏好同一個名冊槽」在二選一上**只能得 ~0.5**，這正是 100／101 的算術結果，不是「接近 chance 的巧合」。也就是說這兩個固定讀**沒有區分兩筆名冊**，只是各自固定選了一邊——下一個登記必須先定義「什麼算區分」（例如同一段 session 內質量**隨正解換邊**）。成本照實記：治療 29:20 + 重跑 27:06 + 探針 5:01 ≈ **61 分鐘**機時，全部在 `CPUQuota=400%/400%/200%`、swap 0、GPU 0% 之下。**核心分仍 0.00/10** | `data/pantry_stage/{g_store,g_gru,h_store,b_cache,w_region,cf_arm}/` 的報告（全部 `--check` OK）；`data/pantry_stage/probe66/{k2,k5}.json`（§66 探針，`--check` OK）、`data/pantry_stage/sel67/{k2,k5}.json`（§67，`--check` OK、載體未變）、`data/pantry_stage/contents68/{k2,k5}.json`（§68，兩份 `--check` OK、k=2 重跑除 `seconds` 外逐欄位相同、載體未變）、`data/pantry_stage/bounds69/{k2,k5}.json`（§69，兩份 `--check` OK、k=2 重跑除 `seconds` 外逐欄位相同、載體未變）、`data/pantry_stage/readout70/{k2,k5,k2_rerun}.json`（§70，三份 `--check` OK、k=2 重跑除 `seconds` 與置換陣列外逐欄位相同、載體未變）、`data/pantry_stage/intervene71/{k2,k5,k2_amended}.json`（§71，三份 `--check` OK；k=2 修正前後逐數字欄位相同，只有 `seconds` 與新增欄位不同；載體未變、`determinism_min_cosine` 1.0）、`data/pantry_stage/slots72/{k2,k5}.json`（§72，兩份 `--check` OK；`values`／`state` 兩臂逐位重現 §70 的 `linear_values`／`linear_state`；載體未變、`determinism_min_cosine` 1.0；第一次執行因 dtype 在寫出任何讀數前中止，作廢的 log 留在 `k2_void_dtype.log`）、`data/pantry_stage/write73/{k2,k2_rerun,k5,k5_rerun}.json`（§73，四份 `--check` OK；同一個 k 的兩次執行除 `seconds` 外逐鍵相同；`weights_hash` 與 checkpoint sha256 前後不變、`store` 區塊 200/200 段兩個非空槽）、`data/pantry_stage/turn73/{k2_arm,k5_arm}/`（§73 的兩個 turn 位址載體，`--check` OK，參數 168,150 與 §70 逐位相同、語料 digest 相同，訓練 log 在 `train.log`）、`data/pantry_stage/compose74/{k2,k5}.json`（§74，兩份 `--check` OK；`N0` 的 `carrier_unchanged`／`checkpoint_unchanged`／`reproduction.equal` 都 `true`，即三臂的 in-sample／held-out 逐位重現 `write73` 的 cell；每格 400 次置換，k=2 604 s、k=5 747 s，log 在 `run.log`）；`data/pantry_stage/split75/{seen_k2,fresh_k2}.json`（§75，兩份 `--check` OK；`seen_k2` 的 `N0a` 三條件全 `true` 且 pooled 逐位重現 §74、3.4 s；`fresh_k2` 的 `N0b` 過、`reproduction_applicable` 記 `false`、614.9 s）＋`data/pantry_stage/seed75/k2_arm/`（§75 B 的新種子 20261126 載體，`--check` OK，參數 168,150 與 §73 相同，log 在 `data/pantry_stage/seed75/run.log`）；`scripts/probe_pantry_state.py`（§58 探針）＋`scripts/probe_pantry_readout.py`（§66 探針）＋`scripts/train_pantry_selection.py`（§67 選擇頭）＋`scripts/probe_pantry_contents.py`（§68 讀出）＋`scripts/probe_pantry_boundaries.py`（§69 三邊界探針）＋`scripts/probe_pantry_families.py`（§70 讀出家族／結構探針；§73 新增 `store` 區塊與 amendment）＋`scripts/probe_pantry_intervene.py`（§71 名冊行干預探針）＋`scripts/probe_pantry_slots.py`（§72 逐槽寫入探針）＋`scripts/probe_pantry_composition.py`（§74 相對可裁決性／leave-roster-out 探針）＋`scripts/probe_pantry_split75.py`（§75 未見名冊切分＋第二支語料種子探針）；`tests/test_pantry_deduction.py` **112 條**＋`tests/test_probe_pantry_readout.py` **27 條**＋`tests/ai/test_token_cache_core.py` **14 條**；`tests/ai/test_turn_store_core.py` **20 條**＋`tests/test_pantry_selection.py` **26 條**＋`tests/test_pantry_contents.py` **40 條**＋`tests/test_pantry_boundaries.py` **47 條**＋`tests/test_pantry_families.py` **23 條**＋`tests/test_pantry_intervene.py` **27 條**＋`tests/test_pantry_slots.py` **28 條**＋`tests/test_pantry_composition.py` **17 條**＋`tests/test_pantry_split75.py` **18 條**；`data/pantry_stage/write76/{k2.json,capped.log}`（§76，`--check OK`；兩臂在 `capped/{control,slots4}/`，`instrument_ok` 都 `true`、參數 168,150、步數 10,000、兩臂秒數 1,776.0／1,776.5）＋`tests/test_pantry_write76.py` **37 條**；`data/pantry_stage/item77/{k2.json,capped.log}`（§77，`--check OK`；兩臂在 `control/`、`item/`，`instrument_ok` 都 `true`、`M_slots` 2.0／3.0、`M_landed` 200/200、參數 168,150、步數 10,000、訓練 1,741／1,720 秒）＋`tests/test_pantry_item77.py` **49 條**；`scripts/probe_pantry_fit78.py`＋`data/pantry_stage/fit78/k2.json`（§78，`--check OK`；`instrument_ok` `true`、`N0` 的錨兩臂逐位重現 §77、匹配 control@8000 對 treatment@250（gap 0.0100、容量同為 0.0700）、Δ overlap +0.1775／Δ exact +0.1900、分支 `F3-gain-below-floor-at-matched-fit`、2,715.1 s）＋`tests/test_pantry_fit78.py` **28 條**；`scripts/gpu_limit.py`＋`tests/test_gpu_limit.py` **18 條**（§76.12 的 GPU 上限：`--target 0.5` 實測 duty 0.4773／`--target 0.25` 0.2428，算出來的暫停長度、不是回饋迴路）；`scripts/probe_pantry_address80.py`＋`data/pantry_stage/address80/k2.json`（§80，`--check OK`；`instrument_ok` `true`、A **0.5000**（Wilson 0.4314–0.5686、p 1.0）、SW **0.0**、分支 `H1-read-ignores-query`、211.83 s）＋`tests/test_pantry_address80.py` **24 條**；`scripts/probe_pantry_readrule81.py`＋`data/pantry_stage/readrule81/k2.json`（§81，`--check OK`；`instrument_ok` `true`、三條規則都 **0.5000**（Wilson 0.4314–0.5686、p 1.0）、`cosine_unit` 的 roster 質量 0.1785 但 argmax 仍槽 2 200/200、錨 `max_abs_diff` 0.0、分支 `N3-keys-do-not-address`、25.39 s）；`scripts/probe_pantry_readrule82.py`＋`data/pantry_stage/readrule82/k2.json`（§82，`--check OK`；`instrument_ok` `true`、§79 的 `v`→顏色 **0.6200（248/400）** 與 §81 的質量（`max_abs_diff` **0.0**、勝場 **100**）都逐位重現、`entry_key` **0.7375（295/400）** PASS、`query` **0.5450（109/200）** FAIL（p 0.069825）、`boundary` 兩條規則 **0.5000／0.5050** FAIL、分支 `C3-query-missing`、339.93 s）＋`tests/test_pantry_readrule82.py` **30 條**；`scripts/probe_pantry_readrule83.py`＋`data/pantry_stage/readrule83/k2.json`（§83，`--check OK`；`I0` 全過、控制錨 `model` `max_abs_diff` **0.0**／勝場 **100**、`cosine_unit` **101**／質量 **0.180198** 逐筆重現 §82；治療臂 `train_fit_subset` **0.8325（333/400）** < 0.90 → 分支 `T0-fit-fails`；治療描述量 `model` **100/200**、`cosine_unit` **100/200**（質量 0.17784）；治療載體不迴歸 `entry_key` **0.7700（308/400）**、`entry_value` **0.7225（289/400）**；同臂重跑 `weights_hash` 逐位相同；4 執行緒的 `E0-instrument` 探針作廢保留在 `discarded/`；270.84 s）＋`tests/test_pantry_readrule83.py` **38 條**；`scripts/probe_pantry_readrule84.py`＋`data/pantry_stage/readrule84/k2.json`（§84，`--check OK`；`I0` 全過、控制錨 `model` `max_abs_diff` **0.0**／勝場 **100**、`cosine_unit` **101**／質量 **0.180198** 逐筆重現 §82，**query 恆等 200/200 筆、`max_abs_diff` 0.0**；治療臂 `train_fit_subset` **0.6525（261/400）** < 0.90 → 分支 `Q0-fit-fails`；治療描述量 `model` **101/200**、`cosine_unit` **102/200**；治療載體不迴歸 `entry_key` **0.8425（337/400）**、`entry_value` **0.7800（312/400）**；同臂重跑 `weights_hash` 逐位相同（報告在 `repeat/`）、槽診斷在 `slots_diagnostic.json`；300.955 s）＋`tests/test_pantry_readrule84.py` **32 條** |
+| **推理**
+| 同一個 core 讀完多輪口供，指出違規的人（§49 登記、§49.13 結果） | 留出 free
+exact 與 ranking 的 Wilson 下界都高過最強 surface baseline 的上界 **0.2500**，且
+`reset`／撤回／常數三條控制照登記方向 | | — |
+**推理（2026-11-13）**：**儀器封頂，沒有任何推理宣稱**。同一個
+`GRUCore`／`CoreState`
+v1 從 L 的 checkpoint 出發（G1 鎖檔案 sha256 與訓練後 hash）、800 段 11 輪口供、20
+epochs、xpu **3,200.6 s**：留出 free exact **0.0850**（17/200）、ranking
+**0.1650**（chance 0.1591、surface 上界 0.2500），train exact **0.1150** →
+G3 不過。**三個讀數**：① 17/200 就是常數 `Kevin`
+在留出的出現次數（訓練集邊際眾數；逐鏈 4/54、5/52、4/46、4/48 也剛好是它）；② 答案的 loss
+**2.526 nats** ≈ 12 個名字的熵（留出 2.4641、`ln 12` =
+2.4849）→ 預測沒有條件於輸入；③ `full`、`reset`（問前歸零）、`skip_al`（不呼叫
+`al_step`）的 200 題預測**逐位元組相同**，`changed_rate`
+0.0。格式對照 0.0650／0.1550（G8
+PASS）→ 不是格式。依 §49.7 這是「儀器封頂」分支：後面的數字都是上限，不是「推理失敗」。**下一個變數是過擬合校準**（32–64 段訓練集要接近 1.0），不是先加選取結構。**核心分仍 0.00/10**。**接著（2026-11-14，§50
+Q1）**：過擬合校準**失敗**——32 段、100 epochs、輔助讀出 λ=1，train exact
+**0.1562**（5/32，正好是常數 `David` 的邊際），λ=0 的配對診斷也只有
+**0.2188**；輔助讀出確實讓**每一輪**都拿到梯度（測試釘住：λ=0 時第 0–1 輪恰好 0），所以失敗點在**信用分配之後**——訊號到了，模型仍背不起 32 段。依登記停損，完整臂**沒有跑**，也沒有事後調 epochs／lr／寬度。這不證明路徑長度不重要，只證明它不是唯一的阻礙；**接著（§50.13 狀態探針）量到瓶頸在表徵**：對第 6–10 輪的
+`h`
+用 800 段擬合線性讀出、在 200 段留出上評分，三個載體（stage-L／λ=1／λ=0）**每一個邊界都在 chance**（0.055–0.140，chance
+0.0833，null 0.040–0.105），但同一支探針讀「線索鏈」在同樣邊界是
+**1.000**（第 5、7 輪）→ 探針有效，是**答案不在 state 裡**，而且第 9–10 輪連主題都讀不到。**接著（§51 階段 R）**：只把輔助項改成「只在
+`derive()`
+已有唯一答案的邊界監督」（32 段上第 0–5 輪 0 個、第 6 輪 16 個、第 7–9 輪各 32 個），R1 校準仍是
+**FAIL**：train exact **0.2500**（8/32，`Ivan`
+0.5625；門檻 0.90），依 §51.5 的否證條件（≤0.30）「空邊界監督」被排除為原因，完整臂不跑、四個超參數不調；但它沒有像 Q1 那樣在第 50 個 epoch 平掉（main
+0.4170→0.3788→0.3609），main 2.026 nats/session 只比邊際低 0.343
+→ 失敗點仍在表徵。**接著（§52–§53 階段 S，容量階梯）**：固定 400 步、只變要背的段數，儀器在 1／4 段是
+**1.00**（4 段有 4 個不同名字，不是常數），8 段 **7/8＝0.875**、16 段
+**7/16＝0.4375** → 斷點 N\*=8；8 段的 4× 步（1,600）**PASS
+8/8**，但 32 段的 1,600 步 **12/32＝0.375**、2× 寬（hidden
+256，330,563 參數）**10/32＝0.3125**（`Kevin`
+被預測 18 次、只有 4 個不同名字）→ 依 §52.4 判定**不是步數、不是寬度**；但 §54 的複習次數更正**否證了容量的讀法**：同樣 32 段、同樣載體，在
+**1,600 複習／段**（6,400 步）下 **31/32＝0.9688**（12 個名字全出現、main
+0.0092、3,969 秒），而同一個 GRU 在 400 複習／段是 12/32 →
+**容量不是約束，信用分配效率才是**（P 臂 800 段只有 20 複習／段）。下一個變數仍是架構，但理由與門檻改成「在 400 複習／段用更少的更新達到同樣擬合」，不是「背不起」；核心分仍 0.00/10
+| `scripts/train_pantry_deduction.py` 的三份報告
+`all_pass=False`（如實）；`tests/test_pantry_deduction.py`
+**63 條綠**；`scripts/probe_credit_assignment.py --state-probe`（`tests/test_credit_assignment.py`
+**12 條綠**）；`LAYER_REGISTRY.json` 的 `stateful_core_pantry_deduction` 為
+`fail`（Q1 校準／狀態探針／S 階梯亦記入） | | **短信用**
+| 同一個 state 物件裡每輪寫一槽、只讀進輸出頭（§55 登記、§55.10 結果） |
+400 複習／段（1,600 步）下 store 臂 train exact **≥ 0.90**、同參數消融 **≤
+0.65** 且 gap **≥ 0.25**、消融與 GRU 對照（12/32）差 **≤ 0.15** | | — |
+**短信用（2026-11-14）**：**接線成立、擬合所需的更新數下降；不是能力、不是泛化**。`TurnStoreCore`
+保留 GRU 的遞歸（`cell(embedding)`、`dt_proj`、`al_step`
+不變），只加「每輪結尾一次寫入」與「讀取只進輸出頭」；`memory=False`
+保留全部參數、`r ≡ 0` 且不寫入。實測（seed 20261118、lr 5e-4、batch
+8、λ=1、`--aux-mode resolvable`、400 複習／段）：store
+**1.0000**（32/32，12 個名字）、消融 **0.5000**（9 個名字）、登記的 GRU 對照
+**0.3750**（12/32），T1／T2／T3／T4 全過（gap 0.5000；T3 0.1250 ≤
+0.15）。**消融是同一個函數的證據**：與 GRU 的逐 epoch loss 到第 25 個 epoch
+**逐位相同**，之後的差來自 `head` GEMM 形狀（192 vs
+128 欄）的浮點求和順序；消融 checkpoint 的 `head.weight[:, 128:]` 非零
+**0 個**。**照實記**：三個預測都偏保守（store 預測 0.55–0.90、實際 1.0000；消融預測 0.30–0.45、實際 0.5000；T3 預測 ≤0.10、實際 0.1250）。這一階證明的是「32 段用 1,600 步而不是 6,400 步達到同樣擬合」，**核心分仍 0.00/10**；泛化是 §56 登記的下一問（同樣複習預算、前 200 段訓練、200 段留出） |
+`scripts/train_pantry_deduction.py --stage-t`
+的配對判定（重新計算 T1–T4，不讀報告裡的判定）；`data/pantry_stage/t_store/arm/pantry_deduction_20261114-100025.json`
+與 `.../ablate/pantry_deduction_20261114-094152.json`（`--check`
+OK）；`tests/ai/test_turn_store_core.py`
+**10 條綠**、`tests/test_pantry_deduction.py` **63 條綠** | | — |
+**綁定（2026-11-14／17，§56–§84）**：**擬合得到，綁定得不到；寫入粒度不是原因**。§56（G）：200 段 ×
+400 複習，store 擬合 **1.0000**、留出 **0.0850**（Wilson 下界 0.0537 低於 chance
+0.1591）。§57（H）：同 10,000 步改成 400 段 × 200 複習，擬合 **0.9125**、留出
+**0.0950**、in-roster
+**0.5350**（不管內容的期望 0.5457）→ 換曝露多樣性不改變形狀。§58（K）：同一 checkpoint 的線性探針，訓練段 in-sample
+**0.9725**、留出 **0.1100**
+→ 答案不在 state 裡。§59（B）：名冊改成一 token 一槽（`TokenCacheCore`，165,956 參數）後擬合反而掉到
+**0.5000**、留出 **0.0750**、in-roster **0.5300**，四個預測全部落空 →
+**寫入粒度被否證**。§60（W）：回到 per-turn
+store，把每個早段邊界的 CE 限縮到本段名冊並依 `1/|C|` 加權——擬合
+**0.9000**（360/400，剛好壓在 0.90 地板）、留出
+**0.1050**（21/200，Wilson 下界 0.0697 低於 chance 0.1591）、in-roster
+**0.5700**（不管內容的期望 0.5396）→
+W1 過、W2 不過（W3 的 0.90–1.00 預測落空，實際 0.5700，ranking
+0.1700）。依 §60.5 的機械分支做**反事實語料**（§61）：前 200 段各加一個配對版本（同一名冊、只有兩格互換 → 不同兇手，其餘文字逐位元組相同），400 項＝200 結構＋200 配對、10,000 步、同一個加權區域損失。擬合
+**0.5000**（200/400，C1 不過）、留出
+**0.0900**（18/200，Wilson 下界 0.0577 低於 chance 0.1591）、in-roster
+**0.5550**（不管內容的期望 0.5396）、ranking 0.1550。配對診斷：`same_prediction`
+112/200、`both_correct` 48/200（88 組給不同答案的配對裡 48 組兩題都對）→
+**不是「完全不看名冊」，是一部分在讀名冊、一半以上塌成同一個答案**。依 §61.9 的機械分支下一步是**最小綁定診斷**（§62：2 人名冊、1 個 live 值、4 輪、單一邊界；400 項＝200 結構＋200 配對，留出 200＋200 個留出配對，chance
+0.5，M1 擬合 ≥ 0.90、M2 留出 Wilson 下界 >
+0.5），登記後再跑。§62 的機械輸出是 M1 **1.0000**（400/400）、M2
+**1.0000**（200/200），但**跑完後的稽核判定它無效**：`_minimal_session()`
+把 dead 值寫第一格、live 值寫第二格，所以名冊的第二格**永遠是兇手**（四組都是 200/200）；把留出名冊順序反轉、對應不動（正解不變）後同一個 checkpoint 由 200/200 掉到
+**0/200**，預測 200/200 跟著**新的**第二格 → 它答的是位置，不是名冊對應。**§62 不是「不過」，是無效**；§62.9 的「容量曲線往上」因此暫緩。§63 只修語料並把位置對照升成門檻：名冊順序由
+`index`
+奇偶決定（兇手在兩格各半，四組都要求 100/100；配對保留 live 鍵，所以一對配對剛好贏一半＝chance）、舊語料以
+`corpus.minimal_roster_order=culprit_second` 保留可重現，新臂用
+`balanced`；**M5** 要求留出名冊順序反轉後 exact ≥ 0.80（M1 不過時為
+`None`）。M1／M2 門檻與 §62 完全相同，語料與目標函數仍同時偏離 §61（`--aux-mode resolvable`，§62.2 已登記的混淆）→
+§63 是診斷，不是歸因臂。**§63 的機械輸出**：M1 **0.9775**（391/400，Wilson
+0.9578–0.9881）過、M2 **0.4250**（85/200，Wilson 上界 0.4943，**低於** chance
+0.5）不過、M5 **0.3100**（62/200）不過；擬合配對 `same_prediction`
+6/200、`both_correct`
+192/200（訓練段確實讀名冊），留出配對同答 26/200。跑完後的**語料稽核否定「還有位置線索」**：四組上沒有任何表面規則超過 0.56、位置 100/100，M5 的掉分是**模型的順序偏好**（正解在第 1 格 0.57
+vs 第 0 格 0.28），不是語料缺陷——因此沒有修語料、沒有調地板。§64 登記為**順序擴增**：同 200 個結構各出現兩次（原順序＋名冊反轉，對應與兇手不動，其餘文字逐位元組相同），仍 400 項／10,000 步／同一個目標；在這種語料上「答第 N 格」的擬合上限是 0.5，所以
+**M1 變成真正的綁定門檻**；讀數加上**順序保留率**（`original_exact`、`retention = 反轉後 / 原順序`），M1／M2 門檻不變。**§64 的機械輸出**：M1
+**1.0000**（400/400），而且 200 組順序配對**全部同答、全部兩份都對**——在「答第 N 格」的擬合上限只有 0.5 的語料上，這是擬合真的綁定的第一個直接證據；retention
+**1.0755**（§63 是 0.7294），順序偏好在擬合段消失。但 M2
+**0.2650**（53/200，Wilson 上界 0.3302，低於 chance
+0.5）比 §63 更差：**44.5% 的答案不在名冊裡**（89/200），名冊內答對率 53/111 =
+0.477，等於 2 選 1 → 沒見過的結構上輸出頭不再被名冊約束。依 §64.9 的機械分支登記
+**§65 容量曲線**（2／3／4／5 人，同一個預算；語料家族、400 項、10,000 步、目標與讀法都不動，只改名冊長度與由它決定的 chance
+1/k；k=2 的語料與 §64 逐位元組相同，所以不重跑，只跑 3／4／5）。**曲線的用途是界定失敗**（「名冊太小」能不能被排除），不是找會過的格子；若某格反而過，先稽核語料再說。**§65 的機械輸出**：k=3／4／5 每一格都是 M1 過（0.9750／0.9725／0.9750，400 項）、M2 不過（0.1900／0.0950／0.1300；Wilson 上界 0.2500／0.1436／0.1837，低於各格 chance
+1/3、1/4、1/5）、M5 不過；`exact/chance`
+是 0.570／0.380／0.650（k=2 是 0.530），沒有趨勢。真正隨 k 變化的是**答案落在名冊裡的比例**0.555→0.550→0.500→0.450（不管內容的期望 0.167→0.250→0.333→0.417，領先幅度 0.388→0.300→0.167→0.033），而名冊內正確率從未超過 chance（0.477／0.345／0.190／0.289）→
+**「名冊太小」被排除**：不是容量不足，是名冊對輸出的約束隨候選變多而消失。依 §65.9 的機械分支，下一步是**讀出／狀態探針**（已訓練的 k=2 與 k=5
+checkpoint，名冊輪換文字，不新增訓練預算）。**§66 的機械輸出是 R3b-head-ignores，兩個 checkpoint 都是**：只改名冊那一輪、在答案邊界讀三層——`h_cos_final`
+中位數
+**1.0000**（k=2 最小值也是 1.0000，k=5 最小 0.9991），而且**完全無關的兩題之間**也只有 0.9870／0.9999
+→ **`h` 從來不裝這一題**；`read_cos_final` 是 **0.8405／0.8553**（k=2）與
+**0.9938／0.8105**（k=5，twin／reorder）、`store_v_rel_final`
+0.6004／0.5560 與 0.1203／0.6968 →
+**store 才是載體，而且答題時真的被讀出來餵給頭**（`token_logits = head([h, read])`）；但名冊限定的 argmax 跟著換名走的比例
+`moved_to_twin_target` 是 **0.4950**（chance 1/2）與 **0.2300**（chance
+1/5），正好是 1/k，identity 準確率 0.4950／0.2650 也在 chance 附近 →
+**內容在 state 裡、頭看到了、卻不照 mapping 選**。R1 逐欄重現報告（0.4950 =
+0.4950、0.2650 = 0.2650，含新增的「探針名冊 argmax =
+`ranking_exact`」交叉檢查）、R2 **0 違規 / 200**、checkpoint sha256 與
+`weights_hash` 前後不變、成本 2.56 s／2.86 s。**照實記一個探針 bug**：第一次跑的
+`pick_all()` 把候選**索引**當名字回傳，`accuracy`／`moved_to_twin_target`
+全 0.0；修正後新增的交叉檢查會抓到它，0.0 全部作廢、兩個 checkpoint 重跑。**下一步（§66.9 機械分支）：讀出**——以
+`read`
+為輸入、在名冊候選上做選擇的頭，不是加 session／步數／寬度。**§67 換讀出**（載體凍結，只訓練一個 16,641 參數的選擇頭
+`v·tanh(W_h h + W_r read + W_e e_c + b)`，softmax 只在該 session 的名冊候選上，所以名冊外答案在構造上不可能；三個臂
+`read`／`h`（`read` 歸零）／`cand`（`h` 與 `read`
+都歸零）同架構、同參數量、同初始化，外加一個不訓練的 `permuted`
+介入＝把每一列留出的 `read`
+換成下一列）：兩個 k（§64 的 k=2、§65 的 k=5）都是 R1／R2／R3 過（語料 digest 記錄、`weights_hash`
+與 checkpoint sha256 前後相同、名冊外答案 0、`read_permutation_share`
+1.0，成本 12.1 s／12.08 s）、**S1 過**（fit
+**1.0000／1.0000**，第 500 步就到）、**S2 不過**（留出
+**0.4850／0.2300**，Wilson 下界 **0.4167／0.1771** 低於 chance
+0.5／0.2）、**S3 不過**（反序同人 0.5200／0.2450）、**S4 不過**（下界低於三個對照的上界 0.5735／0.2770）→
+**R4b-fits-not-transfers**：**讀出不是缺口**，state 裡是 per-session 記憶，不是可轉移的 value
+→ person 綁定。`read` 臂的 fit 1.0000 是**在 `h` 歸零下**達到的（`h`
+臂只有 0.7250／0.3000），所以 `read` 單獨就能分辨「這是哪一題」；但同一份 `read`
+換到沒見過的結構上就回到 chance，而且**沒有比只有名字的 `cand`
+臂好**（0.5050／0.2150，k=2 還更低）。這與 §64 不衝突、是同一件事的兩面：§64 的 M2 名冊內正確率 53/111
+= **0.4775**，§67 構造上只能在名冊裡選、得到 **0.4850**
+→ 把答案限制在名冊裡沒有帶來轉移，只是拿掉了名冊外的猜測。預測命中六項、**落空兩項照實記**：`h`
+臂 fit 預測 ≥ 0.80，實際 0.7250／0.3000（k=5 的預測塌成 `Chris`
+0.405、只有 9 個不同答案，不是背起來）；`cand` 預測 ≈
+1/k，實際略高（0.5050／0.2150），原因是訓練段兇手邊際是斜的（`Chris` 56／`Betty`
+52 對均勻 33.3），一條「挑訓練段最常見的名字」的機械規則在留出上就有 0.5400／0.2100
+→ `cand`
+是名字先驗，不是內容。寫下數字前先查過語料捷徑：兇手在名冊**文字**裡的位置 k=2 是 200/200 對半、k=5 每格 80/80，而且這個頭逐候選共用
+`proj_e`、沒有位置輸入，所以 `cand`
+是真正的「只有名字」對照。**這一節把 §66 的 R3b 收窄，不是放寬**：`read`
+隨名冊變動、足以辨認這一題，但不含可轉移的「值 → 人」對應。**§68 問「state 裡裝的是什麼」**（同一個凍結載體、同一批 400／200 項、答題邊界、2,000 步的四個線性讀出；載體
+`weights_hash` 與 checkpoint sha256 前後相同）：`colour`（8 色 argmax）in-sample
+**0.2550**／capacity 0.2200（k=2）、0.2550／0.2375（k=5），留出
+**0.1450／0.0850**（chance 0.1250）；`roster`（12 選 k 的 **top-k 集合**，chance
+1/66、1/792）in-sample **0.2875／0.0175**（capacity 0.0500／0.0000），留出
+**0.1300／0.0100**；`culprit` 對照 in-sample **1.0000／0.9925**、留出
+**0.2650／0.1100**（Wilson 下界 0.2087／0.0738，**低於**名冊上限 1/k＝0.5／0.2，所以不與 §67 矛盾）；`shift`
+對照（§67 的頭、標籤全部移到名冊下一格，`labels_changed`
+1.00、`labels_in_row_roster` 1.00）照樣擬合
+**1.0000／0.9625**，同批列對**真**標籤 **0.0000** → §67 的 in-sample
+1.0000 是**容量**，不是「裝了真對應」。G1／G2
+PASS、G3／G4 都是 readable=False／transfers=False → 機械分支
+**N3-facts-not-linearly-readable**：**在答題邊界，線性讀出看不到顏色與名冊**（`colour`
+只比自己的容量天花板高 0.035／0.0175，`roster`
+在 k=5 幾乎是零），所以「state 沒有事實」**尚未**成立——失敗可能在**邊界**，不在 state；這與 §67 不衝突，而是把它收窄（連讀出事實都做不到，再換讀出就沒有用）。**照實記**：`roster`
+在 k=2 的留出 0.1300 是 chance 的 8.6 倍、Wilson 下界 0.0903 確實高過 chance，是登記的
+**0.50 效果量**把它判成 transfers=False（不是事後改判）；`colour`
+在兩個 k 的 in-sample 都是 0.2550，像是讀到與 k 無關的某個 3 類劃分，不是顏色本身。跑前只用**訓練段**校準就把預測從 N1 改成 N3，門檻與協定在校準前已定；兩次 30 步煙霧測試的數字**作廢**（登記設定是 2,000 步，且 smoke 的
+`culprit`
+in-sample 只有 0.675、連 G1 都不過）。**§69 問「事實住在哪一回合」**（同一個凍結載體、同一批 400／200 項、2,000 步，只換邊界；`state`＝`[h, read]`
+是模型答案頭真正吃的向量，`read` 單獨一欄保留為 §68 的對照；兩份 `--check`
+OK、k=2 重跑除 `seconds` 外逐欄位相同、`weights_hash` 與 checkpoint
+sha256 前後不變）：顏色在**證據邊界**（它被說出來的那一回合）**0.8900／0.9950**（chance
+0.1250，Wilson 下界 0.8391／0.9722），在**答題邊界**只剩 **0.1400／0.1100** →
+**G1 PASS、G2
+FAIL**：顏色是被後面的回合弄丟的，不是從沒寫進去（答題邊界的 in-sample 仍有 0.3150，比自己的置換容量 0.1925／0.2025 高，所以「塌掉」不是「歸零」）。名冊在**名冊邊界**是
+**0.2850**（chance 0.0152 的 18.7 倍，Wilson
+0.2269–0.3512）／**0.0050**，都低於登記的 0.50 效果量 → **G3／G4
+FAIL**：「兩個事實都在、只缺組合」不成立。`pairing`（per-slot）在兩個 k 的閘門都是
+**`capacity_limited`**（cap 0.5713／0.5905 > 0.50），所以 G5 的 FAIL
+**不能**讀成「對應沒有編碼」。陽性對照 `culprit` in-sample
+**1.0000／0.9975**（cap 0.1700／0.2425）→ **G0 PASS**；`read`
+欄逐格重現 §68（顏色 0.1500／0.1000、名冊 0.1350／0.0100、兇手 0.2700／0.1100）→
+§68 的 N3 是**位址**問題（`read` 看不到），不是 state 沒有內容，但答題邊界的
+`state` 也沒有可轉移內容，所以 N3 的結論站得住、理由要換。機械分支兩個 k 都是
+**B5-partial-facts-held**；8 項預測與分支全部命中，但 §69.4 照實記了 400 步儀器檢查印過一次留出段，所以預測不是盲的。下一步（B5）：對失敗的
+`roster`
+在**它自己的回合**換讀出家族（先直接讀 store 的值，再試非線性），不是加步數／寬度／資料。§70（B5 的執行）：同一個名冊邊界換三個讀出家族＋一個**無參數**結構檢定；k=2 名冊在幾何上分得開（留出 AUC
+**0.7699**、p 0.001、270 對同名冊），但值臂 in-sample **0.4975**、非線性容量
+**0.5650**（兩者都不可裁決）→
+**B3-roster-present-but-not-fittable**；k=5 留出只有 **24** 對同名冊，AUC
+**0.5498**、p 0.1918 →
+**B4-roster-absent-at-its-own-turn**，但那是**量不到**而非證明沒有（訓練段 296 對是 0.8034／p
+0.001）。§71（B3／B4 的共同下一步，**干預而非再加讀出家族**）：三個**等 token 數**的名冊行編輯（換一個同長度名字／反轉子句／換一個未用顏色）；k=2 結果是
+**J1-roster-line-sets-the-roster**——換名字把 state 帶到編輯後名冊的鄰域（lift
+**0.130641**、p 0.001、199 列、無擬合、top1 45/199 對 chance
+0.0152），反轉順序（**+0.007788**）與換顏色（**−0.001729**）都沒有把它推離自己的名冊→ 痕跡是**名字的集合**，不是那一行字面；k=5 只有 34 列有參考（<
+50）→ **J4-neighbourhood-underpowered**（登記的預測）。登記時的
+**J2 預測是錯的**，照實記為 miss。**核心分仍 0.00/10**§72（J1 的機械輸出，**逐槽看寫入**，無擬合）：`end_turn`
+的寫入門在名冊邊界是 **one-hot**（k=2 留出 200/200 段，`max_share`
+平均 0.999998、最小 0.999949；k=5 99%），16 個槽裡 **15 個空著**，值矩陣 **rank
+1**（k=2 每段 `σ₂/σ₁` ≤ 9.00e-06；k=5 93.5%），讀出**就是**那一槽的值（k=2
+`|cos|` 每段 **1.000000**；k=5 99.5%），位址跨段是常數輪廓（`address` 臂留出
+**0.0500／0.0000**，chance 0.5／0.2）→
+**S1-single-address-temporal-superposition**：名冊跟先前每一回合的文字共用同一個 64 維移動平均，**損失在寫入、不在讀出**。k=5 因 0.9350／0.9400（<
+95%）落到 **S4-two-addresses**。兩個重現臂**逐位**重現 §70（`values`
+0.1400／0.0050、`state`
+0.2850／0.0050），store 單獨的留出在線性探針下只有 0.1400（k=2，chance
+0.0152）／0.0050（k=5）；**store 的非線性讀出沒有量過**（照實記的缺口）。登記的 8 項預測全部命中，但來源是訓練分割的先驗，不是本輪的成就。**核心分仍 0.00/10**§73（S1 的機械執行；**只換寫入位址**，其餘逐項固定）：`address="turn"`
+讓回合 k 寫槽 k %
+16，`address="gate"`（預設）是每一節到目前為止的 softmax 門，兩臂參數量都是 168,150、語料 digest 與 §70 同一個 k 逐位相同、同樣 10,000 步／同一組超參數（沒有加 epoch／寬度／資料）。**k=2 的寫入真的換了**：留出 200 段**全部**
+`active_slots = 2`（§72 是 `{1: 200}`）、每段 `σ₂/σ₁` 最小 **0.1497**（§72 是 ≤
+9.00e-06）；三個臂的留出一起上升（`values` **0.1400 → 0.3350**、`state` 0.2850 →
+0.4650、`nonlinear_quad` 0.3000 → 0.4900），無參數結構檢定 AUC 0.7699 →
+**0.8645**（p
+0.001）。但裁決不是「位址是損失」：線性值臂在 turn 載體上仍然**擬合不到自己的訓練名冊**（in-sample
+**0.5325 < 0.95**），非線性臂 in-sample 0.9625 但容量 **0.5550 >
+0.50**（capacity-limited），所以依跑前固定的優先序，機械分支是
+**W2-not-readable-in-sample**，不是登記預測的
+`W3-write-was-part-of-the-loss`。**登記本身有缺陷，照實記**：W2 的 0.95 地板是 §70 給「載體被訓練去產生的那個標籤」的正控制用的，而 W2 自己在 §73.8 登記的預期是
+**0.4975**——0.4975 <
+0.95，也就是說照登記的預期它本來就不可能通過（除非換位址讓 in-sample 多跳 +0.45，而登記沒有預測這件事）。因此 W3 過、W4 不過（0.1400
+< 0.3350 <
+0.50）只記成**事後觀察**，由下一個登記檢定；這一節**不得**宣稱位址是損失的一部分，也**不得**宣稱不是。k=5 的位址同樣換了（`active_slots`
+全部 2），但留出**沒有移動**（`values` 0.0050 → 0.0050，in-sample 反而 0.0850 →
+0.0225），所以 S1 指名的修法不是 k=5 的答案。跑後另記一個**只影響 verdict 的修正**（amendment）：`probe_pantry_families.py`
+的 `--check` 原本只看 `instrument_ok`，而 `instrument_ok`
+把依構造必假的 H1（重現 §69 的 cell）算進去，於是四份 §73 報告只因這一行 FAIL；改成「H1 只在記了
+`--reference`
+時才要求，其餘要求 H0 與兩個 hash 不變」，四份存檔**一個位元組都沒改**（sha256 前後相同，`instrument_ok`
+欄位仍是 `False`），§70／§72 的舊報告仍然
+`--check OK`。§74（§73.17 的**判準重登記**；**不重訓**，載體、語料、特徵、標準化全部凍結，`N0`
+要求三臂的 in-sample／held-out **逐位**重現 §73）：每個讀數改成對
+**400 次標籤置換分佈**檢定（§70／§72／§73 只有**單次**置換，所以「高於自己的置換容量」當時根本無法檢定），並加上第三個分割
+**leave-roster-out**（擬合時拿走整個名冊 `R` 的段，再讀 `R`
+的段——那一對名字**從未一起當過訓練標籤**，所以過關不可能只是標籤集合的查表）。**k=2：Q1／Q2 三臂全過**（in-sample
+0.8075／0.5325／0.9625 對各自的 null 平均 0.2669／0.0609／0.5581，p 都是最小可達值 0.002494；held-out
+0.4650／0.3350／0.4900 對 null 平均 0.018，p 同樣 0.002494），**Q3 三臂全不過**（LRO 的 overlap
+1.2700／1.2050／1.0525 < 登記的
+`0.75k`＝1.5，雖然 LRO 的 p 也都是 0.002494）→ 分支
+**`Q2-transfer-below-the-composition-floor`**。三個要留下來的讀數：① **§70 的
+`capacity_limited` 與 §73 的 `W2-not-readable-in-sample`
+都是絕對門檻的產物**——`nonlinear_quad` 的 in-sample
+0.9625 高於 400 次置換的**每一次**（平均 0.5581、最大 0.6200、p99
+0.6075），0.50 的上限不是這個家族的分佈（§70 的文字不改，兩節判準並存）；②
+**擬合最好的一臂組合最差**（`nonlinear_quad` 0.9625 → LRO
+**0.1075**；`linear_values` 0.5325 → LRO
+**0.2350**），所以「答得出名冊」與「記住名冊的每一對」是兩件事；③
+**LRO 只掉 0.10**（held-out 0.3350 → LRO
+0.2350，null 平均 0.0207，94/400 整對沒錯、overlap
+1.2050）——這是**事後觀察**：登記的門檻說「不稱 binding」，數字說「組合訊號存在但弱」。**k=5 什麼都沒轉移**：Q1 只有
+`linear_state`（0.1700 對 null 0.1028）與
+`nonlinear_quad`（0.5200 對 0.3237）過，`linear_values` **不過**（0.0225 對 null
+0.0099，p 0.027431 > 0.005），Q2 三臂全不過（留出都是 1/200，p
+0.224–0.314；overlap 2.46–2.57 只比 chance 2.0833 多抓 0.4 個名字），LRO 1–2/400
+→ 分支
+**`Q2-fit-but-no-transfer`**。**照實記**：observed 格在登記前已由一次 3-draw 管路測試印出（輸出到
+`/tmp`、不進版控），所以本節**不宣稱盲預測**；登記時未看過的是 400 次 null 分佈，因此 p 值與 Q1／Q2 的裁決不是事後選的，而 Q3 的 k=2 裁決是算術（門檻在管路測試前就寫定）。§75（§74.17 指名的兩問；**A 不重訓**，只把 §74 的 200 列留出按「名冊 key 是否出現在 57 個訓練名冊」切開，並用**同一份擬合**各讀一次；**B 只換語料種子
+`--pantry-seed 20261126`**，其餘引數與 §73 逐項相同）：A 的 `N0a` 過（pooled
+0.4650／0.3350 **逐位**重現 §74），**seen
+176 列 0.5170／0.3693（p 都是 0.002494）→ `S1` 過**，**unseen
+24 列兩臂都 2/24＝0.0833（Wilson
+0.0232–0.2585，null 平均 0.013446、最大 0.0833、ge 10、p 0.027431）→ `S2` 不過**
+→ 分支 **`U2-seen-rosters-only`**：§74 的 pooled
+0.3350 是「**載體看過的那一對**」在撐；24 列那一格答對的兩段各只抓到**一個**名字（overlap
+1.0000／0.8750 對 null 最大 0.6667，事後觀察，不是登記的閘門）。B 的 `N0b`
+過（載體與 checkpoint 未變、語料 digest 有記錄、`reproduction_applicable` 照實記
+`false`）、**`Q1`／`Q2` 三臂全過**（in-sample 0.5475／0.3275／0.8350 對 null
+0.2448／0.0995／0.4991；held-out 0.2200／0.1600／0.2250 對 null
+≈0.017；p 都是 0.002494）、**`Q3` 三臂全不過**（LRO
+0.0625／0.0525／0.0350，overlap 1.0475／0.9375／0.9625，都 < 1.5）→ 分支
+**`Q3-below-floor-again`**：**形狀複現（高於 null、遠低於門檻），幅度沒有**（§74 的 0.2800／0.2350
+→
+0.0625／0.0525）。**並列的共變數**：這支語料的載體沒有擬合到同樣程度（訓練 loss
+0.0001 → 0.6345、生產讀數 0.3700 → 0.1650、`M1`／`M2`
+FAIL），所以「幅度沒複現」不能全歸給語料；§75.7 的停損禁止用加 epoch／寬度／資料去追。登記的 7 條預測
+**6 中 1 落空**：A 的 `S2`
+落空，讀法在登記時已寫死——24 列上「不過」**不等於**組合不存在（存檔的 null 一次都沒到 3/24，也就是差**一段**就翻面）；照實記見 §75.15。§76（§75.7 的停損擋掉「再加預算」之後，換問**一次寫入裝多少**；兩臂**只差
+`--write-slots`**，其餘逐項相同：語料種子
+`20261127`、10,000 步、168,150 參數、`device=cpu`，並在同一個
+`CPUQuota=500%`／`MemoryMax=9216M`／`MemorySwapMax=0` 的 transient user
+service 下跑完）：機制真的換了——留出名冊邊界的 `active_slots` 中位數 **2.0 →
+8.0**（控制 200/200 都是 2，治療 200/200 都是 8，剛好是「2 個回合 ×
+1／4 槽」的算術），`rank1_residual` 中位數 0.3508 →
+**0.7721**（4 塊不是原值的重排）；但 **LRO
+exact 三個家族都沒動**（`linear_state` 0.1175 → 0.0925、`linear_values` 0.0950 →
+0.0925、`nonlinear_quad` 0.0575 → 0.0375），Δ 是
+**−0.0250／−0.0025／−0.0200**，全部遠小於登記的 `CONTRAST_MARGIN`
+0.05，而三個 in-sample 差（0.0275／0.1075／0.0075）都 ≤ `FIT_COMPARABILITY` 0.15
+→ `readable=true`、`gain_arms`／`loss_arms` 皆空 → 分支
+**`W2-the-write-was-not-the-limit`**：**解析度不是組合的損失所在**，下一步是**內容定址（per-name）寫入**，不是更多 epoch／寬度／資料。兩臂的
+`Q1`／`Q2` 三家族全過（p 都是 0.002494）、`Q3` 全不過（overlap
+1.075／0.955／0.960 與 1.0525／0.985／0.940，都 < 1.5）、`S2`／`U`
+也全不過（unseen 最好 2/24＝0.0833，兩臂相同）。**照實記兩件**：① 登記時預測「`W2`
+或 `W4`」，結果是 `W2`，**沒有被否證但資訊量很低**（七個分支裡寫了兩個，`W4`
+還需要 `readable` 加至少一個 `gain_arm`）；② 描述量**違反**
+§76.6 登記的預期——`linear_values` 的 in-sample 位移 **+0.1075** 反而比
+`linear_state` 的 **−0.0275** 大（held-out −0.030 對 +0.045、LRO
+−0.0025 對 −0.0250，兩個反向），那一句「前者位移遠小於後者」**不成立**，而它不裁決任何分支。作廢的跑照實記：16:30 的 12 執行緒 control 與 epoch
+196/200 被重啟終止的首次啟動，都沒有產生任何讀數。§76.12 寫的「GPU 只能靠閒置保證 ≤
+50%」同日被 `scripts/gpu_limit.py` 取代（實測 `--target 0.5`：duty 0.8735 →
+0.4773、25,411 →
+13,609 次 matmul；`--target 0.25`：0.2428、7,057 次；誤差在保守側），但 §76 的裝置仍是登記的
+`cpu`。**核心分仍 0.00/10**。§77 換問「一次寫入的**內容**（哪一個
+`h`）」（§76 只排除了寬度）：兩臂在同一個上限 service 內重訓，語料種子 20261127、10,000 步、168,150 參數、`device=cpu`，只差
+`--address`——control `turn`（回合 k 在最後一個 token 的 `h`
+上寫一次進槽 k）、treatment `item`（每個清單項各寫一次，來源是該項最後一個字元的
+`h`，槽號是每 session 的項序號
+`counter % 16`）；參數、語料、初始化、預算逐項相同，治療是**寫入計畫**、不是第二次 forward（token 流與
+`h`
+軌跡不變）。登記前量到兩件事決定治療：字面的內容 hash 會撞槽（訓練 209/400、留出 101/200 段丟槽，所以槽號只需避免覆寫——讀本來就是內容定址——改用項序號），以及治療在 §76 的控制載體上真的改變 store（`active_slots`
+2→3、`rank1_residual`
+0.3278→0.4552）。照實記一個 §76 的儀器缺陷：`probe_pantry_write76.py` 的
+`load_corpus` 沒傳報告的種子，所以 §76 的格是在**種子 20261113**
+的語料上量的、載體卻訓練在 20261127；§76 的 `W2`
+照原文引用，本節探針讀報告的種子並把 `corpus_digests_match` 放進
+`N0`。機制過：`M_slots`
+2.0（200/200）對 3.0（200/200 剛好 3、比例 1.0000）、`rank1_residual`
+0.3278→0.5148、`M_landed` 兩臂 200/200、min cosine
+1.0（槽內容＝`sigmoid(write_gate(h))·value_proj(h)`
+在計畫指名的位置）、載體與 checkpoint 前後不變。`Q1`／`Q2`
+兩臂三家族全過；**`Q3` 兩臂三家族全不過**（最好的是治療的 `linear_values`
+overlap **1.423** < 1.5）；`S1` 過、`S2`／`U` 不過（unseen 兩臂都
+**0/7**——這支種子切 193/7，`U`
+幾乎空轉，不讀成「沒有轉移」）。登記的對比**不可讀**：治療的 `linear_values`
+in-sample 0.7200 對控制 0.4175，擬合差 **0.3025 >
+0.15**，所以 LRO 的差（+0.0575／+0.2800／+0.0325）是共變數、不是證據；固定優先序因此是
+**`P2-both-width-and-content-were-not-the-limit`**：寫入的寬度（§76）與內容（§77）都不是組合的瓶頸，下一步換**讀出端**、不是更多預算。登記的預測（`P4`
+或 `P1`）**落空**、照實記為 miss；登記的描述量預期（`linear_values` 位移大於
+`linear_state`）**命中**（LRO +0.2800 對 +0.0575、in-sample
++0.3025 對 +0.0375）。重訓的控制**沒有**重現 §76 存檔的格（0.2325／0.1500／0.0900 對 0.1175／0.0950／0.0575），這是預期中的語料種子差、記為
+`reproduction.applicable=false`，不是迴歸。第一次探針在寫 `items_per_session`
+時把回合字典傳給 `item_end_positions` 而中止、**沒有寫出任何讀數**；修成走
+`turn_payload`
+的 helper 並加回歸測試，閘門／常數／讀數定義都沒動，第二次執行才是登記的讀數。**核心分仍 0.00/10**。§78（§77.19 指名的**等擬合對照**；**不重訓任何載體**——兩個 §77 載體凍結，`weights_hash`
+與 checkpoint
+sha256 前後相同，只讓**讀出步數**在 250／500／1,000／2,000／4,000／8,000 的階梯上移動，家族只用 §77 唯一讓對比不可讀的
+`linear_values`）：兩階段協定——階段 A 只讀 in-sample 與置換容量並**先選配對**（`FIT_MATCH_TOLERANCE`
+**0.05**，比 §77 的 0.15 緊三倍；`CAPACITY_MAX`
+0.50 只當可用性濾網），階段 B 才在錨（2,000）與匹配格上算 held-out／leave-roster-out，每格 400 次置換。`N0`
+過（錨的兩臂**逐位**重現 §77：control 0.4175／0.2100／0.1500／1.1475、treatment
+0.7200／0.5500／0.4300／1.4225）、`L`
+過（單調、跨度 0.2100／0.3500）、六個階梯全部可用（容量 ≤ 0.1125）。`W1`
+找到配對：**control@8000（0.5150）對 treatment@250（0.5250）**，gap
+**0.0100**，而且兩邊的置換容量也剛好都是 **0.0700**；兩條擬合範圍只在 **[0.5150,
+0.5250]** 重疊（per-item store 用 **250 步**就達到 per-turn store
+**8,000 步**的線性可讀度），所以「等擬合」只在兩條階梯的**邊緣**成立。匹配對的讀數：control
+LRO exact **0.1025**（41/400）／overlap **1.0875**，treatment
+**0.2925**（117/400）／**1.2650**，Δ overlap **+0.1775**、Δ exact
+**+0.1900**，兩臂的 in-sample／held-out／LRO null p 都是最小可達值
+**0.002494**（held-out 0.2100／0.3400 都高於 chance 0.0152）→ `W2` 過、`gain`
+成立（0.1775 ≥ 0.05）；但 treatment overlap **1.2650 < 1.5** → `above_floor`
+不成立 → 機械分支
+**`F3-gain-below-floor-at-matched-fit`**：**等擬合下寫入有幫助、幅度不夠**。描述量（不裁決）：逐階梯 Δ
+overlap **+0.1825**（250）／**+0.2750**（2,000）／**+0.3450**（8,000）、Δ exact
+**+0.1925／+0.2800／+0.3325**，三個步數 treatment 都較高、差值隨讀出預算**上升**；全系列最好的是 treatment@8000
+**1.4325**（仍差 0.0675）；unseen 兩臂在 250／2,000 都是 0/7，treatment@8000 是 1/7（p
+0.1397、未達 0.005）。登記的預測**落空**：寫的是「`F1` 或 `F4`、明確不是
+`F2`」，實際是 `F3`（`F1` 不成立：0.3025 的差可被步數壓到 0.01；`F4` 不成立：Δ
++0.1775）——「不是 `F2`」成立，但理由是**地板**而不是 `gain`
+不成立，所以記為 miss；D2（匹配格 exact 差 <
+0.2800）**命中**（0.1900），D1 是登記前就算出的低資訊量項。對 §77 的 `P2`
+的處理是**收窄措辭、不改原文**：內容**不是惰性的**（等擬合下 +0.1775），但仍**不是充分條件**（1.5 從未達到）；§77 的 +0.2800 裡大約
+**0.10** 與「治療比較好擬合」共變（overlap 0.2750 → 0.1775、exact 0.2800 →
+0.1900），而這個 0.0975
+**不能**拆成純擬合與純換格子，因為匹配把兩臂移到不同步數。照實記：CLI 對兩臂都算
+**{250, 2,000,
+8,000} 的聯集**，所以 control@250 與 treatment@8000 也被算了（只當描述量，沒有閘門或分支配到它們）；兩臂在匹配對上都不在各自最好的傳遞點（control 最好 @2000 的 1.1475、treatment 最好 @8000 的 1.4325）；事後描述量是 treatment 的**最差**格（@250 的 1.2650）仍高於 control 的**最好**格（@2000 的 1.1475），但未登記、單一語料種子，不升級成結論。執行
+**2,715.1
+s**（`CPUQuota=200%`、`MemoryMax=4096M`、`MemorySwapMax=0`、`OMP_NUM_THREADS=2`、`device=cpu`；成本幾乎全在 in-sample
+null 的 400 次**重新擬合**），`--check` **OK**、`instrument_ok`
+**true**。被排除的下一步是**再加讀出預算**（階梯最好 1.4325 < 1.5）；分支的
+`next`
+是「一個項還缺什麼（同一筆裡的 value→name 配對）」，不加預算。**§79 接著問同一件事**（同一個凍結的 §77 治療載體、不重訓、不掃讀出階梯）：每個 roster 項一筆 entry（該項自己槽上的
+`v`，`k`／`h`
+當診斷），線性探針只用 800 筆訓練 entry 擬合，計分是留出 400 筆的**同一 session 二選一**（自己的標籤 vs 另一項的標籤，chance
+0.5）。`I0` 全過（`weights_hash`
+與 checkpoint 前後相同、語料 digest 相符、item↔映射 400+200 段 0 bad、entry
+coverage 1.0 且 `cos_v`／`cos_k` 最小 1.0、§77 三格逐位重現）。機械輸出
+**`D1-entry-carries-owner`**：名字 **0.9350**（374/400，Wilson
+0.9065–0.9553）、顏色
+**0.6200**（248/400，0.5715–0.6662），六個讀數的 400 次置換都是 0 次 ≥ 觀察值（p
+0.002494），診斷呈 `v < k < h`
+單調（名字 0.9350／0.9900／1.0000、顏色 0.6200／0.7375／0.8375）。準確讀法是**owner 強、value 弱但可讀**：按 session 計，名字兩項都對
+**174/200（0.87）**、顏色只有
+**74/200（0.37）**、13% 的 session 兩個顏色都錯（結果後追加的描述量，不改閘門）。因此
+**§78 的 shortfall 不在 entry 的內容**，而在 pooled 讀出／聚合；它**不是**「store 會組合」（LRO 仍 1.2650
+< 1.5）。照實記：寫入門中位數 **0.9907**，所以
+`v ≈ value_proj(h)`，本節**不能**分離「寫入規則保存了它」與「寫入點的狀態本來就有它」（`h`
+的 1.0000／0.8375 是上界）。計分跑 **1,144.72 s**（2 核／4
+GiB／無 swap／`device=cpu`），`--check` **OK**、`instrument_ok`
+**true**。**核心分仍 0.00/10**§80（§79 的 `next`
+之前，先量**現有的那次讀**；**不重訓**、不掃階梯、不加預算）：同一個凍結的 §77 治療載體，取**提問回合之前**的 store（`snapshots[q-1]`）、重放提問回合取最後一個 token 的
+`h`，用**模型自己的** softmax
+`softmax(exp(log_read_scale)·k·W_q h)`（**沒有擬合參數**）當讀；計分是 held-out
+**200** 次讀的**同一 session 二選一**（證據顏色對應的那一筆 vs 另一筆，chance
+0.5）。`I0`
+全過（`weights_hash`／checkpoint 前後相同、語料 digest 相符、item↔映射 400+200 段 0
+bad、讀點稽核 coverage 1.0 且 `cos` 1.0、§77 三格逐位重現）。結果
+**`H1-read-ignores-query`**：**100/200 = 0.5000**（Wilson
+0.4314–0.5686）、400 次標籤置換 **400/400** 不低於觀察值（p
+**1.0**）；兩槽的注意力質量 mean／min／max 都 **1.0**、argmax 槽 2
+**200/200**、`m0` 全 0.0／`m1` 全 1.0；train 的 200 對雙生 `SW`
+**0.0**（`slot_fixed=True`）。描述量 `h_final → 證據顏色`
+**0.1050**（42/400，chance
+0.125）。讀法是**這次讀沒有用問句去選任何一筆**（槽 2 的 key 範數中位數
+**9.8219** 對槽 1 的 **2.8158**，softmax 在 `exp(log_read_scale)=4`
+下已飽和），所以 §78 的 shortfall 在**讀之前**，`r` 就是固定那一槽的 value。執行
+**211.83 s**（登記是 200 % quota；起跑時整機已被佔 44 %，改用
+`CPUQuota=50%`／`OMP_NUM_THREADS=1` 的 transient
+service，`MemoryMax=4096M`、無 swap、`device=cpu`），`--check`
+**OK**、`instrument_ok`
+**true**。§81（**先分離 §80 診斷裡那個機械原因**，再決定 80.20 的兩條路哪一條；**不重訓**、**零擬合參數**、同一批凍結的讀）：同一批 400／200 次讀用三條只差「拿掉什麼」的規則重算——`model`（＝§80）、`cosine`（拿掉 key 範數、留學到的溫度）、`cosine_unit`（連 query 範數與溫度都拿掉，logit 就是純餘弦）；`model`
+是錨，必須逐位重現 §80 的 200 對質量（2e-9）與 **100** 勝。`I0`
+全過（hash／checkpoint 前後相同、digest 相符、coverage 1.0、錨 `max_abs_diff`
+**0.0**、mismatch 0、勝場 100）。結果
+**`N3-keys-do-not-address`**：三條規則**都是 100/200 = 0.5000**（Wilson
+0.4314–0.5686）、400 次置換**都是 400/400**、p **1.0**，`argmax`
+三條規則**都是槽 2 200/200**。差別只在質量：`cosine` 仍飽和（roster 兩槽 mean
+**0.9992**、最低 0.9064，因為 `exp(scale)·‖q‖ ≈ 71`），`cosine_unit`
+終於分開（**0.1785**，最低 0.1288）——但**槽 2 一次都沒輸**。雙生 `SW`：`model`
+**0.0**、`cosine` **0.0112**（122/200 剛好 0，只有 8 對 > 0.01）、`cosine_unit`
+**0.0209**（154 對 > 0.01，每一對都動一點）——**動不等於指對**：`cosine_unit`
+每對都動而二選一仍是 100/200。query 重配對三條都是 100/200（p
+1.0）。**登記的主預測 `N1`
+落空**（登記時已標成弱預測：key 的方向從沒被量過），否證條件（兩條 cosine 都不過）**命中**。**照實記的限制**：本節**不能**分離「鍵沒有顏色」與「query 沒有顏色」（雙生只對調名冊順序，問句逐字相同），所以
+`N3` 只到「這個形狀的讀規則在這批凍結的 keys 上定址不了」；§80.2（d）的
+`h → 證據顏色` **0.105**（低於 chance 0.125）是這個模糊的來源。執行 **25.39
+s**（登記的
+`CPUQuota=200%`／`MemoryMax=4096M`／`MemorySwapMax=0`／`OMP_NUM_THREADS=2`／`device=cpu`，整機全程 25
+%、峰值 RSS 520 MiB、swap 0），同命令重跑的三條規則讀數與 `SW`
+**逐位相同**（讀沒有隨機性）。**§82 把 §81 的模糊拆開**（不重訓、零擬合參數）：`entry_key`
+**0.7375（295/400、Wilson 0.6923–0.7782、p 0.002494）** 與 §79 的 `k`
+格**逐項相同** → 存進去的鍵**真的帶著名冊顏色**；`entry_value` 錨
+**0.6200／248** 重現；`query` **0.5450（109/200、Wilson 0.4758–0.6125、p
+0.069825、8 路 top-1 0.1550 vs chance 0.1250）**
+**兩道門都不過**（有痕跡、不是可用的量）；零參數的 `boundary_query` 兩條規則
+**0.5000／0.5050**（質量 1.0／0.180198、argmax 槽 2 200/200 與 199/200）→ 分支
+**`C3-query-missing`**，缺口在
+**query 側**，而「光把讀點往前移」的免費版本被否證。**§83 依此把讀點移到證據邊界並重訓投影**（`--read-at boundary`：解碼的每個 token 固定使用
+`snapshots[q-1]`
+的一次讀向量，`W_q`／head／store 不變、**零新增參數**、同 10,000 步／168,150 參數／同語料／同起點）：先設**擬合前置條件**
+`train_fit_subset ≥ 0.90`，結果 **0.8325（333/400）**（控制臂同預算
+**0.9925**；兩臂同從 2.58 出發，最後 `mean_loss` **0.1790** vs **0.0078**）→
+**`T0-fit-fails`**：這個預算下治療臂沒有擬合，所以邊界讀的定址能力**沒有被測到、也沒有被否證**；`I0`
+全過（控制載體 hash／checkpoint 前後相同、digest 相符、同起點同預算，控制錨
+`model` `max_abs_diff` **0.0**／勝場 **100**、`cosine_unit` **101**
+逐筆重現 §82）。**登記的主預測 `T1` 落空、替代 `T3` 也沒成立**；在 `T0`
+之下只作描述：治療 `model` **100/200**、`cosine_unit`
+**100/200**（質量 0.17784），治療載體上的不迴歸兩格反而更高（`entry_key`
+**0.7700（308/400）**、`entry_value`
+**0.7225（289/400）**，都過）。照實記：登記的 `T0`
+`next`（同臂重跑）`weights_hash`
+**逐位相同**（確定性、不是壞運）；2e-9 的錨容差對執行緒數敏感（`OMP_NUM_THREADS=4`
+下 `cosine_unit` 質量差 **3.0e-8**、41/200 筆超差、勝場不變）→ 那次探針記
+`E0-instrument` **作廢保留**，登記的讀數改在 §82 的 `OMP_NUM_THREADS=2`
+下跑（270.84
+s）。**§84 把讀點再往前一格（提問回合自己的邊界）並固定**（§83.21 的下一步；`--read-at question`：解碼的每個 token 固定使用
+`snapshots[q]`
+的一次讀向量——store 已含提問回合自己的寫入——`W_q`／head／store 不變、**零新增參數**、同 10,000 步／168,150 參數／同語料 seed
+20261127／同一個 stage-L 起點；執行環境刻意與 §83 的治療臂相同，兩節只差讀點）：先設同一道**擬合前置條件**
+`train_fit_subset ≥ 0.90`，結果 **0.6525（261/400）**、`train_fit`
+**0.6650**、最後 `mean_loss` **0.3300**（main 0.1665／aux
+0.1636；§83 的臂 0.1790、控制臂 0.0078）→
+**`Q0-fit-fails`**：**不但沒過，還比 §83 更低**。因此 §83.19 的「讀在提問寫入之前」**被否證**（不是被支持）——把提問回合的寫入放進 store 並沒有讓臂擬合；兩條臂剩下的共同因素是**一個固定讀向量**。讀的定址能力仍然**沒有被測到、也沒有被否證**。`I0`
+全過，且比 §83 多一道機械檢查：控制錨逐筆重現 §82 的 `boundary_query`（`model`
+`max_abs_diff` **0.0**／勝場 **100**、`cosine_unit` **101**／質量
+**0.180198**），**query 恆等** 200/200 筆、`max_abs_diff`
+**0.0**（容差 2e-9）——提問邊界讀用的 `W_q h`
+就是 §82 的 query 向量，**只有 store 換了**。**登記的主預測
+`Q3-fits-but-no-gain` 落空、替代 `Q0`
+成立**（連續兩節主預測落在「沒擬合」一側；照實記、不改寫預測、不改門檻）。登記的
+`next`（同臂重跑）**權重逐位相同**（`sha256:b8d98a79…`），所以那個損失地板是**確定性的**，不是一次性的壞運。`Q0`
+之下只作描述（不是讀點的證據）：治療 `model` **101/200**（Wilson
+0.4363–0.5735、p 0.493766）、`cosine_unit` **102/200**（p 0.254364），控制
+`model`／`cosine_unit` 都
+**100/200**；但**治療載體上 §79 的兩格都過**（`entry_key` **0.8425（337/400、p
+0.002494）**、`entry_value`
+**0.7800（312/400）**，比凍結載體的 0.7375／0.6200 更高）→
+**寫入側仍帶著顏色，缺的是讀**。**槽診斷（不裁決，`slots_diagnostic.json`）**：名冊兩筆的槽是
+`[1, 2]`、提問回合自己的寫入落在槽 **4**，而控制讀的 argmax 恆居槽
+**2**（200/200）、治療讀恆居槽
+**1**（197/200）——兩者都在名冊內，但**都固定在一個名冊槽**；名冊順序是平衡的（每槽一半），所以「永遠偏好同一個名冊槽」在二選一上**只能得 ~0.5**，這正是 100／101 的算術結果，不是「接近 chance 的巧合」。也就是說這兩個固定讀**沒有區分兩筆名冊**，只是各自固定選了一邊——下一個登記必須先定義「什麼算區分」（例如同一段 session 內質量**隨正解換邊**）。成本照實記：治療 29:20 + 重跑 27:06 + 探針 5:01
+≈ **61 分鐘**機時，全部在 `CPUQuota=400%/400%/200%`、swap 0、GPU
+0% 之下。**核心分仍 0.00/10** |
+`data/pantry_stage/{g_store,g_gru,h_store,b_cache,w_region,cf_arm}/`
+的報告（全部 `--check`
+OK）；`data/pantry_stage/probe66/{k2,k5}.json`（§66 探針，`--check`
+OK）、`data/pantry_stage/sel67/{k2,k5}.json`（§67，`--check`
+OK、載體未變）、`data/pantry_stage/contents68/{k2,k5}.json`（§68，兩份 `--check`
+OK、k=2 重跑除 `seconds`
+外逐欄位相同、載體未變）、`data/pantry_stage/bounds69/{k2,k5}.json`（§69，兩份
+`--check` OK、k=2 重跑除 `seconds`
+外逐欄位相同、載體未變）、`data/pantry_stage/readout70/{k2,k5,k2_rerun}.json`（§70，三份
+`--check` OK、k=2 重跑除 `seconds`
+與置換陣列外逐欄位相同、載體未變）、`data/pantry_stage/intervene71/{k2,k5,k2_amended}.json`（§71，三份
+`--check` OK；k=2 修正前後逐數字欄位相同，只有 `seconds`
+與新增欄位不同；載體未變、`determinism_min_cosine`
+1.0）、`data/pantry_stage/slots72/{k2,k5}.json`（§72，兩份 `--check`
+OK；`values`／`state` 兩臂逐位重現 §70 的
+`linear_values`／`linear_state`；載體未變、`determinism_min_cosine`
+1.0；第一次執行因 dtype 在寫出任何讀數前中止，作廢的 log 留在
+`k2_void_dtype.log`）、`data/pantry_stage/write73/{k2,k2_rerun,k5,k5_rerun}.json`（§73，四份
+`--check` OK；同一個 k 的兩次執行除 `seconds` 外逐鍵相同；`weights_hash`
+與 checkpoint sha256 前後不變、`store`
+區塊 200/200 段兩個非空槽）、`data/pantry_stage/turn73/{k2_arm,k5_arm}/`（§73 的兩個 turn 位址載體，`--check`
+OK，參數 168,150 與 §70 逐位相同、語料 digest 相同，訓練 log 在
+`train.log`）、`data/pantry_stage/compose74/{k2,k5}.json`（§74，兩份 `--check`
+OK；`N0` 的 `carrier_unchanged`／`checkpoint_unchanged`／`reproduction.equal` 都
+`true`，即三臂的 in-sample／held-out 逐位重現 `write73`
+的 cell；每格 400 次置換，k=2 604 s、k=5 747 s，log 在
+`run.log`）；`data/pantry_stage/split75/{seen_k2,fresh_k2}.json`（§75，兩份
+`--check` OK；`seen_k2` 的 `N0a` 三條件全 `true` 且 pooled 逐位重現 §74、3.4
+s；`fresh_k2` 的 `N0b` 過、`reproduction_applicable` 記 `false`、614.9
+s）＋`data/pantry_stage/seed75/k2_arm/`（§75 B 的新種子 20261126 載體，`--check`
+OK，參數 168,150 與 §73 相同，log 在
+`data/pantry_stage/seed75/run.log`）；`scripts/probe_pantry_state.py`（§58 探針）＋`scripts/probe_pantry_readout.py`（§66 探針）＋`scripts/train_pantry_selection.py`（§67 選擇頭）＋`scripts/probe_pantry_contents.py`（§68 讀出）＋`scripts/probe_pantry_boundaries.py`（§69 三邊界探針）＋`scripts/probe_pantry_families.py`（§70 讀出家族／結構探針；§73 新增
+`store`
+區塊與 amendment）＋`scripts/probe_pantry_intervene.py`（§71 名冊行干預探針）＋`scripts/probe_pantry_slots.py`（§72 逐槽寫入探針）＋`scripts/probe_pantry_composition.py`（§74 相對可裁決性／leave-roster-out 探針）＋`scripts/probe_pantry_split75.py`（§75 未見名冊切分＋第二支語料種子探針）；`tests/test_pantry_deduction.py`
+**112 條**＋`tests/test_probe_pantry_readout.py`
+**27 條**＋`tests/ai/test_token_cache_core.py`
+**14 條**；`tests/ai/test_turn_store_core.py`
+**20 條**＋`tests/test_pantry_selection.py`
+**26 條**＋`tests/test_pantry_contents.py`
+**40 條**＋`tests/test_pantry_boundaries.py`
+**47 條**＋`tests/test_pantry_families.py`
+**23 條**＋`tests/test_pantry_intervene.py`
+**27 條**＋`tests/test_pantry_slots.py`
+**28 條**＋`tests/test_pantry_composition.py`
+**17 條**＋`tests/test_pantry_split75.py`
+**18 條**；`data/pantry_stage/write76/{k2.json,capped.log}`（§76，`--check OK`；兩臂在
+`capped/{control,slots4}/`，`instrument_ok` 都
+`true`、參數 168,150、步數 10,000、兩臂秒數 1,776.0／1,776.5）＋`tests/test_pantry_write76.py`
+**37 條**；`data/pantry_stage/item77/{k2.json,capped.log}`（§77，`--check OK`；兩臂在
+`control/`、`item/`，`instrument_ok` 都 `true`、`M_slots` 2.0／3.0、`M_landed`
+200/200、參數 168,150、步數 10,000、訓練 1,741／1,720 秒）＋`tests/test_pantry_item77.py`
+**49 條**；`scripts/probe_pantry_fit78.py`＋`data/pantry_stage/fit78/k2.json`（§78，`--check OK`；`instrument_ok`
+`true`、`N0` 的錨兩臂逐位重現 §77、匹配 control@8000 對 treatment@250（gap
+0.0100、容量同為 0.0700）、Δ overlap +0.1775／Δ exact +0.1900、分支
+`F3-gain-below-floor-at-matched-fit`、2,715.1 s）＋`tests/test_pantry_fit78.py`
+**28 條**；`scripts/gpu_limit.py`＋`tests/test_gpu_limit.py`
+**18 條**（§76.12 的 GPU 上限：`--target 0.5` 實測 duty 0.4773／`--target 0.25`
+0.2428，算出來的暫停長度、不是回饋迴路）；`scripts/probe_pantry_address80.py`＋`data/pantry_stage/address80/k2.json`（§80，`--check OK`；`instrument_ok`
+`true`、A **0.5000**（Wilson 0.4314–0.5686、p 1.0）、SW **0.0**、分支
+`H1-read-ignores-query`、211.83 s）＋`tests/test_pantry_address80.py`
+**24 條**；`scripts/probe_pantry_readrule81.py`＋`data/pantry_stage/readrule81/k2.json`（§81，`--check OK`；`instrument_ok`
+`true`、三條規則都 **0.5000**（Wilson 0.4314–0.5686、p 1.0）、`cosine_unit`
+的 roster 質量 0.1785 但 argmax 仍槽 2 200/200、錨 `max_abs_diff` 0.0、分支
+`N3-keys-do-not-address`、25.39
+s）；`scripts/probe_pantry_readrule82.py`＋`data/pantry_stage/readrule82/k2.json`（§82，`--check OK`；`instrument_ok`
+`true`、§79 的 `v`→顏色 **0.6200（248/400）** 與 §81 的質量（`max_abs_diff`
+**0.0**、勝場 **100**）都逐位重現、`entry_key` **0.7375（295/400）**
+PASS、`query` **0.5450（109/200）** FAIL（p 0.069825）、`boundary` 兩條規則
+**0.5000／0.5050** FAIL、分支 `C3-query-missing`、339.93
+s）＋`tests/test_pantry_readrule82.py`
+**30 條**；`scripts/probe_pantry_readrule83.py`＋`data/pantry_stage/readrule83/k2.json`（§83，`--check OK`；`I0`
+全過、控制錨 `model` `max_abs_diff` **0.0**／勝場 **100**、`cosine_unit`
+**101**／質量 **0.180198** 逐筆重現 §82；治療臂 `train_fit_subset`
+**0.8325（333/400）** < 0.90 → 分支 `T0-fit-fails`；治療描述量 `model`
+**100/200**、`cosine_unit` **100/200**（質量 0.17784）；治療載體不迴歸
+`entry_key` **0.7700（308/400）**、`entry_value` **0.7225（289/400）**；同臂重跑
+`weights_hash` 逐位相同；4 執行緒的 `E0-instrument` 探針作廢保留在
+`discarded/`；270.84 s）＋`tests/test_pantry_readrule83.py`
+**38 條**；`scripts/probe_pantry_readrule84.py`＋`data/pantry_stage/readrule84/k2.json`（§84，`--check OK`；`I0`
+全過、控制錨 `model` `max_abs_diff` **0.0**／勝場 **100**、`cosine_unit`
+**101**／質量 **0.180198** 逐筆重現 §82，**query 恆等 200/200 筆、`max_abs_diff`
+0.0**；治療臂 `train_fit_subset` **0.6525（261/400）** < 0.90 → 分支
+`Q0-fit-fails`；治療描述量 `model` **101/200**、`cosine_unit`
+**102/200**；治療載體不迴歸 `entry_key` **0.8425（337/400）**、`entry_value`
+**0.7800（312/400）**；同臂重跑 `weights_hash` 逐位相同（報告在
+`repeat/`）、槽診斷在 `slots_diagnostic.json`；300.955
+s）＋`tests/test_pantry_readrule84.py` **32 條** |
 
 **停損**：
 
 - P1 若 T1 沒有下降 → 先修模型／訓練，不是加大 state。
 - P2 若 SNN 在 T1–T6 全過但能力仍落後 → 它可以是效率線，不是能力線。
-- P4 若生產路徑仍需要 `state_for_llm` 才能運作 → 那還是 prompt 路線，不能宣稱
-  「同一個模型」。
+- P4 若生產路徑仍需要 `state_for_llm`
+  才能運作 → 那還是 prompt 路線，不能宣稱「同一個模型」。
 
 ---
 
@@ -324,14 +925,12 @@ T5 對照組也變 → 先把實驗做乾淨。
 
 **新增（P1）**
 
-- `apps/backend/src/ai/core/core_state.py`：schema、save/load、hash、版本
-  ——**P0 已建立**（見下方「P0 現況」）。
-- `apps/backend/src/ai/core/core_step.py`：`ai_step`／`al_step` protocol、時間切段、registry
-  ——**P1 已建立**（純 stdlib，不含模型）。
-- `apps/backend/src/ai/core/stateful_decoder.py`：所有臂共用 `StatefulCore`（同一個 state
-  物件／`weights_hash`／checkpoint）——`GRUCore`（**P1 第一臂**）、`SSMCore`（**P3 臂**，
-  `h ← h·exp(-dt/τ)`、線性讀出）、`SlotMemoryCore`（**§46 的第七輪臂**：同一個 GRU ＋
-  四個 gate 寫入、attention 讀取的槽；`model_kind="slots"`）；SNN 臂仍未接。
+- `apps/backend/src/ai/core/core_state.py`：schema、save/load、hash、版本——**P0 已建立**（見下方「P0 現況」）。
+- `apps/backend/src/ai/core/core_step.py`：`ai_step`／`al_step`
+  protocol、時間切段、registry ——**P1 已建立**（純 stdlib，不含模型）。
+- `apps/backend/src/ai/core/stateful_decoder.py`：所有臂共用
+  `StatefulCore`（同一個 state 物件／`weights_hash`／checkpoint）——`GRUCore`（**P1 第一臂**）、`SSMCore`（**P3 臂**，
+  `h ← h·exp(-dt/τ)`、線性讀出）、`SlotMemoryCore`（**§46 的第七輪臂**：同一個 GRU ＋四個 gate 寫入、attention 讀取的槽；`model_kind="slots"`）；SNN 臂仍未接。
 
 **修改**
 
@@ -339,132 +938,140 @@ T5 對照組也變 → 先把實驗做乾淨。
 - `apps/backend/src/services/llm/generation_gate.py`：`stateful` 能力旗標。
 - `apps/backend/src/api/routes/chat_routes.py`：core 路徑傳 state 物件；`state_for_llm`
   只給 fallback。
-- `apps/backend/src/services/llm/prompt_builder.py`：fallback 專用，標 `route=prompt`。
+- `apps/backend/src/services/llm/prompt_builder.py`：fallback 專用，標
+  `route=prompt`。
 
 **測試／量測**
 
-- `tests/ai/test_core_state_contract.py`：schema、hash、版本、原子寫入、拒絕載入
-  ——**P0 已建立，15 條通過**（P1 追加「存檔拒絕非 numpy 張量」1 條）。
-- `tests/ai/test_state_cycles.py`：`dt=0` 恆等、per-sample 更新、save/load 同 logits、
-  weights hash、半群**只量不判**、等段數產生器——**P1 已建立，21 條**。
+- `tests/ai/test_core_state_contract.py`：schema、hash、版本、原子寫入、拒絕載入——**P0 已建立，15 條通過**（P1 追加「存檔拒絕非 numpy 張量」1 條）。
+- `tests/ai/test_state_cycles.py`：`dt=0`
+  恆等、per-sample 更新、save/load 同 logits、weights
+  hash、半群**只量不判**、等段數產生器——**P1 已建立，21 條**。
 - `scripts/probe_state_cycles.py`：T1–T6 的合成多回合 probe——**P1 已建立**；`--round 2`
   是等段數重跑。預登記在 `CORE_GAP_ANALYSIS.md` §37／§38，結果見 §37.6／§38.4。
-- `scripts/probe_state_restart.py`：**跨進程** restart（P3 的 T4 第二半）——`--phase
-  capture` 在新行程存權重＋查詢前的 state，`--phase resume` 在**另一個**新行程只靠檔案
-  重跑；同時驗「另一臂的 state／被改寫的 state／接到錯的臂」三種拒絕。結果見
-  `CORE_GAP_ANALYSIS.md` §40.8：兩臂 Δp = 0、歸零 state 差 0.91（GRU）／0.99（SSM）。
-- `tests/ai/test_state_restart.py`：上面那條的機制測試（煙霧預算，驗 Δp、hash、ticks、
-  三種拒絕；**不**驗「歸零 state 差異」，那需要訓練過的核心）。
+- `scripts/probe_state_restart.py`：**跨進程**
+  restart（P3 的 T4 第二半）——`--phase capture`
+  在新行程存權重＋查詢前的 state，`--phase resume`
+  在**另一個**新行程只靠檔案重跑；同時驗「另一臂的 state／被改寫的 state／接到錯的臂」三種拒絕。結果見
+  `CORE_GAP_ANALYSIS.md` §40.8：兩臂 Δp =
+  0、歸零 state 差 0.91（GRU）／0.99（SSM）。
+- `tests/ai/test_state_restart.py`：上面那條的機制測試（煙霧預算，驗 Δp、hash、ticks、三種拒絕；**不**驗「歸零 state 差異」，那需要訓練過的核心）。
 - `apps/backend/src/ai/core/stateful_runtime.py`：**P4 的生產綁定**（opt-in、預設關），
-  **P5 加上 R3 的三道鎖與所有權**。`ChatCoreRuntime` 每回合推進一次 state 物件並存檔；
-  每 session 一個狀態目錄（id 的 digest），共用同一份權重；`availability()` 說明為何不可用
-  （未開啟／沒有 checkpoint／上次載入失敗）並回報 `lock`／`multi_writer_safe`；
-  `advance()` 在任何拒絕路徑都回 `None` 且**不改動**既有狀態檔，`last_refusal` 說明是哪一種
-  拒絕（同一個 `None` 可能是「沒有 checkpoint」「檔案被改」「版本輸了」「主人不符」）。
+  **P5 加上 R3 的三道鎖與所有權**。`ChatCoreRuntime`
+  每回合推進一次 state 物件並存檔；每 session 一個狀態目錄（id 的 digest），共用同一份權重；`availability()`
+  說明為何不可用（未開啟／沒有 checkpoint／上次載入失敗）並回報
+  `lock`／`multi_writer_safe`； `advance()` 在任何拒絕路徑都回 `None`
+  且**不改動**既有狀態檔，`last_refusal` 說明是哪一種拒絕（同一個 `None`
+  可能是「沒有 checkpoint」「檔案被改」「版本輸了」「主人不符」）。
 - `apps/backend/src/services/llm/generation_gate.py` 的 `STATEFUL_BACKENDS`／
   `stateful_core_active()`：連續性是**另一種能力**，`stateful-core` **不在**
-  `GENERATIVE_BACKENDS` 裡（它不能吃提示改寫，放進去就會讓模板答案被記在模型頭上）。
-- `scripts/probe_core_turns.py`：**P5 的回合量測**。走真正的 `_handle_chat_request`，把凍結
-  標準集整輪整輪地跑（不截斷最後一輪，否則尾端 stratum 會無故缺額），每個 stratum 一個
-  session，逐回合寫 JSONL 到 `data/core_turns/`（gitignored）。gate：回合數、零拒絕、版本嚴格
-  遞增、五個 stratum 都在。它量的是**載體**，不是能力——回覆仍由表層產生。
-- `tests/test_probe_core_turns.py`（8 條）：上面那個 gate 自己的測試（掉一次更新／一次拒絕／
-  少一個 stratum 都必須讓 `all_pass=False`），以及「整輪不截斷」與可重現性。
-- `scripts/train_state_content.py`：**§43–§44 的內容量測**。教一個配對、跨 `al_step(120 s)`、
-  再用問題生成答案；四種量測各有一個可以失敗的對照（零狀態 ablation 用**同一個** state
-  物件只把 `h` 歸零、`cold` 是同一批題目跳過教學回合、`wrong_name` 分開「值被攜帶」與
-  「配對被使用」），另加 teacher-forced 與只讀 `h` 的線性 probe 兩個診斷，用來說明資訊是
-  「沒存進去」還是「存了但讀不出來」。報告與 checkpoint 寫到 `data/state_content/`
-  （gitignored）。
+  `GENERATIVE_BACKENDS`
+  裡（它不能吃提示改寫，放進去就會讓模板答案被記在模型頭上）。
+- `scripts/probe_core_turns.py`：**P5 的回合量測**。走真正的
+  `_handle_chat_request`，把凍結標準集整輪整輪地跑（不截斷最後一輪，否則尾端 stratum 會無故缺額），每個 stratum 一個 session，逐回合寫 JSONL 到
+  `data/core_turns/`（gitignored）。gate：回合數、零拒絕、版本嚴格遞增、五個 stratum 都在。它量的是**載體**，不是能力——回覆仍由表層產生。
+- `tests/test_probe_core_turns.py`（8 條）：上面那個 gate 自己的測試（掉一次更新／一次拒絕／少一個 stratum 都必須讓
+  `all_pass=False`），以及「整輪不截斷」與可重現性。
+- `scripts/train_state_content.py`：**§43–§44 的內容量測**。教一個配對、跨
+  `al_step(120 s)`、再用問題生成答案；四種量測各有一個可以失敗的對照（零狀態 ablation 用**同一個**
+  state物件只把 `h` 歸零、`cold` 是同一批題目跳過教學回合、`wrong_name`
+  分開「值被攜帶」與「配對被使用」），另加 teacher-forced 與只讀 `h`
+  的線性 probe 兩個診斷，用來說明資訊是「沒存進去」還是「存了但讀不出來」。報告與 checkpoint 寫到
+  `data/state_content/` （gitignored）。
 - `tests/test_state_content_task.py`（13 條）：那個任務自己的契約——洩漏偵測器被**故意餵壞**
-  一次（重用值／訓練過的名字）、`cold` 必須與 held-out 同一批題目、重跑可重現、答案不在
-  問句裡、損失從答案的第一個字元開始、零狀態真的把 `h` 歸零而**不換物件也不換權重**。
-- `scripts/train_state_binding.py`：**§45 的兩組配對量測**。兩個教學回合（各一次 `ai_step`／
-  `al_step(120 s)`）、一個查詢、生成該鍵的值；唯一變數是目標（`single` 只訓練被抽中的
-  那一組、`both` 兩組都訓練且各自從**全新的 state** 出發，所以兩臂的差別沒有序列佈局）。
-  checkpoint 以**最低 dev 答案損失**選，不以 exact 選（exact 是階躍函數，`--patience 0`
+  一次（重用值／訓練過的名字）、`cold`
+  必須與 held-out 同一批題目、重跑可重現、答案不在問句裡、損失從答案的第一個字元開始、零狀態真的把
+  `h` 歸零而**不換物件也不換權重**。
+- `scripts/train_state_binding.py`：**§45 的兩組配對量測**。兩個教學回合（各一次
+  `ai_step`／
+  `al_step(120 s)`）、一個查詢、生成該鍵的值；唯一變數是目標（`single`
+  只訓練被抽中的那一組、`both` 兩組都訓練且各自從**全新的 state**
+  出發，所以兩臂的差別沒有序列佈局）。checkpoint 以**最低 dev 答案損失**選，不以 exact 選（exact 是階躍函數，`--patience 0`
   單獨修不好這件事）。診斷：`h` 對兩個槽與「被問的那組」的線性 probe、`by_ask`、
   `other_value_rate`、`wrong_name.taught_value_rate`、`both_sequential`。**§46 追加**
-  `--core slots`（可定址 store）／`--no-memory`（同參數的消融）／`--control`（把對照報告
-  讀回來，B7 的消融差與 B8 的參數匹配才可能算得出來；資料 digest 不符就拒絕），以及
+  `--core slots`（可定址 store）／`--no-memory`（同參數的消融）／`--control`（把對照報告讀回來，B7 的消融差與 B8 的參數匹配才可能算得出來；資料 digest 不符就拒絕），以及
   `addressing_diagnostics`（兩個問題讀到同不同格）——消融臂沒有 attention 權重，回
   `applicable: false` 而不崩潰。
 - `scripts/train_text_stage.py`：**§47 的文字階段（L）**。byte 詞表（259：`<pad>`／
-  `<bos>`／`<eos>` ＋ 256 bytes）、**同一個** `GRUCore` 與 `CoreState` v1、128-byte 窗、
-  每 4096 bytes 重置 state；floor 是**算出來的**內插 bigram／trigram（權重在訓練尾巴選），
-  L3 比的是同一個 trigram 的貪心續寫，L4 是「同一份權重、每個窗重置 state」，L5 在
-  `--check` 裡也會真的把 checkpoint 載回同一個類別。語料是 core_train／core_val 的前
-  N bytes ＋ pantry v2 證詞（登記的位元組數在執行時比對，不符就中止）。
-- `tests/test_text_stage.py`（22 條）：詞表對 256 個 byte 可逆、loader 只切整行、floor 是
-  機率分布且 λ 只在訓練尾巴選、gate 由記錄的數字重算、`--check` 對竄改／缺 checkpoint
-  都會失敗、洩漏的 camera tag 在訓練前就中止。
-- `scripts/train_pantry_deduction.py`：**§49 的 pantry 推理（P）**，從 L 的 checkpoint
-  出發（G1 鎖檔案 sha256 與訓練後 hash）。11 個 turn 逐輪 `ai_step`、輪間
-  `al_step(turn["dt_s"])`，目標只有兇手名字的 4–5 bytes ＋ `\n`；正解、前綴解、每個消融解
-  都由產生器的 `derive()` 算出來，不由人手指定。G8 的格式對照（同文字、同步數、答案換成
-  隨機的另一個人）是**另一支臂**，計分臂在它完成前拒絕啟動。
+  `<bos>`／`<eos>` ＋ 256 bytes）、**同一個** `GRUCore` 與 `CoreState`
+  v1、128-byte 窗、每 4096
+  bytes 重置 state；floor 是**算出來的**內插 bigram／trigram（權重在訓練尾巴選），L3 比的是同一個 trigram 的貪心續寫，L4 是「同一份權重、每個窗重置 state」，L5 在
+  `--check`
+  裡也會真的把 checkpoint 載回同一個類別。語料是 core_train／core_val 的前 N
+  bytes ＋ pantry v2 證詞（登記的位元組數在執行時比對，不符就中止）。
+- `tests/test_text_stage.py`（22 條）：詞表對 256 個 byte 可逆、loader 只切整行、floor 是機率分布且 λ 只在訓練尾巴選、gate 由記錄的數字重算、`--check`
+  對竄改／缺 checkpoint 都會失敗、洩漏的 camera tag 在訓練前就中止。
+- `scripts/train_pantry_deduction.py`：**§49 的 pantry 推理（P）**，從 L 的 checkpoint 出發（G1 鎖檔案 sha256 與訓練後 hash）。11 個 turn 逐輪
+  `ai_step`、輪間 `al_step(turn["dt_s"])`，目標只有兇手名字的 4–5 bytes ＋
+  `\n`；正解、前綴解、每個消融解都由產生器的 `derive()`
+  算出來，不由人手指定。G8 的格式對照（同文字、同步數、答案換成隨機的另一個人）是**另一支臂**，計分臂在它完成前拒絕啟動。
 - `tests/test_pantry_deduction.py`（128 條）：語料兩份 digest 與 L 相同、逐輪 runner 與
-  `ai_step`＋`al_step` 逐位相同（含 `state_version`／`ticks`）、批次不改變單筆 state、
-  重置臂只看最後一輪、前綴在 **98** 題上是陷阱、格式對照永遠不是兇手、gate 由數字重算、
-  `verdict` 只數布林、smoke 報告不會被當成對照；§52 之後再加上：`--gate-prefix` 只收單一
-  大寫字母（報告與 `--check` 用同一個前綴）、`--widen-to` 的起點必須是「L 或 L 的行為等價
-  加寬」（新單元零接線，`h[:128]` 與 logits 逐步相同），以及 CLI 拒絕 `--widen-to 128`、
-  同時給 `--hidden` 或改 `--emb` 的組合；§61 再加上：配對版本除名冊外逐位元組相同、
-  `derive()` 指到新兇手而撤回前的候選集合不變、留出 digest 不變、前 400 項是 200 組
-  交錯、把配對兇手改回去時閘門必須紅、配對報告的算術，以及 CLI 拒絕會改動這條臂的
-  組合（不是 400 項、任何 limit、overfit、格式對照、別的載體或目標）；§62 的獨立最小語料
-  （4 輪、2 人、1 個 live 值、名冊外逐位元組相同的配對）另有 9 條：形狀與決定性、閘門、
-  dead value 不出現在證據裡、只看名冊仍無法回答、配對換答案、留出配對連結、配對算術，
-  以及 CLI 拒絕與 §61 混用／少於 400 項／任何 limit／換目標／格式對照／overfit／改 --sessions。
-  §63 再加 11 條：平衡語料四組各 100/100、第二格讀者整體只有 chance、舊語料重現 §62 的兩份
-  digest、舊驗證器仍接受舊語料、平衡驗證器拒絕「兇手永遠在第二格」的竄改、`reorder_roster`
-  保答案且翻位置、M5 讀位置對照（含 M1 不過時 `None`、未跑時 False）、以及 CLI 必須用
-  `--gate-prefix M`。§64 再加 9 條：順序擴增語料的形狀與「留出不變」、配對只反轉名冊且正解不動、
-  兩個半邊各 100/100、舊驗證器不接受順序語料、竄改（配對不反轉）被拒、M3 接受
-  `minimal_order_pairs`、`retention` 的算術（讀對照 vs 記住字面順序 = 1.0 vs 0.0）、以及 CLI
-  要求 `--minimal-binding`／拒絕其他語料與校準。§65 再加 16 條：k=2 的兩份語料逐位元組等於
-  §63／§64（digest）、四格的名冊人數與 `slots`、四格的 slot 次數 max−min ≤ 1、每格 `derive()`
-  仍只靠名冊、驗證器接受每一格並拒絕「slot 0 包辦」的竄改、換名配對在 k>2 仍改變答案、
-  `roster_size` 越界被拒、`roster_permutation_report` 記 `roster_size`／`follows_last_entry`、
-  M2 讀報告自己的 chance（0.3333）、以及 CLI 要求 `--minimal-binding`＋`--order-augmented`／
-  拒絕曲線外的 k／接受登記的 k=3 指令。
+  `ai_step`＋`al_step` 逐位相同（含
+  `state_version`／`ticks`）、批次不改變單筆 state、重置臂只看最後一輪、前綴在
+  **98** 題上是陷阱、格式對照永遠不是兇手、gate 由數字重算、 `verdict`
+  只數布林、smoke 報告不會被當成對照；§52 之後再加上：`--gate-prefix`
+  只收單一大寫字母（報告與 `--check` 用同一個前綴）、`--widen-to`
+  的起點必須是「L 或 L 的行為等價加寬」（新單元零接線，`h[:128]`
+  與 logits 逐步相同），以及 CLI 拒絕 `--widen-to 128`、同時給 `--hidden` 或改
+  `--emb` 的組合；§61 再加上：配對版本除名冊外逐位元組相同、 `derive()`
+  指到新兇手而撤回前的候選集合不變、留出 digest 不變、前 400 項是 200 組交錯、把配對兇手改回去時閘門必須紅、配對報告的算術，以及 CLI 拒絕會改動這條臂的組合（不是 400 項、任何 limit、overfit、格式對照、別的載體或目標）；§62 的獨立最小語料（4 輪、2 人、1 個 live 值、名冊外逐位元組相同的配對）另有 9 條：形狀與決定性、閘門、dead
+  value 不出現在證據裡、只看名冊仍無法回答、配對換答案、留出配對連結、配對算術，以及 CLI 拒絕與 §61 混用／少於 400 項／任何 limit／換目標／格式對照／overfit／改 --sessions。§63 再加 11 條：平衡語料四組各 100/100、第二格讀者整體只有 chance、舊語料重現 §62 的兩份 digest、舊驗證器仍接受舊語料、平衡驗證器拒絕「兇手永遠在第二格」的竄改、`reorder_roster`
+  保答案且翻位置、M5 讀位置對照（含 M1 不過時
+  `None`、未跑時 False）、以及 CLI 必須用
+  `--gate-prefix M`。§64 再加 9 條：順序擴增語料的形狀與「留出不變」、配對只反轉名冊且正解不動、兩個半邊各 100/100、舊驗證器不接受順序語料、竄改（配對不反轉）被拒、M3 接受
+  `minimal_order_pairs`、`retention` 的算術（讀對照 vs 記住字面順序 = 1.0 vs
+  0.0）、以及 CLI 要求
+  `--minimal-binding`／拒絕其他語料與校準。§65 再加 16 條：k=2 的兩份語料逐位元組等於§63／§64（digest）、四格的名冊人數與
+  `slots`、四格的 slot 次數 max−min ≤ 1、每格 `derive()`
+  仍只靠名冊、驗證器接受每一格並拒絕「slot
+  0 包辦」的竄改、換名配對在 k>2 仍改變答案、 `roster_size`
+  越界被拒、`roster_permutation_report` 記
+  `roster_size`／`follows_last_entry`、M2 讀報告自己的 chance（0.3333）、以及 CLI 要求
+  `--minimal-binding`＋`--order-augmented`／拒絕曲線外的 k／接受登記的 k=3 指令。
 - `scripts/train_pantry_deduction.py --widen-to 256`：**§52.4 的寬度 rung**。L 是 128 寬，
-  `load_weights(strict_config=True)` 會拒絕把 128 載進 256，所以加寬不是換一個新的隨機
-  載體，而是把 L 的 block 複製、新單元零接線（`cell.weight_hh` 的新欄、`head` 的新欄為 0），
-  使起點的函數與 L 相同、只多出容量。`start_is_stage_l` 是 G1 與 `--check` 共用的唯一判定。
-- `scripts/probe_credit_assignment.py`：**§49.16 的儀器診斷**（不是能力量測、沒有門檻）。
-  沿用 driver 的 tokenisation 與 `_answer_loss`，逐輪保留 `h`、一次 backward，報每一輪的
-  `|dL/dh|`、最早越過 `1e-6` 的一輪、往回的每輪縮小倍率；兩臂（L 的載體／P 的 checkpoint）
-  同一次執行。
-- `tests/test_credit_assignment.py`（6 條）：前置傳播與 `run_session` 逐位相同、reach 取
-  最早越線的一輪、全在 floor 下時回 `None` 而不是 0、縮小倍率是往回量、floor 必須為正、
-  玩具模型上梯度也到不了前面的輪。
+  `load_weights(strict_config=True)`
+  會拒絕把 128 載進 256，所以加寬不是換一個新的隨機載體，而是把 L 的 block 複製、新單元零接線（`cell.weight_hh`
+  的新欄、`head`
+  的新欄為 0），使起點的函數與 L 相同、只多出容量。`start_is_stage_l` 是 G1 與
+  `--check` 共用的唯一判定。
+- `scripts/probe_credit_assignment.py`：**§49.16 的儀器診斷**（不是能力量測、沒有門檻）。沿用 driver 的 tokenisation 與
+  `_answer_loss`，逐輪保留 `h`、一次 backward，報每一輪的 `|dL/dh|`、最早越過
+  `1e-6`
+  的一輪、往回的每輪縮小倍率；兩臂（L 的載體／P 的 checkpoint）同一次執行。
+- `tests/test_credit_assignment.py`（6 條）：前置傳播與 `run_session`
+  逐位相同、reach 取最早越線的一輪、全在 floor 下時回 `None`
+  而不是 0、縮小倍率是往回量、floor 必須為正、玩具模型上梯度也到不了前面的輪。
 - `tests/test_state_binding_task.py`（40 條）：洩漏偵測器被故意餵壞（重用值／訓練過的名字／
-  `wrong_name` 竟然問到教過的 key／`ask` 越界）、`cold` 與 held-out 同題、兩個教學回合是
-  **兩個**各自只帶一個值的序列、兩個 `ask` 位置都出現、`_teach` 真的是兩次 `ai_step` 加兩次
-  `al_step`、checkpoint 選擇用的是連續訊號、消融臂的診斷回 `applicable: false` 而不是
-  崩潰、判定只數布林門檻（數字不是門檻）。
-- `tests/ai/test_stateful_runtime.py`（27 條）＋ `tests/services/test_memory_handoff.py`
-  的兩條能力邊界測試：開關預設關、沒有 checkpoint 不建目錄、兩回合推進、session 互不
-  汙染、restart 續接、三種拒絕（毀損／換權重）且檔案位元組不變、prompt 端不再發布
-  `state_for_llm`、回覆 provenance 記 `core`／`none`、關閉時回覆形狀不變、「有 checkpoint 但還沒載入」不算承載連續性（載入失敗時不得把 prompt 載體關掉卻什麼都不補）。
+  `wrong_name` 竟然問到教過的 key／`ask` 越界）、`cold`
+  與 held-out 同題、兩個教學回合是 **兩個**各自只帶一個值的序列、兩個 `ask`
+  位置都出現、`_teach` 真的是兩次 `ai_step` 加兩次
+  `al_step`、checkpoint 選擇用的是連續訊號、消融臂的診斷回 `applicable: false`
+  而不是崩潰、判定只數布林門檻（數字不是門檻）。
+- `tests/ai/test_stateful_runtime.py`（27 條）＋
+  `tests/services/test_memory_handoff.py`
+  的兩條能力邊界測試：開關預設關、沒有 checkpoint 不建目錄、兩回合推進、session 互不汙染、restart 續接、三種拒絕（毀損／換權重）且檔案位元組不變、prompt 端不再發布
+  `state_for_llm`、回覆 provenance 記
+  `core`／`none`、關閉時回覆形狀不變、「有 checkpoint 但還沒載入」不算承載連續性（載入失敗時不得把 prompt 載體關掉卻什麼都不補）。
 
 ### P0 現況（2026-11-12，已實作，未改任何行為）
 
 `ai/core/core_state.py` 只做「一個 state 怎麼被描述、存、驗、載」：
 
-- `CoreState.create()` 是唯一重置點（契約 R5）；`bump()` 讓 `state_version` 單調遞增。
-- `save()` 先張量、後 `meta.json`；checksum 同時涵蓋兩者，崩潰殘檔會在載入時被拒絕。
-- `load()` 在檔案缺失、schema 不符、`weights_hash` 不符、checksum 不符時**一律拋錯**，
-  不建立空狀態。張量用 `.npz`＋`allow_pickle=False`，meta 用 JSON。
-- `derived` 不落盤（meta 的鍵集合被測試釘住）；單一 session ≤ 10 MB，超過拋錯不截斷。
+- `CoreState.create()` 是唯一重置點（契約 R5）；`bump()` 讓 `state_version`
+  單調遞增。
+- `save()` 先張量、後
+  `meta.json`；checksum 同時涵蓋兩者，崩潰殘檔會在載入時被拒絕。
+- `load()` 在檔案缺失、schema 不符、`weights_hash`
+  不符、checksum 不符時**一律拋錯**，不建立空狀態。張量用
+  `.npz`＋`allow_pickle=False`，meta 用 JSON。
+- `derived` 不落盤（meta 的鍵集合被測試釘住）；單一 session ≤ 10
+  MB，超過拋錯不截斷。
 
-**當時尚未做（P1 才做）**：per-session 鎖與樂觀鎖（R3 的並發部分）、`ai_step`／`al_step`、
-跨回合訓練、T1–T6。所以 P0 綠燈**不代表**「模型在用 state」。
+**當時尚未做（P1 才做）**：per-session 鎖與樂觀鎖（R3 的並發部分）、`ai_step`／`al_step`、跨回合訓練、T1–T6。所以 P0 綠燈**不代表**「模型在用 state」。
 
-（R3 的並發部分後來在 P5 補上：per-session 執行緒條帶 ＋ `flock`／`msvcrt` 檔案鎖 ＋
-存檔前版本比對，見 §9 的 P5 列與 `CORE_GAP_ANALYSIS.md` §42。`core_state.py` 本身仍只提供
-「原子寫入＋拒絕載入」，鎖在它的呼叫者身上。）
+（R3 的並發部分後來在 P5 補上：per-session 執行緒條帶 ＋ `flock`／`msvcrt`
+檔案鎖 ＋存檔前版本比對，見 §9 的 P5 列與 `CORE_GAP_ANALYSIS.md`
+§42。`core_state.py` 本身仍只提供「原子寫入＋拒絕載入」，鎖在它的呼叫者身上。）
 
 **指令**
 
@@ -494,135 +1101,134 @@ ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
 
 ## 13. 變更紀錄
 
-- 2026-11-12：建立。動機：§36 的 SNN/GRU 對照只量了單回合 mapping；使用者指出
-  「狀態走上下文」與「AI/AL 分成兩個實體」會重複狀態問題。本契約把核心定義為
+- 2026-11-12：建立。動機：§36 的 SNN/GRU 對照只量了單回合 mapping；使用者指出「狀態走上下文」與「AI/AL 分成兩個實體」會重複狀態問題。本契約把核心定義為
   **同一份權重＋同一個 state＋兩個 step**，並把 observable 降為投影。
-- 2026-11-12（P0）：`ai/core/core_state.py` ＋ `tests/ai/test_core_state_contract.py`
+- 2026-11-12（P0）：`ai/core/core_state.py` ＋
+  `tests/ai/test_core_state_contract.py`
   （14 條；P1 追加 1 條後為 15 條）。只定 schema 與拒絕規則，不接生產、不改行為；
   `ai_step`／`al_step` 仍是 P1。
 - 2026-11-12（P1 第一臂）：`ai/core/core_step.py`（切段規則）、`ai/core/stateful_decoder.py`
   （同一個 `GRUCell` 兩個入口，per-sample `dt`，用完的樣本不再被零輸入推動）、
-  `scripts/probe_state_cycles.py`（T1–T6）、`tests/ai/test_state_cycles.py`（25 條）。
-  預登記（§37.4–§37.5）在跑之前寫定，登記 run **17/17 通過**：state 被 `al_step` 使用，
-  且 T1 偵測得到；hand-state 對照組在同一 T1 下不受影響（測試有鑑別力）。
-  2026-11-12（§38 等段數）：每 session 固定 8 個 chunk 後重跑，**18/18 通過**，主臂
-  1.0000、歸零 0.4986——「數更新次數」的捷徑排除。半群在該輪 0.9180（仍未成立）。
-  2026-11-12（§39 `L_al`）：λ=0.5、只教 (25,25)、量 (30,30)／(20,40)；半群差縮小
-  12–24 倍（1.66–1.88 → 0.069–0.140），但未達登記的 1e-2，**3 項 FAIL**。最後 batch 的
-  loss 1.4e-5 與 held-out 的 6.9e-2 並列，說明約束只作用在當前狀態分布。否定結果照實記，
-  不調 λ；P3（SSM）是下一步。
-  2026-11-12（P4 接線）：`stateful_runtime.py` 把「每回合推進同一個 state 物件」接進
-  `chat_routes._handle_chat_request`，並在 `_ctx_state_matrix` 停止把 state 發布成 prompt
-  文字；**opt-in、預設關**，預設回覆形狀不變。回覆 provenance 記 `state_source`
-  （`core`／`none`）與 `core_state`。核心**不生成回覆**——目前沒有能生成開放域文字的核心，
-  所以這是「載體正確」而不是「載體被讀回生成」。核心分仍 0.00/10。
-  過程中修掉兩個真缺陷：`CoreState.load` 交回 numpy（必須 `attach_state` 才能步進）、
-  以及 `last_update` 是 UTC 卻用 `time.mktime`（本地時區）解析，會把每個 gap 多算
-  8 小時（改 `calendar.timegm`，測試釘住 epoch 0）。
-  2026-11-12（§40.8 跨進程 restart）：新的 `probe_state_restart.py` 在**兩個新行程**之間
-  傳遞權重檔＋狀態檔，兩臂 Δp = 0.000e+00、`ticks`／`state_version`／`last_dt_s`／hash
-  全部保留、歸零 state 差 0.9063（GRU）／0.9904（SSM）。順手修掉真缺陷：
-  `attach_state()` 原本**不檢查** `model_kind`／`weights_hash`，同尺寸（hidden=64）時會
-  安靜接受另一臂的 state；現在兩項都驗並丟 `CoreStateInvalid`（+2 測試）。
-  2026-11-12（§40.7 成本）：`train_arm` 的單步抽成 `_train_step()`（登記 run 重跑逐位
-  相同），`--cost` 量同一份工作；SSM/GRU = 0.217 參數、0.239 checkpoint、0.55 forward、
-  0.45 訓練步（三次獨立 run，差 ≤3%）。桌面機、負載 3.6–4.7，不是專用 benchmark 機。
-  2026-11-12（§40 SSM 臂）：`StatefulCore` 收攏 state／hash／checkpoint；`SSMCore`
-  （對角 decay、per-dim log-spaced `τ`、線性讀出）在**沒有** `L_al` 下 21/21 通過，
-  半群 1.9–3.8e-6（架構保證）、T3／T5 與 GRU 同分。**這是 P3 候選，不是能力提升**；
-  成本未乾淨量測，P4 未開始。
-  **限制照實記**：合成任務、同進程 restart（§40.8 已補上跨進程）；§37／§38 的半群未成立（0.7588／0.9180），
-  §39 把它縮小 12–24 倍但仍未達 1e-2，§40 靠架構讓它精確；核心分不變（0.00/10），
-  生產路徑未接。
+  `scripts/probe_state_cycles.py`（T1–T6）、`tests/ai/test_state_cycles.py`（25 條）。預登記（§37.4–§37.5）在跑之前寫定，登記 run
+  **17/17 通過**：state 被 `al_step`
+  使用，且 T1 偵測得到；hand-state 對照組在同一 T1 下不受影響（測試有鑑別力）。2026-11-12（§38 等段數）：每 session 固定 8 個 chunk 後重跑，**18/18 通過**，主臂 1.0000、歸零 0.4986——「數更新次數」的捷徑排除。半群在該輪 0.9180（仍未成立）。2026-11-12（§39
+  `L_al`）：λ=0.5、只教 (25,25)、量 (30,30)／(20,40)；半群差縮小 12–24 倍（1.66–1.88
+  → 0.069–0.140），但未達登記的 1e-2，**3 項 FAIL**。最後 batch 的 loss
+  1.4e-5 與 held-out 的 6.9e-2 並列，說明約束只作用在當前狀態分布。否定結果照實記，不調 λ；P3（SSM）是下一步。2026-11-12（P4 接線）：`stateful_runtime.py`
+  把「每回合推進同一個 state 物件」接進 `chat_routes._handle_chat_request`，並在
+  `_ctx_state_matrix`
+  停止把 state 發布成 prompt 文字；**opt-in、預設關**，預設回覆形狀不變。回覆 provenance 記
+  `state_source` （`core`／`none`）與
+  `core_state`。核心**不生成回覆**——目前沒有能生成開放域文字的核心，所以這是「載體正確」而不是「載體被讀回生成」。核心分仍 0.00/10。過程中修掉兩個真缺陷：`CoreState.load`
+  交回 numpy（必須 `attach_state` 才能步進）、以及 `last_update` 是 UTC 卻用
+  `time.mktime`（本地時區）解析，會把每個 gap 多算 8 小時（改
+  `calendar.timegm`，測試釘住 epoch
+  0）。2026-11-12（§40.8 跨進程 restart）：新的 `probe_state_restart.py`
+  在**兩個新行程**之間傳遞權重檔＋狀態檔，兩臂 Δp =
+  0.000e+00、`ticks`／`state_version`／`last_dt_s`／hash 全部保留、歸零 state 差 0.9063（GRU）／0.9904（SSM）。順手修掉真缺陷：
+  `attach_state()` 原本**不檢查**
+  `model_kind`／`weights_hash`，同尺寸（hidden=64）時會安靜接受另一臂的 state；現在兩項都驗並丟
+  `CoreStateInvalid`（+2 測試）。2026-11-12（§40.7 成本）：`train_arm`
+  的單步抽成 `_train_step()`（登記 run 重跑逐位相同），`--cost`
+  量同一份工作；SSM/GRU = 0.217 參數、0.239 checkpoint、0.55
+  forward、0.45 訓練步（三次獨立 run，差 ≤3%）。桌面機、負載 3.6–4.7，不是專用 benchmark 機。2026-11-12（§40
+  SSM 臂）：`StatefulCore` 收攏 state／hash／checkpoint；`SSMCore`
+  （對角 decay、per-dim log-spaced `τ`、線性讀出）在**沒有** `L_al`
+  下 21/21 通過，半群 1.9–3.8e-6（架構保證）、T3／T5 與 GRU 同分。**這是 P3 候選，不是能力提升**；成本未乾淨量測，P4 未開始。
+  **限制照實記**：合成任務、同進程 restart（§40.8 已補上跨進程）；§37／§38 的半群未成立（0.7588／0.9180），§39 把它縮小 12–24 倍但仍未達 1e-2，§40 靠架構讓它精確；核心分不變（0.00/10），生產路徑未接。
 
-- 2026-11-13（P5）：量產級的三件事。① **R3 的三道鎖**：per-session 執行緒條帶
-  （固定 64 條，不做淘汰——淘汰掉一個正在被持有的鎖會讓同一 session 出現兩個鎖）、
-  session 目錄的 advisory 檔案鎖（POSIX `flock`／Windows `msvcrt`，`LOCK_NB` 輪詢、
-  上限 2 秒）、以及**存檔前的版本比對**。第三道能抓到前兩道抓不到的寫入者（工具、手改、
-  舊版建置），測試用一次**合法**存檔（有效 checksum）的干擾寫入證明不能只靠 checksum。
-  `availability()` 回報 `lock`／`multi_writer_safe`；沒有檔案鎖的主機記一次 warning 並
-  只允許單一 worker。② **所有權**：`advance(user_id=...)` 在新狀態記下主人，續接時主人
-  不符就拒絕（session id 可猜）；空主人的舊狀態接受（§41 的 state 不能回溯作廢）。
-  `last_refusal` 說明是哪一種拒絕。③ **回合量**：`scripts/probe_core_turns.py` 走真正的
+- 2026-11-13（P5）：量產級的三件事。①
+  **R3 的三道鎖**：per-session 執行緒條帶（固定 64 條，不做淘汰——淘汰掉一個正在被持有的鎖會讓同一 session 出現兩個鎖）、session 目錄的 advisory 檔案鎖（POSIX
+  `flock`／Windows `msvcrt`，`LOCK_NB`
+  輪詢、上限 2 秒）、以及**存檔前的版本比對**。第三道能抓到前兩道抓不到的寫入者（工具、手改、舊版建置），測試用一次**合法**存檔（有效 checksum）的干擾寫入證明不能只靠 checksum。
+  `availability()` 回報
+  `lock`／`multi_writer_safe`；沒有檔案鎖的主機記一次 warning 並只允許單一 worker。②
+  **所有權**：`advance(user_id=...)`
+  在新狀態記下主人，續接時主人不符就拒絕（session
+  id 可猜）；空主人的舊狀態接受（§41 的 state 不能回溯作廢）。 `last_refusal`
+  說明是哪一種拒絕。③ **回合量**：`scripts/probe_core_turns.py` 走真正的
   `_handle_chat_request`，2,208 回合（五個 stratum 各一個 session），逐回合記
   `state_source`／`ticks`／`state_version`／`dt_s`，gate 含「版本嚴格遞增」（掉一次更新就紅）。
-  **沒變的**：核心不生成回覆，`schema_version` 只有 v1（不符拒絕，**沒有** migration），
-  核心分仍 0.00/10。結果與限制見 `CORE_GAP_ANALYSIS.md` §42。
+  **沒變的**：核心不生成回覆，`schema_version` 只有 v1（不符拒絕，**沒有**
+  migration），核心分仍 0.00/10。結果與限制見 `CORE_GAP_ANALYSIS.md` §42。
 
-- 2026-11-13（內容，§43–§44）：前面每一輪量的都是**載體**。這一輪問的是「state 裡裝的
-  東西有沒有語言內容、生成會不會讀它」——那是核心分 0.00 的**前置條件**，不是分數本身。
-  任務：教 `remember <name> = <value> .`（不計損失）→ `al_step(120 s)` → 問 `<name> ?`
-  → 生成 `<value> .`；答案是**兩次 `ai_step`**、不是兩句接成一個序列，第二回合的輸入裡
-  沒有值，所以 state 是唯一通道。所有非 train 切分都由**訓練沒看過的字串**組成，洩漏
-  檢查是機械的（值交集、名字交集、train 內重複、字母表外的字元）。
+- 2026-11-13（內容，§43–§44）：前面每一輪量的都是**載體**。這一輪問的是「state 裡裝的東西有沒有語言內容、生成會不會讀它」——那是核心分 0.00 的**前置條件**，不是分數本身。任務：教
+  `remember <name> = <value> .`（不計損失）→ `al_step(120 s)` → 問 `<name> ?`
+  → 生成 `<value> .`；答案是**兩次
+  `ai_step`**、不是兩句接成一個序列，第二回合的輸入裡沒有值，所以 state 是唯一通道。所有非 train 切分都由**訓練沒看過的字串**組成，洩漏檢查是機械的（值交集、名字交集、train 內重複、字母表外的字元）。
   **實測**（`--seed 20261114 --epochs 60 --patience 0`，81,765 參數，271.6 秒，XPU）：
-  `heldout_names` exact **0.995**、`dev` 0.994、零狀態 ablation **0.000**、`cold`
-  **0.000**、teacher-forced 0.999、只讀 `h` 的線性 probe 0.851。checkpoint 重載後
-  數字相同。
-  **照實記的邊界**：`wrong_name` **0.994**（名字沒有被使用 → 單槽攜帶，不是鍵值查詢）、
-  拿掉 `al_step` 掉到 **0.003**（不是間隙不變）、封閉 CV 音節不是語言、**沒有接進生產**。
-  §43 的登記 run 先 FAIL（dev 0.001）並被判定為**協定缺陷**（早停看階躍的 exact），
-  §44 只改訓練長度與早停、門檻逐字不動、換一個沒用過的資料 seed 重跑——不是回頭改
-  登記的次數。核心分**不變**（0.00/10）。結果見 `CORE_GAP_ANALYSIS.md` §43／§44。
+  `heldout_names` exact **0.995**、`dev` 0.994、零狀態 ablation
+  **0.000**、`cold` **0.000**、teacher-forced 0.999、只讀 `h` 的線性 probe
+  0.851。checkpoint 重載後數字相同。 **照實記的邊界**：`wrong_name`
+  **0.994**（名字沒有被使用 → 單槽攜帶，不是鍵值查詢）、拿掉 `al_step` 掉到
+  **0.003**（不是間隙不變）、封閉 CV 音節不是語言、**沒有接進生產**。§43 的登記 run 先 FAIL（dev
+  0.001）並被判定為**協定缺陷**（早停看階躍的 exact），§44 只改訓練長度與早停、門檻逐字不動、換一個沒用過的資料 seed 重跑——不是回頭改登記的次數。核心分**不變**（0.00/10）。結果見
+  `CORE_GAP_ANALYSIS.md` §43／§44。
 
-- 2026-11-13（兩組，§45）：上一輪證明了「state 裡有內容」，但它自己量到的 `wrong_name` 0.994
-  說明那只是**單槽緩衝區**（教 A、問沒教過的 B 還是回 A 的值），名字沒有被使用。這一輪問
-  「能不能同時持**兩組**、由查詢選一組」。任務：兩個教學回合（各一次 `ai_step` ＋
-  `al_step(120 s)`）→ 問 `<name A> ?` 或 `<name B> ?` → 生成 `<value> .`；單槽在這個任務上
-  的上限是 0.5，所以高於 0.5 只能來自選對。唯一變數是**目標**（`single` 只算被抽中那組、
-  `both` 兩組都算且各自從全新 state 出發）。
-  **實測**（登記 `d9aacbc5e`、seed 20261115、100 epochs、81,765 參數）：`single`
-  held-out exact **0.0033**、`both` **0.0100**（門檻 0.30）→ **FAIL**；零狀態與冷啟 0.000。
-  **同一個臂、同一個 seed 的單組對照 C1 是 1.000**（probe 0.874），所以不是臂或 seed 壞了。
-  `h` 的線性 probe 對兩個槽都只有 0.32–0.41 字元（chance 0.027）→ **沒寫進去**，不是選不出來。
-  已排除：目標（兩臂排序在兩個 seed 上翻轉）、寬度（256 寬：訓練損失 0.196、held-out 0.057）。
-  **陷阱照實記**：`other_value_rate` 低（0.002–0.004）不代表「不賭」，是因為兩組的值都沒
-  答出來——所以 B5 同時要求兩個 `by_ask ≥ 0.50`。結論是設計要求（可定址的槽／注意力），
-  不是預算。核心分**不變**（0.00/10）。結果見 `CORE_GAP_ANALYSIS.md` §45。
+- 2026-11-13（兩組，§45）：上一輪證明了「state 裡有內容」，但它自己量到的
+  `wrong_name`
+  0.994說明那只是**單槽緩衝區**（教 A、問沒教過的 B 還是回 A 的值），名字沒有被使用。這一輪問「能不能同時持**兩組**、由查詢選一組」。任務：兩個教學回合（各一次
+  `ai_step` ＋ `al_step(120 s)`）→ 問 `<name A> ?` 或 `<name B> ?` → 生成
+  `<value> .`；單槽在這個任務上的上限是 0.5，所以高於 0.5 只能來自選對。唯一變數是**目標**（`single`
+  只算被抽中那組、 `both` 兩組都算且各自從全新 state 出發）。 **實測**（登記
+  `d9aacbc5e`、seed 20261115、100 epochs、81,765 參數）：`single` held-out exact
+  **0.0033**、`both` **0.0100**（門檻 0.30）→ **FAIL**；零狀態與冷啟 0.000。
+  **同一個臂、同一個 seed 的單組對照 C1 是 1.000**（probe
+  0.874），所以不是臂或 seed 壞了。 `h`
+  的線性 probe 對兩個槽都只有 0.32–0.41 字元（chance 0.027）→
+  **沒寫進去**，不是選不出來。已排除：目標（兩臂排序在兩個 seed 上翻轉）、寬度（256 寬：訓練損失 0.196、held-out
+  0.057）。 **陷阱照實記**：`other_value_rate`
+  低（0.002–0.004）不代表「不賭」，是因為兩組的值都沒答出來——所以 B5 同時要求兩個
+  `by_ask ≥ 0.50`。結論是設計要求（可定址的槽／注意力），不是預算。核心分**不變**（0.00/10）。結果見
+  `CORE_GAP_ANALYSIS.md` §45。
 
-- 2026-11-26（§46 — 單一模型收斂，「線路太多 → 只留一個模型 + 對話不落後」）：前面多線路並存
-  （UnifiedEngine／TokenSNN／legacy ED3N／GARDEN）；本輪收斂為**底層只有一個模型**，多線路變成
-  它的層。沿用 R1：**一份權重＋一個 state 物件**，兩個 step（`ai_step`／`al_step`）只是入口。
-  下文 §46.1–§46.5（收斂定義、數據生命保留清單、對話守門新增、遷移路徑、反模式）。
+- 2026-11-26（§46
+  — 單一模型收斂，「線路太多 → 只留一個模型 + 對話不落後」）：前面多線路並存（UnifiedEngine／TokenSNN／legacy
+  ED3N／GARDEN）；本輪收斂為**底層只有一個模型**，多線路變成它的層。沿用 R1：**一份權重＋一個 state 物件**，兩個 step（`ai_step`／`al_step`）只是入口。下文 §46.1–§46.5（收斂定義、數據生命保留清單、對話守門新增、遷移路徑、反模式）。
 
 ## 14. 單一模型收斂（2026-11-26）
 
 ### 14.1 那個「一個模型」是什麼（沿用 R1）
 
-| 線路 | 收斂後 |
-| --- | --- |
-| **UnifiedEngine**（確定性反射／數學／邏輯 + 統計核心 + SLS 檢索） | **單一模型的底層**（`ai/unified_engine/unified_engine.py`） |
-| **TokenSNN**（tokens + surrogate gradient + next-token CE，`scripts/train_token_snn.py`） | **同一模型的原生動力學載體**（共享 `weights_hash`） |
-| legacy ED3N（`ANGELA_LEGACY_ED3N=1`：反射／關聯 SNN） | 收斂進單核心（結構／關聯層），flag 刪除 |
-| GARDEN（結構學習） | 收斂進單核心（學習層），不另建 engine |
+| 線路                                                                                      | 收斂後                                                      |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **UnifiedEngine**（確定性反射／數學／邏輯 + 統計核心 + SLS 檢索）                         | **單一模型的底層**（`ai/unified_engine/unified_engine.py`） |
+| **TokenSNN**（tokens + surrogate gradient + next-token CE，`scripts/train_token_snn.py`） | **同一模型的原生動力學載體**（共享 `weights_hash`）         |
+| legacy ED3N（`ANGELA_LEGACY_ED3N=1`：反射／關聯 SNN）                                     | 收斂進單核心（結構／關聯層），flag 刪除                     |
+| GARDEN（結構學習）                                                                        | 收斂進單核心（學習層），不另建 engine                       |
 
 ### 14.2 數據生命不動（保留 — 單一模型的資料線不得殺掉）
 
 - `scripts/prepare_core_training_data.py`（去重／洩漏／95–5 split）
 - `scripts/census_reply_provenance.py`（正解來源；核心分只算單一模型產生）
-- `apps/backend/data/models/`（ED3N/TlN checkpoints）、`data/models/`（GARDEN/qwen 資產）
-- 記憶（taught_facts）／知識（wiki／百百基底）／思考（symbolic_reasoner）／學習 loop（既有）
-  —— 它們是**內容庫**，不是模型。
+- `apps/backend/data/models/`（ED3N/TlN
+  checkpoints）、`data/models/`（GARDEN/qwen 資產）
+- 記憶（taught_facts）／知識（wiki／百百基底）／思考（symbolic_reasoner）／學習 loop（既有）—— 它們是**內容庫**，不是模型。
 
 ### 14.3 對話能力守門（新增 — 「別像之前連對話都做不好」）
 
 單一模型不得以犧牲對話為代價換單一能力：
 
 - **門禁**：`scripts/probe_native_dialogue.py`（純本地，鸚鵡／雞同鴨講／QA 機器偵測 + 預算 gate）
-  + `scripts/native_dialogue_budget_gate.py`。收斂後，對話計分必須**不退化**（對照檔記錄）。
-- **指標**：`scripts/census_reply_provenance.py`（既有檢測）＋ `probe_native_dialogue.py` 輸出。
+  - `scripts/native_dialogue_budget_gate.py`。收斂後，對話計分必須**不退化**（對照檔記錄）。
+- **指標**：`scripts/census_reply_provenance.py`（既有檢測）＋
+  `probe_native_dialogue.py` 輸出。
 - **規則**：收斂任何線路，對話 gate 先進（P3 在「動動力學」之前）。
 
 ### 14.4 遷移路徑（每階有 gate）
 
-1. **P0（對齊）**：`check_fact_gates.py` 新增 fact：單一模型 + 對話門禁（§14.3）；
-   `AI_AL_SINGLE_CORE_CONTRACT` R1／R2 仍紅。
-2. **P1（資料線合併）**：token-SNN 訓練資料接入 `prepare_core_training_data.py`（session 單位）；
+1. **P0（對齊）**：`check_fact_gates.py`
+   新增 fact：單一模型 + 對話門禁（§14.3）； `AI_AL_SINGLE_CORE_CONTRACT`
+   R1／R2 仍紅。
+2. **P1（資料線合併）**：token-SNN 訓練資料接入
+   `prepare_core_training_data.py`（session 單位）；
    `census_reply_provenance.py` 補 TokenSNN provenance 欄位。
-3. **P2（收斂 ED3N/GARDEN）**：legacy ED3N 結構／關聯資料切入單核心學習層；GARDEN 結構學習折入同一模型。
-4. **P3（對話 gate 雙軌）**：`probe_native_dialogue.py` 在現有 `unified` 後端維持門檻，確認對話不退，
-   再動動力學。
-5. **P4（驗證）**：`report_intelligence.py`（核心分跟蹤）＋ `probe_native_dialogue.py`（對話維持）＋
+3. **P2（收斂 ED3N/GARDEN）**：legacy
+   ED3N 結構／關聯資料切入單核心學習層；GARDEN 結構學習折入同一模型。
+4. **P3（對話 gate 雙軌）**：`probe_native_dialogue.py` 在現有 `unified`
+   後端維持門檻，確認對話不退，再動動力學。
+5. **P4（驗證）**：`report_intelligence.py`（核心分跟蹤）＋
+   `probe_native_dialogue.py`（對話維持）＋
    `check_fact_gates.py`（單一模型 gate）。
 
 ### 14.5 反模式（看到就退）
@@ -631,4 +1237,4 @@ ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
 - 合併前刪 ED3N／GARDEN 的訓練資料（數據生命死了）。
 - 為把對話做好而拔掉統計核心／檢索（那是多線路）。
 
-*結果見此次收斂的證據（commit 紀錄）：本輪起底層模型為單一一個（UnifiedEngine＋TokenSNN），ED3N／GARDEN 資料線保留。*
+_結果見此次收斂的證據（commit 紀錄）：本輪起底層模型為單一一個（UnifiedEngine＋TokenSNN），ED3N／GARDEN 資料線保留。_

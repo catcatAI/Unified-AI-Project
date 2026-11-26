@@ -3,7 +3,7 @@
     "facts": 0.5333,
     "math": 0.8,
     "tools": 0.0,
-    "paraphrase": 0.75,
+    "paraphrase": 0.8571,
     "dialogue": 0.8757666666666667,
     "boundary": 0.8889
   },
@@ -76,8 +76,8 @@
     }
   },
   "diagnostics": {
-    "改述（教過詞、新句子）": 1.0,
-    "改述（沒教過的詞，開發診斷）": 0.875
+    "改述（教過詞、新句子）": 0.9048,
+    "改述（沒教過的詞，開發診斷）": 0.567
   },
   "sources": {
     "deterministic": 469,
@@ -142,7 +142,7 @@
     "math": "census 與 core probe 取較高者（census 0%／probe 0%）",
     "tools": "census 與 core probe 取較高者（census 0%／probe 0%）"
   },
-  "core_probe_checkpoint": "apps/backend/data/models/token_snn_108m.pt",
+  "core_probe_checkpoint": null,
   "core_control": {
     "suites": {
       "math": {
@@ -153,44 +153,42 @@
           "performance": 1.0,
           "snn": 0.0,
           "ed3n": 1.0,
-          "tok": 0.925,
-          "llm": 1.0
+          "tok": 0.0,
+          "llm": 0.0
         },
         "accuracy_answered": {
           "performance": 0.8,
           "snn": null,
           "ed3n": 0.0,
-          "tok": 0.0,
-          "llm": 0.675
+          "tok": null,
+          "llm": null
         },
         "answered": {
           "performance": 40,
           "snn": 0,
           "ed3n": 40,
-          "tok": 37,
-          "llm": 40
+          "tok": 0,
+          "llm": 0
         },
         "distinct": {
           "performance": 36,
           "snn": 0,
           "ed3n": 23,
-          "tok": 19,
-          "llm": 40
+          "tok": 0,
+          "llm": 0
         },
         "snn": 0.0,
         "ed3n": 0.0,
-        "tok": 0.0,
-        "llm": 0.675,
-        "surface_only": 10,
-        "intelligence_problem": 3,
-        "snn_gap": 27,
+        "tok": null,
+        "llm": null,
+        "surface_only": 0,
+        "intelligence_problem": 0,
+        "snn_gap": 0,
         "gaps": {
-          "snn": 27,
-          "ed3n": 27,
-          "tok": 27
-        },
-        "tok_prompt_unk": 0.0881,
-        "tok_unreadable_items": 0
+          "snn": 0,
+          "ed3n": 0,
+          "tok": 0
+        }
       },
       "knowledge": {
         "n": 15,
@@ -200,44 +198,42 @@
           "performance": 0.8666666666666667,
           "snn": 0.0,
           "ed3n": 1.0,
-          "tok": 1.0,
-          "llm": 1.0
+          "tok": 0.0,
+          "llm": 0.0
         },
         "accuracy_answered": {
           "performance": 0.6153846153846154,
           "snn": null,
           "ed3n": 0.0,
-          "tok": 0.0,
-          "llm": 0.7333333333333333
+          "tok": null,
+          "llm": null
         },
         "answered": {
           "performance": 13,
           "snn": 0,
           "ed3n": 15,
-          "tok": 15,
-          "llm": 15
+          "tok": 0,
+          "llm": 0
         },
         "distinct": {
           "performance": 13,
           "snn": 0,
           "ed3n": 15,
-          "tok": 9,
-          "llm": 15
+          "tok": 0,
+          "llm": 0
         },
         "snn": 0.0,
         "ed3n": 0.0,
-        "tok": 0.0,
-        "llm": 0.7333333333333333,
-        "surface_only": 1,
-        "intelligence_problem": 3,
-        "snn_gap": 11,
+        "tok": null,
+        "llm": null,
+        "surface_only": 0,
+        "intelligence_problem": 0,
+        "snn_gap": 0,
         "gaps": {
-          "snn": 11,
-          "ed3n": 11,
-          "tok": 11
-        },
-        "tok_prompt_unk": 0.0683,
-        "tok_unreadable_items": 0
+          "snn": 0,
+          "ed3n": 0,
+          "tok": 0
+        }
       },
       "code": {
         "n": 10,
@@ -247,44 +243,42 @@
           "performance": 0.0,
           "snn": 0.0,
           "ed3n": 1.0,
-          "tok": 0.6,
-          "llm": 1.0
+          "tok": 0.0,
+          "llm": 0.0
         },
         "accuracy_answered": {
           "performance": null,
           "snn": null,
           "ed3n": 0.0,
-          "tok": 0.0,
-          "llm": 0.9
+          "tok": null,
+          "llm": null
         },
         "answered": {
           "performance": 0,
           "snn": 0,
           "ed3n": 10,
-          "tok": 6,
-          "llm": 10
+          "tok": 0,
+          "llm": 0
         },
         "distinct": {
           "performance": 0,
           "snn": 0,
           "ed3n": 7,
-          "tok": 5,
-          "llm": 10
+          "tok": 0,
+          "llm": 0
         },
         "snn": 0.0,
         "ed3n": 0.0,
-        "tok": 0.0,
-        "llm": 0.9,
+        "tok": null,
+        "llm": null,
         "surface_only": 0,
-        "intelligence_problem": 1,
-        "snn_gap": 9,
+        "intelligence_problem": 0,
+        "snn_gap": 0,
         "gaps": {
-          "snn": 9,
-          "ed3n": 9,
-          "tok": 9
-        },
-        "tok_prompt_unk": 0.0133,
-        "tok_unreadable_items": 0
+          "snn": 0,
+          "ed3n": 0,
+          "tok": 0
+        }
       },
       "routing": {
         "n": 10,
@@ -294,56 +288,54 @@
           "performance": 1.0,
           "snn": 0.0,
           "ed3n": 1.0,
-          "tok": 0.9,
-          "llm": 1.0
+          "tok": 0.0,
+          "llm": 0.0
         },
         "accuracy_answered": {
           "performance": 1.0,
           "snn": null,
           "ed3n": 0.0,
-          "tok": 0.0,
-          "llm": 0.0
+          "tok": null,
+          "llm": null
         },
         "answered": {
           "performance": 10,
           "snn": 0,
           "ed3n": 10,
-          "tok": 9,
-          "llm": 10
+          "tok": 0,
+          "llm": 0
         },
         "distinct": {
           "performance": 6,
           "snn": 0,
           "ed3n": 10,
-          "tok": 6,
-          "llm": 10
+          "tok": 0,
+          "llm": 0
         },
         "snn": 0.0,
         "ed3n": 0.0,
-        "tok": 0.0,
-        "llm": 0.0,
-        "surface_only": 10,
+        "tok": null,
+        "llm": null,
+        "surface_only": 0,
         "intelligence_problem": 0,
         "snn_gap": 0,
         "gaps": {
           "snn": 0,
           "ed3n": 0,
           "tok": 0
-        },
-        "tok_prompt_unk": 0.3191,
-        "tok_unreadable_items": 0
+        }
       }
     },
     "provenance": {
       "performance": "lookup/rules/templates (NativeBackend)",
       "snn": "GARDEN engine (ok)",
       "ed3n": "ed3n_core.json (ok)",
-      "tok": "token_snn_108m.pt (ok)",
-      "llm": "qwen2.5-1.5b-instruct-q4_k_m.gguf (ok; mode=chat, gpu_layers=-1)"
+      "tok": "token_snn.pt (ModuleNotFoundError: No module named 'torch')",
+      "llm": "qwen2.5-1.5b-instruct-q4_k_m.gguf (ModuleNotFoundError: No module named 'llama_cpp'; mode=chat, gpu_layers=0)"
     },
-    "generated_at": "2026-11-07T12:09:04"
+    "generated_at": "2026-11-11T21:48:42"
   },
-  "system_score": 6.41,
+  "system_score": 6.59,
   "core_score": 0.0,
   "integrity": {
     "sample_valid": true,
@@ -352,7 +344,7 @@
     "problems": []
   },
   "result": {
-    "score": 6.41,
+    "score": 6.59,
     "status": "measured",
     "band": "L3 LLM 編排",
     "band_summary": "自然對話、工具調用、多智能體協作",
@@ -374,7 +366,7 @@
       ],
       [
         "paraphrase",
-        0.75
+        0.8571
       ],
       [
         "dialogue",
