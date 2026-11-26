@@ -1211,6 +1211,8 @@ ANGELA_STATEFUL_CORE=1 ANGELA_STATEFUL_CORE_DIR=data/core_state \
 
 - **門禁**：`scripts/probe_native_dialogue.py`（純本地，鸚鵡／雞同鴨講／QA 機器偵測 + 預算 gate）
   - `scripts/native_dialogue_budget_gate.py`。收斂後，對話計分必須**不退化**（對照檔記錄）。
+- **基準（2026-11-26 實測，純本地，預算 1300 回合／1200 秒內 1168 回合）**：第 1 輪人味 0.691、第 2 輪 0.897、學習效應 +0.554；第 1 輪答對 46%、鸚鵡 0%，第 2 輪答對 79%、鸚鵡 0%、QA 機器 10%；不同輸出 341 種（29%），棄權 5%/0%。結果檔
+  `/tmp/opencode/dialogue_probe_20261126.json`。
 - **指標**：`scripts/census_reply_provenance.py`（既有檢測）＋
   `probe_native_dialogue.py` 輸出。
 - **規則**：收斂任何線路，對話 gate 先進（P3 在「動動力學」之前）。
