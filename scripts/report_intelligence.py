@@ -69,6 +69,31 @@ def _run(command: List[str], label: str, out_flag: str = "--json") -> Optional[P
     return out
 
 
+# A --from-cache run must never silently reuse numbers produced by an older
+# version of the probe that generated them (that is how the 2026-11-26 report
+# ended up quoting paraphrase 0.857 / boundary 0.889 while a fresh run measured
+# 0.411 / 0.083). A cache older than its producer is stale: refuse it.
+CACHE_PRODUCERS: Dict[str, str] = {
+    "angela_bench.json": "scripts/run_benchmarks.py",
+    "core_control.json": "scripts/probe_core_control.py",
+    "paraphrase.json": "scripts/probe_paraphrase.py",
+    "native_dialogue.json": "scripts/probe_native_dialogue.py",
+}
+
+
+def stale_caches() -> List[str]:
+    """Cache files older than the script that regenerates them."""
+    stale: List[str] = []
+    for name, producer in CACHE_PRODUCERS.items():
+        cache = REPORT_DIR / name
+        source = REPO_ROOT / producer
+        if not cache.is_file() or not source.is_file():
+            continue
+        if cache.stat().st_mtime < source.stat().st_mtime:
+            stale.append(f"{name} < {producer}")
+    return stale
+
+
 def _load(path: Optional[Path]) -> Optional[dict]:
     if path is None or not path.exists():
         return None
@@ -116,6 +141,14 @@ def main() -> int:
     )
     parser.add_argument("--json", dest="json_path")
     args = parser.parse_args()
+
+    if args.from_cache:
+        stale = stale_caches()
+        if stale:
+            print("❌ --from-cache：快取比產生它的腳本還舊，拒絕使用（請重新量測）")
+            for item in stale:
+                print(f"  - {item}")
+            return 2
 
     from ai.meta.intelligence import (
         DIMENSIONS,
