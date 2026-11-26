@@ -27,7 +27,12 @@ HASH_LIMIT_BYTES = 128 * 1024 * 1024  # larger binaries: record size, not hash
 
 # Runtime state mutates on every server tick — record for traceability but
 # never gate its hash (otherwise the gate cries wolf on a normal run).
-VOLATILE_PREFIXES = ("data/checkpoints/lifecycle/", "data/state/", "data/angela_memory/")
+VOLATILE_PREFIXES = (
+    "data/checkpoints/lifecycle/",
+    "data/checkpoints/msba/",
+    "data/state/",
+    "data/angela_memory/",
+)
 
 # Critical artifacts a reader expects to trace (the current score chain).
 CRITICAL = (

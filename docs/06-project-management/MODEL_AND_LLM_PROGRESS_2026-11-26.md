@@ -19,12 +19,22 @@
 
 ## 1. 一句話現況
 
-**在生產聊天路徑上，目前沒有會說話的模型**（ollama 空、llamacpp
-slots 停用、unified 是確定性＋統計核心）；但
-**llama.cpp 這條路徑不是空的**——本機有 3 個 GGUF、`llama_cpp`
-套件與 provider 都在， `probe_core_control.py` 直接用 in-process
-llama.cpp 載入 1.5B GGUF，得到 math 67.5%／knowledge 73.3%／code
-90% 的正解。**差的是接線，不是載體**。
+**2026-11-27 更新：llama.cpp 已接線，生產聊天路徑現在有會說話的模型。** 做法：起
+`python -m llama_cpp.server --model data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf --model_alias qwen2.5-1.5b-instruct --port 8081 --n_gpu_layers -1 --n_ctx 2048`；把 gitignored 的
+`apps/backend/configs/system/llm.user.yaml` 的 `llamacpp-qwen` slot 設為
+`enabled: true`、`preferred_backend: llamacpp-qwen`。驗證：`/v1/models`
+回 alias；`generation_available()` True 且兩個後端 health OK；真實
+`ChatService.generate_response("天空為什麼是藍色的?")` 回傳
+`backend=llama.cpp, model=qwen2.5-1.5b-instruct` 的中文解釋。
+
+**核心分仍 0.00/10**：凍結題由表層（knowledge_pipeline／deterministic-math）先答，
+`census_reply_provenance`
+仍記 lookup=8／computed=32／classifier=10／produced=0——
+LLM 只在表層放棄時接手；核心分契約也把 LLM 對照臂排除在計分外。
+**所以「可比」現在成立於模型層（同題 LLM 臂 67.5/73.3/90%），不成立於核心分層。**
+
+ollama 仍是空的；llama.cpp 是本機 3 個 GGUF、`llama_cpp 0.3.35`、provider 與 generation
+gate 都在。
 
 ## 2. 核心模型（token-SNN / 108M）現況
 
@@ -169,6 +179,26 @@ v=-0.003、Transformer v=-0.056）。Transformer 的 copy 較高（0.591 vs
 5. **接線缺口**：唯一能與外部模型公平比較的載體是 llama.cpp 的 1.5B（67.5/73.3/90%），但它在生產路徑被停用；核心契約要求的「一份權重＋一個 state」載體並不存在。
 
 **一句話**：如果只看專案自己的神經核心，的確「沒有什麼能與其他 AI 模型比」——但這不代表問題只在模型架構；資料規模／型態、評測歸因、與生產接線都是更靠近瓶頸的位置。
+
+## 7.2 接線後量測（2026-11-27）
+
+| 量測                           | 結果                                                                                                                                | 來源                                            |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 模型本身（直接 chat endpoint） | 「天空為什麼是藍色的?」答出散射和解釋                                                                                               | `curl /v1/chat/completions`                     |
+| 真實 ChatService               | `backend=llama.cpp`、`model=qwen2.5-1.5b-instruct`、中文解釋                                                                        | 直接呼叫 `ChatService.generate_response`        |
+| 同題 4 臂（可比）              | 表現層 80/53.3/0/100；**本地 LLM 67.5/73.3/90/0**；TOK-SNN 全 0                                                                     | `core_control.json`（venv）                     |
+| 凍結題走 ChatService           | math 5/5 正確，但 4 題由 `knowledge_pipeline`、1 題 `deterministic-math`——**LLM 沒被用**，因為表層先答                              | `/tmp/opencode/prod_llm_measure.json`（小樣本） |
+| 對話探針（接線後）             | 人味 0.695（輪1）/0.892（輪2）、學習效應 +0.482、有效性 ✅、一致性 ✅；與接線前 0.691/0.897/+0.554 相比**無退化**（隨機波動範圍內） | `/tmp/opencode/dialogue_after_llamacpp.json`    |
+| 門禁                           | `check_default_config`（gitignored user 層 0）、`check_fact_gates` ALL PASS                                                         | 指令輸出                                        |
+
+**結論**：現在有「能與其他 AI 模型比」的載體與分數（本地 Qwen1.5B 在同題 67.5/73.3/90%），且已接進聊天；但**核心分契約仍把 LLM 對照臂排除**，而凍結題由表層先答，所以
+`census`
+仍記 produced=0。要讓核心分動起來，得改契約或改量測路徑——那是人為決定，不是接線 bug。
+
+操作註記：量測若改寫 `data/intelligence_reports/`
+的 cache，manifest 的 hash 會失效——請重跑
+`scripts/gen_artifact_manifest.py`。`lifecycle/` 與 `msba/`
+是 runtime 會自己變的目錄，已標 `verified=false` 不進 hash gate。
 
 ## 8. 下一步（二選一，需人為決定）
 
