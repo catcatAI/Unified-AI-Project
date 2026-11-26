@@ -26,7 +26,7 @@
 | **facts** 事實與知識               | MMLU（Hendrycks et al., 2020, [arXiv:2009.03300](https://arxiv.org/abs/2009.03300)）                       | 4 選項隨機 25%；非專家 34.5%；**專家 89.8%**                             | R1：25% + 20pp = **45%**（R2 = 44.9%，取大）     | 53.3%      | ✅ PASS |
 | **math** 数理與邏輯                | GSM8K（Cobbe et al., 2021, [arXiv:2110.14168](https://arxiv.org/abs/2110.14168)；GPT-4 TR 2023 Table 2）   | 已發表強基線 **87.3%**（Chinchilla+SFT+ORM-RL）；GPT-4 92.0% ※含污染註記 | R3：0.7 × 87.3% = **61.1%**                      | 80.0%      | ✅ PASS |
 | **paraphrase** 改述泛化（L1 關鍵） | PAWS（Zhang et al., 2019, [N19-1131](https://aclanthology.org/N19-1131/)）                                 | 二元隨機 50%；**人類一致度 92.0%**（QQP）／94.7%（Wiki）；訓練後模型 85% | R1：50% + 20pp = **70%**（R2 = 46%，取大）       | 75.0%      | ✅ PASS |
-| **dialogue** 對話與記憶（L2 關鍵） | LoCoMo（Maharana et al., ACL 2024, [2024.acl-long.747](https://aclanthology.org/2024.acl-long.747/)）      | **人類 87.9**（長對話 QA F1）；最佳 LLM 51.6                             | R2：0.5 × 87.9% = **44.0%**（高於隨機地板 20%）  | 78.0%      | ✅ PASS |
+| **dialogue** 對話與記憶（L2 關鍵） | LoCoMo（Maharana et al., ACL 2024, [2024.acl-long.747](https://aclanthology.org/2024.acl-long.747/)）      | **人類 87.9**（長對話 QA F1）；最佳 LLM 51.6                             | R2：0.5 × 87.9% = **44.0%**（高於隨機地板 20%）  | 87.6%      | ✅ PASS |
 | **boundary** 推理與例外            | FOLIO（Han et al., EMNLP 2024, [2024.emnlp-main.1229](https://aclanthology.org/2024.emnlp-main.1229/)）    | 三值隨機 33.3%；非專家 61.8%；**專家 96.0%**；GPT-4 64.2%（CoT 68.9%）   | R1：33.3% + 20pp = **53.3%**（R2 = 48.0%，取大） | 88.9%      | ✅ PASS |
 | **tools** 工具與行動               | BFCL V4（Patil et al., ICML 2025, [leaderboard](https://gorilla.cs.berkeley.edu/leaderboard)，2026-10-22） | Overall **SOTA 77.5%**（Claude Opus 4.5）；中位數約 45%                  | R3：0.7 × 77.5% = **54.2%**                      | 0.0%       | ❌ FAIL |
 
@@ -43,10 +43,27 @@ FTS5（`scripts/download_knowledge_corpus.py` →
 `scripts/build_knowledge_index.py`），再由 `ai/knowledge/wiki_facts.py`
 抽出回答句；課程與調參都沒有看過評測題。同時修掉一個**誠實度**缺陷：精選知識庫以前會把「只是提到某主體」的問句（`How many continents are there on Earth?`
 問到 earth）回成該主體的顏色（`blue`）——現在只有問句真的在問該屬性時才回答，其餘交給一般層或誠實棄權。兩點限制照實記：(1)
-`knowledge`
-套件的判定是「任一關鍵詞命中」，不是精確答案比對，53.3% 應讀作「8/15 題的答案句含正確關鍵詞」；(2)
-`facts` 取 `min(knowledge, knowledge_mc)`，`knowledge_mc`
-為 100%（40/40），所以 facts 由 `knowledge` 決定。
+`knowledge` 套件的判定**目前是 strict**（`scripts/run_benchmarks.py` 的
+`SCORING_MODE = "strict"`：答案必須含作者標定的正解，且所有標定概念都在；2026-10-23 前的 loose「任一關鍵詞命中」只保留為對照），53.3% 應讀作「8/15 題通過 strict 判定」；本次 cache 的 loose
+Accuracy 也是 53.33%，所以這個分數**不是**換評分規則換出來的。 (2) `facts` 取
+`min(knowledge, knowledge_mc)`，`knowledge_mc` 為 100%（40/40），所以 facts 由
+`knowledge` 決定。
+
+### 每個現況分數的分子／分母（2026-11-26 快照）
+
+| 維度       | 原始量測（來源 cache）                                                                                   | 算式                                     | 分數          |
+| ---------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ------------- |
+| facts      | `knowledge` 8/15（strict）、`knowledge_mc` 40/40                                                         | min(53.33%, 100%)                        | 53.3%         |
+| math       | benchmark `math` 32/40                                                                                   | 32/40                                    | 80.0%         |
+| paraphrase | `heldout_final` 42/56（`probe_paraphrase.py`；編碼器如實記為 `onnx-fallback`，見 cache 的 `encoder` 欄） | 42/56                                    | 75.0%         |
+| dialogue   | `qa` 468/492、`dialogue` 94/100、`multi` 53/72                                                           | (0.9512 + 0.94 + 0.7361) / 3             | 87.6%         |
+| boundary   | `claim` 96/108                                                                                           | 96/108                                   | 88.9%         |
+| tools      | benchmark `code` 0/10                                                                                    | 0/10                                     | 0.0%          |
+| **系統分** | 上述六維（每維權重 1.0）                                                                                 | (5.33 + 8.0 + 7.5 + 8.76 + 8.89 + 0) / 6 | **6.41 / 10** |
+
+`state`
+類 0/324 是**知識缺口**（覆蓋率），不是能力分，不計入上表。`band`（依分數帶命名的L3）與
+`attained_level`（六維逐項裁決的階梯 L2）是報告中兩個不同欄位——前者是「分數落在哪一帶」，後者才是「達成哪個能力階梯」，不要混用。
 
 改述那一格的數字是「**從未教過的關係詞**」上的系統正確率（`scripts/probe_paraphrase.py`
 的 `heldout_final`

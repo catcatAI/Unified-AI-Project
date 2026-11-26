@@ -525,10 +525,11 @@ epochs：記憶變好（train/val exact 47%／45%），但**淨 holdout exact 11
 > 這些內部量測是「同題型、自己出題」（`protocol="analogous"`），**不是**在那六個基準上跑的——所以及格線是**可比性下限**，不是「在 MMLU 上拿 45%」。
 
 **智能總分 =
-0.00/10（核心）；6.41/10 是系統分（2026-11-26 以 venv 量測），不是智能**：**1,168 個回合裡，沒有任何一個是 SNN/ED3N/GARDEN/LLM 產生的**（knowledge_pipeline
-351、local-fallback 342、semantic-qa 250、composed-template 64、claim-reasoning
-40、記憶 63、unified 6、其他 11）。probe 裡的 `source=neural` 標籤把
-`semantic-qa`／`unified`／`neural-bridge`
+0.00/10（核心）；6.41/10 是系統分（2026-11-26 以 venv 量測），不是智能**：**1,096 題標準集回合裡，沒有任何一個是 SNN/ED3N/GARDEN/LLM 產生的**（目前
+`native_dialogue.json` 的 `sources`：`deterministic` 469、`template`
+352、`neural` 246、`retrieval` 23、`other`
+6，合計 1,096；舊的細目標記——knowledge_pipeline／local-fallback／semantic-qa 等——是前一版快照，不再引用）。probe 裡的
+`source=neural` 標籤把 `semantic-qa`／`unified`／`neural-bridge`
 也算進去，但那是「encoder 相似度 ＋ 模板」的檢索，不是核心思考——所以核心分是 0，不是 1.22。L1 的關鍵度量「改述泛化」現在是
 **75.0%**（過 70% 的及格線；同一切分上，教過的詞＋新句子是 100%，那是回想不是泛化）。六維度
 **5 過 1 不過**（只剩 tools 未達外部及格線）。改述這格在 2026-10-23 換過三次最終留出（每次被用來找 bug 後就降級為開發集，理由與過程寫在
