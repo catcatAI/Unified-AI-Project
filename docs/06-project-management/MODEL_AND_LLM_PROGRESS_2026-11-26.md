@@ -27,6 +27,11 @@
 `ChatService.generate_response("天空為什麼是藍色的?")` 回傳
 `backend=llama.cpp, model=qwen2.5-1.5b-instruct` 的中文解釋。
 
+**非持久警告**：第一次啟動被外層 1 小時時限 SIGTERM 停掉，LLM 路徑隨之失效（slot 仍 enabled，但 health
+probe 失敗會被 prune → fallback）。2026-11-27 已用 12 小時時限重啟（PID
+637290，`/v1/models` 再驗證 OK）。要長期使用請手動起 server 或做成 service；
+**不要把「config 開了」當成「模型一直在」。**
+
 **核心分仍 0.00/10**：凍結題由表層（knowledge_pipeline／deterministic-math）先答，
 `census_reply_provenance`
 仍記 lookup=8／computed=32／classifier=10／produced=0——
