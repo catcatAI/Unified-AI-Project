@@ -72,6 +72,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import importlib.util
 import json
 import os
@@ -536,6 +537,114 @@ def _matrix_facts():
             "docs/status_matrix.yaml features[status=verified]",
             f"weak={len(weak)} budget={budget}: {detail}",
             measured_at="2026-11-10",
+        ),
+    ]
+
+
+def _data_lifecycle_facts():
+    """關鍵產物有 manifest 條目且 hash 相符。
+
+    data/ 是 gitignored：全新 clone 沒有 manifest 也沒有產物，只記 INFO（不是
+    門禁紅燈）；有 manifest 時才強制 critical 覆蓋與 hash 相符。
+    """
+    from core.facts import Fact
+    from gen_artifact_manifest import CRITICAL, build
+
+    manifest_path = REPO / "data" / "artifact_manifest.json"
+    if not manifest_path.is_file():
+        return [
+            Fact(
+                "data_lifecycle.manifest_present",
+                0.0,
+                1.0,
+                "ge",
+                "manifest",
+                "data/artifact_manifest.json",
+                "absent (gitignored) — run scripts/gen_artifact_manifest.py",
+                must_pass=False,
+            )
+        ]
+    try:
+        stored = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return [
+            Fact(
+                "data_lifecycle.manifest_readable",
+                0.0,
+                1.0,
+                "ge",
+                "manifest",
+                "data/artifact_manifest.json",
+                f"unreadable: {type(exc).__name__}",
+            )
+        ]
+
+    current = build(REPO)
+    now = {e["path"]: e["sha256"] for e in current["entries"]}
+    before = {e["path"]: e["sha256"] for e in stored.get("entries", [])}
+    missing = [p for p in (stored.get("critical") or CRITICAL) if p not in now]
+    changed = [p for p in before if p in now and before[p] != now[p]]
+    training_drift: List[str] = []
+    train_manifest = REPO / "apps" / "backend" / "data" / "processed" / "core_train_manifest.json"
+    if train_manifest.is_file():
+        try:
+            tm = json.loads(train_manifest.read_text(encoding="utf-8"))
+            raw = REPO / "apps" / "backend" / "data" / "raw_datasets"
+            for name, meta in (tm.get("report") or {}).get("sources", {}).items():
+                src = raw / name
+                expected = meta.get("sha256")
+                if expected and src.is_file():
+                    actual = hashlib.sha256(src.read_bytes()).hexdigest()[:16]
+                    if actual != expected:
+                        training_drift.append(name)
+        except (OSError, ValueError):
+            training_drift.append("<unreadable>")
+    return [
+        Fact(
+            "data_lifecycle.manifest_present",
+            1.0,
+            1.0,
+            "ge",
+            "manifest",
+            "data/artifact_manifest.json",
+            f"entries={current['count']}",
+        ),
+        Fact(
+            "data_lifecycle.critical_covered",
+            float(len(missing)),
+            0.0,
+            "le",
+            "artifacts",
+            "manifest critical list",
+            f"missing={missing}",
+        ),
+        Fact(
+            "data_lifecycle.hash_matches",
+            float(len(changed)),
+            0.0,
+            "le",
+            "artifacts",
+            "manifest sha256",
+            f"changed={changed}",
+        ),
+        Fact(
+            "data_lifecycle.training_sources_match",
+            float(len(training_drift)),
+            0.0,
+            "le",
+            "sources",
+            "core_train_manifest.json",
+            f"drift={training_drift} (quarantine signal)",
+        ),
+        Fact(
+            "data_lifecycle.entries",
+            float(current["count"]),
+            1.0,
+            "ge",
+            "artifacts",
+            "scripts/gen_artifact_manifest.py",
+            "manifest must cover at least one artifact",
+            must_pass=False,
         ),
     ]
 
@@ -2399,6 +2508,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         + _config_hygiene_facts()
         + _matrix_annotation_facts()
         + _gates_facts()
+        + _data_lifecycle_facts()
         + _intelligence_facts()
         + _paraphrase_facts()
         + _layers_facts()
