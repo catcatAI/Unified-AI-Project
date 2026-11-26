@@ -200,7 +200,7 @@ dev = [
   "astunparse",
   "gmqtt",
   "amqtt",
-  "black==26.5.1",
+  "black==26.10.1",
   "isort==8.0.1",
   "flake8",
   "mypy",
