@@ -188,6 +188,19 @@ AGGREGATION_ANY_SEEDS: List[str] = [
 # --------------------------------------------------------------------------- #
 _SENTENCE_ENCODER: Any = None
 _SENTENCE_ENCODER_FAILED = False
+_SENTENCE_ENCODER_REASON = "uninitialised"
+
+
+def encoder_provenance() -> Dict[str, str]:
+    """Which sentence encoder is actually in use, for measurement provenance.
+
+    A score measured with the ONNX fallback is not the same measurement as one
+    measured with the multilingual MiniLM encoder — the cache must say which.
+    """
+    return {
+        "name": "sentence-transformer" if _SENTENCE_ENCODER is not None else "onnx-fallback",
+        "reason": _SENTENCE_ENCODER_REASON,
+    }
 
 
 def _sentence_encoder() -> Any:
@@ -200,7 +213,7 @@ def _sentence_encoder() -> Any:
     prototypes are rebuilt from it. Falls back to the ONNX model when the
     dependency or the weights are unavailable, so a base install still works.
     """
-    global _SENTENCE_ENCODER, _SENTENCE_ENCODER_FAILED
+    global _SENTENCE_ENCODER, _SENTENCE_ENCODER_FAILED, _SENTENCE_ENCODER_REASON
     if _SENTENCE_ENCODER is not None or _SENTENCE_ENCODER_FAILED:
         return _SENTENCE_ENCODER
     if os.environ.get("ANGELA_PARAPHRASE_ENCODER", "sentence-transformer").lower() in {
@@ -209,6 +222,7 @@ def _sentence_encoder() -> Any:
         "0",
     }:
         _SENTENCE_ENCODER_FAILED = True
+        _SENTENCE_ENCODER_REASON = "disabled by ANGELA_PARAPHRASE_ENCODER"
         return None
     try:
         from sentence_transformers import SentenceTransformer
@@ -217,9 +231,10 @@ def _sentence_encoder() -> Any:
             "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
             device="cpu",
         )
-    except Exception:  # pragma: no cover - depends on the install
+    except Exception as exc:  # pragma: no cover - depends on the install
         logger.debug("sentence-transformer unavailable; using the ONNX encoder", exc_info=True)
         _SENTENCE_ENCODER_FAILED = True
+        _SENTENCE_ENCODER_REASON = f"import failed: {type(exc).__name__}: {exc}"
         _SENTENCE_ENCODER = None
     return _SENTENCE_ENCODER
 

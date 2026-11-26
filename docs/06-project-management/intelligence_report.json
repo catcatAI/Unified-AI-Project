@@ -79,6 +79,10 @@
     "改述（教過詞、新句子）": 1.0,
     "改述（沒教過的詞，開發診斷）": 0.875
   },
+  "paraphrase_encoder": {
+    "name": "onnx-fallback",
+    "reason": "import failed: ImportError: cannot import name 'HfFileSystemResolvedBucketPath' from 'huggingface_hub.hf_file_system' (/home/cxuo/文件/GitHub/Unified-AI-Project/.venv/lib/python3.12/site-packages/huggingface_hub/hf_file_system.py)"
+  },
   "sources": {
     "deterministic": 469,
     "neural": 246,

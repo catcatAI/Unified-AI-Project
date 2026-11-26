@@ -65,7 +65,7 @@ def main() -> int:
     parser.add_argument("--json", dest="json_path", help="write the result as JSON")
     args = parser.parse_args()
 
-    from ai.reasoning.neural_bridge import NeuralBridge
+    from ai.reasoning.neural_bridge import NeuralBridge, encoder_provenance
     from ai.reasoning.paraphrase_curriculum import (
         apply_curriculum,
         load_curriculum,
@@ -173,6 +173,7 @@ def main() -> int:
         "application": application,
         "application_split": "test",
         "learning_effect": learning_effect,
+        "encoder": encoder_provenance(),
         "integrity": {"no_leak": not problems, "problems": problems},
         "elapsed_sec": round(time.time() - started, 2),
     }

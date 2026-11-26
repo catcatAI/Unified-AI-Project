@@ -302,7 +302,9 @@ def main() -> int:
     else:
         paraphrase = _load(_run([sys.executable, "scripts/probe_paraphrase.py"], "paraphrase"))
     diagnostics: Dict[str, float] = {}
+    paraphrase_encoder: Optional[dict] = None
     if paraphrase:
+        paraphrase_encoder = paraphrase.get("encoder")
         value = paraphrase.get("score")
         if isinstance(value, (int, float)):
             scores["paraphrase"] = float(value)
@@ -503,6 +505,11 @@ def main() -> int:
         print("\n診斷（不計入總分，但必須跟分數一起看）")
         for label, value in diagnostics.items():
             print(f"  {label:36} {value:.0%}")
+    if paraphrase_encoder:
+        print(
+            f"  改述量測所用編碼器：{paraphrase_encoder.get('name')}"
+            f"（{paraphrase_encoder.get('reason')}）"
+        )
 
     if gaps:
         print("\n知識缺口（不計入總分——是覆蓋率，不是能力）")
@@ -618,6 +625,7 @@ def main() -> int:
         "scores": scores,
         "thresholds": thresholds,
         "diagnostics": diagnostics,
+        "paraphrase_encoder": paraphrase_encoder,
         "sources": sources,
         "source_verdict": source_verdict,
         "gaps": gaps,

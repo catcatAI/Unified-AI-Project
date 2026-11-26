@@ -19,6 +19,7 @@ from ai.reasoning.neural_bridge import (
     SUPERLATIVE_SEEDS,
     NeuralBridge,
     RelationMatcher,
+    encoder_provenance,
     extract_aggregation_span,
     extract_relation_spans,
 )
@@ -324,3 +325,16 @@ def test_the_matcher_reports_its_concepts() -> None:
 
 def test_the_any_dimension_is_not_a_real_dimension() -> None:
     assert ANY_DIMENSION not in DIMENSION_SEEDS
+
+
+def test_the_encoder_provenance_names_the_fallback(monkeypatch) -> None:
+    """A degraded measurement must say so — ONNX fallback is not MiniLM."""
+    import ai.reasoning.neural_bridge as nb
+
+    monkeypatch.setattr(nb, "_SENTENCE_ENCODER", None)
+    monkeypatch.setattr(nb, "_SENTENCE_ENCODER_FAILED", True)
+    monkeypatch.setattr(nb, "_SENTENCE_ENCODER_REASON", "import failed: ImportError")
+    assert nb.encoder_provenance() == {
+        "name": "onnx-fallback",
+        "reason": "import failed: ImportError",
+    }

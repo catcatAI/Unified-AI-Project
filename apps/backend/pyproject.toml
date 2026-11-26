@@ -76,7 +76,11 @@ ml = [
   "torchvision>=0.18.0",
   "sentence-transformers>=2.2.0",
   "transformers>=4.41.0",
-  "huggingface-hub>=0.23.0",
+  # transformers 5.x requires hub <2; hub 2.x breaks its import. The
+  # multilingual sentence-transformer encoder therefore falls back to the
+  # shipped ONNX encoder in this install — probe_paraphrase.py records which
+  # encoder was actually used in its cache (encoder_provenance).
+  "huggingface-hub>=0.23.0,<2.0",
 ]
 # Persistent vector database. Optional: a numpy+JSON vector store is the
 # built-in fallback when chromadb is absent.
