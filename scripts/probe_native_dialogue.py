@@ -893,6 +893,20 @@ def _consistency(
             f"human_score: 少量 {small['human_score']} vs 標準 {standard['human_score']}"
         )
 
+    # 4. The learning effect. Small-sample per-pair deltas are noisy, so compare
+    #    the two estimates with 2 standard errors — a fixed tolerance would be
+    #    unfair to this estimator (and a no-op here would make the consistency
+    #    verdict hollow for the only number that claims learning).
+    if small_deltas:
+        spread = _learning_spread(small_deltas)
+        standard_progress = float(standard["progress"])
+        if abs(spread["mean"] - standard_progress) > 2 * spread["stderr"]:
+            disagreements.append(
+                f"learning effect: 少量 {spread['mean']:+.3f} "
+                f"({spread['pairs']:.0f} pairs, SE {spread['stderr']:.3f}) vs "
+                f"標準 {standard_progress:+.3f}（差 > 2·SE → 標準量不可信）"
+            )
+
     return {
         "consistent": not disagreements,
         "disagreements": disagreements,

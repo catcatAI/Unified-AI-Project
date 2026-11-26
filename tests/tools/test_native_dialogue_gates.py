@@ -281,6 +281,28 @@ def test_a_repeated_answer_is_a_qa_machine(probe) -> None:
     assert "qa_machine" in second.classes
 
 
+def test_the_consistency_check_compares_the_learning_effect(probe) -> None:
+    """The documented 2·SE guard must be real, not a no-op: a small-sample
+    learning effect that disagrees with the standard one must be flagged."""
+    rates = {
+        k: {"rate": 0.0, "hits": 0, "total": 10, "ci95": (0.0, 0.1)}
+        for k in probe.CLASSES
+    }
+    small = {"human_score": 0.69, "rates": rates, "progress": 0.10}
+    standard = {"human_score": 0.69, "rates": rates, "progress": 0.55}
+
+    tight = probe._consistency(
+        small, standard, small_deltas=[0.10, 0.11, 0.09, 0.10, 0.10]
+    )
+    assert tight["consistent"] is False, tight
+    assert any("learning effect" in d for d in tight["disagreements"])
+
+    matching = probe._consistency(
+        small, standard, small_deltas=[0.55, 0.55, 0.55]
+    )
+    assert matching["consistent"] is True, matching
+
+
 def test_the_budget_file_has_every_key_the_gate_reads() -> None:
     gate = _load("native_dialogue_budget_gate")
     budget = gate.load_budget()
