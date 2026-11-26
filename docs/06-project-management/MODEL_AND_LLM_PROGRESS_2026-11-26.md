@@ -68,18 +68,37 @@ provider + 可起 server 的 module）與能力（probe 的 67.5/73.3/90%）都�
 
 ## 4. 研究計畫 M0–M4 進度
 
-| 里程碑                                                   | 狀態                       | 證據                                                                                                     |
-| -------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------- |
-| M0 四臂 A/B（LIF-1L / GRU-2L / Transformer-6L / hybrid） | **部分完成（2/4 臂）**     | §36 已做 LIF vs GRU（`compare_snn_gru.py`）；無 Transformer-6L / hybrid 腳本                             |
-| M1 BPE 32k 中文 + session 切分 + 洩漏守門                | **未開始**                 | 無 BPE 相關腳本／資料                                                                                    |
-| M2 30M/80M、ctx 1024 預訓練                              | **未開始**                 | 無對應 checkpoint／報告                                                                                  |
-| M3 SFT + 工具呼叫軌跡                                    | **未開始**                 | 無 SFT 語料／訓練產物                                                                                    |
-| M4 併入單一核心契約                                      | **只有契約、沒有可用模型** | `AI_AL_SINGLE_CORE_CONTRACT.md` §14（R1：一份權重＋一個 state）；ollama 空、SNN 0/40、llamacpp slot 停用 |
+| 里程碑                                                   | 狀態                               | 證據                                                                                                                                                                                                                                                         |
+| -------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| M0 四臂 A/B（LIF-1L / GRU-2L / Transformer-6L / hybrid） | **部分完成；不可照抄**             | §36 已做 LIF vs GRU（`compare_snn_gru.py`／`snn_vs_gru.json`）；`mve1_architecture_comparison.json` 已做 SNN vs causal Transformer，但題目是 **MVE-1 AI+AL atoms 對**（不是 149k 語言任務）。**不要重跑 MVE-1**；若要 M0，必須另立 149k 語言任務的預登記協定 |
+| M1 BPE 32k 中文 + session 切分 + 洩漏守門                | **部分完成／未開始**               | `scripts/prepare_core_training_data.py` 已有正規化、去重、95/5 切分、**manifest + source sha256 + benchmark 洩漏檢查**（`ai_al_manifest.json` 可證）；但 **BPE 分詞尚未做**（仍為字元/整句 token）                                                           |
+| M2 30M/80M、ctx 1024 預訓練                              | **已有不同規模的訓練，但非此配置** | `scaleup_phase1*.json`／`scaleup_phase2_*.json`／`kd_scaleup_*.json`／`width_ab_*.json`／`token_snn_core149k.json` 已跑；皆為 LIF 系列、max_len 192，不是 Transformer-6L／ctx 1024                                                                           |
+| M3 SFT + 工具呼叫軌跡                                    | **未開始**                         | 無 SFT 語料／訓練產物；`chat_qwen.py` 只是用既有微調 adapter 對話，不是 SFT 訓練                                                                                                                                                                             |
+| M4 併入單一核心契約                                      | **只有契約、沒有可用模型**         | `AI_AL_SINGLE_CORE_CONTRACT.md` §14（R1：一份權重＋一個 state）；ollama 空、SNN 0/40、llamacpp slot 停用                                                                                                                                                     |
 
 算力估算（記錄用，未實測新訓練）：108M × 千萬 token / 6,677 s → 實效不到 1
 TFLOPS；30M × 1B token 粗估 ~50 小時，batch 加大 +
 bf16 後有機會 10–15 小時。**瓶頸是資料**：1B
 token 中文對話語料本地沒有，149k 答案式配對只會養出模板機。
+
+## 4.1 已執行研究清單（**不要重複執行**）
+
+下列研究都已有產物（報告在 `data/intelligence_reports/`，多數在
+`.gitignore`，可重跑但不要當新問題再問一次）：
+
+| 類別                          | 已跑過的 experiment / 報告                                                                                                                                                                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SNN 規模與資料                | `token_snn.json`、`token_snn_arithmetic*.json`、`token_snn_core149k.json`、`token_snn_curriculum.json`、`token_snn_distill.json`、`token_snn_108m.json`、`token_snn_xpu_soak.json`                                                       |
+| Scale-up / KD                 | `scaleup_phase1*.json`、`scaleup_phase2_*.json`、`kd_scaleup_*.json`、`scale_envelope.json`                                                                                                                                              |
+| 架構對照（已做！）            | `snn_vs_gru.json`（LIF vs GRU）、`width_ab_*.json`、`mve1_architecture_comparison*.json` 與 `mve1_emergence_boundary_transformer*.json`（SNN vs causal Transformer，MVE-1 題目）、`mve1_cellular_baseline.json`                          |
+| TLN 自研架構                  | `tln_phase0..13*.json`（含 `_b1`、`_tok` 對照）；`CUSTOM_ARCHITECTURE_PLAN.md`                                                                                                                                                           |
+| AI+AL / 下游                  | `ai_al_round1..10*.json`（含 guarded）、`al_downstream_v7..v22*.json`、`al_c_*.json`、`al_phase_effect.json`、`al_ladder.json`                                                                                                           |
+| 状态/記憶研究                 | `data/pantry_stage/*`（§49–§84 的 fit/composition/address/readrule/…）、`probe_state_cycles*.json`、`probe_state_restart.json`                                                                                                           |
+| 對話/改述/歸因                | `native_dialogue.json`、`paraphrase.json`、`dialogue_teaching`、`neural_learning`、`intelligence_sources.json`、`reasoning_unseen.json`、`provenance_census.json`                                                                        |
+| Core control（多 checkpoint） | `core_control.json`、`core_control_108m.json`、`core_control_core149k.json`、`core_control_distill.json`、`core_control_ai_al_round1.json`                                                                                               |
+| LLM 基線                      | `exp_gemma_baseline.py`（Gemma E2B Q4_0 的 18 事實探針）、`chat_qwen.py`（Qwen3-0.6B 微調 adapter 對話）、`probe_local_small_model.py`（僅硬體可行性估計，未實際載模型）、`core_control_108m.json` 的 llama.cpp 1.5B 臂（67.5/73.3/90%） |
+
+**禁止重複的具體例子**：不要在 149k 語言任務上「重新發現 Transformer 比 LIF 好」——這在 MVE-1 題目上已經量過；新的 M0 必須換題目／換協定並先登記，不是把舊報告Copy 一份。
 
 ## 5. 今天已完成的證據鏈基礎
 
@@ -95,11 +114,18 @@ token 中文對話語料本地沒有，149k 答案式配對只會養出模板機
   PASS、`check_generated_docs` 0、mypy debt 0、定義有誤 0；`tests/` 10,868
   collected / 全 testpaths 11,526 passed / 112 skipped / 0 failed。
 
-## 6. 尚未開始的 MD P0
+## 6. MD P0：部分已有，尚未完整
 
 `DATA_LIFE_AND_PROJECT_STATUS_REPORT_2026-11-26.md`
 §8 的 P0（統一 manifest、lineage、quarantine gate、retention
-trace）**尚未實作**——只完成了方向決定。它仍是下一階段的基礎設施缺口。
+trace）**部分已有**：
+
+- **已有**：`scripts/prepare_core_training_data.py`
+  對**訓練資料**已寫 manifest（來源 sha256、筆數、去重、95/5 切分、benchmark 洩漏檢查），見
+  `ai_al_manifest.json`。
+- **缺口**：HAM 記憶、checkpoint、benchmark 結果、**訓練入口 quarantine gate**
+  仍未納入同一 manifest；retention decision trace 未暴露。
+- **因此 P0 的正確做法是擴充既有 manifest，不是重造一份。**
 
 ## 7. 下一步（二選一，需人為決定）
 
@@ -107,10 +133,14 @@ trace）**尚未實作**——只完成了方向決定。它仍是下一階段�
    `llm.user.yaml` 的 llamacpp slot 打開，讓 `generation_available()`
    看見；核心仍當「腦」（狀態／記憶／路由／驗證），語言交給 llama.cpp。
    **代價**：核心分契約要改——目前只算神經產生且正確，會永遠 0。
-2. **研究線（M0）**：做四臂 A/B（補 Transformer-6L /
-   hybrid 兩臂），同一份 149k 語料、等參數等步數，用 val loss +
-   100 列 free-running exact 裁決。 **否證條件**：Transformer-6L 的 val
-   loss 仍 >3.5 → 問題在分詞／資料，不在架構。
+2. **研究線（新 M0，不可重複舊 MVE-1/§36）**：先查 §4.1 的清單—— LIF vs
+   GRU（§36）、SNN vs Transformer（MVE-1 atoms）、width A/B、scale-up、KD、TLN
+   phase
+   0–13 都已跑過。新的四臂 A/B 必須換**題目／協定**（149k 語言任務、free-running
+   exact），跑前先登記門檻與否證條件，不是在舊題目上再比一次架構。
+   **否證條件**：Transformer-6L 的 val loss 仍 >3.5
+   → 問題在分詞／資料，不在架構。
 
-不建議：續訓 108M、把確定性/模板算進核心分、拿 `logs/deviation`
+**不重複規則**：任何新實驗必須先能在 §4.1 找到「沒做過的那一格」；找不到就不要跑。不建議：續訓 108M、把確定性/模板算進核心分、拿
+`logs/deviation`
 的 mock 當品質證據、用「單一模型」當理由拔掉 LLM（R1 只要求一份權重＋一個 state，沒要求必須是 SNN）。
