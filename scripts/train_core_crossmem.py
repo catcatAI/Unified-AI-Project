@@ -137,8 +137,12 @@ def main() -> int:
                 session, code = sessions[rng.randrange(len(sessions))], None
             state = None
             for turn_idx, (user, assistant) in enumerate(session[:6]):
-                ids = [1] + tok.encode(user).ids[: args.max_len // 2] + [2]
-                answer = tok.encode(assistant).ids[: args.max_len // 2] + [2]
+                ids = (
+                    [1] + tok.encode(user, add_special_tokens=False).ids[: args.max_len // 2] + [2]
+                )
+                answer = tok.encode(assistant, add_special_tokens=False).ids[
+                    : args.max_len // 2
+                ] + [2]
                 full = (ids + answer)[: args.max_len]
                 x = torch.tensor([full[:-1]], dtype=torch.long, device=device)
                 y = torch.tensor([full], dtype=torch.long, device=device)
@@ -152,7 +156,7 @@ def main() -> int:
                 )
                 total_loss = loss
                 if synth and code and turn_idx == 0:
-                    code_ids = tok.encode(code).ids[: args.memory]
+                    code_ids = tok.encode(code, add_special_tokens=False).ids[: args.memory]
                     aux = nn.functional.cross_entropy(
                         model.mem_readout(state[0, : len(code_ids)]).reshape(-1, logits.shape[-1]),
                         torch.tensor(code_ids, dtype=torch.long, device=device),
@@ -182,13 +186,24 @@ def main() -> int:
             code = "".join(rng.choice("ABCDEFGHJKLMNPQRSTUVWXYZ0123456789") for _ in range(8))
             teach, ask, answer = f"記住代號 {code}", "代號？", code
             with torch.no_grad():
-                t = torch.tensor([tok.encode(teach + "記住囉！").ids], device=device)
+                t = torch.tensor(
+                    [
+                        [1]
+                        + tok.encode(teach, add_special_tokens=False).ids
+                        + [2]
+                        + tok.encode("記住囉！", add_special_tokens=False).ids
+                        + [2]
+                    ],
+                    device=device,
+                )
                 _, state = model(t[:, :-1], None)
                 if mode == "zero":
                     state = torch.zeros_like(state)
                 elif mode == "random":
                     state = torch.randn_like(state)
-                q = torch.tensor([tok.encode(ask).ids], device=device)
+                q = torch.tensor(
+                    [[1] + tok.encode(ask, add_special_tokens=False).ids + [2]], device=device
+                )
                 gen = list(q[0].tolist())
                 for _ in range(64):
                     logits, state = model(torch.tensor([gen], device=device), state)
