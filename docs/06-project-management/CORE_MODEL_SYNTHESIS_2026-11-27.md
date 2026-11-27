@@ -109,3 +109,12 @@ s/步），無 OOM。因此正在跑最大可行規模： **25,000 步 × batch
 2、~6.5 小時、cross-attention state、50% 不可背誦合成任務**。結果寫入
 `data/intelligence_reports/core_model_large.json` 與
 `data/models/angela_core_large`；gate 仍為 `real>=8/30` 且 `delta>=3`。
+
+**實際結果（2026-11-27
+23:21）**：25,000 步跑完、7,212 秒（2 小時，比預估快），88,488 turns、loss
+1.0–7.9 震盪，但消融仍是
+`real=0 / zero=0 / random=0`，生成只剩句點（`....`），`not_demonstrated`。**這是在可用資源上限內能跑的最大規模，仍不足以做出可對話、可用 state 的 single
+core model。**
+六輪從 0 訓練（12k／40k／20k／25k／15k／25k 步）一致失敗，已排除超參、注入方式、合成任務、模型規模（89M→305M）與訓練量（44M→200M
+tokens）的單一因素；剩餘瓶頸是 **state 的寫入沒有被訓練**（`new_state`
+被 detach，只訓練「讀」、沒訓練「寫」），以及整體規模仍低於語言模型形成對話能力所需。這兩個都需要新的訓練設計／更多資源，不能在原 session 內偷渡。
