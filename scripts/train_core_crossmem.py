@@ -76,7 +76,7 @@ class CoreModel(nn.Module):
         if tail.shape[1] < self.memory:  # short turn: pad from the front, keep shape fixed
             pad = out[:, : self.memory - tail.shape[1], :]
             tail = torch.cat([pad, tail], dim=1)
-        new_state = tail.detach()
+        new_state = tail  # keep the graph: WRITE loss must train the body that formed state
         return self.head(self.norm2(out)), new_state
 
 
@@ -158,6 +158,7 @@ def main() -> int:
                     )
                     total_loss = loss + aux
                 (total_loss / args.batch).backward()
+                state = state.detach()  # release this turn's graph before the next turn
                 step_loss += loss.item()
                 step_turns += 1
                 turns_seen += 1

@@ -118,3 +118,17 @@ core model。**
 六輪從 0 訓練（12k／40k／20k／25k／15k／25k 步）一致失敗，已排除超參、注入方式、合成任務、模型規模（89M→305M）與訓練量（44M→200M
 tokens）的單一因素；剩餘瓶頸是 **state 的寫入沒有被訓練**（`new_state`
 被 detach，只訓練「讀」、沒訓練「寫」），以及整體規模仍低於語言模型形成對話能力所需。這兩個都需要新的訓練設計／更多資源，不能在原 session 內偷渡。
+
+**2026-11-28 state 寫入 bug 的完整追蹤（不是規模問題）**：
+
+1. 文獻（`hf papers search`：RMT 2207.06881、Titans 2501.00663、LiveMem
+   2608.02515）一致指出：memory 必須被明確訓練**寫入**，不能只把向量接到輸入。
+2. Linear probe 量舊 checkpoint：state 解出代號首字只有 **0.09**（chance
+   0.028）→ state 裡幾乎沒有要記的內容。
+3. 第一個 write objective 加了 aux loss，但 probe 只升到 **0.18**——因為
+   `new_state = tail.detach()` 把梯度切斷，aux loss 只訓練 `mem_readout`，
+   **產生 state 的模型本體完全沒被訓練寫入**。
+4. 已修：forward 不再 detach；目前回合的 state 保留計算圖給 write
+   loss，backward 後才 detach 傳給下一回合（避免重複 backprop）。state 也改成固定 K 向量（短回合從前面補）。15k 步重訓正在跑。
+5. 潘多拉的結論：**前面六輪失敗不是不夠大，是 state 的寫入路徑被 detach 切斷**。Gate 不改：仍需
+   `real>=8/30` 且 `delta>=3`。
