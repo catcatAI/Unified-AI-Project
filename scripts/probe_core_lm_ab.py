@@ -177,14 +177,23 @@ class Arm(nn.Module):
         return self.head(x)
 
 
-def batches(rows: List[Tuple[int, ...]], batch: int, device: torch.device):
+def batches(
+    rows: List[Tuple[int, ...]],
+    batch: int,
+    device: torch.device,
+    qlens: Optional[List[int]] = None,
+):
     for start in range(0, len(rows), batch):
         chunk = rows[start : start + batch]
         width = max(len(r) for r in chunk)
         padded = torch.full((len(chunk), width), 0, dtype=torch.long, device=device)
         for i, row in enumerate(chunk):
             padded[i, : len(row)] = torch.tensor(row, dtype=torch.long, device=device)
-        yield padded[:, :-1], padded[:, 1:]
+        y = padded[:, 1:]
+        if qlens is not None:
+            for i, q in enumerate(qlens[start : start + batch]):
+                y[i, : max(0, min(q - 1, y.shape[1]))] = -100  # ignore question tokens
+        yield padded[:, :-1], y
 
 
 def greedy_answer(
@@ -211,18 +220,31 @@ def train_arm(
     device,
     seed: int,
     d_model: int = 256,
+    loss_mode: str = "full",
 ):
     torch.manual_seed(seed)
-    encoded = [vocab.encode(q + "\n" + a)[:192] for q, a in train_rows]
+    newline = vocab.stoi.get("\n", vocab.stoi["<unk>"] if "<unk>" in vocab.stoi else 0)
+    encoded, qlens = [], []
+    for q, a in train_rows:
+        q_ids = [vocab.stoi["<bos>"]] + [vocab.stoi[c] for c in q if c in vocab.stoi]
+        ids = (
+            q_ids
+            + [newline]
+            + [vocab.stoi[c] for c in a if c in vocab.stoi]
+            + [vocab.stoi["<eos>"]]
+        )
+        encoded.append(ids[:192])
+        qlens.append(min(len(q_ids) + 1, len(ids[:192])))
     model = Arm(kind, len(vocab.itos), d_model=d_model).to(device)
     optim = torch.optim.AdamW(model.parameters(), lr=2e-3)
     seen, started = 0, time.time()
     rng = random.Random(seed)
     while seen < tokens:
         model.train()
-        order = encoded[:]
-        rng.shuffle(order)  # full corpus, deterministic order per epoch — not a 256-row prefix
-        for x, y in batches(order, 8, device):
+        order = list(zip(encoded, qlens))
+        rng.shuffle(order)
+        ids_batch, q_batch = zip(*order)
+        for x, y in batches(list(ids_batch), 8, device, q_batch if loss_mode == "answer" else None):
             if seen >= tokens:
                 break
             loss = nn.functional.cross_entropy(model(x).reshape(-1, len(vocab.itos)), y.reshape(-1))
@@ -231,18 +253,26 @@ def train_arm(
             optim.step()
             seen += x.numel()
     model.eval()
+    val_ids, val_qlens = [], []
+    for q, a in val_rows[:200]:
+        q_ids = [vocab.stoi["<bos>"]] + [vocab.stoi[c] for c in q if c in vocab.stoi]
+        ids = (
+            q_ids
+            + [newline]
+            + [vocab.stoi[c] for c in a if c in vocab.stoi]
+            + [vocab.stoi["<eos>"]]
+        )
+        val_ids.append(ids[:192])
+        val_qlens.append(min(len(q_ids) + 1, len(ids[:192])))
     val_loss, n = 0.0, 0
     with torch.no_grad():
-        for x, y in batches(
-            [vocab.encode(q + "\n" + a)[:192] for q, a in val_rows[:200]], 8, device
-        ):
-            val_loss += (
-                nn.functional.cross_entropy(
-                    model(x).reshape(-1, len(vocab.itos)), y.reshape(-1)
-                ).item()
-                * y.numel()
-            )
-            n += y.numel()
+        for x, y in batches(val_ids, 8, device, val_qlens if loss_mode == "answer" else None):
+            valid = y != -100
+            val_loss += nn.functional.cross_entropy(
+                model(x).reshape(-1, len(vocab.itos))[valid.reshape(-1)],
+                y.reshape(-1)[valid.reshape(-1)],
+            ).item() * int(valid.sum())
+            n += int(valid.sum())
     hits = 0
     samples = []
     for q, a in val_rows[:30]:
@@ -269,6 +299,7 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=20261127)
     parser.add_argument("--d-model", type=int, default=256)
     parser.add_argument("--vocab", choices=("char", "subword"), default="char")
+    parser.add_argument("--loss", choices=("full", "answer"), default="full")
     parser.add_argument(
         "--out", default=str(REPO / "data" / "intelligence_reports" / "core_lm_ab.json")
     )
@@ -279,7 +310,17 @@ def main() -> int:
     vocab = SubwordVocab(train_rows) if args.vocab == "subword" else CharVocab(train_rows)
     device = _device()
     results = [
-        train_arm(kind, train_rows, val_rows, vocab, args.tokens, device, args.seed, args.d_model)
+        train_arm(
+            kind,
+            train_rows,
+            val_rows,
+            vocab,
+            args.tokens,
+            device,
+            args.seed,
+            args.d_model,
+            args.loss,
+        )
         for kind in args.arms.split(",")
     ]
     transformer = next((r for r in results if r["kind"] == "transformer"), None)
