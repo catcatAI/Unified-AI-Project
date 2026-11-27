@@ -132,3 +132,14 @@ tokens）的單一因素；剩餘瓶頸是 **state 的寫入沒有被訓練**（
    loss，backward 後才 detach 傳給下一回合（避免重複 backprop）。state 也改成固定 K 向量（短回合從前面補）。15k 步重訓正在跑。
 5. 潘多拉的結論：**前面六輪失敗不是不夠大，是 state 的寫入路徑被 detach 切斷**。Gate 不改：仍需
    `real>=8/30` 且 `delta>=3`。
+
+**2026-11-28 後續除錯（全部修好但問題仍未解決）**：
+
+- 均勻 state 錨點（MARCH/ATLAS 式）：state 從整句取樣而非只取尾端。
+- **雙重 special tokens**：`tok.encode()` 預設加 BOS/EOS，程式又手動加
+  `[1]/[2]`，訓練格式與 eval 不一致。已全面改 `add_special_tokens=False`，eval
+  teaching 格式也對齊。
+- 純化任務（答案只有代號本身、無模板稀釋）、aux WRITE loss 收到 ~0。
+- **結果**：真／零／隨機 state 消融仍全 0；生成是重複字串（`ZNJNJN…`）。代表 state 確實被寫入（aux≈0），但模型在 prompt 只有問題時**讀不出精確值**，或語言解碼本身尚未成形。
+- 誠實結論：今天修掉的是四個真 bug（detach 梯度、state 形狀、token 格式、評測錯位），它們都**確認已修**；但「核心模型可用、能對話、state 影響可測」這個目標**尚未解決**。剩下的不是再調一個本地開關，而是需要真正的 content-addressed
+  write/read 架構與足夠的語言訓練規模；不可把 checkpoint 宣傳成成果。
