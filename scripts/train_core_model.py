@@ -93,7 +93,8 @@ def main() -> int:
     p.add_argument("--heads", type=int, default=16)
     p.add_argument("--memory", type=int, default=8)
     p.add_argument("--max-len", type=int, default=768)
-    p.add_argument("--lr", type=float, default=1e-3)
+    p.add_argument("--lr", type=float, default=2e-3)
+    p.add_argument("--synthetic-ratio", type=float, default=0.25)
     p.add_argument("--device", choices=("xpu", "cpu", "cuda"), default="xpu")
     p.add_argument(
         "--out", default=str(REPO / "data" / "intelligence_reports" / "core_model_training.json")
@@ -120,6 +121,13 @@ def main() -> int:
         tok.get_vocab_size(), args.d_model, args.layers, args.heads, args.memory, args.max_len
     ).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
+
+    def lr_lambda(step: int) -> float:
+        warmup = min(1.0, (step + 1) / 1000)
+        cosine = 0.5 * (1 + math.cos(math.pi * min(1.0, step / max(1, args.steps))))
+        return warmup * (0.1 + 0.9 * cosine)
+
+    scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda)
     rng = random.Random(20261127)
     started = time.time()
     seen_turns = 0
@@ -129,7 +137,16 @@ def main() -> int:
         step_loss = 0.0
         step_turns = 0
         for _ in range(args.batch):
-            session = sessions[rng.randrange(len(sessions))]
+            if rng.random() < args.synthetic_ratio:
+                kind = list(VALUES)[rng.randrange(3)]
+                value = VALUES[kind][rng.randrange(len(VALUES[kind]))]
+                teach, ask, answer = PATTERNS[kind]
+                session = [
+                    (teach.format(V=value), "記住囉！"),
+                    (ask, answer.format(V=value)),
+                ]
+            else:
+                session = sessions[rng.randrange(len(sessions))]
             state = None
             for user, assistant in session[:6]:  # cap turns per session
                 ids = [1] + tok.encode(user).ids[: args.max_len // 2] + [2]
@@ -156,6 +173,7 @@ def main() -> int:
                 seen_turns += 1
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
+        scheduler.step()
         if step % 200 == 0:
             print(
                 f"step {step} loss={step_loss / max(1, step_turns):.4f} turns={seen_turns}",
