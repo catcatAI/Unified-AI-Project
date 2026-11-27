@@ -85,6 +85,38 @@ class CharVocab:
         return "".join(self.itos[i] for i in ids if i >= 3)
 
 
+class SubwordVocab:
+    """Word/punctuation subwords + char fallback — a different representation
+    from the baseline char vocab. NOT full BPE; named honestly."""
+
+    def __init__(self, rows: List[Tuple[str, str]], target: int = 4096):
+        import re
+        from collections import Counter
+
+        pattern = r"[A-Za-z0-9]+|\s+|."
+        counts: Counter = Counter()
+        for q, a in rows:
+            counts.update(re.findall(pattern, q + "\n" + a))
+        tokens = [t for t, _ in counts.most_common(target - 4)]
+        self.itos = ["<pad>", "<bos>", "<eos>", "<unk>"] + tokens
+        self.stoi = {t: i for i, t in enumerate(self.itos)}
+        self._pattern = pattern
+
+    def encode(self, text: str) -> List[int]:
+        import re
+
+        ids = [self.stoi["<bos>"]]
+        for token in re.findall(self._pattern, text):
+            if token in self.stoi:
+                ids.append(self.stoi[token])
+            else:
+                ids.extend(self.stoi.get(c, self.stoi["<unk>"]) for c in token)
+        return ids + [self.stoi["<eos>"]]
+
+    def decode(self, ids: List[int]) -> str:
+        return "".join(self.itos[i] for i in ids if i >= 4 and i < len(self.itos))
+
+
 class LifCell(nn.Module):
     """Single-layer LIF with a surrogate-gradient hard sigmoid (SLAYER-style)."""
 
@@ -149,7 +181,7 @@ def batches(rows: List[Tuple[int, ...]], batch: int, device: torch.device):
     for start in range(0, len(rows), batch):
         chunk = rows[start : start + batch]
         width = max(len(r) for r in chunk)
-        padded = torch.full((len(chunk), width), 3, dtype=torch.long, device=device)
+        padded = torch.full((len(chunk), width), 0, dtype=torch.long, device=device)
         for i, row in enumerate(chunk):
             padded[i, : len(row)] = torch.tensor(row, dtype=torch.long, device=device)
         yield padded[:, :-1], padded[:, 1:]
@@ -236,6 +268,7 @@ def main() -> int:
     parser.add_argument("--tokens", type=int, default=200000)
     parser.add_argument("--seed", type=int, default=20261127)
     parser.add_argument("--d-model", type=int, default=256)
+    parser.add_argument("--vocab", choices=("char", "subword"), default="char")
     parser.add_argument(
         "--out", default=str(REPO / "data" / "intelligence_reports" / "core_lm_ab.json")
     )
@@ -243,7 +276,7 @@ def main() -> int:
 
     rows = load_rows(args.limit)
     train_rows, val_rows = split(rows)
-    vocab = CharVocab(train_rows)
+    vocab = SubwordVocab(train_rows) if args.vocab == "subword" else CharVocab(train_rows)
     device = _device()
     results = [
         train_arm(kind, train_rows, val_rows, vocab, args.tokens, device, args.seed, args.d_model)

@@ -106,13 +106,15 @@ val CE > 3.5 → 資料/分詞瓶頸，終止架構線。**
 | 200k tokens / d256 | LIF / GRU / Transformer / hybrid | 2.557 / **1.863** / 2.198 / 2.062 | 0 / 0 / 0 / 0 |
 | 2M tokens / d512   | GRU / Transformer                | **1.158** / 2.356                 | 0 / 0         |
 
-否證未觸發（Transformer 2.198/2.356 ≤
-3.5），所以不是分詞/資料死路。但 GRU 生成「The states of the store is a string
-of the story…」——語法-like、語意不對；模型在學 char 分佈，還沒學到「答案」。
+否證未觸發（Transformer CE ≤ 3.5），所以不是分詞/資料死路。但 GRU 生成「The
+states of the store is a string of the
+story…」——語法-like、語意不對；模型在學 char 分佈，還沒學到「答案」。
 
-**跑前登記的下一個否證（20M tokens / GRU d768，已在跑）**：若 free
-exact 仍為 0，
-**結論是不可再靠「加資料/加預算」**，必須改表徵（subword/BPE）或改訓練目標（指令/SFT、蒸餾），並把這條寫成研究結論，不是再加大一次。
+**跑前否證已裁決**：20M 的 exact 仍 0、CE 只降 0.013 →
+**停止再加預算，改表徵**。2026-11-27 已開始 subword（word/punct
+4096，不是完整 BPE，如實命名）2M-token
+GRU 實驗；若 exact 仍 0，再改目標（SFT／蒸餾），但 KD 40k（Qwen
+teacher）已有 loss 3.9 的舊結果，**不可重複**。
 
 ## 4.1 已執行研究清單（**不要重複執行**）
 
