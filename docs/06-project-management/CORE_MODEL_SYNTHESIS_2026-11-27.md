@@ -83,9 +83,20 @@ token 級多輪／指令語料與可重跑的 train→save→ablation 管線，�
 | 已下載語料 | `HuggingFaceH4/ultrachat_200k`（1.6 GB）、`BAAI/COIG`（338 MB）、`YeungNLP/firefly-train-1.1M`（1.2 GB） |
 | 正規化語料 | `data/core_corpus`：477,108 sessions、206,396,814 tokens、32k BPE（1.9 GB）                              |
 
-**正在執行**：`train_core_model.py` 從 0 訓練 ONE Transformer（d768/l8、8 memory
-tokens，state 由上一回合 hidden 而來、prompt 只有問題），12,000 步 × batch
-3，預計 ~4,400 萬 tokens 訓練量，完成後以真／零／隨機 state 消融裁決（`real>=8/30`
-且 `delta>=3` 才通過）。結果將寫入
-`data/intelligence_reports/core_model_training.json` 與
+結果寫入 `data/intelligence_reports/core_model_training.json` 與
 `data/models/angela_core`。
+
+**2026-11-27 五輪大訓練的完整結果（全部 `not_demonstrated`）**：
+
+| 輪  | 做法                                                      | 規模                | 結果                                          |
+| --- | --------------------------------------------------------- | ------------------- | --------------------------------------------- |
+| 1   | prefix memory，一般語料                                   | 12k 步 / 44M token  | loss 10.4→6.5，生成「Sure/Yes」，消融全 0     |
+| 2   | 加 25% 合成 state（候選只有 6 個）                        | 40k 步 / 150M token | loss ~2–7，模型背答案（loss 0.03），消融全 0  |
+| 3   | 隨機 8 字元代號、修正 state 不一致                        | 20k 步              | loss ~1–7，生成僅碎片，消融全 0               |
+| 4   | K=32、50% state 任務                                      | 25k 步              | loss ~1–7，生成「你的XJ。」部分格式，消融全 0 |
+| 5   | **cross-attention memory**（state 當 K/V，question 當 Q） | 15k 步 / 80k turns  | loss ~2–5，生成只剩「....」，消融全 0         |
+
+結論：在 89M 參數、2 億 token 語料、單機 Arc B570 的規模下，從 0 訓練的 single
+model 始終無法在 prompt 只有問題時從 state 取值回答。問題不是單一超參、不是注入方式、也不是合成任務設計——是模型規模與訓練量不足以同時學會語言與 state 讀取。
+`data/models/angela_core*`
+的 checkpoint 已保存，但**不可作為可用核心模型宣稱**。
