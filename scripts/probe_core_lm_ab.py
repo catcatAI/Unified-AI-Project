@@ -24,6 +24,7 @@ import argparse
 import hashlib
 import json
 import math
+import random
 import time
 from collections import Counter
 from pathlib import Path
@@ -155,7 +156,7 @@ def batches(rows: List[Tuple[int, ...]], batch: int, device: torch.device):
 
 
 def greedy_answer(
-    model: Arm, vocab: CharVocab, prompt: str, gold: str, device, max_new: int = 96
+    model: Arm, vocab: CharVocab, prompt: str, gold: str, device, max_new: int = 192
 ) -> Tuple[bool, str]:
     ids = [vocab.stoi["<bos>"]] + [vocab.stoi[c] for c in prompt if c in vocab.stoi]
     with torch.no_grad():
@@ -169,15 +170,27 @@ def greedy_answer(
     return text.strip() == gold.strip(), text[:160]
 
 
-def train_arm(kind: str, train_rows, val_rows, vocab: CharVocab, tokens: int, device, seed: int):
+def train_arm(
+    kind: str,
+    train_rows,
+    val_rows,
+    vocab: CharVocab,
+    tokens: int,
+    device,
+    seed: int,
+    d_model: int = 256,
+):
     torch.manual_seed(seed)
     encoded = [vocab.encode(q + "\n" + a)[:192] for q, a in train_rows]
-    model = Arm(kind, len(vocab.itos)).to(device)
+    model = Arm(kind, len(vocab.itos), d_model=d_model).to(device)
     optim = torch.optim.AdamW(model.parameters(), lr=2e-3)
     seen, started = 0, time.time()
+    rng = random.Random(seed)
     while seen < tokens:
         model.train()
-        for x, y in batches(encoded[:256], 8, device):
+        order = encoded[:]
+        rng.shuffle(order)  # full corpus, deterministic order per epoch — not a 256-row prefix
+        for x, y in batches(order, 8, device):
             if seen >= tokens:
                 break
             loss = nn.functional.cross_entropy(model(x).reshape(-1, len(vocab.itos)), y.reshape(-1))
@@ -199,15 +212,19 @@ def train_arm(kind: str, train_rows, val_rows, vocab: CharVocab, tokens: int, de
             )
             n += y.numel()
     hits = 0
+    samples = []
     for q, a in val_rows[:30]:
-        ok, _text = greedy_answer(model, vocab, q + "\n", a, device)
+        ok, text = greedy_answer(model, vocab, q + "\n", a, device)
         hits += int(ok)
+        if len(samples) < 3:
+            samples.append({"q": q[:80], "gold": a[:120], "got": text, "exact": ok})
     return {
         "kind": kind,
         "params": sum(p.numel() for p in model.parameters()),
         "tokens": seen,
         "val_ce": round(val_loss / max(n, 1), 4),
         "free_exact_30": hits,
+        "samples": samples,
         "seconds": round(time.time() - started, 1),
     }
 
@@ -218,6 +235,7 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=20000)
     parser.add_argument("--tokens", type=int, default=200000)
     parser.add_argument("--seed", type=int, default=20261127)
+    parser.add_argument("--d-model", type=int, default=256)
     parser.add_argument(
         "--out", default=str(REPO / "data" / "intelligence_reports" / "core_lm_ab.json")
     )
@@ -228,7 +246,7 @@ def main() -> int:
     vocab = CharVocab(train_rows)
     device = _device()
     results = [
-        train_arm(kind, train_rows, val_rows, vocab, args.tokens, device, args.seed)
+        train_arm(kind, train_rows, val_rows, vocab, args.tokens, device, args.seed, args.d_model)
         for kind in args.arms.split(",")
     ]
     transformer = next((r for r in results if r["kind"] == "transformer"), None)
