@@ -96,6 +96,24 @@ TFLOPS；30M × 1B token 粗估 ~50 小時，batch 加大 +
 bf16 後有機會 10–15 小時。**瓶頸是資料**：1B
 token 中文對話語料本地沒有，149k 答案式配對只會養出模板機。
 
+## 4.0 M0 語言任務實測（2026-11-27，新協定，非 §36/MVE-1）
+
+`scripts/probe_core_lm_ab.py`：149k 自然語言答案配對、同 next-token 目標、同 token 預算，char-level 詞表 229、XPU。跑前登記：**Transformer
+val CE > 3.5 → 資料/分詞瓶頸，終止架構線。**
+
+| 預算               | 臂                               | val CE                            | free exact/30 |
+| ------------------ | -------------------------------- | --------------------------------- | ------------- |
+| 200k tokens / d256 | LIF / GRU / Transformer / hybrid | 2.557 / **1.863** / 2.198 / 2.062 | 0 / 0 / 0 / 0 |
+| 2M tokens / d512   | GRU / Transformer                | **1.158** / 2.356                 | 0 / 0         |
+
+否證未觸發（Transformer 2.198/2.356 ≤
+3.5），所以不是分詞/資料死路。但 GRU 生成「The states of the store is a string
+of the story…」——語法-like、語意不對；模型在學 char 分佈，還沒學到「答案」。
+
+**跑前登記的下一個否證（20M tokens / GRU d768，已在跑）**：若 free
+exact 仍為 0，
+**結論是不可再靠「加資料/加預算」**，必須改表徵（subword/BPE）或改訓練目標（指令/SFT、蒸餾），並把這條寫成研究結論，不是再加大一次。
+
 ## 4.1 已執行研究清單（**不要重複執行**）
 
 下列研究都已有產物（報告在 `data/intelligence_reports/`，多數在
