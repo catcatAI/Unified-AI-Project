@@ -182,7 +182,7 @@ def main() -> int:
         "samples": samples,
         "gate": {
             "registered_before_run": True,
-            "pass": hits > 0 and any(s["got"] for s in samples),
+            "pass": hits >= 5 and any(s["got"] for s in samples),
             "verdict": (
                 "single_model_converses_with_state" if hits > 0 else "falsified_at_this_scale"
             ),
