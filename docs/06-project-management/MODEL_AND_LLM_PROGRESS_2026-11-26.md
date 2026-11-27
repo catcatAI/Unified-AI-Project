@@ -116,6 +116,13 @@ story…」——語法-like、語意不對；模型在學 char 分佈，還沒�
 GRU 實驗；若 exact 仍 0，再改目標（SFT／蒸餾），但 KD 40k（Qwen
 teacher）已有 loss 3.9 的舊結果，**不可重複**。
 
+subword 2M 實測：CE 1.691（比 char 1.158 差）、exact 0，生成的開頭在**覆述問題**
+（「Alternatie energy sorces are
+critical…」）——表徵改了也沒解決。下一個跑前登記：**只在答案 token 上算 loss**（`--loss answer`，遮罩問題 token），2026-11-27 已以 CPU 跑 2M
+tokens。**環境事實**：Arc B570 XPU 在並行負載下
+`UR_RESULT_ERROR_DEVICE_LOST`，研究改用 CPU；llama.cpp
+server 也被時限 SIGTERM，可比數字以既有 `core_control.json` 為準。
+
 ## 4.1 已執行研究清單（**不要重複執行**）
 
 下列研究都已有產物（報告在 `data/intelligence_reports/`，多數在
