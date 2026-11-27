@@ -157,6 +157,11 @@ def main() -> int:
                         torch.tensor(code_ids, dtype=torch.long, device=device),
                     )
                     total_loss = loss + aux
+                    if step % 500 == 0 and turn_idx == 0:
+                        print(
+                            f"aux step={step} aux={aux.item():.3f} main={loss.item():.3f}",
+                            flush=True,
+                        )
                 (total_loss / args.batch).backward()
                 state = state.detach()  # release this turn's graph before the next turn
                 step_loss += loss.item()
