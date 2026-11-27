@@ -154,7 +154,20 @@ token 的預算內，模型只學到 char 分佈（CE
   **尚未達成**——投影式注入需要更大規模的端到端訓練，不能用 30 步宣稱成功。既有可比數字仍是
   `core_control.json` 的本地 Qwen 1.5B 臂（67.5/73.3/90%，同題同評分）。
 
-不再把「LLM 當另一個模型」或「狀態走 context」當選項——那違反 §14 的「一個模型」與 R1 的「state 不進 context」。正當後續只有：把上述投影做成真正的模型一部分並端到端訓練，或取得更大規模 instruction/多輪語料；兩者都不是本輪可偷渡的捷徑。
+不再把「LLM 當另一個模型」或「狀態走 context」當選項——那違反 §14 的「一個模型」與 R1 的「state 不進 context」。
+
+**2026-11-27 續（同一份模型、端到端訓練 state）**：
+
+- `train_single_core_dialogue.py`：合併 Qwen3-0.6B +
+  LoRA 端到端學「讀 state」；state = 教學回合的值-token hidden
+  state，投影後注入下一回合 embedding（prompt 只有問題）。XPU 600 步 loss
+  13→0.5，但**嚴格留出回憶 1/30（≈猜測）**，生成會列舉所有候選值 → 未達成。
+- `train_single_core_memory.py`：把 state 改成 **4 個 memory
+  tokens**（用戶自己的注意力去讀），450 步 loss
+  ~0.3，留出「值出現在第一句」**5/30**（6–8 個候選值下仍是猜測等級）。生成連貫、同主題，但 state 是否真的被讀**沒有證據**；gate 已修正為
+  `weak_or_falsified` （原本 5/30 被判 pass 是假通過，已糾正）。
+- 結論保持：**一份權重可生成連貫語言；「state 在模型內且被用來答題」尚未達成**。既有可比數字仍是
+  `core_control.json` 的本地 Qwen 1.5B 臂（67.5/73.3/90%，同題同評分）。
 
 ## 4.1 已執行研究清單（**不要重複執行**）
 
