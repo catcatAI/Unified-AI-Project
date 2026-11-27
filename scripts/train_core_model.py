@@ -83,6 +83,15 @@ class CoreModel(nn.Module):
         return self.head(self.norm(out)), new_state
 
 
+def fresh_synthetic(rng: random.Random) -> List[Tuple[str, str]]:
+    """A teaching->recall pair whose answer cannot be memorised: a new code each time."""
+    code = "".join(rng.choice("ABCDEFGHJKLMNPQRSTUVWXYZ0123456789") for _ in range(8))
+    return [
+        (f"我的代號是{code}。", "記住囉！"),
+        ("我的代號是什麼？", f"你的代號是{code}。"),
+    ]
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--sessions", type=int, default=100000)
@@ -138,13 +147,7 @@ def main() -> int:
         step_turns = 0
         for _ in range(args.batch):
             if rng.random() < args.synthetic_ratio:
-                kind = list(VALUES)[rng.randrange(3)]
-                value = VALUES[kind][rng.randrange(len(VALUES[kind]))]
-                teach, ask, answer = PATTERNS[kind]
-                session = [
-                    (teach.format(V=value), "記住囉！"),
-                    (ask, answer.format(V=value)),
-                ]
+                session = fresh_synthetic(rng)
             else:
                 session = sessions[rng.randrange(len(sessions))]
             state = None
@@ -184,9 +187,8 @@ def main() -> int:
     def recall(mode: str) -> Tuple[int, List[str]]:
         hits, out = 0, []
         for i in range(30):
-            kind = list(VALUES)[i % 3]
-            value = VALUES[kind][rng.randrange(len(VALUES[kind]))]
-            teach, ask, answer = PATTERNS[kind]
+            value = "".join(rng.choice("ABCDEFGHJKLMNPQRSTUVWXYZ0123456789") for _ in range(8))
+            teach, ask, answer = "我的代號是{V}。", "我的代號是什麼？", "你的代號是{V}。"
             with torch.no_grad():
                 t = torch.tensor([tok.encode(teach.format(V=value)).ids], device=device)
                 _, state = model(t[:, :-1], None)
