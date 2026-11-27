@@ -162,8 +162,8 @@ def main() -> int:
         "samples": samples,
         "gate": {
             "registered_before_run": True,
-            "pass": hits >= 5 and any(s["got"] for s in samples),
-            "verdict": "single_model_converses_with_state" if hits >= 5 else "weak_or_falsified",
+            "pass": hits >= 10 and any(s["got"] for s in samples),  # 5/30 is chance for 6-8 values
+            "verdict": "single_model_converses_with_state" if hits >= 10 else "weak_or_falsified",
         },
     }
     out = Path(args.out)
