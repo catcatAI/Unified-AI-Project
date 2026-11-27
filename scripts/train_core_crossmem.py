@@ -31,9 +31,9 @@ REPO = Path(__file__).resolve().parent.parent
 CORPUS = REPO / "data" / "core_corpus"
 
 
-def fresh_synthetic(rng: random.Random) -> List[Tuple[str, str]]:
+def fresh_synthetic(rng: random.Random) -> Tuple[List[Tuple[str, str]], str]:
     code = "".join(rng.choice("ABCDEFGHJKLMNPQRSTUVWXYZ0123456789") for _ in range(8))
-    return [(f"我的代號是{code}。", "記住囉！"), ("我的代號是什麼？", f"你的代號是{code}。")]
+    return [(f"我的代號是{code}。", "記住囉！"), ("我的代號是什麼？", f"你的代號是{code}。")], code
 
 
 class CoreModel(nn.Module):
@@ -60,6 +60,9 @@ class CoreModel(nn.Module):
         self.body = nn.TransformerEncoder(layer, layers)
         self.norm2 = nn.LayerNorm(d)
         self.head = nn.Linear(d, vocab)
+        self.mem_readout = nn.Linear(
+            d, vocab
+        )  # explicit WRITE objective: state must encode the code
 
     def forward(self, ids: torch.Tensor, state: torch.Tensor | None = None):
         x = self.embed(ids) + self.pos(torch.arange(ids.shape[1], device=ids.device).unsqueeze(0))
@@ -69,7 +72,11 @@ class CoreModel(nn.Module):
             x = self.norm1(x + attended)
         mask = torch.triu(torch.ones(x.shape[1], x.shape[1], device=ids.device), 1).bool()
         out = self.body(x, mask=mask)
-        new_state = out[:, -self.memory - 1 : -1, :].detach()
+        tail = out[:, -(self.memory + 1) : -1, :]  # last K hidden vectors
+        if tail.shape[1] < self.memory:  # short turn: pad from the front, keep shape fixed
+            pad = out[:, : self.memory - tail.shape[1], :]
+            tail = torch.cat([pad, tail], dim=1)
+        new_state = tail.detach()
         return self.head(self.norm2(out)), new_state
 
 
@@ -122,13 +129,13 @@ def main() -> int:
         opt.zero_grad()
         step_loss, step_turns = 0.0, 0
         for _ in range(args.batch):
-            session = (
-                fresh_synthetic(rng)
-                if rng.random() < args.synthetic_ratio
-                else sessions[rng.randrange(len(sessions))]
-            )
+            synth = rng.random() < args.synthetic_ratio
+            if synth:
+                session, code = fresh_synthetic(rng)
+            else:
+                session, code = sessions[rng.randrange(len(sessions))], None
             state = None
-            for user, assistant in session[:6]:
+            for turn_idx, (user, assistant) in enumerate(session[:6]):
                 ids = [1] + tok.encode(user).ids[: args.max_len // 2] + [2]
                 answer = tok.encode(assistant).ids[: args.max_len // 2] + [2]
                 full = (ids + answer)[: args.max_len]
@@ -142,7 +149,15 @@ def main() -> int:
                     logits[0, start : start + n].reshape(-1, logits.shape[-1]),
                     y[0, len(ids) : len(ids) + n].reshape(-1),
                 )
-                (loss / args.batch).backward()
+                total_loss = loss
+                if synth and code and turn_idx == 0:
+                    code_ids = tok.encode(code).ids[: args.memory]
+                    aux = nn.functional.cross_entropy(
+                        model.mem_readout(state[0, : len(code_ids)]).reshape(-1, logits.shape[-1]),
+                        torch.tensor(code_ids, dtype=torch.long, device=device),
+                    )
+                    total_loss = loss + aux
+                (total_loss / args.batch).backward()
                 step_loss += loss.item()
                 step_turns += 1
                 turns_seen += 1
