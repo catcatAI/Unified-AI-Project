@@ -135,10 +135,10 @@ class Arm(nn.Module):
             if self.kind == "hybrid":
                 x, _ = self.attn(x, x, x)
         else:
-            state = torch.zeros(x.shape[0], x.shape[1], x.shape[2], device=x.device)
+            mem = torch.zeros(x.shape[0], x.shape[2], device=x.device)
             out = []
             for t in range(x.shape[1]):
-                spike, state = self.body(x[:, t], state[:, t])
+                spike, mem = self.body(x[:, t], mem)
                 out.append(spike)
             x = torch.stack(out, dim=1)
         return self.head(x)
@@ -236,9 +236,13 @@ def main() -> int:
         "registered_before_run": True,
         "transformer_val_ce_le_3_5": bool(transformer and transformer["val_ce"] <= 3.5),
         "verdict": (
-            "data_or_tokenization_bottleneck"
-            if transformer and transformer["val_ce"] > 3.5
-            else "architecture_comparable"
+            "not_evaluated"
+            if transformer is None
+            else (
+                "data_or_tokenization_bottleneck"
+                if transformer["val_ce"] > 3.5
+                else "architecture_comparable"
+            )
         ),
     }
     payload = {
