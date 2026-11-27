@@ -33,7 +33,8 @@ CORPUS = REPO / "data" / "core_corpus"
 
 def fresh_synthetic(rng: random.Random) -> Tuple[List[Tuple[str, str]], str]:
     code = "".join(rng.choice("ABCDEFGHJKLMNPQRSTUVWXYZ0123456789") for _ in range(8))
-    return [(f"我的代號是{code}。", "記住囉！"), ("我的代號是什麼？", f"你的代號是{code}。")], code
+    # Answer is the code ONLY — no template tokens to dilute the recall loss.
+    return [(f"記住代號 {code}", "記住囉！"), ("代號？", code)], code
 
 
 class CoreModel(nn.Module):
@@ -179,7 +180,7 @@ def main() -> int:
         hits, samples = 0, []
         for _ in range(30):
             code = "".join(rng.choice("ABCDEFGHJKLMNPQRSTUVWXYZ0123456789") for _ in range(8))
-            teach, ask, answer = f"我的代號是{code}。", "我的代號是什麼？", f"你的代號是{code}。"
+            teach, ask, answer = f"記住代號 {code}", "代號？", code
             with torch.no_grad():
                 t = torch.tensor([tok.encode(teach + "記住囉！").ids], device=device)
                 _, state = model(t[:, :-1], None)
