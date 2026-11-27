@@ -169,6 +169,14 @@ token 的預算內，模型只學到 char 分佈（CE
 - 結論保持：**一份權重可生成連貫語言；「state 在模型內且被用來答題」尚未達成**。既有可比數字仍是
   `core_control.json` 的本地 Qwen 1.5B 臂（67.5/73.3/90%，同題同評分）。
 
+**2026-11-27 從 0 訓練（回應「合併預訓練模型看不出 state」的批評）**：
+`train_one_model_from_scratch.py`：完全不用預訓練權重——19M 參數 Transformer（6→8 層）、char 詞表 1858、百科 30k 篇 +
+149k 指令；15,000 步預 train + 4,000 步 SFT（~5M token，XPU 1329
+s）。結果：pretrain loss 3.9→3.0、SFT loss
+~3.2、**生成為空**，消融三臂（真/零/隨機 state）全 0，`not_demonstrated`。所以不是合併造成的假象：在 5M
+token/19M 參數的規模下，從 0 训也得不到能對話的模型。這與語言模型所需 10⁸–10⁹
+token 的規模一致——**不是架構或 state 機制的單一錯**。
+
 ## 4.1 已執行研究清單（**不要重複執行**）
 
 下列研究都已有產物（報告在 `data/intelligence_reports/`，多數在
