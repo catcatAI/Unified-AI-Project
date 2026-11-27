@@ -100,3 +100,12 @@ token 級多輪／指令語料與可重跑的 train→save→ablation 管線，�
 model 始終無法在 prompt 只有問題時從 state 取值回答。問題不是單一超參、不是注入方式、也不是合成任務設計——是模型規模與訓練量不足以同時學會語言與 state 讀取。
 `data/models/angela_core*`
 的 checkpoint 已保存，但**不可作為可用核心模型宣稱**。
+
+**按資源訂出的上限（2026-11-27）**：VRAM 10.6 GB 在 fp32 +
+AdamW 下，3 億參數約需 3.6 GB（權重+優化器）＋ 3–4
+GB 激活，是單機安全上限。smoke 實測：`d=1280 / layers=16 / heads=16 / memory=32`
+= **304,683,008 參數**，10 步 9.4 秒（~0.94
+s/步），無 OOM。因此正在跑最大可行規模： **25,000 步 × batch
+2、~6.5 小時、cross-attention state、50% 不可背誦合成任務**。結果寫入
+`data/intelligence_reports/core_model_large.json` 與
+`data/models/angela_core_large`；gate 仍為 `real>=8/30` 且 `delta>=3`。
