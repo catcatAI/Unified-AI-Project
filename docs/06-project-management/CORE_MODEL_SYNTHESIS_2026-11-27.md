@@ -72,3 +72,20 @@ Transformer、單核心 state、Qwen 合併 + state 投影／memory tokens。全
 
 把「語料與訓練規模」當成核心專案的前置條件：先有 10⁸
 token 級多輪／指令語料與可重跑的 train→save→ablation 管線，再訓練一個把 state 內建的模型，並用真／零／隨機 state 三臂消融量測影響。在那之前，所有「核心模型可用」的宣稱都不成立。
+
+**2026-11-27 資源與語料（已實際盤點／下載）**：
+
+| 項目       | 實測                                                                                                     |
+| ---------- | -------------------------------------------------------------------------------------------------------- |
+| 磁碟       | 916 GB 總量、~89 GB 可用（90% 已用）                                                                     |
+| RAM / CPU  | 15 GB（可用 ~9 GB）、12 核心                                                                             |
+| 加速器     | Intel Arc B570，10.6 GB VRAM，XPU available（曾有 `DEVICE_LOST`，已恢復）                                |
+| 已下載語料 | `HuggingFaceH4/ultrachat_200k`（1.6 GB）、`BAAI/COIG`（338 MB）、`YeungNLP/firefly-train-1.1M`（1.2 GB） |
+| 正規化語料 | `data/core_corpus`：477,108 sessions、206,396,814 tokens、32k BPE（1.9 GB）                              |
+
+**正在執行**：`train_core_model.py` 從 0 訓練 ONE Transformer（d768/l8、8 memory
+tokens，state 由上一回合 hidden 而來、prompt 只有問題），12,000 步 × batch
+3，預計 ~4,400 萬 tokens 訓練量，完成後以真／零／隨機 state 消融裁決（`real>=8/30`
+且 `delta>=3` 才通過）。結果將寫入
+`data/intelligence_reports/core_model_training.json` 與
+`data/models/angela_core`。
