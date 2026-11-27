@@ -189,7 +189,7 @@ def batches(
         padded = torch.full((len(chunk), width), 0, dtype=torch.long, device=device)
         for i, row in enumerate(chunk):
             padded[i, : len(row)] = torch.tensor(row, dtype=torch.long, device=device)
-        y = padded[:, 1:]
+        y = padded[:, 1:].clone()  # view would corrupt x when masking -100
         if qlens is not None:
             for i, q in enumerate(qlens[start : start + batch]):
                 y[i, : max(0, min(q - 1, y.shape[1]))] = -100  # ignore question tokens
@@ -247,7 +247,21 @@ def train_arm(
         for x, y in batches(list(ids_batch), 8, device, q_batch if loss_mode == "answer" else None):
             if seen >= tokens:
                 break
-            loss = nn.functional.cross_entropy(model(x).reshape(-1, len(vocab.itos)), y.reshape(-1))
+            if (
+                int(x.max()) >= model.embed.num_embeddings
+                or int(x.min()) < 0
+                or x.shape[1] > model.pos.num_embeddings
+            ):
+                print(
+                    f"BAD x min={int(x.min())} max={int(x.max())} width={x.shape[1]} emb={model.embed.num_embeddings} pos={model.pos.num_embeddings}",
+                    flush=True,
+                )
+                raise SystemExit(3)
+            logits = model(x)
+            targets = y.clamp(min=0).unsqueeze(-1)
+            nll = -torch.log_softmax(logits, dim=-1).gather(-1, targets).squeeze(-1)
+            valid = (y != -100).to(logits.dtype)
+            loss = (nll * valid).sum() / valid.sum().clamp(min=1)
             optim.zero_grad()
             loss.backward()
             optim.step()
@@ -301,6 +315,12 @@ def main() -> int:
     parser.add_argument("--vocab", choices=("char", "subword"), default="char")
     parser.add_argument("--loss", choices=("full", "answer"), default="full")
     parser.add_argument(
+        "--device",
+        choices=("auto", "cpu", "xpu", "cuda"),
+        default="auto",
+        help="XPU can die under heavy concurrent load (UR_RESULT_ERROR_DEVICE_LOST)",
+    )
+    parser.add_argument(
         "--out", default=str(REPO / "data" / "intelligence_reports" / "core_lm_ab.json")
     )
     args = parser.parse_args()
@@ -308,7 +328,7 @@ def main() -> int:
     rows = load_rows(args.limit)
     train_rows, val_rows = split(rows)
     vocab = SubwordVocab(train_rows) if args.vocab == "subword" else CharVocab(train_rows)
-    device = _device()
+    device = _device() if args.device == "auto" else torch.device(args.device)
     results = [
         train_arm(
             kind,
