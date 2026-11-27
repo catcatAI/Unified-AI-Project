@@ -72,11 +72,11 @@ class CoreModel(nn.Module):
             x = self.norm1(x + attended)
         mask = torch.triu(torch.ones(x.shape[1], x.shape[1], device=ids.device), 1).bool()
         out = self.body(x, mask=mask)
-        tail = out[:, -(self.memory + 1) : -1, :]  # last K hidden vectors
-        if tail.shape[1] < self.memory:  # short turn: pad from the front, keep shape fixed
-            pad = out[:, : self.memory - tail.shape[1], :]
-            tail = torch.cat([pad, tail], dim=1)
-        new_state = tail  # keep the graph: WRITE loss must train the body that formed state
+        # Content-addressed anchors: sample K positions across the WHOLE turn
+        # (not just the tail), so early tokens such as the taught code are in state.
+        idx = torch.linspace(0, out.shape[1] - 1, self.memory, device=out.device).long()
+        anchors = out[:, idx, :]
+        new_state = anchors  # keep graph: WRITE loss trains the body that formed anchors
         return self.head(self.norm2(out)), new_state
 
 
