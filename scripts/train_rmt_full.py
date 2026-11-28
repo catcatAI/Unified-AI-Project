@@ -92,6 +92,7 @@ def main() -> int:
     p.add_argument("--memory", type=int, default=32)
     p.add_argument("--max-len", type=int, default=256)
     p.add_argument("--lr", type=float, default=1e-3)
+    p.add_argument("--init-from", default="", help="checkpoint dir to fine-tune from (curriculum)")
     p.add_argument("--synthetic-ratio", type=float, default=0.5)
     p.add_argument("--device", choices=("xpu", "cpu", "cuda"), default="xpu")
     p.add_argument("--out", default=str(REPO / "data" / "intelligence_reports" / "rmt_core.json"))
