@@ -63,6 +63,7 @@ class RMT(nn.Module):
         self.body = nn.TransformerEncoder(layer, layers)
         self.norm = nn.LayerNorm(d)
         self.head = nn.Linear(d, vocab)
+        self.mem_readout = nn.Linear(d, vocab)  # supervised WRITE: state must encode the code
 
     def forward(self, ids: torch.Tensor, state: torch.Tensor | None = None):
         words = self.embed(ids)
@@ -119,7 +120,7 @@ def main() -> int:
             synth = rng.random() < args.synthetic_ratio
             session, code = fresh(rng) if synth else (sessions[rng.randrange(len(sessions))], None)
             state = None  # BPTT: no detach between turns of the same session
-            for user, assistant in session[:4]:
+            for turn_idx, (user, assistant) in enumerate(session[:4]):
                 ids = [1] + enc(user)[: args.max_len // 2] + [2]
                 answer = enc(assistant)[: args.max_len // 2] + [2]
                 full = (ids + answer)[: args.max_len]
@@ -133,6 +134,13 @@ def main() -> int:
                     y[0, len(ids) : len(ids) + n].reshape(-1),
                 )
                 session_loss = session_loss + loss
+                if synth and code and turn_idx == 0:
+                    code_ids = enc(code)[: args.memory]
+                    aux = nn.functional.cross_entropy(
+                        model.mem_readout(state[0, : len(code_ids)]).reshape(-1, logits.shape[-1]),
+                        torch.tensor(code_ids, dtype=torch.long, device=device),
+                    )
+                    session_loss = session_loss + aux
                 total_turns += 1
         (session_loss / args.batch).backward()  # BPTT through all turns -> memory WRITE trained
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
