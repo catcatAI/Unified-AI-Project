@@ -64,7 +64,7 @@ class RMT(nn.Module):
         self.norm = nn.LayerNorm(d)
         self.head = nn.Linear(d, vocab)
         self.mem_write = nn.Linear(d, d)  # learned WRITE: turn hidden states -> memory
-        self.mem_readout = nn.Linear(d, vocab)  # supervised WRITE: state must encode the code
+        self.mem_readout = nn.Linear(d, vocab)  # CE supervision for written memory
 
     def forward(self, ids: torch.Tensor, state: torch.Tensor | None = None):
         words = self.embed(ids)
@@ -151,9 +151,13 @@ def main() -> int:
                             ],
                             dim=1,
                         )
-                    session_loss = session_loss + torch.nn.functional.mse_loss(
-                        state, target.detach()
+                    written_logits = model.mem_readout(state[0, : len(code_ids)])
+                    write_loss = torch.nn.functional.cross_entropy(
+                        written_logits.reshape(-1, written_logits.shape[-1]),
+                        torch.tensor(code_ids, dtype=torch.long, device=device),
                     )
+                    session_loss = session_loss + write_loss
+
                 total_turns += 1
         (session_loss / args.batch).backward()  # BPTT through all turns -> memory WRITE trained
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
