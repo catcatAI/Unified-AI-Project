@@ -187,8 +187,9 @@ def main() -> int:
                     state = torch.randn_like(state)
                 q = torch.tensor([[1] + enc(ask) + [2]], device=device)
                 gen = list(q[0])
+                fixed_state = state  # RMT: memory changes once per turn, not per token
                 for _ in range(48):
-                    logits, state = model(torch.tensor([gen], device=device), state)
+                    logits, _ = model(torch.tensor([gen], device=device), fixed_state)
                     nxt = int(logits[0, -1].argmax())
                     gen.append(nxt)
                     if nxt == 2:
