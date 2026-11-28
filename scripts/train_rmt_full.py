@@ -55,7 +55,7 @@ class RMT(nn.Module):
         super().__init__()
         self.memory, self.max_len = memory, max_len
         self.embed = nn.Embedding(vocab, d)
-        self.pos = nn.Embedding(max_len, d)
+        self.pos = nn.Embedding(max_len + 2 * memory, d)
         self.mem = nn.Parameter(torch.randn(memory, d) * 0.02)  # model-owned memory tokens
         layer = nn.TransformerEncoderLayer(
             d, heads, d * 2, dropout=0.0, batch_first=True, norm_first=True
@@ -68,13 +68,17 @@ class RMT(nn.Module):
 
     def forward(self, ids: torch.Tensor, state: torch.Tensor | None = None):
         words = self.embed(ids)
-        mem = self.mem.unsqueeze(0).expand(ids.shape[0], -1, -1) if state is None else state
-        x = torch.cat([mem, words], dim=1)
+        read_mem = self.mem.unsqueeze(0).expand(ids.shape[0], -1, -1) if state is None else state
+        write_mem = self.mem.unsqueeze(0).expand(ids.shape[0], -1, -1)
+        # read memory first (can be attended by words), WRITE memory at the END:
+        # with a causal mask only trailing tokens can see the whole turn (the code).
+        x = torch.cat([read_mem, words, write_mem], dim=1)
         x = x + self.pos(torch.arange(x.shape[1], device=x.device).unsqueeze(0))
         mask = torch.triu(torch.ones(x.shape[1], x.shape[1], device=x.device), 1).bool()
         out = self.body(x, mask=mask)
-        new_state = out[:, : self.memory, :]  # RMT: hidden states at memory positions
-        return self.head(self.norm(out[:, self.memory :, :])), new_state
+        n_words = words.shape[1]
+        new_state = out[:, self.memory + n_words :, :]  # trailing write-memory saw everything
+        return self.head(self.norm(out[:, self.memory : self.memory + n_words, :])), new_state
 
 
 def main() -> int:
