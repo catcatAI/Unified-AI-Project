@@ -143,3 +143,24 @@ tokens）的單一因素；剩餘瓶頸是 **state 的寫入沒有被訓練**（
 - **結果**：真／零／隨機 state 消融仍全 0；生成是重複字串（`ZNJNJN…`）。代表 state 確實被寫入（aux≈0），但模型在 prompt 只有問題時**讀不出精確值**，或語言解碼本身尚未成形。
 - 誠實結論：今天修掉的是四個真 bug（detach 梯度、state 形狀、token 格式、評測錯位），它們都**確認已修**；但「核心模型可用、能對話、state 影響可測」這個目標**尚未解決**。剩下的不是再調一個本地開關，而是需要真正的 content-addressed
   write/read 架構與足夠的語言訓練規模；不可把 checkpoint 宣傳成成果。
+
+## 6. 突破（2026-11-28，跑前登記的 gate 通過）
+
+`train_rmt_full.py`（RMT 正統結構）是最後一次重構，修掉關鍵架構 bug：
+
+| 先前 bug                                                                 | 修法                                                                     |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| memory tokens 放在序列前面，causal mask 讓 write tokens 看不到後面的代號 | **讀 memory 前置、寫 memory 後置**（RMT 標準），write 位置可 attend 整句 |
+| mem_write 用 MSE 訊號太弱                                                | CE readout 監督：written state 必須能解出代號 token                      |
+| 跨回合 detach / 每回合 separate backward                                 | BPTT：一個 session 一次 backward，梯度回流到 write 路徑                  |
+| eval 每生成 token 就更新 state，覆寫記住的內容                           | state 在回合內固定                                                       |
+| special tokens 雙重 / eval 格式不符                                      | 全面 `add_special_tokens=False`，訓練／eval 格式一致                     |
+
+**實測（同題留出、3 seeds 不變）**：真 state **24/30**、零 state
+**0/30**、隨機 state
+**0/30**、delta=24；生成開頭即完整正確代號（`E6P19YRC…`、`BUNI00GX…`、`PDQ0MLGQ…`）。
+`gate.pass=true`、`verdict=core_model_converses_with_state`。意義：**一個模型、一份權重、一個內部 state；prompt 只有問題；對話歷史不進 context；無第二模型、無 KV
+cache**——state 影響對話已被因果消融量到。
+
+**尚未完成**：目前只驗證了 teaching→recall 的單純任務，還沒接上自然語言對話（語料混合、EOS 訓練）與生產聊天路徑。 checkpoint 在
+`data/models/angela_rmt_full`（gitignored）。
