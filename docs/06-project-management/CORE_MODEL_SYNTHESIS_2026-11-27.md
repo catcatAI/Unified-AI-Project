@@ -162,5 +162,16 @@ tokens）的單一因素；剩餘瓶頸是 **state 的寫入沒有被訓練**（
 `gate.pass=true`、`verdict=core_model_converses_with_state`。意義：**一個模型、一份權重、一個內部 state；prompt 只有問題；對話歷史不進 context；無第二模型、無 KV
 cache**——state 影響對話已被因果消融量到。
 
-**尚未完成**：目前只驗證了 teaching→recall 的單純任務，還沒接上自然語言對話（語料混合、EOS 訓練）與生產聊天路徑。 checkpoint 在
-`data/models/angela_rmt_full`（gitignored）。
+cache**——state 影響對話已被因果消融量到。
+
+**後續（2026-11-28）**：
+
+- 從頭混訓（50% 語料）會把 state 沖掉（0/30）；改課程式微調（先 state-only，再低 LR 混語料）後 gate 保持
+  **27/30**、零/隨機state 0/0。再加大語言比例（80% 語料、lr
+  1e-4、20k 步）後gate 仍 **27/30**，證明 state 路徑已穩定保留。
+- **自然對話仍不合格**：輸出是重複的「这首歌／I do not have
+  access…」語法片段，語意不通。代表 state 機制完成，但語言建模 still
+  under-trained（目前只見過約 10 萬 turns）。
+- checkpoint：`data/models/angela_rmt_language`（gitignored），`gate.pass=true`。
+- **核心模型尚未「完成」**：還缺連貫語言、EOS 訓練、與生產聊天路徑接線。不能再把 state
+  gate 通過當成全部完成。
