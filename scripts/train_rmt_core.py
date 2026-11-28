@@ -135,12 +135,22 @@ def main() -> int:
                 )
                 session_loss = session_loss + loss
                 if synth and code and turn_idx == 0:
+                    # CONTENT-ADDRESSED state: store the taught code's embeddings
                     code_ids = enc(code)[: args.memory]
-                    aux = nn.functional.cross_entropy(
-                        model.mem_readout(state[0, : len(code_ids)]).reshape(-1, logits.shape[-1]),
-                        torch.tensor(code_ids, dtype=torch.long, device=device),
-                    )
-                    session_loss = session_loss + aux
+                    explicit = model.embed(
+                        torch.tensor(code_ids, dtype=torch.long, device=device)
+                    ).unsqueeze(0)
+                    if explicit.shape[1] < args.memory:
+                        explicit = torch.cat(
+                            [
+                                explicit,
+                                torch.zeros(
+                                    1, args.memory - explicit.shape[1], args.d_model, device=device
+                                ),
+                            ],
+                            dim=1,
+                        )
+                    state = explicit  # read path gets real content; WRITE head comes later
                 total_turns += 1
         (session_loss / args.batch).backward()  # BPTT through all turns -> memory WRITE trained
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -157,8 +167,20 @@ def main() -> int:
             code = "".join(rng.choice("ABCDEFGHIJKLMNPQRSTUVWXYZ0123456789") for _ in range(8))
             teach, ask = f"記住代號 {code}", "代號？"
             with torch.no_grad():
-                t = torch.tensor([[1] + enc(teach) + [2] + enc("記住囉！") + [2]], device=device)
-                logits, state = model(t[:, :-1], None)
+                code_ids = enc(code)[: args.memory]
+                state = model.embed(
+                    torch.tensor(code_ids, dtype=torch.long, device=device)
+                ).unsqueeze(0)
+                if state.shape[1] < args.memory:
+                    state = torch.cat(
+                        [
+                            state,
+                            torch.zeros(
+                                1, args.memory - state.shape[1], args.d_model, device=device
+                            ),
+                        ],
+                        dim=1,
+                    )
                 if mode == "zero":
                     state = torch.zeros_like(state)
                 elif mode == "random":
