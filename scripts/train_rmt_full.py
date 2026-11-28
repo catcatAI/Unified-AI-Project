@@ -134,7 +134,9 @@ def main() -> int:
                 y = torch.tensor([full], dtype=torch.long, device=device)
                 logits, state = model(x, state)
                 start = len(ids) - 1
-                n = min(logits.shape[1] - start - 1, y.shape[1] - len(ids))
+                # logits[i] predicts y[i+1]; word logits end at len(full)-2 and
+                # answer targets are y[len(ids)..len(full)-1] INCLUDING eos.
+                n = min(logits.shape[1] - start, y.shape[1] - len(ids))
                 loss = nn.functional.cross_entropy(
                     logits[0, start : start + n].reshape(-1, logits.shape[-1]),
                     y[0, len(ids) : len(ids) + n].reshape(-1),
